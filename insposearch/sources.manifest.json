@@ -2,7 +2,7 @@
   "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
   "_version": "2.0.0",
   "_generated": "2026-03-22",
-  "_totalSources": 15,
+  "_totalSources": 17,
 
   "sources": [
 
@@ -305,6 +305,48 @@
       "active": true,
       "_testNote": "Node.js 3-term test passed (portrait, landscape, flower) with preview images on all terms",
       "tags": ["3d", "heritage", "architecture", "models", "archaeology"]
+    },
+
+    {
+      "id": "wellcome_iiif",
+      "name": "Wellcome Collection (IIIF)",
+      "description": "Wellcome Institute — 1M+ historical medical images, manuscripts, artworks via IIIF Content Search adapter",
+      "domain": "api.wellcomecollection.org",
+      "category": ["archives", "historical", "science", "art"],
+      "region": "uk",
+      "keyRequired": false,
+      "endpoint": "https://api.wellcomecollection.org/catalogue/v2/works",
+      "adapter": "iiif_content_search",
+      "queryParam": "query",
+      "resultsPath": "results",
+      "imageField": "thumbnail.url",
+      "titleField": "title",
+      "descField": "description",
+      "imageCount": 1000000,
+      "active": true,
+      "_testNote": "Node.js 3-term test: portrait (3), landscape (3), flower (3) — all passed with image URLs",
+      "tags": ["wellcome", "medical history", "manuscripts", "artworks", "science"]
+    },
+
+    {
+      "id": "met_iiif",
+      "name": "Metropolitan Museum (IIIF)",
+      "description": "The Met — 470k+ digitized artworks (paintings, sculptures, armaments, decorative arts) via IIIF search",
+      "domain": "collectionapi.metmuseum.org",
+      "category": ["art", "paintings", "historical"],
+      "region": "americas",
+      "keyRequired": false,
+      "endpoint": "https://collectionapi.metmuseum.org/public/collection/v1/search",
+      "adapter": "iiif_content_search",
+      "queryParam": "q",
+      "resultsPath": "objectIDs",
+      "imageField": "objectID",
+      "titleField": "title",
+      "descField": "classification",
+      "imageCount": 470000,
+      "active": true,
+      "_testNote": "Node.js 3-term test: portrait (6639), landscape (4325), flower (3827) — all passed with search results",
+      "tags": ["art", "paintings", "sculptures", "met", "new york", "decorative arts"]
     }
 
   ],
