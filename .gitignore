@@ -1,0 +1,16 @@
+# All markdown files stay local — only root README.md goes to GitHub
+*.md
+!/README.md
+
+# Test scripts
+*.ps1
+*.js
+test_*.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
