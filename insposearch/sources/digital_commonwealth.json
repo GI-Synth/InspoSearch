@@ -1,0 +1,21 @@
+{
+  "id": "digital_commonwealth",
+  "name": "Digital Commonwealth",
+  "description": "Massachusetts cultural heritage — Boston Public Library, Harvard, state libraries — 1.5M+ digitized items including photos, maps, manuscripts",
+  "domain": "www.digitalcommonwealth.org",
+  "category": ["archives", "historical", "photos", "maps"],
+  "region": "americas",
+  "keyRequired": false,
+  "endpoint": "https://www.digitalcommonwealth.org/search.json",
+  "adapter": "simple_rest",
+  "queryParam": "q",
+  "extraParams": "per_page={limit}",
+  "resultsPath": "data",
+  "imageField": "attributes.exemplary_image_ssi",
+  "imageUrlTemplate": "https://iiif.digitalcommonwealth.org/iiif/2/{id}/full/400,/0/default.jpg",
+  "titleField": "attributes.title_info_primary_tsi",
+  "descField": "attributes.institution_name_ssi",
+  "imageCount": 1500000,
+  "active": true,
+  "tags": ["boston", "massachusetts", "photos", "maps", "historical", "archives"]
+}

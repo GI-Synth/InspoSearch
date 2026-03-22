@@ -2227,6 +2227,11 @@
           <button class="filter-pill" data-filter="access" data-value="no_key">no key</button>
           <button class="filter-pill" data-filter="access" data-value="free_key">free key</button>
         </div>
+        <div class="filter-group">
+          <span class="filter-group-label">category</span>
+          <button class="filter-pill active" data-filter="category" data-value="">all</button>
+          <button class="filter-pill" data-filter="category" data-value="fashion">fashion</button>
+        </div>
         <span id="filter-source-count" class="filter-source-count"></span>
       </div>
 
@@ -2749,7 +2754,7 @@
                    'chicago','cleveland',
                    'mia','lacma','mauritshuis','whitney','munch','freersackler'],
       maps:        ['loc','usgs','nypl','wdl','bsb','bodleian','cudl'],
-      fashion:     ['va','nordic','cooperhewitt','mak','maas','smk'],
+      fashion:     ['va','nordic','cooperhewitt','mak','maas','smk','parismusees'],
       science:     ['nasa','apod','hubble','noaa','usgs','gbif','eol',
                    'inaturalist','smg','naturalis','nasm','nationalzoo','gbiflit'],
       botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
@@ -2792,7 +2797,7 @@
       bhl:              { category: ['botanical','nature','archives'],  region: 'global',   access: 'no_key' },
       carnegie:         { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
       prado:            { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
-      parismusees:      { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+      parismusees:      { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key' },
       yale:             { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
       picsum:           { category: ['photos'],                         region: 'global',   access: 'no_key' },
       usgs:             { category: ['science','photos','maps'],        region: 'americas', access: 'no_key' },
@@ -2810,8 +2815,8 @@
       auckland:         { category: ['museums','art'],                  region: 'oceania',  access: 'no_key' },
       photogrammar:     { category: ['archives','photos','historical'], region: 'americas', access: 'no_key' },
       wellcome:         { category: ['archives','science','art'],       region: 'uk',       access: 'no_key' },
-      maas:             { category: ['museums','science','art'],        region: 'oceania',  access: 'no_key' },
-      smk:              { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+      maas:             { category: ['museums','science','art','fashion'], region: 'oceania',  access: 'no_key' },
+      smk:              { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key' },
       thyssen:          { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
       wdl:              { category: ['archives','maps','historical'],   region: 'global',   access: 'no_key' },
       walters:          { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
@@ -3021,10 +3026,10 @@
     }
 
     /* ── Phase 2: source view filtering ── */
-    const SOURCE_VIEW_FILTER = { region: '', access: '' };
+    const SOURCE_VIEW_FILTER = { region: '', access: '', category: '' };
 
     function applySourceFilter() {
-      const { region, access } = SOURCE_VIEW_FILTER;
+      const { region, access, category } = SOURCE_VIEW_FILTER;
       let visible = 0;
       document.querySelectorAll('#keys-rows-container .key-source-row').forEach(row => {
         const id = row.dataset.sourceId;
@@ -3033,7 +3038,8 @@
         const meta = SOURCE_META[src?.toggleId || id] || SOURCE_META[id] || {};
         const regMatch = !region || meta.region === region;
         const accMatch = !access || meta.access === access;
-        const show = regMatch && accMatch;
+        const catMatch = !category || (meta.category || []).includes(category);
+        const show = regMatch && accMatch && catMatch;
         row.style.display = show ? '' : 'none';
         if (show) visible++;
       });
@@ -6392,7 +6398,9 @@
     async function fetchIIIFCollection(config, keyword, limit, signal) {
       try {
         const qp = config.queryParam || 'q';
-        const extra = config.extraParams ? `&${config.extraParams}` : '';
+        // Support {limit} in extraParams so sources using non-standard limit param names
+        // (e.g. per_page=20 → per_page={limit}) reflect the user's slider value.
+        const extra = config.extraParams ? `&${config.extraParams.replace('{limit}', String(limit))}` : '';
         const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}${extra}`;
         const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(`IIIF ${config.id} failed`);

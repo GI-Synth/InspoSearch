@@ -1,8 +1,75 @@
 # Current State — InspoSearch
 
-**Last Updated:** March 23, 2026 (source-adder: imageUrlTemplate bug fix + DigitalCommonwealth)
+**Last Updated:** March 22, 2026 (builder: dc source file, westfalen fix, fashion tags + filter pill)
 
 ## Completed Work
+
+---
+
+### ✅ Builder Session — DC Source File, Westfalen Verify, Fashion Tags + Filter Pill (March 22)
+
+#### Step 1 — `digital_commonwealth.json` created
+**File:** `insposearch/sources/digital_commonwealth.json`
+
+Source file created matching the manifest entry exactly (plus `per_page={limit}` already applied). The `/sources/` directory now has a file for every active manifest source that isn't a key-gated or broken entry.
+
+#### Step 2 — Westfalen `imageBaseUrl` verified ✅
+**API test:** `https://westfalen.museum-digital.de/json/objects?s=portrait&limit=1`
+- Image field value: `data/westfalen/images/201805/200w_040713105aec080606a01.jpg`
+- Starts with `data/westfalen/` → `imageBaseUrl: "https://westfalen.museum-digital.de/"` is correct
+- No change needed. Reviewer concern resolved.
+
+#### Step 3 — DigitalCommonwealth `per_page` slider fix
+**Files:** `insposearch/index.html` (adapter), `insposearch/sources.manifest.json`, `insposearch/sources/digital_commonwealth.json`
+
+- Adapter (`fetchIIIFCollection`): `extraParams` now supports `{limit}` substitution — `config.extraParams.replace('{limit}', String(limit))`. Backward-compatible: sources without `{limit}` in extraParams are unchanged.
+- `sources.manifest.json`: `"extraParams": "per_page=20"` → `"per_page={limit}"`
+- `digital_commonwealth.json`: created with `"per_page={limit}"` from the start
+
+User's image count slider now controls DC result count instead of being hardcoded at 20.
+
+#### Step 4 — Fashion category tags added
+**File:** `insposearch/index.html`
+
+`SOURCE_GROUPS.fashion` extended: `['va','nordic','cooperhewitt','mak','maas','smk','parismusees']` (added `parismusees`)
+
+`SOURCE_META` updated — added `fashion` to category arrays:
+- `parismusees` → `['museums','art','fashion']` (was `['museums','art']`)
+- `maas` → `['museums','science','art','fashion']` (was `['museums','science','art']`)
+- `smk` → `['museums','art','fashion']` (was `['museums','art']`)
+
+Already had `fashion` — no change: `va`, `nordic`, `cooperhewitt`, `mak`.
+
+Note: `parismusees`, `nordic`, `va` are **hardcoded sources** (not manifest entries). The manifest has no entries for them; their fashion tags live in `SOURCE_META` / `SOURCE_GROUPS` only.
+
+#### Step 5 — Fashion category filter pill added
+**File:** `insposearch/index.html`
+
+- New `category` filter group added to `#source-view-filters`, with `all` and `fashion` pills
+- `SOURCE_VIEW_FILTER` extended: `{ region: '', access: '', category: '' }`
+- `applySourceFilter()` now checks `catMatch = !category || (meta.category || []).includes(category)`
+- Clicking "fashion" in the filter pills narrows the **source list view** to only fashion-tagged sources (without disabling any sources for search — that's the separate fashion preset button)
+
+---
+
+### 🔍 Reviewer Audit — Source-Adder Batch 2 (March 22)
+**Audited by:** Reviewer agent
+
+#### Verified Correct
+- `imageUrlTemplate` bug fix confirmed in code at `fetchIIIFCollection` lines 6430–6431, 6442–6443. Fix condition `config.imageUrlTemplate && rawImg && !imgUrl.startsWith('http')` is correct and handles DigitalCommonwealth's `commonwealth:...` ID strings properly.
+- `digital_commonwealth` active in manifest, `_totalSources: 14` correct, API chain works: `extraParams: per_page=20` → `resultsPath: data` → `imageField: attributes.exemplary_image_ssi` → `imageUrlTemplate` constructs IIIF URL.
+- `claude-sonnet-4-6` confirmed at all 3 call sites (lines 8478, 8504, 9532). No action needed.
+- Active manifest source count = **7** (cudl, unsplash, david_rumsey, smb, nat, westfalen, digital_commonwealth). Inactive = 7.
+- Fashion Tier 1 investigation logged with correct findings — 5 institutions have no accessible public JSON APIs.
+
+#### Issues Found
+1. **`digital_commonwealth.json` missing from `/sources/`** — Source was added directly into `sources.manifest.json` without creating an individual file in `/sources/`. Same structural gap as the 3 museum_digital sources in batch 1. Contributor model is broken: `/sources/README.md` says "one file per source." Fix: create `insposearch/sources/digital_commonwealth.json`.
+
+2. **`museum_digital_westfalen` health-tracker risk** — Documented in batch 1: `landscape` and `flower` queries return HTTP 404 (not empty array). `fetchIIIFCollection` treats 404 as an error and returns `[]`. `recordSourceResult` then logs a miss. After 3 consecutive all-miss queries in a session, `isSourceHealthy` returns `false` and the source is silently disabled (sessionStorage; resets on reload). Low risk for common queries like `portrait`, but fragile for keyword-heavy searches.
+
+3. **`museum_digital_westfalen` `imageBaseUrl` unverified** — Manifest uses `https://westfalen.museum-digital.de/` while `museum_digital_nat` uses `https://smb.museum-digital.de/` (because nat images are hosted on the smb subdomain). Westfalen's own domain may differ — needs a live API response check to confirm relative image paths resolve correctly.
+
+4. **DigitalCommonwealth `per_page` is hardcoded** — `extraParams: "per_page=20"` is baked into the manifest entry. The generic `fetchIIIFCollection` also appends `&limit=${limit}` (the slider value), but DC ignores `limit` and obeys `per_page`. Result: the user's image count slider has no effect on DC — always returns exactly 20 items. Not a breakage but a UX gap.
 
 ---
 
@@ -162,14 +229,14 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 
 **Phase 2 — Progress:**
 
-#### Manifest Active Sources (post batch 2)
+#### Manifest Active Sources (7 total — reviewer-confirmed)
 - `cudl` — active ✅
 - `unsplash` — active ✅ (key required)
 - `david_rumsey` — active ✅
 - `museum_digital_smb` — active ✅ (batch 1)
 - `museum_digital_nat` — active ✅ (batch 1)
-- `museum_digital_westfalen` — active ✅ (batch 1)
-- `digital_commonwealth` — active ✅ NEW (batch 2)
+- `museum_digital_westfalen` — active ✅ (batch 1) ⚠️ 404-on-empty risk; imageBaseUrl domain unverified
+- `digital_commonwealth` — active ✅ (batch 2) ⚠️ per_page hardcoded at 20; JSON file missing from /sources/
 
 #### Still Inactive (needs investigation)
 - **`heidelberg`** — All tested paths return 404; correct API path not found
@@ -180,6 +247,8 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 - **`bsb`** — Newly marked inactive; `api.digitale-sammlungen.de/search/v1/json` returns 404
 
 #### Phase 2 Remaining Work
+- **`digital_commonwealth.json`** — Create individual source file in `insposearch/sources/` (reviewer finding, batch 2 audit)
+- **westfalen imageBaseUrl** — Verify `westfalen.museum-digital.de` is the correct host for image paths (reviewer finding)
 - **Fashion Tier 1 "already in app" tags** — Add `"fashion"` to `category` array for: `palais_galliera` (parismusees), `galleria_costume` (joconde), `nordic_fashion` (nordic), `va_fashion` (va)
 - **Fashion Tier 1 new institutions** — No public JSON APIs found; MoMu/KCI/FIT/Bath/MAD require browser-level JS API tracing or institution outreach
 - **2.2 More IIIF sources** — Stanford, BnF/Gallica IIIF, NGA IIIF, LC IIIF not yet in manifest
