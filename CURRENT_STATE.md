@@ -38,7 +38,14 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 
 ## Pending Work
 
-_(None currently planned)_
+**Phase 2 — Still Pending:**
+- **2.2 More IIIF sources** — Stanford, Harvard IIIF, BnF/Gallica IIIF, NGA IIIF, LC IIIF not yet in manifest
+- **2.3 Aggregator sub-collections** — Europeana sub-collections not surfaced; DPLA hubs need a key first
+- **2.4 Specialized DBs** — Fashion, Film, Architecture, Vintage DBs not yet in manifest
+- **heidelberg** — Needs correct API path (tried `/api/v1/items` and `/api/v1/search`, both 404)
+- **kb_nl** — Needs correct image/collections endpoint (not the Linked Data API)
+- **botanicus** — Domain unreachable; consider replacing with BHL illustrations API
+- **DPLA sources** — Waiting on user to add DPLA key to localStorage (`inspo_dpla_key`)
 
 ---
 
@@ -57,6 +64,10 @@ Two workspace-level agents now available:
 
 ## Next Steps (for future sessions)
 
-- Clarify the 3 open policy questions, update agent if needed
-- Consider companion agent: source-auditor (read-only research before edits)
-- Consider source-manifest instruction file for semantic auto-loading in source directory
+1. **Research heidelberg correct API** — try `/api/v1/collections`, `/search`, or Solr endpoint
+2. **Research kb_nl correct API** — try KB collections portal or memory-of-the-netherlands API
+3. **Replace botanicus** with working BHL illustrations endpoint, or investigate if domain is temporarily down
+4. **Add DPLA key** to localStorage to unlock `dpla_nypl` and `dpla_digital_commonwealth`
+5. **Add more IIIF institutions** to manifest — Stanford, Harvard, NGA, BnF using `iiif_search` adapter
+6. **Phase 4 kickoff** — push to GitHub public repo, polish `CONTRIBUTING.md`, add GitHub Actions manifest validator
+7. Clarify the 3 open policy questions for Source Integrator agent
