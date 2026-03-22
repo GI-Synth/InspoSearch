@@ -8,11 +8,18 @@ Free forever. No accounts. No signups. No paywalls.
 
 ---
 
+![InspoSearch screenshot — dark grid of research images from world museums and archives](docs/screenshot.png)
+*screenshot coming soon — open `insposearch/index.html` and search for anything*
+
+---
+
 ## What it is
 
-InspoSearch aggregates 80+ cultural heritage databases into a single, fast, beautiful grid. Search once — get results from the Met, the V&A, NASA, iNaturalist, the Library of Congress, Gallica, and dozens more, all at once.
+InspoSearch is not an image search engine. It is a multi-source visual research engine — a creative thinking tool that aggregates the open cultural web and makes it explorable, connectable, and inspiring.
 
-It is not an image search engine. It's a creative thinking tool. The sources are chosen for depth and diversity, not traffic. You will find things here you would never find on Google Images.
+Search once and get results from the Met, the V&A, NASA, iNaturalist, the Library of Congress, Gallica, museum-digital, DigitalCommonwealth, and 80+ more — all at once, in a single dark grid. The sources are chosen for depth and diversity, not traffic. You will find things here you would never find on Google Images.
+
+The magic works without AI. AI amplifies it when you want to go deeper.
 
 ## How to use it
 
