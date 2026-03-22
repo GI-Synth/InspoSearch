@@ -6398,11 +6398,15 @@
         if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
         const data = await res.json();
 
-        // Walk resultsPath (dot-notation) to get items array
+        // Walk resultsPath (dot-notation) to get items array.
+        // Use '$' as resultsPath to indicate the root response is already the array.
         let items = data;
-        for (const key of (config.resultsPath || 'resources').split('.')) {
-          items = items?.[key];
-          if (!items) break;
+        const rp = config.resultsPath;
+        if (rp !== '$') {
+          for (const key of (rp || 'resources').split('.')) {
+            items = items?.[key];
+            if (!items) break;
+          }
         }
         if (!Array.isArray(items)) return [];
 
@@ -6415,8 +6419,14 @@
         return items
           .filter(item => getField(item, config.imageField || 'thumbnail'))
           .map((item, i) => {
-            const imgUrl = getField(item, config.imageField || 'thumbnail') || '';
-            const thumbUrl = getField(item, config.thumbField || config.imageField || 'thumbnail') || imgUrl;
+            const rawImg = getField(item, config.imageField || 'thumbnail') || '';
+            const imgUrl = (config.imageBaseUrl && rawImg && !rawImg.startsWith('http'))
+              ? config.imageBaseUrl + rawImg
+              : rawImg;
+            const rawThumb = getField(item, config.thumbField || config.imageField || 'thumbnail') || rawImg;
+            const thumbUrl = (config.imageBaseUrl && rawThumb && !rawThumb.startsWith('http'))
+              ? config.imageBaseUrl + rawThumb
+              : rawThumb || imgUrl;
             return {
               id:          `${config.id}_${i}_${String(getField(item, '@id') || i).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
               url:         String(imgUrl),

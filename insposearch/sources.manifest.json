@@ -2,7 +2,7 @@
   "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
   "_version": "2.0.0",
   "_generated": "2026-03-22",
-  "_totalSources": 5,
+  "_totalSources": 8,
 
   "sources": [
 
@@ -22,7 +22,8 @@
       "thumbField": "thumbnail",
       "titleField": "name",
       "imageCount": 400000,
-      "active": true,
+      "active": false,
+      "_endpointStatus": "404 — /api/v1/search/ endpoint removed; Bodleian migrated to IIIF collection browsing only (no keyword search JSON API as of 2025)",
       "tags": ["manuscripts", "maps", "oxford", "medieval"]
     },
 
@@ -41,7 +42,8 @@
       "imageField": "thumbnail_url",
       "titleField": "title",
       "imageCount": 1000000,
-      "active": true,
+      "active": false,
+      "_endpointStatus": "404 — api.digitale-sammlungen.de/search/v1/json endpoint returns 404; BSB search API endpoint has changed as of 2025",
       "tags": ["manuscripts", "maps", "bavaria", "incunabula"]
     },
 
@@ -194,6 +196,69 @@
       "imageCount": 150000,
       "active": true,
       "tags": ["maps", "cartography", "historical", "geography"]
+    },
+
+    {
+      "id": "museum_digital_smb",
+      "name": "SMB Berlin (museum-digital)",
+      "description": "Staatliche Museen zu Berlin — Gemäldegalerie, Kunstgewerbemuseum, and 20+ collections via museum-digital",
+      "domain": "smb.museum-digital.de",
+      "category": ["art", "archives", "decorative arts"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://smb.museum-digital.de/json/objects",
+      "adapter": "simple_rest",
+      "queryParam": "s",
+      "resultsPath": "$",
+      "imageField": "image",
+      "imageBaseUrl": "https://smb.museum-digital.de/",
+      "titleField": "objekt_name",
+      "descField": "institution_name",
+      "imageCount": 200000,
+      "active": true,
+      "tags": ["berlin", "museums", "paintings", "decorative arts", "sculptures"]
+    },
+
+    {
+      "id": "museum_digital_nat",
+      "name": "museum-digital Deutschland",
+      "description": "National aggregator of German museums — 100k+ objects from hundreds of institutions",
+      "domain": "nat.museum-digital.de",
+      "category": ["art", "archives", "natural history"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://nat.museum-digital.de/json/objects",
+      "adapter": "simple_rest",
+      "queryParam": "s",
+      "resultsPath": "$",
+      "imageField": "image",
+      "imageBaseUrl": "https://smb.museum-digital.de/",
+      "titleField": "objekt_name",
+      "descField": "institution_name",
+      "imageCount": 500000,
+      "active": true,
+      "tags": ["germany", "museums", "paintings", "natural history", "ethnography"]
+    },
+
+    {
+      "id": "museum_digital_westfalen",
+      "name": "museum-digital Westfalen",
+      "description": "Westphalian museums via museum-digital — regional German cultural heritage",
+      "domain": "westfalen.museum-digital.de",
+      "category": ["art", "archives", "local history"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://westfalen.museum-digital.de/json/objects",
+      "adapter": "simple_rest",
+      "queryParam": "s",
+      "resultsPath": "$",
+      "imageField": "image",
+      "imageBaseUrl": "https://westfalen.museum-digital.de/",
+      "titleField": "objekt_name",
+      "descField": "institution_name",
+      "imageCount": 50000,
+      "active": true,
+      "tags": ["westphalia", "germany", "regional", "craft", "local history"]
     }
 
   ],
