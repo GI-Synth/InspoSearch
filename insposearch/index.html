@@ -6477,10 +6477,19 @@
     async function fetchIIIFCollection(config, keyword, limit, signal) {
       try {
         const qp = config.queryParam || 'q';
-        // Support {limit} in extraParams so sources using non-standard limit param names
-        // (e.g. per_page=20 → per_page={limit}) reflect the user's slider value.
-        const extra = config.extraParams ? `&${config.extraParams.replace('{limit}', String(limit))}` : '';
-        const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}${extra}`;
+        // Support non-standard paging params from manifest extraParams.
+        // If per_page exists, force it to the slider value and do not append &limit.
+        let extraParams = config.extraParams || '';
+        const hasPerPage = /(^|&)per_page=/.test(extraParams);
+        if (hasPerPage) {
+          extraParams = extraParams.replace(/(^|&)per_page=[^&]*/g, `$1per_page=${String(limit)}`);
+        }
+        if (extraParams.includes('{limit}')) {
+          extraParams = extraParams.replace(/\{limit\}/g, String(limit));
+        }
+        const extra = extraParams ? `&${extraParams}` : '';
+        const limitParam = hasPerPage ? '' : `&limit=${limit}`;
+        const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}${limitParam}${extra}`;
         const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
         const data = await res.json();
