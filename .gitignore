@@ -1,11 +1,13 @@
-# All markdown files stay local — only root README.md goes to GitHub
+# All markdown files stay local — except README and CONTRIBUTING
 *.md
 !/README.md
+!/CONTRIBUTING.md
 
-# Test scripts
-*.ps1
-*.js
-test_*.json
+# Internal / planning
+scripts/
+package.json
+package-lock.json
+.github/
 
 # OS files
 .DS_Store
