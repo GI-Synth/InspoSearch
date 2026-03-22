@@ -2,7 +2,7 @@
   "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
   "_version": "2.0.0",
   "_generated": "2026-03-22",
-  "_totalSources": 4,
+  "_totalSources": 5,
 
   "sources": [
 
@@ -101,6 +101,7 @@
       "titleField": "label",
       "imageCount": 150000,
       "active": false,
+      "_endpointStatus": "404 — correct API path not verified; needs investigation before activation",
       "tags": ["manuscripts", "illuminated", "germany", "university"]
     },
 
@@ -120,6 +121,7 @@
       "titleField": "prefLabel",
       "imageCount": 500000,
       "active": false,
+      "_endpointStatus": "404 — data.bibliotheken.nl is Linked Data, not image search; needs correct KB collections API",
       "tags": ["dutch", "netherlands", "historical", "newspapers"]
     },
 
@@ -135,6 +137,7 @@
       "dplaProvider": "New York Public Library",
       "imageCount": 900000,
       "active": false,
+      "_note": "Requires a free DPLA API key — get one at dp.la/info/developers/codex. Set inspo_dpla_key in localStorage to activate.",
       "tags": ["new york", "photos", "maps", "posters", "ephemera"]
     },
 
@@ -150,6 +153,7 @@
       "dplaProvider": "Digital Commonwealth",
       "imageCount": 400000,
       "active": false,
+      "_note": "Requires a free DPLA API key — get one at dp.la/info/developers/codex. Set inspo_dpla_key in localStorage to activate.",
       "tags": ["massachusetts", "boston", "historical", "new england"]
     },
 
@@ -166,6 +170,7 @@
       "queryParam": "q",
       "imageCount": 500000,
       "active": false,
+      "_endpointStatus": "domain unreachable — botanicus.org connection refused; consider BHL API as fallback",
       "tags": ["botanical", "plants", "illustrations", "missouri", "natural history"]
     },
 
@@ -177,11 +182,17 @@
       "category": ["maps"],
       "region": "global",
       "keyRequired": false,
-      "endpoint": "https://luna.davidrumsey.com/service/ajax/search",
+      "endpoint": "https://www.davidrumsey.com/luna/servlet/as/search",
       "adapter": "iiif_search",
       "queryParam": "q",
+      "extraParams": "lc=RUMSEY~8~1&output=json",
+      "resultsPath": "results",
+      "imageField": "urlSize2",
+      "thumbField": "urlSize1",
+      "titleField": "displayName",
+      "sourceUrlField": "relayButtonUrl",
       "imageCount": 150000,
-      "active": false,
+      "active": true,
       "tags": ["maps", "cartography", "historical", "geography"]
     }
 

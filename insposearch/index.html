@@ -6392,7 +6392,8 @@
     async function fetchIIIFCollection(config, keyword, limit, signal) {
       try {
         const qp = config.queryParam || 'q';
-        const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}`;
+        const extra = config.extraParams ? `&${config.extraParams}` : '';
+        const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}${extra}`;
         const res = await fetch(url, { signal });
         if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
         const data = await res.json();
@@ -8445,7 +8446,7 @@
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 600, messages: [{ role: 'user', content }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, messages: [{ role: 'user', content }] }),
       });
       if (!res.ok) throw new Error('Claude ' + res.status);
       const data = await res.json();
@@ -8471,7 +8472,7 @@
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 600, system: systemPrompt, messages }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, system: systemPrompt, messages }),
       });
       if (!res.ok) throw new Error('Claude ' + res.status);
       const data = await res.json();
@@ -9499,7 +9500,7 @@
       {
         id:        'claude',
         name:      'Claude (Anthropic)',
-        desc:      'claude-opus-4-5 vision · bring your own key',
+        desc:      'claude-sonnet-4-6 vision · bring your own key',
         imageCount: 0,
         alwaysOn:  false,
         stateKey:  'claudeKey',
