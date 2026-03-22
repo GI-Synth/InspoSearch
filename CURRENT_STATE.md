@@ -1,8 +1,36 @@
 # Current State — InspoSearch
 
-**Last Updated:** 2026 (source-adder batch 1)
+**Last Updated:** March 22, 2026 (builder: imageUrlTemplate + manifest fixes)
 
 ## Completed Work
+### ✅ Builder Session — imageUrlTemplate Adapter, Manifest Count Fix, Source JSON Files (March 22)
+
+#### Step 1 — `imageUrlTemplate` added to `fetchIIIFCollection`
+**File:** `insposearch/index.html`
+
+New fallback path in the `.map()` inside `fetchIIIFCollection`:
+- After extracting `rawImg` via `imageField`, if `imgUrl` is empty AND `config.imageUrlTemplate` is set, the adapter constructs the URL by calling `config.imageUrlTemplate.replace('{id}', idVal)` where `idVal` is `getField(item, config.imageField)`.
+- `imageBaseUrl` is applied to the template result too if the output is a relative path.
+- Logic order: verbatim → baseUrl (on verbatim) → template (fallback) → baseUrl (on template result).
+- Unlocks sources whose API returns an object ID in the image field that needs URL construction (e.g. DigitalCommonwealth, Wikimedia file prefix patterns).
+
+#### Step 2 — Claude model (already claude-sonnet-4-6 from prior session)
+- All 3 references confirmed at lines 8459, 8485, 9513 — no change needed.
+
+#### Step 3 — `_totalSources` fixed
+**File:** `insposearch/sources.manifest.json`
+- `_totalSources: 8` → `_totalSources: 13` (13 total entries in manifest; 6 active, 7 inactive)
+
+#### Step 4 — Individual source JSON files created
+**New files:**
+- `insposearch/sources/museum_digital_smb.json` — SMB Berlin (200k objects, active)
+- `insposearch/sources/museum_digital_nat.json` — museum-digital Deutschland (500k objects, active)
+- `insposearch/sources/museum_digital_westfalen.json` — museum-digital Westfalen (50k objects, active)
+
+These files match the entries already in `sources.manifest.json` exactly. They exist for contributor reference — the manifest is still the authoritative runtime source.
+
+---
+
 ### ✅ Source-Adder Batch 1 — Adapter Enhancement + 3 New Sources
 **Files changed:** `insposearch/index.html`, `insposearch/sources.manifest.json`
 

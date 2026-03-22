@@ -6420,9 +6420,21 @@
           .filter(item => getField(item, config.imageField || 'thumbnail'))
           .map((item, i) => {
             const rawImg = getField(item, config.imageField || 'thumbnail') || '';
-            const imgUrl = (config.imageBaseUrl && rawImg && !rawImg.startsWith('http'))
+            // 1. imageBaseUrl: prefix relative verbatim paths
+            let imgUrl = (config.imageBaseUrl && rawImg && !rawImg.startsWith('http'))
               ? config.imageBaseUrl + rawImg
               : rawImg;
+            // 2. imageUrlTemplate: construct URL from field value used as ID (fallback if verbatim empty)
+            if (!imgUrl && config.imageUrlTemplate && config.imageField) {
+              const idVal = getField(item, config.imageField);
+              if (idVal) {
+                imgUrl = config.imageUrlTemplate.replace('{id}', idVal);
+                // Apply imageBaseUrl to template result too, if relative
+                if (config.imageBaseUrl && imgUrl && !imgUrl.startsWith('http')) {
+                  imgUrl = config.imageBaseUrl + imgUrl;
+                }
+              }
+            }
             const rawThumb = getField(item, config.thumbField || config.imageField || 'thumbnail') || rawImg;
             const thumbUrl = (config.imageBaseUrl && rawThumb && !rawThumb.startsWith('http'))
               ? config.imageBaseUrl + rawThumb

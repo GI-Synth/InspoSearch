@@ -1,0 +1,20 @@
+{
+  "id": "museum_digital_westfalen",
+  "name": "museum-digital Westfalen",
+  "description": "Westphalian museums via museum-digital — regional German cultural heritage",
+  "domain": "westfalen.museum-digital.de",
+  "category": ["art", "archives", "local history"],
+  "region": "europe",
+  "keyRequired": false,
+  "endpoint": "https://westfalen.museum-digital.de/json/objects",
+  "adapter": "simple_rest",
+  "queryParam": "s",
+  "resultsPath": "$",
+  "imageField": "image",
+  "imageBaseUrl": "https://westfalen.museum-digital.de/",
+  "titleField": "objekt_name",
+  "descField": "institution_name",
+  "imageCount": 50000,
+  "active": true,
+  "tags": ["westphalia", "germany", "regional", "craft", "local history"]
+}
