@@ -1,0 +1,23 @@
+{
+  "id": "unsplash",
+  "name": "Unsplash",
+  "description": "5M+ high-resolution photos, CC0-style license, free key from unsplash.com/developers",
+  "domain": "unsplash.com",
+  "category": ["photos"],
+  "region": "global",
+  "keyRequired": true,
+  "keyLabel": "Access Key",
+  "getKeyUrl": "https://unsplash.com/developers",
+  "endpoint": "https://api.unsplash.com/search/photos",
+  "adapter": "unsplash",
+  "queryParam": "query",
+  "resultsPath": "results",
+  "imageField": "urls.regular",
+  "thumbField": "urls.small",
+  "titleField": "description",
+  "sourceUrlField": "links.html",
+  "imageCount": 5000000,
+  "corsMode": "direct",
+  "active": true,
+  "tags": ["photography", "contemporary", "cc0", "stock"]
+}
