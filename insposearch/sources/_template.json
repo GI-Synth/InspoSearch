@@ -1,0 +1,23 @@
+{
+  "id": "YOUR-SOURCE-ID",
+  "name": "Source Display Name",
+  "description": "Short description — what's special about this source",
+  "domain": "example.org",
+  "category": ["museums"],
+  "region": "europe",
+  "keyRequired": false,
+  "keyLabel": null,
+  "getKeyUrl": null,
+  "endpoint": "https://api.example.org/search",
+  "adapter": "simple_rest",
+  "queryParam": "q",
+  "resultsPath": "results",
+  "imageField": "thumbnail",
+  "thumbField": "thumbnail",
+  "titleField": "title",
+  "sourceUrlField": "url",
+  "imageCount": 100000,
+  "corsMode": "direct",
+  "active": false,
+  "tags": []
+}

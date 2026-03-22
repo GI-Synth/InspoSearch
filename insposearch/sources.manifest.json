@@ -1,0 +1,191 @@
+{
+  "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
+  "_version": "2.0.0",
+  "_generated": "2026-03-22",
+  "_totalSources": 4,
+
+  "sources": [
+
+    {
+      "id": "bodleian",
+      "name": "Bodleian Libraries",
+      "description": "Oxford University digital collections — manuscripts, maps, rare books",
+      "domain": "digital.bodleian.ox.ac.uk",
+      "category": ["archives", "art", "maps", "historical"],
+      "region": "uk",
+      "keyRequired": false,
+      "endpoint": "https://digital.bodleian.ox.ac.uk/api/v1/search/",
+      "adapter": "bodleian",
+      "queryParam": "q",
+      "resultsPath": "objects",
+      "imageField": "thumbnail",
+      "thumbField": "thumbnail",
+      "titleField": "name",
+      "imageCount": 400000,
+      "active": true,
+      "tags": ["manuscripts", "maps", "oxford", "medieval"]
+    },
+
+    {
+      "id": "bsb",
+      "name": "BSB Munich",
+      "description": "Bayerische Staatsbibliothek — 15M+ pages, maps, illuminated manuscripts",
+      "domain": "digitale-sammlungen.de",
+      "category": ["archives", "maps", "historical"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://api.digitale-sammlungen.de/search/v1/json",
+      "adapter": "bsb",
+      "queryParam": "q",
+      "resultsPath": "hits.items",
+      "imageField": "thumbnail_url",
+      "titleField": "title",
+      "imageCount": 1000000,
+      "active": true,
+      "tags": ["manuscripts", "maps", "bavaria", "incunabula"]
+    },
+
+    {
+      "id": "cudl",
+      "name": "Cambridge Digital Library",
+      "description": "Cambridge University — Newton papers, Darwin notebooks, medieval manuscripts",
+      "domain": "cudl.lib.cam.ac.uk",
+      "category": ["archives", "historical", "science"],
+      "region": "uk",
+      "keyRequired": false,
+      "endpoint": "https://services.cudl.lib.cam.ac.uk/v1/search",
+      "adapter": "cudl",
+      "queryParam": "query",
+      "resultsPath": "results.items",
+      "imageField": "thumbnailUrl",
+      "titleField": "title",
+      "imageCount": 200000,
+      "active": true,
+      "tags": ["newton", "darwin", "cambridge", "science", "manuscripts"]
+    },
+
+    {
+      "id": "unsplash",
+      "name": "Unsplash",
+      "description": "5M+ high-res contemporary photos — free key from unsplash.com/developers",
+      "domain": "unsplash.com",
+      "category": ["photos"],
+      "region": "global",
+      "keyRequired": true,
+      "keyLabel": "Access Key",
+      "getKeyUrl": "https://unsplash.com/developers",
+      "endpoint": "https://api.unsplash.com/search/photos",
+      "adapter": "unsplash",
+      "queryParam": "query",
+      "resultsPath": "results",
+      "imageField": "urls.regular",
+      "titleField": "description",
+      "imageCount": 5000000,
+      "active": true,
+      "tags": ["photography", "contemporary", "cc0"]
+    },
+
+    {
+      "id": "heidelberg",
+      "name": "Heidelberg University",
+      "description": "UB Heidelberg — illuminated manuscripts, incunabula, historical photographs",
+      "domain": "digi.ub.uni-heidelberg.de",
+      "category": ["archives", "historical", "art"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://digi.ub.uni-heidelberg.de/api/v1/items",
+      "adapter": "iiif_search",
+      "queryParam": "q",
+      "resultsPath": "items",
+      "imageField": "thumbnail",
+      "titleField": "label",
+      "imageCount": 150000,
+      "active": false,
+      "tags": ["manuscripts", "illuminated", "germany", "university"]
+    },
+
+    {
+      "id": "kb_nl",
+      "name": "KB Netherlands",
+      "description": "Koninklijke Bibliotheek — Dutch national library, 70M+ pages digitized",
+      "domain": "www.kb.nl",
+      "category": ["archives", "historical"],
+      "region": "europe",
+      "keyRequired": false,
+      "endpoint": "https://data.bibliotheken.nl/api/v1/search",
+      "adapter": "iiif_search",
+      "queryParam": "query",
+      "resultsPath": "result.items",
+      "imageField": "image",
+      "titleField": "prefLabel",
+      "imageCount": 500000,
+      "active": false,
+      "tags": ["dutch", "netherlands", "historical", "newspapers"]
+    },
+
+    {
+      "id": "dpla_nypl",
+      "name": "DPLA / NYPL Hub",
+      "description": "New York Public Library digital collections via DPLA — photos, maps, posters",
+      "domain": "dp.la",
+      "category": ["archives", "photos", "maps"],
+      "region": "americas",
+      "keyRequired": true,
+      "adapter": "dpla_provider",
+      "dplaProvider": "New York Public Library",
+      "imageCount": 900000,
+      "active": false,
+      "tags": ["new york", "photos", "maps", "posters", "ephemera"]
+    },
+
+    {
+      "id": "dpla_digital_commonwealth",
+      "name": "Digital Commonwealth (DPLA)",
+      "description": "Massachusetts cultural institutions via DPLA hub",
+      "domain": "dp.la",
+      "category": ["archives", "historical", "photos"],
+      "region": "americas",
+      "keyRequired": true,
+      "adapter": "dpla_provider",
+      "dplaProvider": "Digital Commonwealth",
+      "imageCount": 400000,
+      "active": false,
+      "tags": ["massachusetts", "boston", "historical", "new england"]
+    },
+
+    {
+      "id": "botanicus",
+      "name": "Botanicus (MBG)",
+      "description": "Missouri Botanical Garden — historic botanical literature with illustrations",
+      "domain": "www.botanicus.org",
+      "category": ["botanical", "archives"],
+      "region": "americas",
+      "keyRequired": false,
+      "endpoint": "https://www.botanicus.org/search",
+      "adapter": "iiif_search",
+      "queryParam": "q",
+      "imageCount": 500000,
+      "active": false,
+      "tags": ["botanical", "plants", "illustrations", "missouri", "natural history"]
+    },
+
+    {
+      "id": "david_rumsey",
+      "name": "David Rumsey Maps",
+      "description": "150k+ historical maps — 16th century to present, free for research",
+      "domain": "www.davidrumsey.com",
+      "category": ["maps"],
+      "region": "global",
+      "keyRequired": false,
+      "endpoint": "https://luna.davidrumsey.com/service/ajax/search",
+      "adapter": "iiif_search",
+      "queryParam": "q",
+      "imageCount": 150000,
+      "active": false,
+      "tags": ["maps", "cartography", "historical", "geography"]
+    }
+
+  ],
+
+  "_contributing": "To add a source: copy sources/_template.json, fill fields, submit a PR. See sources/README.md."
+}

@@ -1,0 +1,23 @@
+{
+  "id": "bsb",
+  "name": "BSB Munich",
+  "description": "Bayerische Staatsbibliothek — 15M+ digitized pages, maps, illuminated manuscripts, incunabula",
+  "domain": "digitale-sammlungen.de",
+  "category": ["archives", "maps", "historical", "art"],
+  "region": "europe",
+  "keyRequired": false,
+  "keyLabel": null,
+  "getKeyUrl": null,
+  "endpoint": "https://api.digitale-sammlungen.de/search/v1/json",
+  "adapter": "bsb",
+  "queryParam": "q",
+  "resultsPath": "hits.items",
+  "imageField": "thumbnail_url",
+  "thumbField": "thumbnail_url",
+  "titleField": "title",
+  "sourceUrlField": "link",
+  "imageCount": 1000000,
+  "corsMode": "direct",
+  "active": true,
+  "tags": ["manuscripts", "maps", "bavaria", "incunabula", "illuminated"]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "cudl",
+  "name": "Cambridge Digital Library",
+  "description": "Cambridge University — Newton's papers, Darwin's notebooks, medieval manuscripts",
+  "domain": "cudl.lib.cam.ac.uk",
+  "category": ["archives", "historical", "maps", "science"],
+  "region": "uk",
+  "keyRequired": false,
+  "keyLabel": null,
+  "getKeyUrl": null,
+  "endpoint": "https://services.cudl.lib.cam.ac.uk/v1/search",
+  "adapter": "cudl",
+  "queryParam": "query",
+  "resultsPath": "results.items",
+  "imageField": "thumbnailUrl",
+  "thumbField": "thumbnailUrl",
+  "titleField": "title",
+  "sourceUrlField": null,
+  "imageCount": 200000,
+  "corsMode": "direct",
+  "active": true,
+  "tags": ["newton", "darwin", "cambridge", "medieval", "manuscripts", "science"]
+}

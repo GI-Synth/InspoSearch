@@ -1,0 +1,23 @@
+{
+  "id": "bodleian",
+  "name": "Bodleian Libraries",
+  "description": "Oxford University digital collections — manuscripts, maps, music, rare books — 400k+ items",
+  "domain": "digital.bodleian.ox.ac.uk",
+  "category": ["archives", "art", "maps", "historical"],
+  "region": "uk",
+  "keyRequired": false,
+  "keyLabel": null,
+  "getKeyUrl": null,
+  "endpoint": "https://digital.bodleian.ox.ac.uk/api/v1/search/",
+  "adapter": "bodleian",
+  "queryParam": "q",
+  "resultsPath": "objects",
+  "imageField": "thumbnail",
+  "thumbField": "thumbnail",
+  "titleField": "name",
+  "sourceUrlField": "links.self",
+  "imageCount": 400000,
+  "corsMode": "direct",
+  "active": true,
+  "tags": ["manuscripts", "maps", "oxford", "medieval", "rare books"]
+}
