@@ -1,0 +1,20 @@
+{
+  "id": "museum_digital_nat",
+  "name": "museum-digital Deutschland",
+  "description": "National aggregator of German museums — 100k+ objects from hundreds of institutions",
+  "domain": "nat.museum-digital.de",
+  "category": ["art", "archives", "natural history"],
+  "region": "europe",
+  "keyRequired": false,
+  "endpoint": "https://nat.museum-digital.de/json/objects",
+  "adapter": "simple_rest",
+  "queryParam": "s",
+  "resultsPath": "$",
+  "imageField": "image",
+  "imageBaseUrl": "https://smb.museum-digital.de/",
+  "titleField": "objekt_name",
+  "descField": "institution_name",
+  "imageCount": 500000,
+  "active": true,
+  "tags": ["germany", "museums", "paintings", "natural history", "ethnography"]
+}
