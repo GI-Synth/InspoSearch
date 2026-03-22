@@ -59,6 +59,8 @@ The CI will validate your JSON automatically. If it fails, the error message wil
 
 ## Schema reference
 
+### Empty template
+
 ```json
 {
   "id": "unique-lowercase-id",
@@ -84,6 +86,41 @@ The CI will validate your JSON automatically. If it fails, the error message wil
   "tags": ["keyword1", "keyword2"]
 }
 ```
+
+### Filled example — DigitalCommonwealth
+
+```json
+{
+  "id": "digital_commonwealth",
+  "name": "DigitalCommonwealth",
+  "description": "1.5M digitized items from Massachusetts cultural institutions",
+  "domain": "digitalcommonwealth.org",
+  "category": ["archives", "photos", "historical"],
+  "region": "americas",
+  "keyRequired": false,
+  "keyLabel": null,
+  "getKeyUrl": null,
+  "endpoint": "https://www.digitalcommonwealth.org/search.json",
+  "adapter": "simple_rest",
+  "queryParam": "q",
+  "extraParams": "per_page={limit}",
+  "resultsPath": "data",
+  "imageField": "attributes.exemplary_image_ssi",
+  "imageUrlTemplate": "https://iiif.digitalcommonwealth.org/iiif/2/{id}/full/400,/0/default.jpg",
+  "titleField": "attributes.title_info_primary_tsi",
+  "descField": "attributes.institution_name_ssi",
+  "imageCount": 1500000,
+  "corsMode": "direct",
+  "active": true,
+  "tags": ["boston", "new england", "libraries", "photographs", "maps"]
+}
+```
+
+**Notes on this example:**
+- `adapter: "simple_rest"` — standard JSON REST API, no IIIF search protocol
+- `resultsPath: "data"` — results are under the `data` key in the response
+- `imageField` returns an ID string like `"commonwealth:1v53kk76g"`, not a URL → `imageUrlTemplate` constructs the full URL by replacing `{id}`
+- `extraParams: "per_page={limit}"` — `{limit}` is substituted with the user's image count slider value at runtime
 
 ### Valid categories
 

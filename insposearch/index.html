@@ -1736,6 +1736,80 @@
     }
 
     /* ============================================================
+       MOBILE LAYOUT (≤ 480px)
+       At 375px the fixed-width sidebar (240px) + panel (280px)
+       overflow the viewport and crush #canvas to 0. Fix: sidebar
+       becomes a fixed overlay; canvas takes full width.
+    ============================================================ */
+    #mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 110;
+      background: var(--bg-panel);
+      border: 1px solid var(--line-strong);
+      color: var(--ink-2);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      line-height: 1;
+      padding: 6px 9px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #mobile-menu-btn:hover { opacity: 0.6; }
+
+    #sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 99;
+    }
+    #sidebar-backdrop.visible { display: block; }
+
+    @media (max-width: 480px) {
+      #mobile-menu-btn { display: block; }
+
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      #sidebar.mobile-open { transform: translateX(0); }
+
+      /* Panel becomes full-width when open */
+      #panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100vw;
+        max-width: 100vw;
+        z-index: 90;
+      }
+
+      /* Image grid works at small widths */
+      #image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      /* Floating bar fits on narrow screens */
+      #floating-bar {
+        max-width: calc(100vw - 24px);
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      /* AI chat panel full-width */
+      #ai-chat-panel {
+        width: 100vw;
+      }
+    }
+
+    /* ============================================================
        AI CHAT PANEL
     ============================================================ */
     #ai-chat-panel {
@@ -1891,6 +1965,11 @@
 
 <body>
   <div id="app">
+
+    <!-- Mobile hamburger — only visible on ≤480px viewports -->
+    <button id="mobile-menu-btn" aria-label="open sidebar">&#9776;</button>
+    <!-- Backdrop — closes sidebar on tap outside -->
+    <div id="sidebar-backdrop"></div>
 
     <!-- ======================================================
          SIDEBAR
@@ -11314,6 +11393,31 @@
     loadSourceManifest();
 
     console.log('[insposearch] Phase 10 — Settings Module ready.');
+
+    // ── Mobile sidebar toggle ──────────────────────────────────
+    (function () {
+      const mobileBtn = document.getElementById('mobile-menu-btn');
+      const backdrop  = document.getElementById('sidebar-backdrop');
+      const sidebar   = document.getElementById('sidebar');
+      if (!mobileBtn || !backdrop || !sidebar) return;
+
+      function openSidebar() {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('visible');
+      }
+      function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('visible');
+      }
+
+      mobileBtn.addEventListener('click', openSidebar);
+      backdrop.addEventListener('click', closeSidebar);
+
+      // Close sidebar when user triggers a search (taps search result area)
+      document.getElementById('search-input')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') closeSidebar();
+      });
+    })();
   </script>
 
 </body>
