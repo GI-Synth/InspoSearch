@@ -272,7 +272,7 @@
       "endpoint": "https://www.digitalcommonwealth.org/search.json",
       "adapter": "simple_rest",
       "queryParam": "q",
-      "extraParams": "per_page=20",
+      "extraParams": "per_page={limit}",
       "resultsPath": "data",
       "imageField": "attributes.exemplary_image_ssi",
       "imageUrlTemplate": "https://iiif.digitalcommonwealth.org/iiif/2/{id}/full/400,/0/default.jpg",
