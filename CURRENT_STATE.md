@@ -1,8 +1,40 @@
 # Current State — InspoSearch
 
-**Last Updated:** March 22, 2026 (builder: dc source file, westfalen fix, fashion tags + filter pill)
+**Last Updated:** March 22, 2026 (builder: README, CONTRIBUTING, mobile fixes)
 
 ## Completed Work
+
+---
+
+### ✅ Builder Session — README, CONTRIBUTING, Mobile Fixes (March 22)
+
+#### Step 1 — GitHub remote (manual step required — see bottom of this file)
+No `gh` CLI installed; repo must be created manually at github.com. Steps provided below.
+
+#### Step 2 — README.md updated
+- Added screenshot placeholder (`docs/screenshot.png`) with italicized caption
+- Replaced opening description with V2 long-form "multi-source visual research engine" copy (from InspoSearch-Expansion-V2.md)
+- All other sections unchanged: 3-step usage, features, AI features, contributing, project structure, license
+
+#### Step 3 — CONTRIBUTING.md: filled example added
+Added a new **"Filled example — DigitalCommonwealth"** JSON block under the existing empty template in the Schema Reference section. Annotated with 4 notes explaining `adapter`, `resultsPath`, `imageUrlTemplate`, and `{limit}` substitution. The empty template block was retitled "Empty template" for clarity.
+
+#### Step 4 — Mobile layout pass (375px)
+**File:** `insposearch/index.html`
+
+**Problem:** At 375px, `#sidebar` (240px, `flex-shrink: 0`) + `#panel` (280px, `flex-shrink: 0`) = 520px > 375px. canvas was crushed to 0px width.
+
+**Fixes added:**
+- New `#mobile-menu-btn` CSS — hidden by default (`display: none`), positioned fixed top-left, shows at ≤480px
+- New `#sidebar-backdrop` CSS — full-screen click-to-close overlay
+- `@media (max-width: 480px)` block:
+  - `#sidebar` → `position: fixed`, slides in from left via `transform: translateX(-100%)` → `.mobile-open` class
+  - `#panel` → `position: fixed; width: 100vw` when open (slides in from right as before)
+  - `#image-grid` → `minmax(150px, 1fr)` (was 200px minimum — broken at narrow widths)
+  - `#floating-bar` → `max-width: calc(100vw - 24px); flex-wrap: wrap` to prevent overflow
+  - `#ai-chat-panel` → `width: 100vw`
+- HTML: added `<button id="mobile-menu-btn">` and `<div id="sidebar-backdrop">` as first children of `#app`
+- JS: `mobile-menu-btn` click → `sidebar.classList.add('mobile-open')` + backdrop visible; backdrop click → close; Enter in search input → auto-close sidebar
 
 ---
 
@@ -226,6 +258,17 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 ---
 
 ## Pending Work
+
+**GitHub remote — ACTION REQUIRED (manual step):**
+1. Go to [github.com/new](https://github.com/new)
+2. Create a public repo named `insposearch` (no README, no .gitignore — repo should be empty)
+3. Then run in this project folder:
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/insposearch.git
+git branch -M main
+git push -u origin main
+```
+All 6 commits (b6a233b → 660abe3) will push in one shot.
 
 **Phase 2 — Progress:**
 
