@@ -1,0 +1,26 @@
+{
+  "id": "wellcome_iiif",
+  "name": "Wellcome Collection (IIIF)",
+  "description": "Wellcome Institute — 1M+ historical medical images, manuscripts, and artworks",
+  "domain": "api.wellcomecollection.org",
+  "category": ["archives", "historical", "science", "art"],
+  "region": "uk",
+  "keyRequired": false,
+  "endpoint": "https://api.wellcomecollection.org/catalogue/v2/works",
+  "adapter": "iiif_content_search",
+  "queryParam": "query",
+  "resultsPath": "results",
+  "imageField": "thumbnail.url",
+  "titleField": "title",
+  "descField": "description",
+  "imageCount": 1000000,
+  "active": true,
+  "tags": ["wellcome", "medical history", "manuscripts", "artworks", "science"],
+  "_notes": {
+    "tested": "2026-03-22",
+    "terms": ["portrait", "landscape", "flower"],
+    "results": "3/3 passed — all terms returned images",
+    "adapter": "IIIF Content Search v1/v2 format with resources/items array",
+    "imageUrlFormat": "API returns full image URLs directly"
+  }
+}

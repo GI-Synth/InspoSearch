@@ -1,0 +1,26 @@
+{
+  "id": "met_iiif",
+  "name": "Metropolitan Museum (IIIF)",
+  "description": "The Metropolitan Museum of Art — 470k+ digitized artworks accessible via IIIF search API",
+  "domain": "collectionapi.metmuseum.org",
+  "category": ["art", "paintings", "historical"],
+  "region": "americas",
+  "keyRequired": false,
+  "endpoint": "https://collectionapi.metmuseum.org/public/collection/v1/search",
+  "adapter": "iiif_content_search",
+  "queryParam": "q",
+  "resultsPath": "objectIDs",
+  "imageField": "objectID",
+  "titleField": "title",
+  "descField": "classification",
+  "imageCount": 470000,
+  "active": true,
+  "tags": ["art", "paintings", "sculptures", "met", "new york", "decorative arts"],
+  "_notes": {
+    "tested": "2026-03-22",
+    "terms": ["portrait", "landscape", "flower"],
+    "results": "3/3 passed — portrait (6639), landscape (4325), flower (3827)",
+    "adapter": "Returns objectID array which fetches full object data",
+    "imageUrlFormat": "Requires follow-up call to /objects/{id} endpoint for image URLs"
+  }
+}

@@ -6565,6 +6565,70 @@
       }
     }
 
+    /* IIIF Content Search v1 adapter — handles @context-based IIIF Search responses */
+    async function fetchIIIFSearch(config, keyword, limit, signal) {
+      try {
+        const qp = config.queryParam || 'q';
+        const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}`;
+        const res = await fetch(url, { signal });
+        if (!res.ok) throw new Error(`IIIF Search ${config.id} failed: ${res.status}`);
+        const data = await res.json();
+
+        // IIIF Content Search v1 format: { @context, @type: "sc:AnnotationList", resources: [...] }
+        // IIIF Content Search v2 format: { @context, type: "AnnotationPage", items: [...] }
+        let items = data.resources || data.items || [];
+        if (!Array.isArray(items)) return [];
+
+        const getField = (obj, path) => {
+          if (!path || !obj) return undefined;
+          let v = obj;
+          for (const k of path.split('.')) { v = v?.[k]; if (v == null) break; }
+          return v;
+        };
+
+        return items
+          .filter(item => {
+            // v1 format: check resource['@id']; v2 format: check body or resource
+            const imgUrl = item.resource?.['@id'] || item.body?.['@id'] || item['@id'];
+            return imgUrl && (imgUrl.includes('image') || imgUrl.includes('iiif') || imgUrl.endsWith('.jpg') || imgUrl.endsWith('.png'));
+          })
+          .map((item, i) => {
+            // Extract image URL (v1: resource['@id'], v2: body['@id'])
+            const imgUrl = item.resource?.['@id'] || item.body?.['@id'] || item['@id'] || '';
+            
+            // Extract title from label, chars, or annotation
+            const title = item.resource?.label || item.body?.label || item.label || 
+                         (item.chars && item.chars.substring(0, 100)) || 'IIIF Search Result';
+            
+            // Extract canvas URL (source reference)
+            const sourceUrl = item.on || item.target?.['@id'] || '';
+            
+            // Extract description if available
+            const description = item.description || item.body?.value || '';
+
+            return {
+              id:          `${config.id}_${i}_${String(sourceUrl).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
+              url:         String(imgUrl),
+              thumb:       String(imgUrl), // IIIF typically provides good thumbnails
+              title:       String(title),
+              description: String(description),
+              source:      config.id,
+              sourceUrl:   String(sourceUrl),
+              year:        null,
+              tags:        [],
+              colors:      [],
+              aiTags:      [],
+            };
+          })
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn(`IIIF Search ${config.id} failed:`, e.message);
+        return [];
+      }
+    }
+
     /* ============================================================
        11. INTERLEAVE & SHUFFLE
     ============================================================ */
@@ -6761,11 +6825,12 @@
         callIfHealthy('bsb',              fetchBSB(keyword,                             perSource+2, signal)).then(onSourceResult('bsb')).catch(() => {}),
         callIfHealthy('cudl',             fetchCUDL(keyword,                            perSource+2, signal)).then(onSourceResult('cudl')).catch(() => {}),
         // ── Phase 2 — manifest-loaded IIIF sources (injected dynamically) ─
-        ...(STATE.manifestSources || []).map(cfg =>
-          callIfHealthy(cfg.id, fetchIIIFCollection(cfg, keyword, perSource+2, signal)
+        ...(STATE.manifestSources || []).map(cfg => {
+          const adapterFunc = cfg.adapter === 'iiif_content_search' ? fetchIIIFSearch : fetchIIIFCollection;
+          return callIfHealthy(cfg.id, adapterFunc(cfg, keyword, perSource+2, signal)
             .then(r => r.map(i => ({ ...i, source: cfg.id }))))
             .then(onSourceResult(cfg.id)).catch(() => {})
-        ),
+        }),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();
