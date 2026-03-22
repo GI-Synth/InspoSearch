@@ -2,7 +2,7 @@
   "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
   "_version": "2.0.0",
   "_generated": "2026-03-22",
-  "_totalSources": 13,
+  "_totalSources": 14,
 
   "sources": [
 
@@ -259,6 +259,29 @@
       "imageCount": 50000,
       "active": true,
       "tags": ["westphalia", "germany", "regional", "craft", "local history"]
+    },
+
+    {
+      "id": "digital_commonwealth",
+      "name": "Digital Commonwealth",
+      "description": "Massachusetts cultural heritage — Boston Public Library, Harvard, state libraries — 1.5M+ digitized items including photos, maps, manuscripts",
+      "domain": "www.digitalcommonwealth.org",
+      "category": ["archives", "historical", "photos", "maps"],
+      "region": "americas",
+      "keyRequired": false,
+      "endpoint": "https://www.digitalcommonwealth.org/search.json",
+      "adapter": "simple_rest",
+      "queryParam": "q",
+      "extraParams": "per_page=20",
+      "resultsPath": "data",
+      "imageField": "attributes.exemplary_image_ssi",
+      "imageUrlTemplate": "https://iiif.digitalcommonwealth.org/iiif/2/{id}/full/400,/0/default.jpg",
+      "titleField": "attributes.title_info_primary_tsi",
+      "descField": "attributes.institution_name_ssi",
+      "imageCount": 1500000,
+      "active": true,
+      "_testNote": "API confirmed working in prior session; imageUrlTemplate adapter bug fixed this session — images were always available, URL construction was the blocker",
+      "tags": ["boston", "massachusetts", "photos", "maps", "historical", "archives"]
     }
 
   ],

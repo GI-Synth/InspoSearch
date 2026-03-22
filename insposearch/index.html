@@ -6424,21 +6424,28 @@
             let imgUrl = (config.imageBaseUrl && rawImg && !rawImg.startsWith('http'))
               ? config.imageBaseUrl + rawImg
               : rawImg;
-            // 2. imageUrlTemplate: construct URL from field value used as ID (fallback if verbatim empty)
-            if (!imgUrl && config.imageUrlTemplate && config.imageField) {
-              const idVal = getField(item, config.imageField);
-              if (idVal) {
-                imgUrl = config.imageUrlTemplate.replace('{id}', idVal);
-                // Apply imageBaseUrl to template result too, if relative
-                if (config.imageBaseUrl && imgUrl && !imgUrl.startsWith('http')) {
-                  imgUrl = config.imageBaseUrl + imgUrl;
-                }
+            // 2. imageUrlTemplate: construct URL from a non-URL ID field value.
+            //    Fires when template is configured AND the value is non-empty but not yet an absolute URL.
+            //    This handles sources like DigitalCommonwealth where imageField returns an ID, not a URL.
+            if (config.imageUrlTemplate && rawImg && !imgUrl.startsWith('http')) {
+              imgUrl = config.imageUrlTemplate.replace('{id}', rawImg);
+              // Apply imageBaseUrl to template result too, if still relative
+              if (config.imageBaseUrl && imgUrl && !imgUrl.startsWith('http')) {
+                imgUrl = config.imageBaseUrl + imgUrl;
               }
             }
             const rawThumb = getField(item, config.thumbField || config.imageField || 'thumbnail') || rawImg;
-            const thumbUrl = (config.imageBaseUrl && rawThumb && !rawThumb.startsWith('http'))
+            let thumbUrl = (config.imageBaseUrl && rawThumb && !rawThumb.startsWith('http'))
               ? config.imageBaseUrl + rawThumb
-              : rawThumb || imgUrl;
+              : rawThumb;
+            // Apply template to thumb too if not yet a URL
+            if (config.imageUrlTemplate && rawThumb && !thumbUrl.startsWith('http')) {
+              thumbUrl = config.imageUrlTemplate.replace('{id}', rawThumb);
+              if (config.imageBaseUrl && thumbUrl && !thumbUrl.startsWith('http')) {
+                thumbUrl = config.imageBaseUrl + thumbUrl;
+              }
+            }
+            thumbUrl = thumbUrl || imgUrl;
             return {
               id:          `${config.id}_${i}_${String(getField(item, '@id') || i).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
               url:         String(imgUrl),
