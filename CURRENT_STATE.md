@@ -1,8 +1,57 @@
 # Current State — InspoSearch
 
-**Last Updated:** March 22, 2026 (builder: imageUrlTemplate + manifest fixes)
+**Last Updated:** March 23, 2026 (source-adder: imageUrlTemplate bug fix + DigitalCommonwealth)
 
 ## Completed Work
+
+---
+
+### ✅ Source-Adder Batch 2 — imageUrlTemplate Bug Fix + DigitalCommonwealth (March 23)
+**Files changed:** `insposearch/index.html`, `insposearch/sources.manifest.json`
+
+#### imageUrlTemplate Adapter Bug Fix (`index.html`)
+The `imageUrlTemplate` feature added in the builder session had a silent bug: the condition was
+`if (!imgUrl && config.imageUrlTemplate...)` — it only fired when `rawImg` was **null/empty**.
+For DigitalCommonwealth (and any source where `imageField` returns an inventory ID, not a URL), `rawImg` is
+a non-empty string like `"commonwealth:1v53kk76g"` — so the template never fired.
+
+**Fix:** Condition changed to `if (config.imageUrlTemplate && rawImg && !imgUrl.startsWith('http'))`.
+Fires whenever the image field returns a non-empty value that isn't already an absolute URL.
+Also applied the same fix to the `thumbUrl` path to keep thumb/main consistent.
+
+Backward compatibility confirmed: sources using `imageBaseUrl` (SMB, nat, westfalen) are unaffected —
+their `imgUrl` becomes absolute after the base-URL step, so `!imgUrl.startsWith('http')` is false.
+
+#### DigitalCommonwealth Added (`sources.manifest.json`)
+- **API verified via Node.js** (PS 5.1 can't reach site; Node.js TLS 1.3 works):
+  - `portrait` → 107,940 results ✅ &nbsp; `landscape` → 9,633 ✅ &nbsp; `flower` → 14,014 ✅
+  - IIIF image HEAD: `Status 200, image/jpeg` ✅
+- `_totalSources: 13 → 14`; active count: 6 → **7**
+- Key manifest fields:
+  - `endpoint`: `https://www.digitalcommonwealth.org/search.json`
+  - `queryParam`: `q`, `extraParams`: `per_page=20` (site uses `per_page`, not `limit`)
+  - `resultsPath`: `data`
+  - `imageField`: `attributes.exemplary_image_ssi` (returns IDs like `"commonwealth:1v53kk76g"`)
+  - `imageUrlTemplate`: `https://iiif.digitalcommonwealth.org/iiif/2/{id}/full/400,/0/default.jpg`
+  - `titleField`: `attributes.title_info_primary_tsi`, `descField`: `attributes.institution_name_ssi`
+
+#### Fashion Tier 1 — All New Institutions Investigated, No Accessible APIs Found
+Tested all 5 new Tier 1 fashion institutions from V2 Phase 2B:
+
+| Institution | Finding |
+|---|---|
+| **KCI Japan** (`kci.or.jp`) | No IIIF endpoint, no REST API, no WP-JSON — static HTML site |
+| **Museum at FIT NY** (`fashionmuseum.fitnyc.edu`) | No eMuseum API exposed; search redirects to HTML |
+| **Bath Fashion Museum** (`fashionmuseum.co.uk`) | 403/404 on all JSON/API paths; Drupal site, no JSON:API |
+| **MoMu Antwerp** (`momu.be`) | Craft CMS GraphQL at `/api/` — but only 1 collection piece in CMS; full collection unexposed |
+| **MAD Paris** (`madparis.fr`) | No JSON API; `collections.madparis.fr` is HTML-only |
+| **Kunstmuseum Den Haag** (`kunstmuseum.nl`) | SPARQL/Linked Data API (wiki at `api.kunstmuseum.nl`) — not REST-compatible |
+
+Note: The 4 "already in app" Tier 1 sources (`palais_galliera → parismusees`, `galleria_costume → joconde`,
+`nordic_fashion → nordic`, `va_fashion → va`) just need a `"fashion"` category tag added — tracked in next steps.
+
+---
+
 ### ✅ Builder Session — imageUrlTemplate Adapter, Manifest Count Fix, Source JSON Files (March 22)
 
 #### Step 1 — `imageUrlTemplate` added to `fetchIIIFCollection`
@@ -113,13 +162,14 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 
 **Phase 2 — Progress:**
 
-#### Manifest Active Sources (post batch 1)
+#### Manifest Active Sources (post batch 2)
 - `cudl` — active ✅
 - `unsplash` — active ✅ (key required)
 - `david_rumsey` — active ✅
-- `museum_digital_smb` — active ✅ NEW
-- `museum_digital_nat` — active ✅ NEW
-- `museum_digital_westfalen` — active ✅ NEW
+- `museum_digital_smb` — active ✅ (batch 1)
+- `museum_digital_nat` — active ✅ (batch 1)
+- `museum_digital_westfalen` — active ✅ (batch 1)
+- `digital_commonwealth` — active ✅ NEW (batch 2)
 
 #### Still Inactive (needs investigation)
 - **`heidelberg`** — All tested paths return 404; correct API path not found
@@ -130,7 +180,8 @@ A new workspace-level custom agent for narrowly focused source-manifest integrat
 - **`bsb`** — Newly marked inactive; `api.digitale-sammlungen.de/search/v1/json` returns 404
 
 #### Phase 2 Remaining Work
-- **DigitalCommonwealth** — API works, images need URL construction from `exemplary_image_ssi` ID → needs custom adapter or `imageUrlTemplate` schema field
+- **Fashion Tier 1 "already in app" tags** — Add `"fashion"` to `category` array for: `palais_galliera` (parismusees), `galleria_costume` (joconde), `nordic_fashion` (nordic), `va_fashion` (va)
+- **Fashion Tier 1 new institutions** — No public JSON APIs found; MoMu/KCI/FIT/Bath/MAD require browser-level JS API tracing or institution outreach
 - **2.2 More IIIF sources** — Stanford, BnF/Gallica IIIF, NGA IIIF, LC IIIF not yet in manifest
 - **2.3 Aggregator sub-collections** — Europeana sub-collections not surfaced; DPLA hubs need DPLA key
 - **2.4 Specialized DBs** — Fashion, Film, Architecture DBs not yet in manifest
@@ -153,12 +204,13 @@ Two workspace-level agents now available:
 
 ## Next Steps (for future sessions)
 
-1. **DigitalCommonwealth** — Add `imageUrlTemplate` field to manifest schema + adapter support; confirmed API works, image URL pattern is `https://iiif.digitalcommonwealth.org/iiif/2/{exemplary_image_ssi}/full/400,/0/default.jpg`
-2. **NHM London** — Re-test from browser; `data.nhm.ac.uk/api/3/action/datastore_search?resource_id=e4e0a710-2400-4e5f-a569-87dbab23d1d2` may have usable image URLs
-3. **Research heidelberg correct API** — try `/api/v1/collections`, `/search`, or Solr endpoint
-4. **Research kb_nl correct API** — try KB collections portal or memory-of-the-netherlands API
-5. **Replace botanicus** with working BHL illustrations endpoint, or test if domain is back
-6. **Add DPLA key** to localStorage to unlock `dpla_nypl` and `dpla_digital_commonwealth`
-7. **Add more IIIF institutions** — Stanford, BnF, NGA using `iiif_search` adapter; verify CORS headers
-8. **Phase 4 kickoff** — push to GitHub public repo, polish `CONTRIBUTING.md`, add GitHub Actions manifest validator
-9. **Policy clarification** — Can agent modify adapter code? (Answered yes in this session — `imageBaseUrl` and `$` resultsPath were added). Next: `imageUrlTemplate` for ID-based URL construction.
+1. **Fashion category tags** — Add `"fashion"` to `category` array for existing in-app sources: `david_rumsey` (already has fashion content), `parismusees` (palais_galliera), joconde (galleria_costume), nordic, va
+2. **Fashion Tier 1 new institutions** — Need browser-level API tracing (DevTools Network tab) for KCI Japan, FIT NY, Bath, MoMu, MAD Paris — none had accessible Node.js-reachable JSON APIs
+3. **NHM London** — Re-test from browser; `data.nhm.ac.uk/api/3/action/datastore_search?resource_id=e4e0a710-2400-4e5f-a569-87dbab23d1d2` may have usable image URLs
+4. **Research heidelberg correct API** — try `/api/v1/collections`, `/search`, or Solr endpoint
+5. **Research kb_nl correct API** — try KB collections portal or memory-of-the-netherlands API
+6. **Replace botanicus** with working BHL illustrations endpoint, or test if domain is back
+7. **Add DPLA key** to localStorage to unlock `dpla_nypl` and `dpla_digital_commonwealth`
+8. **Add more IIIF institutions** — Stanford, BnF, NGA using `iiif_search` adapter; verify CORS headers
+9. **Phase 4 kickoff** — push to GitHub public repo, polish `CONTRIBUTING.md`, add GitHub Actions manifest validator
+10. **Phase 2B fashion UI** — Add fashion category filter pill to source filter row (V2 Phase 2B implementation note)
