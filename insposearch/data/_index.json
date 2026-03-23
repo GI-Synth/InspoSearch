@@ -1,64 +1,64 @@
 {
-  "lastUpdated": "2026-03-23T07:40:45.361Z",
+  "lastUpdated": "2026-03-23T09:43:33.739Z",
   "sources": [
     {
       "id": "prado",
       "name": "Museo del Prado",
-      "status": "failed",
-      "lastFetched": null
+      "status": "ok",
+      "lastFetched": "2026-03-23T09:43:33.740Z"
     },
     {
       "id": "parismusees",
-      "name": "Paris Musees",
-      "status": "failed",
-      "lastFetched": null
+      "name": "Paris Musées",
+      "status": "ok",
+      "lastFetched": "2026-03-23T09:43:33.740Z"
     },
     {
       "id": "soch",
       "name": "Swedish Open Cultural Heritage",
       "status": "ok",
-      "lastFetched": "2026-03-23T07:34:34.263Z"
+      "lastFetched": "2026-03-23T09:43:33.740Z"
     },
     {
       "id": "thyssen",
       "name": "Museo Thyssen-Bornemisza",
-      "status": "failed",
-      "lastFetched": null
+      "status": "ok",
+      "lastFetched": "2026-03-23T09:43:33.740Z"
     },
     {
       "id": "cudl",
       "name": "Cambridge Digital Library",
-      "status": "failed",
-      "lastFetched": null
+      "status": "ok",
+      "lastFetched": "2026-03-23T09:43:33.740Z"
     },
     {
       "id": "nhm_london",
       "name": "Natural History Museum London",
-      "status": "pending",
+      "status": "failed",
       "lastFetched": null
     },
     {
       "id": "wallace_collection",
       "name": "The Wallace Collection",
-      "status": "pending",
+      "status": "failed",
       "lastFetched": null
     },
     {
       "id": "fitzwilliam",
       "name": "Fitzwilliam Museum",
-      "status": "pending",
+      "status": "failed",
       "lastFetched": null
     },
     {
       "id": "national_gallery_london",
       "name": "National Gallery London",
-      "status": "pending",
+      "status": "failed",
       "lastFetched": null
     },
     {
       "id": "scottish_national",
       "name": "Scottish National Gallery",
-      "status": "pending",
+      "status": "failed",
       "lastFetched": null
     }
   ]
