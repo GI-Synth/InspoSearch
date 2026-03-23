@@ -7202,10 +7202,9 @@
       const alt2       = keywords[2] || altKeyword;
 
       // all slots always run — key-gated sources return [] when no key set
-      // UPDATE THIS NUMBER when adding new sources to fetchAll
-      // Current count: ~140 parallel calls
-      const activeCallCount = 140;
-      const perSource  = Math.ceil(totalCount / 140);
+      // Scale per-source budget dynamically as source registry grows.
+      const activeCallCount = Math.max(ALL_SOURCES.length + (STATE.manifestSources || []).length, 1);
+      const perSource  = Math.max(1, Math.ceil(totalCount / activeCallCount));
       const fetchBatch = perSource + 4;
 
       const seenIds = new Set();
@@ -10648,7 +10647,12 @@
     }
 
     function getSourceStats() {
-      const db = KEY_SOURCES.filter(s => s.id !== 'gemini');
+      // Dedupe by source id so counts reflect real source inventory.
+      const deduped = new Map();
+      KEY_SOURCES
+        .filter(s => !s.aiProvider)
+        .forEach(s => deduped.set(s.id, s));
+      const db = Array.from(deduped.values());
       const noKey = db.filter(s => s.alwaysOn);
       const withKey = db.filter(s => !s.alwaysOn);
       return {
@@ -12037,8 +12041,8 @@
             };
           }
 
-          // Queue for generic IIIF adapter in fetchAll
-          if (['iiif_search', 'simple_rest'].includes(cfg.adapter) && cfg.endpoint) {
+          // Queue for generic adapter in fetchAll
+          if (['iiif_search', 'simple_rest', 'iiif_content_search'].includes(cfg.adapter) && cfg.endpoint) {
             STATE.manifestSources.push(cfg);
           }
 
