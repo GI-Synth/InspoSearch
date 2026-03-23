@@ -2807,6 +2807,26 @@
       'ago','pem','npg','louvread',
       // Phase 2
       'unsplash','bodleian','bsb','cudl',
+      // Phase A — Aggregator Sub-Collections (60)
+      // A1: Europeana sub-collections (20)
+      'euro_rijksmuseum','euro_fashion','euro_ddb','euro_bnf','euro_bne',
+      'euro_kb','euro_bn_pl','euro_nkr','euro_photography','euro_sounds',
+      'euro_newspapers','euro_kulturpool','euro_hispana','euro_nuk',
+      'euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian',
+      'euro_romanian','euro_bulgarian',
+      // A2: DPLA hub sub-collections (15)
+      'dpla_california','dpla_commonwealth','dpla_empire','dpla_mountain_west',
+      'dpla_minnesota','dpla_michigan','dpla_illinois','dpla_kentucky',
+      'dpla_south_carolina','dpla_georgia','dpla_texas','dpla_pacific_nw',
+      'dpla_ohio','dpla_pennsylvania','dpla_new_england',
+      // A3: Smithsonian sub-museums (15)
+      'si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp',
+      'si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2',
+      'si_npm','si_acm','si_renwick',
+      // A4: Wikimedia category filters (10)
+      'wmc_fashion','wmc_architecture','wmc_paintings','wmc_sculptures',
+      'wmc_maps','wmc_natural_history','wmc_portraits','wmc_botanical',
+      'wmc_scientific','wmc_street',
     ];
 
     const SOURCE_GROUPS = {
@@ -2931,7 +2951,159 @@
       bodleian:         { category: ['archives','art','maps'],          region: 'uk',       access: 'no_key' },
       bsb:              { category: ['archives','maps','historical'],   region: 'europe',   access: 'no_key' },
       cudl:             { category: ['archives','historical','maps'],   region: 'uk',       access: 'no_key' },
+      // Phase A — Europeana sub-collections (20)
+      euro_rijksmuseum:  { category: ['museums','art'],               region: 'europe',   access: 'free_key' },
+      euro_fashion:      { category: ['museums','art','fashion'],     region: 'europe',   access: 'free_key' },
+      euro_ddb:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_bnf:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_bne:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_kb:           { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_bn_pl:        { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_nkr:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_photography:  { category: ['photos','archives'],           region: 'europe',   access: 'free_key' },
+      euro_sounds:       { category: ['archives'],                    region: 'europe',   access: 'free_key' },
+      euro_newspapers:   { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_kulturpool:   { category: ['museums','archives'],          region: 'europe',   access: 'free_key' },
+      euro_hispana:      { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_nuk:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_estonian:     { category: ['museums','historical'],        region: 'europe',   access: 'free_key' },
+      euro_lithuanian:   { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_latvian:      { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_hungarian:    { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_romanian:     { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      euro_bulgarian:    { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+      // Phase A — DPLA hub sub-collections (15)
+      dpla_california:     { category: ['archives','photos','historical'], region: 'americas', access: 'free_key' },
+      dpla_commonwealth:   { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_empire:         { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_mountain_west:  { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_minnesota:      { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_michigan:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_illinois:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_kentucky:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_south_carolina: { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_georgia:        { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_texas:          { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_pacific_nw:     { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_ohio:           { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_pennsylvania:   { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      dpla_new_england:    { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+      // Phase A — Smithsonian sub-museums (15)
+      si_nmah:    { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+      si_nmnh:    { category: ['museums','science','nature'],       region: 'americas', access: 'no_key' },
+      si_npg_dc:  { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+      si_saam:    { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+      si_hmsg:    { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+      si_nzp:     { category: ['nature','science'],                 region: 'americas', access: 'no_key' },
+      si_chndm:   { category: ['museums','design','art','fashion'], region: 'americas', access: 'no_key' },
+      si_fsg:     { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+      si_nmafa:   { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+      si_nmai:    { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+      si_nmaahc2: { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+      si_nasm2:   { category: ['museums','science'],                region: 'americas', access: 'no_key' },
+      si_npm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+      si_acm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+      si_renwick: { category: ['museums','art','design'],           region: 'americas', access: 'no_key' },
+      // Phase A — Wikimedia category filters (10)
+      wmc_fashion:         { category: ['art','fashion'],      region: 'global',   access: 'no_key' },
+      wmc_architecture:    { category: ['art'],                region: 'global',   access: 'no_key' },
+      wmc_paintings:       { category: ['art','museums'],      region: 'global',   access: 'no_key' },
+      wmc_sculptures:      { category: ['art','museums'],      region: 'global',   access: 'no_key' },
+      wmc_maps:            { category: ['maps','historical'],  region: 'global',   access: 'no_key' },
+      wmc_natural_history: { category: ['nature','science'],   region: 'global',   access: 'no_key' },
+      wmc_portraits:       { category: ['art','photos'],       region: 'global',   access: 'no_key' },
+      wmc_botanical:       { category: ['botanical','nature'], region: 'global',   access: 'no_key' },
+      wmc_scientific:      { category: ['science'],            region: 'global',   access: 'no_key' },
+      wmc_street:          { category: ['photos'],             region: 'global',   access: 'no_key' },
     };
+
+    /* ============================================================
+       PHASE A — SUB-COLLECTION LOOKUP TABLES
+    ============================================================ */
+    const EUROPEANA_PROVIDERS = {
+      euro_rijksmuseum:  { filterParam: 'DATA_PROVIDER', filterValue: 'Rijksmuseum',                                         name: 'Rijksmuseum (Europeana)' },
+      euro_fashion:      { filterParam: 'PROVIDER',      filterValue: 'Europeana Fashion',                                   name: 'Europeana Fashion' },
+      euro_ddb:          { filterParam: 'DATA_PROVIDER', filterValue: 'Deutsche Digitale Bibliothek',                        name: 'Deutsche Digitale Bibliothek' },
+      euro_bnf:          { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioth\u00e8que nationale de France',               name: 'BnF via Europeana' },
+      euro_bne:          { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioteca Nacional de Espa\u00f1a',                  name: 'National Library of Spain' },
+      euro_kb:           { filterParam: 'DATA_PROVIDER', filterValue: 'Koninklijke Bibliotheek',                             name: 'National Library of Netherlands' },
+      euro_bn_pl:        { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioteka Narodowa',                                 name: 'National Library of Poland' },
+      euro_nkr:          { filterParam: 'DATA_PROVIDER', filterValue: 'N\u00e1rodn\u00ed knihovna \u010cR',               name: 'National Library of Czech Republic' },
+      euro_photography:  { filterParam: 'PROVIDER',      filterValue: 'Europeana Photography',                              name: 'Europeana Photography' },
+      euro_sounds:       { filterParam: 'PROVIDER',      filterValue: 'Europeana Sounds',        extra: 'TYPE:IMAGE',       name: 'Europeana Sounds (Images)' },
+      euro_newspapers:   { filterParam: 'PROVIDER',      filterValue: 'Europeana Newspapers',                               name: 'Europeana Newspapers' },
+      euro_kulturpool:   { filterParam: 'DATA_PROVIDER', filterValue: 'Kulturpool',                                         name: 'Kulturpool Austria' },
+      euro_hispana:      { filterParam: 'DATA_PROVIDER', filterValue: 'Hispana',                                            name: 'Hispana Spain' },
+      euro_nuk:          { filterParam: 'DATA_PROVIDER', filterValue: 'Digital Library of Slovenia',                        name: 'Digital Library of Slovenia' },
+      euro_estonian:     { filterParam: 'DATA_PROVIDER', filterValue: 'Estonian National Museum',                           name: 'Estonian National Museum' },
+      euro_lithuanian:   { filterParam: 'DATA_PROVIDER', filterValue: 'Lithuanian Central State Archives',                  name: 'Lithuanian Archives' },
+      euro_latvian:      { filterParam: 'DATA_PROVIDER', filterValue: 'National Library of Latvia',                         name: 'Latvian National Library' },
+      euro_hungarian:    { filterParam: 'DATA_PROVIDER', filterValue: 'Orsz\u00e1gos Sz\u00e9ch\u00e9nyi K\u00f6nyvt\u00e1r', name: 'Hungarian National Library' },
+      euro_romanian:     { filterParam: 'DATA_PROVIDER', filterValue: 'Romanian National Library',                          name: 'Romanian National Library' },
+      euro_bulgarian:    { filterParam: 'DATA_PROVIDER', filterValue: 'Bulgarian National Library',                         name: 'Bulgarian National Library' },
+    };
+
+    const DPLA_HUBS = {
+      dpla_california:     { provider: 'California Digital Library',                         name: 'California Digital Library' },
+      dpla_commonwealth:   { provider: 'Digital Commonwealth',                              name: 'Digital Commonwealth (DPLA)' },
+      dpla_empire:         { provider: 'Empire State Digital Network',                      name: 'Empire State Network (NY)' },
+      dpla_mountain_west:  { provider: 'Mountain West Digital Library',                     name: 'Mountain West Digital Library' },
+      dpla_minnesota:      { provider: 'Minnesota Digital Library',                         name: 'Minnesota Digital Library' },
+      dpla_michigan:       { provider: 'Michigan Digital Library',                          name: 'Michigan Digital Library' },
+      dpla_illinois:       { provider: 'Illinois Digital Heritage Hub',                     name: 'Illinois Digital Heritage' },
+      dpla_kentucky:       { provider: 'Kentucky Digital Library',                          name: 'Kentucky Digital Library' },
+      dpla_south_carolina: { provider: 'South Carolina Digital Library',                    name: 'South Carolina Digital Library' },
+      dpla_georgia:        { provider: 'Georgia HomePLACE',                                 name: 'Georgia HomePLACE' },
+      dpla_texas:          { provider: 'Texas Digital Library',                             name: 'Texas Digital Library' },
+      dpla_pacific_nw:     { provider: 'Pacific Northwest Digital Collections',             name: 'Pacific Northwest Collections' },
+      dpla_ohio:           { provider: 'Ohio Network of American History Research Centers', name: 'Ohio Digital Network' },
+      dpla_pennsylvania:   { provider: 'PA Digital',                                        name: 'Pennsylvania Digital Collections' },
+      dpla_new_england:    { provider: 'New England Digital Collections',                   name: 'New England Digital Collections' },
+    };
+
+    const SI_UNITS = {
+      si_nmah:    { code: 'NMAH',   name: 'Nat\u2019l Museum of American History' },
+      si_nmnh:    { code: 'NMNH',   name: 'Nat\u2019l Museum of Natural History' },
+      si_npg_dc:  { code: 'NPG',    name: 'National Portrait Gallery (SI)' },
+      si_saam:    { code: 'SAAM',   name: 'American Art Museum (SI)' },
+      si_hmsg:    { code: 'HMSG',   name: 'Hirshhorn Museum' },
+      si_nzp:     { code: 'NZP',    name: 'Smithsonian National Zoo' },
+      si_chndm:   { code: 'CHNDM',  name: 'Cooper Hewitt Design (SI)' },
+      si_fsg:     { code: 'FSG',    name: 'Freer|Sackler Asian Art' },
+      si_nmafa:   { code: 'NMAFA',  name: 'African Art Museum (SI)' },
+      si_nmai:    { code: 'NMAI',   name: 'American Indian Museum (SI)' },
+      si_nmaahc2: { code: 'NMAAHC',name: 'African American History (SI)' },
+      si_nasm2:   { code: 'NASM',   name: 'Air and Space Museum (SI)' },
+      si_npm:     { code: 'NPM',    name: 'Postal Museum (SI)' },
+      si_acm:     { code: 'ACM',    name: 'Anacostia Community Museum (SI)' },
+      si_renwick: { code: 'SAAM',   name: 'Renwick Gallery (SI)' },
+    };
+
+    const WIKIMEDIA_CATS = {
+      wmc_fashion:         { cat: 'Fashion',                 name: 'Wikimedia Fashion' },
+      wmc_architecture:    { cat: 'Architecture',            name: 'Wikimedia Architecture' },
+      wmc_paintings:       { cat: 'Paintings',               name: 'Wikimedia Paintings' },
+      wmc_sculptures:      { cat: 'Sculptures',              name: 'Wikimedia Sculptures' },
+      wmc_maps:            { cat: 'Historical_maps',         name: 'Wikimedia Historical Maps' },
+      wmc_natural_history: { cat: 'Natural_history',         name: 'Wikimedia Natural History' },
+      wmc_portraits:       { cat: 'Portraits',               name: 'Wikimedia Portraits' },
+      wmc_botanical:       { cat: 'Botanical_illustrations', name: 'Wikimedia Botanical Illustrations' },
+      wmc_scientific:      { cat: 'Scientific_diagrams',     name: 'Wikimedia Scientific Diagrams' },
+      wmc_street:          { cat: 'Street_photography',      name: 'Wikimedia Street Photography' },
+    };
+
+    /* Extend source groups with Phase A sub-collections */
+    (function() {
+      SOURCE_GROUPS.fashion.push('euro_fashion', 'wmc_fashion', 'si_chndm');
+      SOURCE_GROUPS.museums.push('si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp','si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2','si_npm','si_acm','si_renwick','euro_rijksmuseum','euro_kulturpool','euro_estonian');
+      SOURCE_GROUPS.archives.push(...Object.keys(EUROPEANA_PROVIDERS), ...Object.keys(DPLA_HUBS));
+      SOURCE_GROUPS.artdesign.push('euro_rijksmuseum','euro_fashion','wmc_paintings','wmc_sculptures','wmc_portraits','wmc_architecture','wmc_fashion','si_saam','si_hmsg','si_renwick','si_nmafa','si_fsg');
+      SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','wmc_natural_history','wmc_botanical');
+      SOURCE_GROUPS.maps.push('wmc_maps');
+      SOURCE_GROUPS.historical.push(...Object.keys(DPLA_HUBS),'euro_newspapers','euro_ddb','euro_bnf','euro_bne','euro_kb','euro_bn_pl','euro_nkr','euro_kulturpool','euro_hispana','euro_nuk','euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian','euro_romanian','euro_bulgarian','si_nmah','si_npm','si_acm','si_nmai');
+      SOURCE_GROUPS.botanical.push('wmc_botanical');
+      SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific');
+    })();
 
     /* ============================================================
        SOURCE HEALTH TRACKER
@@ -3577,6 +3749,44 @@
       } catch { return []; }
     }
 
+    async function fetchWikimediaCategory(category, keyword, limit, signal) {
+      try {
+        const catPart = `incategory:${category}`;
+        const srsearch = keyword ? `${encodeURIComponent(keyword)}+${catPart}` : catPart;
+        const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${srsearch}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
+        const res = await fetch(searchUrl, { signal });
+        if (res.status === 429) return [];
+        const data = await res.json();
+        const hits = (data.query?.search || []).filter(h => {
+          const t = h.title.toLowerCase();
+          return !t.includes('.svg') && !t.includes('logo') && !t.includes('icon') && !t.includes('chart');
+        });
+        if (!hits.length) return [];
+        const results = [];
+        for (let i = 0; i < hits.length; i += 10) {
+          const batch = hits.slice(i, i + 10);
+          const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
+          try {
+            const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
+            const infoRes = await fetch(infoUrl, { signal });
+            const infoData = await infoRes.json();
+            for (const page of Object.values(infoData.query?.pages || {})) {
+              const item = normalizeWikimedia(page);
+              if (!item) continue;
+              if (!item.url.match(/\.(jpe?g|png)(\?|$)/i)) continue;
+              item.tags = extractTags(item);
+              if (isLikelyReal(item)) results.push(item);
+            }
+          } catch (batchErr) { console.warn('WMC category batch failed:', batchErr.message); }
+        }
+        return results;
+      } catch (err) {
+        if (err.name === 'AbortError') return [];
+        console.warn('Wikimedia category failed:', err.message);
+        return [];
+      }
+    }
+
     async function fetchMet(keyword, limit, signal, offset = 0) {
 
       try {
@@ -3747,6 +3957,38 @@
       }
     }
 
+    async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, limit, signal, extraQf = '') {
+      if (!STATE.europeanaKey) return [];
+      try {
+        let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&qf=${filterParam}:${encodeURIComponent(filterValue)}`;
+        if (extraQf) url += `&qf=${encodeURIComponent(extraQf)}`;
+        const res = await fetch(url, { signal });
+        if (!res.ok) throw new Error('Europeana filtered fetch failed');
+        const data = await res.json();
+        return (data.items || [])
+          .filter(item => item.edmIsShownBy?.[0] || item.edmPreview?.[0])
+          .map(item => ({
+            id:          `eurofilt_${filterParam}_${item.id.replace(/\//g, '_')}`,
+            url:         item.edmIsShownBy?.[0] || item.edmPreview?.[0],
+            thumb:       item.edmPreview?.[0] || item.edmIsShownBy?.[0],
+            title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Untitled'),
+            description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
+            source:      'europeana',
+            sourceUrl:   item.guid || '',
+            year:        (item.year?.[0] || '').toString().slice(0, 4) || null,
+            tags:        (item.dcSubject || []).map(s => s.toLowerCase()),
+            colors: [], aiTags: [],
+          }))
+          .map(item => { item.tags = extractTags(item); return item; })
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('Europeana filtered failed:', e.message);
+        return [];
+      }
+    }
+
     /* ============================================================
        10c. HARVARD / SMITHSONIAN / PEXELS
     ============================================================ */
@@ -3818,6 +4060,42 @@
       } catch (e) {
         if (e.name === 'AbortError') return [];
         console.warn('Smithsonian failed:', e.message);
+        return [];
+      }
+    }
+
+    async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
+      try {
+        const key = STATE.smithsonianKey || 'DEMO_KEY';
+        const res = await fetch(
+          `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=${unitCode}`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('Smithsonian unit fetch failed');
+        const data = await res.json();
+        const rows = data.response?.rows || [];
+        return rows
+          .filter(row => row.indexedStructured?.online_media?.[0])
+          .map(row => {
+            const media = row.indexedStructured.online_media[0];
+            return {
+              id:          `si_${unitCode.toLowerCase()}_${row.id}`,
+              url:         media.thumbnail || media.content,
+              thumb:       media.thumbnail || media.content,
+              title:       row.title || 'Untitled',
+              description: row.content?.indexedStructured?.object_type?.[0] || '',
+              source:      'smithsonian',
+              sourceUrl:   `https://www.si.edu/object/${row.id}`,
+              year:        (row.content?.indexedStructured?.date?.[0] || '').slice(0, 4) || null,
+              tags:        (row.content?.indexedStructured?.topic || []).map(t => t.toLowerCase()),
+              colors: [], aiTags: [],
+            };
+          })
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('Smithsonian unit fetch failed:', e.message);
         return [];
       }
     }
@@ -5079,6 +5357,38 @@
       } catch (e) {
         if (e.name === 'AbortError') return [];
         console.warn('DPLA failed:', e.message);
+        return [];
+      }
+    }
+
+    async function fetchDPLAProvider(provider, keyword, limit, signal) {
+      if (!STATE.dplaKey) return [];
+      try {
+        const res = await fetch(
+          `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource&provider=${encodeURIComponent(provider)}`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('DPLA provider fetch failed');
+        const data = await res.json();
+        return (data.docs || [])
+          .filter(item => item.object)
+          .map(item => ({
+            id:          'dplap_' + item.id,
+            url:         item.object,
+            thumb:       item.object,
+            title:       item.sourceResource?.title?.[0] || 'DPLA Item',
+            description: item.sourceResource?.contributor?.[0] || '',
+            source:      'dpla',
+            sourceUrl:   `https://dp.la/item/${item.id}`,
+            year:        (item.sourceResource?.date?.displayDate || '').slice(0, 4) || null,
+            tags:        (item.sourceResource?.subject || []).map(s => s.name?.toLowerCase()).filter(Boolean),
+            colors: [], aiTags: [],
+          }))
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('DPLA provider fetch failed:', e.message);
         return [];
       }
     }
@@ -6831,6 +7141,30 @@
             .then(r => r.map(i => ({ ...i, source: cfg.id }))))
             .then(onSourceResult(cfg.id)).catch(() => {})
         }),
+        // ── Phase A — Europeana sub-collections (20) ─────────────────────────
+        ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) =>
+          callIfHealthy(id, fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, keyword, Math.max(2, Math.ceil(perSource/3)), signal, cfg.extra || '')
+            .then(r => r.map(i => ({ ...i, source: id }))))
+            .then(onSourceResult(id)).catch(() => {})
+        ),
+        // ── Phase A — DPLA hub sub-collections (15) ─────────────────────────
+        ...Object.entries(DPLA_HUBS).map(([id, cfg]) =>
+          callIfHealthy(id, fetchDPLAProvider(cfg.provider, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+            .then(r => r.map(i => ({ ...i, source: id }))))
+            .then(onSourceResult(id)).catch(() => {})
+        ),
+        // ── Phase A — Smithsonian sub-museums (15) ──────────────────────────
+        ...Object.entries(SI_UNITS).map(([id, cfg]) =>
+          callIfHealthy(id, fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+            .then(r => r.map(i => ({ ...i, source: id }))))
+            .then(onSourceResult(id)).catch(() => {})
+        ),
+        // ── Phase A — Wikimedia category filters (10) ─────────────────────────
+        ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) =>
+          callIfHealthy(id, fetchWikimediaCategory(cfg.cat, keyword, Math.max(2, Math.ceil(perSource/2)), signal)
+            .then(r => r.map(i => ({ ...i, source: id }))))
+            .then(onSourceResult(id)).catch(() => {})
+        ),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();
@@ -7974,6 +8308,13 @@
         maas:         () => fetchMAAS(kw, lim, signal),
         smk:          () => fetchSMK(kw, lim, signal),
         thyssen:      () => fetchThyssen(kw, lim, signal),
+        // Phase A sub-collections
+        ...Object.fromEntries([
+          ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) => [id, () => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, kw, lim, signal, cfg.extra || '')]),
+          ...Object.entries(DPLA_HUBS).map(([id, cfg]) => [id, () => fetchDPLAProvider(cfg.provider, kw, lim, signal)]),
+          ...Object.entries(SI_UNITS).map(([id, cfg]) => [id, () => fetchSmithsonianUnit(cfg.code, kw, lim, signal)]),
+          ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) => [id, () => fetchWikimediaCategory(cfg.cat, kw, lim, signal)]),
+        ]),
       };
       const fetcher = fetchMap[sourceName];
       if (!fetcher) return;
