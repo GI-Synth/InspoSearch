@@ -2836,6 +2836,8 @@
       'idigbio','ala',
       // Phase D — niche & specialized (1)
       'nasa_images',
+      // Phase E — CORS-blocked, cache-first (5)
+      'nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national',
     ];
 
     const SOURCE_GROUPS = {
@@ -3030,6 +3032,12 @@
       // Phase D — niche & specialized
       nasa_images:        { category: ['science','space','photos'],       region: 'global',   access: 'no_key' },
       loc:                { category: ['historical','archives','photos'], region: 'usa',      access: 'no_key' },
+      // Phase E — CORS-blocked, cache-first
+      nhm_london:              { category: ['nature','science'],          region: 'uk',       access: 'no_key', corsBlocked: true },
+      wallace_collection:      { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+      fitzwilliam:             { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+      national_gallery_london: { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+      scottish_national:       { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
     };
 
     /* ============================================================
@@ -3120,6 +3128,10 @@
       SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala','nasa_images');
       SOURCE_GROUPS.historical.push('loc');
       SOURCE_GROUPS.archives.push('loc');
+      // Phase E — CORS-blocked, cache-first
+      SOURCE_GROUPS.museums.push('nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national');
+      SOURCE_GROUPS.nature.push('nhm_london');
+      SOURCE_GROUPS.science.push('nhm_london');
     })();
 
     /* ============================================================
@@ -3353,6 +3365,26 @@
         controller.abort();
       });
       return controller.signal;
+    }
+
+    // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
+    async function fetchFromDataCache(sourceId, keyword) {
+      try {
+        const res = await fetch(`/data/${sourceId}.json`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data.items || !data.items.length) return null;
+        // Filter items by keyword (simple title/tag match)
+        const kw = keyword.toLowerCase();
+        const filtered = data.items.filter(item =>
+          (item.title && item.title.toLowerCase().includes(kw)) ||
+          (item.tags && item.tags.some(t => t.toLowerCase().includes(kw)))
+        );
+        // If keyword filter returns nothing, return random sample
+        const results = filtered.length > 0 ? filtered :
+          data.items.sort(() => Math.random() - 0.5).slice(0, 20);
+        return results.slice(0, STATE.perSource || 20);
+      } catch { return null; }
     }
 
     function pickOnboardingTerm() {
@@ -4935,6 +4967,10 @@
     }
 
     async function fetchPrado(keyword, limit, signal) {
+      // Try pre-fetched data cache first
+      const cached = await fetchFromDataCache('prado', keyword);
+      if (cached) return cached;
+      // Fall back to direct API (may fail due to CORS)
       try {
         const s = withTimeout(signal, 5000);
         const res = await fetch(
@@ -4965,6 +5001,10 @@
     }
 
     async function fetchParisMusees(keyword, limit, signal) {
+      // Try pre-fetched data cache first
+      const cached = await fetchFromDataCache('parismusees', keyword);
+      if (cached) return cached;
+      // Fall back to direct API (may fail due to CORS)
       try {
         const s = withTimeout(signal, 5000);
         const body = JSON.stringify({
@@ -5212,6 +5252,10 @@
 
     // C03 — Swedish National Heritage Board (CORS best-effort)
     async function fetchSOCH(keyword, limit, signal) {
+      // Try pre-fetched data cache first
+      const cached = await fetchFromDataCache('soch', keyword);
+      if (cached) return cached;
+      // Fall back to direct API (may fail due to CORS)
       try {
         const s = withTimeout(signal, 5000);
         const res = await fetch(
@@ -5689,6 +5733,10 @@
 
     // C16 — Museo Thyssen-Bornemisza (CORS best-effort)
     async function fetchThyssen(keyword, limit, signal) {
+      // Try pre-fetched data cache first
+      const cached = await fetchFromDataCache('thyssen', keyword);
+      if (cached) return cached;
+      // Fall back to direct API (may fail due to CORS)
       try {
         const s = withTimeout(signal, 5000);
         const res = await fetch(
@@ -6596,6 +6644,43 @@
       }
     }
 
+    // ── New CORS-blocked sources (cache-first) ───────────────────────────────
+
+    // NHM London — Natural History Museum
+    async function fetchNHMLondon(keyword, limit, signal) {
+      const cached = await fetchFromDataCache('nhm_london', keyword);
+      if (cached) return cached.map(item => ({ ...item, source: 'nhm_london' }));
+      return []; // Only served via data cache
+    }
+
+    // Wallace Collection London
+    async function fetchWallaceCollection(keyword, limit, signal) {
+      const cached = await fetchFromDataCache('wallace_collection', keyword);
+      if (cached) return cached.map(item => ({ ...item, source: 'wallace_collection' }));
+      return [];
+    }
+
+    // Fitzwilliam Museum Cambridge
+    async function fetchFitzwilliam(keyword, limit, signal) {
+      const cached = await fetchFromDataCache('fitzwilliam', keyword);
+      if (cached) return cached.map(item => ({ ...item, source: 'fitzwilliam' }));
+      return [];
+    }
+
+    // National Gallery London
+    async function fetchNationalGalleryLondon(keyword, limit, signal) {
+      const cached = await fetchFromDataCache('national_gallery_london', keyword);
+      if (cached) return cached.map(item => ({ ...item, source: 'national_gallery_london' }));
+      return [];
+    }
+
+    // Scottish National Gallery
+    async function fetchScottishNational(keyword, limit, signal) {
+      const cached = await fetchFromDataCache('scottish_national', keyword);
+      if (cached) return cached.map(item => ({ ...item, source: 'scottish_national' }));
+      return [];
+    }
+
     async function fetchArchiveMaps(keyword, limit, signal) {
       try {
         const res = await fetch(
@@ -6879,6 +6964,10 @@
 
     /* Cambridge Digital Library (CUDL) — no key, best-effort CORS */
     async function fetchCUDL(keyword, limit, signal) {
+      // Try pre-fetched data cache first
+      const cached = await fetchFromDataCache('cudl', keyword);
+      if (cached) return cached;
+      // Fall back to direct API (may fail due to CORS)
       try {
         const res = await fetch(
           `https://services.cudl.lib.cam.ac.uk/v1/search?query=${encodeURIComponent(keyword)}&start=1&end=${limit}`,
@@ -7301,6 +7390,12 @@
         skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
         // ── Phase D — niche & specialized ──────────────────────────────────
         callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
+        // ── Phase E — CORS-blocked, cache-first ─────────────────────────────
+        callIfHealthy('nhm_london',              fetchNHMLondon(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('nhm_london')).catch(() => {}),
+        callIfHealthy('wallace_collection',      fetchWallaceCollection(keyword,      Math.max(3, perSource), signal)).then(onSourceResult('wallace_collection')).catch(() => {}),
+        callIfHealthy('fitzwilliam',             fetchFitzwilliam(keyword,            Math.max(3, perSource), signal)).then(onSourceResult('fitzwilliam')).catch(() => {}),
+        callIfHealthy('national_gallery_london', fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal)).then(onSourceResult('national_gallery_london')).catch(() => {}),
+        callIfHealthy('scottish_national',       fetchScottishNational(keyword,       Math.max(3, perSource), signal)).then(onSourceResult('scottish_national')).catch(() => {}),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();

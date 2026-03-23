@@ -210,12 +210,127 @@ async function fetchCUDL(term) {
 
 // ── main orchestrator ─────────────────────────────────────────────────────
 
+// NHM London — Natural History Museum
+async function fetchNHMLondon(term) {
+  const url = `https://data.nhm.ac.uk/api/3/action/datastore_search?resource_id=e4e0a710-2400-4e5f-a569-87dbab23d1d2&q=${encodeURIComponent(term)}&limit=25`;
+  const res = await fetchWithTimeout(url, {
+    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.result?.records || [])
+    .filter(r => r.accessURI || (r.indexTerms && r.indexTerms.accessURI?.[0]))
+    .map(r => {
+      const img = r.accessURI || r.indexTerms?.accessURI?.[0] || '';
+      return {
+        img, thumb: img,
+        title: r.scientificName || r.typeStatus || 'NHM Specimen',
+        source: 'nhm_london', tags: [term],
+      };
+    })
+    .filter(item => item.img.startsWith('http'));
+}
+
+// Wallace Collection — The Wallace Collection, London
+async function fetchWallaceCollection(term) {
+  const url = `https://wallacelive.wallacecollection.org/emuseum/api/search?q=${encodeURIComponent(term)}&rows=25&type=objects`;
+  const res = await fetchWithTimeout(url, {
+    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.rows || data.results || [])
+    .filter(item => item.primaryMedia?.publicAccess?.uri || item.images?.[0]?.uri)
+    .map(item => {
+      const img = item.primaryMedia?.publicAccess?.uri || item.images?.[0]?.uri || '';
+      return {
+        img, thumb: img,
+        title: item.title?.[0]?.value || item.title || 'Wallace Collection Work',
+        source: 'wallace_collection', tags: [term],
+      };
+    })
+    .filter(item => item.img.startsWith('http'));
+}
+
+// Fitzwilliam Museum Cambridge
+async function fetchFitzwilliam(term) {
+  const url = `https://data.fitzmuseum.cam.ac.uk/api/v1/objects?q=${encodeURIComponent(term)}&limit=25`;
+  const res = await fetchWithTimeout(url, {
+    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.data || data.results || [])
+    .filter(item => item.images?.length || item.thumbnail?.url)
+    .map(item => {
+      const img = item.images?.[0]?.media?.source || item.thumbnail?.url || '';
+      return {
+        img, thumb: img,
+        title: item.title?.[0]?.value || item.summary_title || 'Fitzwilliam Object',
+        source: 'fitzwilliam', tags: [term],
+      };
+    })
+    .filter(item => item.img.startsWith('http'));
+}
+
+// National Gallery London
+async function fetchNationalGalleryLondon(term) {
+  // National Gallery uses Elasticsearch — try collection API
+  const url = `https://www.nationalgallery.org.uk/api/search/artworks?q=${encodeURIComponent(term)}&limit=25`;
+  const res = await fetchWithTimeout(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; InspoSearch/1.0)', 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.artworks || data.results || data.hits?.hits || [])
+    .filter(item => {
+      const src = item._source || item;
+      return src.images?.length || src.primaryImage || src.imageUrl;
+    })
+    .map(item => {
+      const src = item._source || item;
+      const img = src.images?.[0]?.url || src.primaryImage || src.imageUrl || '';
+      return {
+        img, thumb: img,
+        title: src.title || src.name || 'National Gallery Work',
+        source: 'national_gallery_london', tags: [term],
+      };
+    })
+    .filter(item => item.img.startsWith('http'));
+}
+
+// Scottish National Gallery
+async function fetchScottishNational(term) {
+  const url = `https://api.nationalgalleries.org/api/2/search?q=${encodeURIComponent(term)}&format=json&limit=25`;
+  const res = await fetchWithTimeout(url, {
+    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.results || data.items || [])
+    .filter(item => item.mediaUrl || item.thumbnail || item.image)
+    .map(item => {
+      const img = item.mediaUrl || item.thumbnail || item.image || '';
+      return {
+        img, thumb: img,
+        title: item.title || item.name || 'Scottish National Gallery Work',
+        source: 'scottish_national', tags: [term],
+      };
+    })
+    .filter(item => item.img.startsWith('http'));
+}
+
 const SOURCES = [
-  { id: 'prado',       name: 'Museo del Prado',          fetcher: fetchPrado },
-  { id: 'parismusees', name: 'Paris Musées',              fetcher: fetchParisMusees },
-  { id: 'soch',        name: 'Swedish Open Cultural Heritage', fetcher: fetchSOCH },
-  { id: 'thyssen',     name: 'Museo Thyssen-Bornemisza',  fetcher: fetchThyssen },
-  { id: 'cudl',        name: 'Cambridge Digital Library', fetcher: fetchCUDL },
+  { id: 'prado',                  name: 'Museo del Prado',               fetcher: fetchPrado },
+  { id: 'parismusees',            name: 'Paris Musées',                  fetcher: fetchParisMusees },
+  { id: 'soch',                   name: 'Swedish Open Cultural Heritage', fetcher: fetchSOCH },
+  { id: 'thyssen',                name: 'Museo Thyssen-Bornemisza',       fetcher: fetchThyssen },
+  { id: 'cudl',                   name: 'Cambridge Digital Library',      fetcher: fetchCUDL },
+  { id: 'nhm_london',             name: 'Natural History Museum London',  fetcher: fetchNHMLondon },
+  { id: 'wallace_collection',     name: 'The Wallace Collection',         fetcher: fetchWallaceCollection },
+  { id: 'fitzwilliam',            name: 'Fitzwilliam Museum',             fetcher: fetchFitzwilliam },
+  { id: 'national_gallery_london',name: 'National Gallery London',        fetcher: fetchNationalGalleryLondon},
+  { id: 'scottish_national',      name: 'Scottish National Gallery',      fetcher: fetchScottishNational },
 ];
 
 async function fetchSource(source) {
