@@ -1107,6 +1107,8 @@
     .badge-pem              { background: rgba(0,80,100,0.8); }
     .badge-npg              { background: rgba(40,0,80,0.8); }
     .badge-louvread         { background: rgba(180,120,0,0.85); }
+    .badge-idigbio          { background: rgba(20,120,60,0.8); }
+    .badge-ala              { background: rgba(0,140,70,0.8); }
 
     /* ============================================================
        BOARD VIEW
@@ -2680,6 +2682,7 @@
     // Source IDs that are domain-locked to nature biology
     const NATURE_ONLY_SOURCES = new Set([
       'inaturalist','gbif','eol','naturalis','nationalzoo','gbiflit',
+      'idigbio','ala',
     ]);
     // Source IDs that are domain-locked to space/astronomy
     const SPACE_ONLY_SOURCES = new Set([
@@ -2827,6 +2830,8 @@
       'wmc_fashion','wmc_architecture','wmc_paintings','wmc_sculptures',
       'wmc_maps','wmc_natural_history','wmc_portraits','wmc_botanical',
       'wmc_scientific','wmc_street',
+      // Phase B — zero-auth free APIs (2)
+      'idigbio','ala',
     ];
 
     const SOURCE_GROUPS = {
@@ -3015,6 +3020,9 @@
       wmc_botanical:       { category: ['botanical','nature'], region: 'global',   access: 'no_key' },
       wmc_scientific:      { category: ['science'],            region: 'global',   access: 'no_key' },
       wmc_street:          { category: ['photos'],             region: 'global',   access: 'no_key' },
+      // Phase B — zero-auth free APIs
+      idigbio:            { category: ['nature','science'],               region: 'global',   access: 'no_key' },
+      ala:                { category: ['nature','science'],               region: 'oceania',  access: 'no_key' },
     };
 
     /* ============================================================
@@ -3098,11 +3106,11 @@
       SOURCE_GROUPS.museums.push('si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp','si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2','si_npm','si_acm','si_renwick','euro_rijksmuseum','euro_kulturpool','euro_estonian');
       SOURCE_GROUPS.archives.push(...Object.keys(EUROPEANA_PROVIDERS), ...Object.keys(DPLA_HUBS));
       SOURCE_GROUPS.artdesign.push('euro_rijksmuseum','euro_fashion','wmc_paintings','wmc_sculptures','wmc_portraits','wmc_architecture','wmc_fashion','si_saam','si_hmsg','si_renwick','si_nmafa','si_fsg');
-      SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','wmc_natural_history','wmc_botanical');
+      SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','wmc_natural_history','wmc_botanical','idigbio','ala');
       SOURCE_GROUPS.maps.push('wmc_maps');
       SOURCE_GROUPS.historical.push(...Object.keys(DPLA_HUBS),'euro_newspapers','euro_ddb','euro_bnf','euro_bne','euro_kb','euro_bn_pl','euro_nkr','euro_kulturpool','euro_hispana','euro_nuk','euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian','euro_romanian','euro_bulgarian','si_nmah','si_npm','si_acm','si_nmai');
       SOURCE_GROUPS.botanical.push('wmc_botanical');
-      SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific');
+      SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala');
     })();
 
     /* ============================================================
@@ -6465,6 +6473,81 @@
       }
     }
 
+    // ── Phase B: iDigBio ── biodiversity media records ────────────────────
+    async function fetchIDigBio(keyword, limit, signal) {
+      try {
+        const rq = encodeURIComponent(JSON.stringify({ hasImage: true }));
+        const res = await fetch(
+          `https://search.idigbio.org/v2/search/media?rq=${rq}&q=${encodeURIComponent(keyword)}&limit=${limit}`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('iDigBio fetch failed');
+        const data = await res.json();
+        return (data.items || [])
+          .filter(item => item.indexTerms && item.indexTerms.accessuri)
+          .map(item => ({
+            id:          `idigbio_${item.uuid}`,
+            url:         item.indexTerms.accessuri,
+            thumb:       item.indexTerms.accessuri,
+            title:       (item.data && (item.data['dcterms:title'] || item.data['ac:tag'])) || 'iDigBio Image',
+            description: (item.data && (item.data['dcterms:description'] || '')) || '',
+            source:      'idigbio',
+            sourceUrl:   `https://www.idigbio.org/portal/mediarecords/${item.uuid}`,
+            year:        ((item.data && item.data['dcterms:available']) || '').slice(0, 4) || null,
+            tags:        [item.indexTerms.tag].filter(Boolean),
+            colors:      [],
+            aiTags:      [],
+          }))
+          .filter(item => item.url)
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('iDigBio failed:', e.message);
+        return [];
+      }
+    }
+
+    // ── Phase B: ALA ── Atlas of Living Australia images ─────────────────────
+    async function fetchALA(keyword, limit, signal) {
+      try {
+        const res = await fetch(
+          `https://biocache.ala.org.au/ws/occurrences/search?q=${encodeURIComponent(keyword)}&fq=multimedia:Image&pageSize=${limit}&fl=uuid,scientificName,vernacularName,stateProvince,images`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('ALA fetch failed');
+        const data = await res.json();
+        return (data.occurrences || [])
+          .filter(occ => occ.images && occ.images.length)
+          .map(occ => {
+            const imgId = occ.images[0];
+            const url   = `https://images.ala.org.au/image/${imgId}/original`;
+            const thumb = `https://images.ala.org.au/image/${imgId}/thumbnail`;
+            const title = occ.vernacularName || occ.scientificName || 'ALA Image';
+            return {
+              id:          `ala_${occ.uuid || imgId}`,
+              url,
+              thumb,
+              title,
+              description: occ.stateProvince || occ.scientificName || '',
+              source:      'ala',
+              sourceUrl:   `https://biocache.ala.org.au/occurrences/${occ.uuid}`,
+              year:        null,
+              tags:        [occ.scientificName, occ.vernacularName].filter(Boolean).map(t => t.toLowerCase()),
+              colors:      [],
+              aiTags:      [],
+            };
+          })
+          .filter(item => item.url)
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('ALA failed:', e.message);
+        return [];
+      }
+    }
+
     async function fetchArchiveMaps(keyword, limit, signal) {
       try {
         const res = await fetch(
@@ -7165,6 +7248,9 @@
             .then(r => r.map(i => ({ ...i, source: id }))))
             .then(onSourceResult(id)).catch(() => {})
         ),
+        // ── Phase B — zero-auth free APIs ────────────────────────────────────
+        skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
+        skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();
@@ -7323,6 +7409,9 @@
           bodleian:         'bodleian',
           bsb:              'bsb',
           cudl:             'cudl',
+          // Phase B
+          idigbio:          'idigbio',
+          ala:              'ala',
         }[item.source] || 'wiki');
         const sourceLabel = ({
           wikimedia:    'wiki',
@@ -7412,6 +7501,9 @@
           bodleian:         'bodleian',
           bsb:              'bsb',
           cudl:             'cambridge',
+          // Phase B
+          idigbio:          'idigbio',
+          ala:              'ala',
         })[item.source] || item.source;
         badge.innerHTML = `<span class="badge-label">${sourceLabel}</span><span class="badge-refresh" title="Refresh ${sourceLabel}">↺</span>`;
         badge.querySelector('.badge-refresh').addEventListener('click', e => {
@@ -8315,6 +8407,9 @@
           ...Object.entries(SI_UNITS).map(([id, cfg]) => [id, () => fetchSmithsonianUnit(cfg.code, kw, lim, signal)]),
           ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) => [id, () => fetchWikimediaCategory(cfg.cat, kw, lim, signal)]),
         ]),
+        // Phase B
+        idigbio: () => fetchIDigBio(kw, lim, signal),
+        ala:     () => fetchALA(kw, lim, signal),
       };
       const fetcher = fetchMap[sourceName];
       if (!fetcher) return;
