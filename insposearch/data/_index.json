@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-03-23T07:27:36.440Z",
+  "lastUpdated": "2026-03-23T07:40:45.361Z",
   "sources": [
     {
       "id": "prado",
@@ -9,7 +9,7 @@
     },
     {
       "id": "parismusees",
-      "name": "Paris Musées",
+      "name": "Paris Musees",
       "status": "failed",
       "lastFetched": null
     },
@@ -17,7 +17,7 @@
       "id": "soch",
       "name": "Swedish Open Cultural Heritage",
       "status": "ok",
-      "lastFetched": "2026-03-23T07:27:36.440Z"
+      "lastFetched": "2026-03-23T07:34:34.263Z"
     },
     {
       "id": "thyssen",
@@ -29,6 +29,36 @@
       "id": "cudl",
       "name": "Cambridge Digital Library",
       "status": "failed",
+      "lastFetched": null
+    },
+    {
+      "id": "nhm_london",
+      "name": "Natural History Museum London",
+      "status": "pending",
+      "lastFetched": null
+    },
+    {
+      "id": "wallace_collection",
+      "name": "The Wallace Collection",
+      "status": "pending",
+      "lastFetched": null
+    },
+    {
+      "id": "fitzwilliam",
+      "name": "Fitzwilliam Museum",
+      "status": "pending",
+      "lastFetched": null
+    },
+    {
+      "id": "national_gallery_london",
+      "name": "National Gallery London",
+      "status": "pending",
+      "lastFetched": null
+    },
+    {
+      "id": "scottish_national",
+      "name": "Scottish National Gallery",
+      "status": "pending",
       "lastFetched": null
     }
   ]
