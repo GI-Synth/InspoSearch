@@ -1,0 +1,38 @@
+name: Nightly CORS-Blocked Source Fetch
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 2am UTC every night
+  workflow_dispatch:      # Allow manual trigger from GitHub UI
+
+jobs:
+  fetch-sources:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: .
+
+      - name: Run nightly fetch
+        run: node scripts/fetch-cors-blocked.js
+
+      - name: Commit updated data files
+        run: |
+          git config --local user.email 'action@github.com'
+          git config --local user.name 'InspoSearch Nightly Fetch'
+          git add insposearch/data/
+          git diff --staged --quiet || git commit -m 'chore: nightly fetch update'
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
