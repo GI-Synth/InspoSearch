@@ -10677,8 +10677,12 @@
       const db = Array.from(deduped.values());
       const noKey = db.filter(s => s.alwaysOn);
       const withKey = db.filter(s => !s.alwaysOn);
+      // Total sources in the fetch engine (ALL_SOURCES + manifest runtime sources)
+      const manifestActive = (STATE.manifestSources || []).length;
+      const totalFetchSources = ALL_SOURCES.length + manifestActive;
       return {
         totalSources:       db.length,
+        totalFetchSources:  totalFetchSources,
         noKeySources:       noKey.length,
         keySources:         withKey.length,
         totalImagesNoKey:   noKey.reduce((a, s) => a + (s.imageCount || 0), 0),
@@ -10737,7 +10741,13 @@
 
         // stats row (step 3)
         const statsRow = document.getElementById('ob-stats-row');
+        const fetchCountEl = document.getElementById('ob-fetch-count');
+        if (fetchCountEl) fetchCountEl.textContent = s.totalFetchSources;
         statsRow.innerHTML = `
+          <div class="ob-stat">
+            <div class="ob-stat-num" id="ob-fetch-count" data-target="${s.totalFetchSources}">0</div>
+            <div class="ob-stat-label">sources</div>
+          </div>
           <div class="ob-stat">
             <div class="ob-stat-num" data-target="${s.totalSources}">0</div>
             <div class="ob-stat-label">databases</div>
