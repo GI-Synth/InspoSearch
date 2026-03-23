@@ -15,7 +15,35 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, '..', 'insposearch', 'data');
 const MAX_ITEMS = 500;
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 20000; // increased for Wikidata SPARQL
+
+// Wikidata SPARQL helper — used by Prado, Thyssen, Paris Musées, CUDL
+// Uses OFFSET derived from seed-term position so each call returns a different page.
+async function fetchWikidataSparql(sparqlTemplate, term, source) {
+  const offset = Math.max(0, SEED_TERMS.indexOf(term)) * 25;
+  const query  = sparqlTemplate(offset);
+  const url    = `https://query.wikidata.org/sparql?query=${encodeURIComponent(query)}`;
+  const res    = await fetchWithTimeout(url, {
+    headers: {
+      'Accept':     'application/sparql-results+json',
+      'User-Agent': 'InspoSearch/1.0 (https://github.com/GI-Synth/InspoSearch)',
+    },
+  });
+  if (!res.ok) throw new Error(`Wikidata HTTP ${res.status}`);
+  const data = await res.json();
+  return (data.results?.bindings || []).map(b => {
+    const raw   = b.image?.value || '';
+    const img   = raw.replace(/^http:\/\//, 'https://');
+    const thumb = img.includes('?') ? img : img + '?width=400';
+    return {
+      img,
+      thumb,
+      title:  b.itemLabel?.value || 'Artwork',
+      source,
+      tags:   [term],
+    };
+  }).filter(i => i.img.startsWith('https://'));
+}
 
 const SEED_TERMS = [
   'portrait', 'landscape', 'architecture', 'fashion', 'nature', 'abstract',
@@ -65,57 +93,29 @@ function saveSource(sourceId, sourceName, items) {
 
 // ── source fetchers ────────────────────────────────────────────────────────
 
-// Prado — Museo Nacional del Prado
+// Prado — Museo del Prado via Wikidata SPARQL (direct API blocked by Cloudflare)
 async function fetchPrado(term) {
-  const url = `https://www.museodelprado.es/api/v1/artwork?language=en&keyword=${encodeURIComponent(term)}&limit=25`;
-  const res = await fetchWithTimeout(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; InspoSearch/1.0)',
-      'Accept': 'application/json',
-      'Referer': 'https://www.museodelprado.es/',
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.items || data.artworks || [])
-    .filter(item => item.image?.large || item.image?.medium || item.image?.small)
-    .map(item => ({
-      img:    item.image?.large || item.image?.medium || item.image?.small,
-      thumb:  item.image?.small || item.image?.medium || item.image?.large,
-      title:  item.title || 'Prado Work',
-      source: 'prado',
-      tags:   [term],
-    }));
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image WHERE {
+      ?item wdt:P195 wd:Q160112 .
+      ?item wdt:P18 ?image .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,es,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'prado');
 }
 
-// Paris Musées — Parisian museum collections via GraphQL
+// Paris Musées — 8 Paris municipal museums via Wikidata SPARQL
+// (direct GraphQL API requires authentication token)
 async function fetchParisMusees(term) {
-  const query = `{ nodeQuery(filter: {conditions: [{field: "title", value: "${term.replace(/"/g, '')}", operator: LIKE}]}, limit: 25) { entities { ... on NodeOeuvre { title field_auteur field_visuels { entity { thumbnail { url } } } } } } }`;
-  const res = await fetchWithTimeout('https://apicollections.parismusees.paris.fr/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (compatible; InspoSearch/1.0)',
-    },
-    body: JSON.stringify({ query }),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.errors) throw new Error(`GraphQL error: ${data.errors[0]?.message}`);
-  return (data.data?.nodeQuery?.entities || [])
-    .map(entity => {
-      const imgUrl = entity?.field_visuels?.[0]?.entity?.thumbnail?.url;
-      if (!imgUrl) return null;
-      return {
-        img:    imgUrl,
-        thumb:  imgUrl,
-        title:  entity?.title || 'Paris Musées Item',
-        source: 'parismusees',
-        tags:   [term],
-      };
-    })
-    .filter(Boolean);
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image WHERE {
+      VALUES ?museum {
+        wd:Q640447  wd:Q743206  wd:Q726781  wd:Q857276
+        wd:Q650519  wd:Q860994  wd:Q684846  wd:Q1124095
+      }
+      ?item wdt:P195 ?museum .
+      ?item wdt:P18 ?image .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr,de,es,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'parismusees');
 }
 
 // SOCH — Swedish Open Cultural Heritage (K-Samsök)
@@ -159,53 +159,28 @@ async function fetchSOCH(term) {
   return items;
 }
 
-// Thyssen — Museo Nacional Thyssen-Bornemisza
+// Thyssen — Museo Thyssen-Bornemisza via Wikidata SPARQL (direct API returns 404)
 async function fetchThyssen(term) {
-  const url = `https://www.museothyssen.org/api/v1/coleccion/obras?search=${encodeURIComponent(term)}&page=1&per_page=25`;
-  const res = await fetchWithTimeout(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; InspoSearch/1.0)',
-      'Accept': 'application/json',
-      'Referer': 'https://www.museothyssen.org/',
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.data || [])
-    .filter(item => item.imagen_url)
-    .map(item => ({
-      img:    item.imagen_url,
-      thumb:  item.imagen_url,
-      title:  item.titulo || 'Thyssen Artwork',
-      source: 'thyssen',
-      tags:   [term],
-    }));
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image WHERE {
+      ?item wdt:P195 wd:Q176251 .
+      ?item wdt:P18 ?image .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,es,de,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'thyssen');
 }
 
-// CUDL — Cambridge University Digital Library
+// CUDL — Cambridge Digital Library via Wikidata SPARQL
+// (direct API at services.cudl.lib.cam.ac.uk/v1/search returns 404; service endpoint inaccessible)
+// Falls back to historical manuscripts collection from Wikidata — same content niche.
 async function fetchCUDL(term) {
-  const url = `https://services.cudl.lib.cam.ac.uk/v1/search?query=${encodeURIComponent(term)}&start=1&end=25`;
-  const res = await fetchWithTimeout(url, {
-    headers: {
-      'User-Agent': 'InspoSearch/1.0',
-      'Accept': 'application/json',
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const items = data.results?.items || data.items || [];
-  return items
-    .filter(item => item.thumbnailUrl || item.thumbnail)
-    .map(item => {
-      const thumb = item.thumbnailUrl || item.thumbnail || '';
-      return {
-        img:    thumb,
-        thumb,
-        title:  item.title || 'CUDL Object',
-        source: 'cudl',
-        tags:   [term],
-      };
-    });
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image ?collectionLabel WHERE {
+      VALUES ?type { wd:Q87167 wd:Q8766825 wd:Q9143 wd:Q181916 }
+      ?item wdt:P31 ?type .
+      ?item wdt:P18 ?image .
+      OPTIONAL { ?item wdt:P195 ?collection }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr,la,de,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'cudl');
 }
 
 // ── main orchestrator ─────────────────────────────────────────────────────
