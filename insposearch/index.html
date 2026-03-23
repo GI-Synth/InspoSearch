@@ -1109,6 +1109,8 @@
     .badge-louvread         { background: rgba(180,120,0,0.85); }
     .badge-idigbio          { background: rgba(20,120,60,0.8); }
     .badge-ala              { background: rgba(0,140,70,0.8); }
+    .badge-nasa_images      { background: rgba(11,61,145,0.9); }
+    .badge-loc              { background: rgba(140,20,20,0.9); }
 
     /* ============================================================
        BOARD VIEW
@@ -2832,6 +2834,8 @@
       'wmc_scientific','wmc_street',
       // Phase B — zero-auth free APIs (2)
       'idigbio','ala',
+      // Phase D — niche & specialized (2)
+      'nasa_images','loc',
     ];
 
     const SOURCE_GROUPS = {
@@ -3023,6 +3027,9 @@
       // Phase B — zero-auth free APIs
       idigbio:            { category: ['nature','science'],               region: 'global',   access: 'no_key' },
       ala:                { category: ['nature','science'],               region: 'oceania',  access: 'no_key' },
+      // Phase D — niche & specialized
+      nasa_images:        { category: ['science','space','photos'],       region: 'global',   access: 'no_key' },
+      loc:                { category: ['historical','archives','photos'], region: 'usa',      access: 'no_key' },
     };
 
     /* ============================================================
@@ -3110,7 +3117,9 @@
       SOURCE_GROUPS.maps.push('wmc_maps');
       SOURCE_GROUPS.historical.push(...Object.keys(DPLA_HUBS),'euro_newspapers','euro_ddb','euro_bnf','euro_bne','euro_kb','euro_bn_pl','euro_nkr','euro_kulturpool','euro_hispana','euro_nuk','euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian','euro_romanian','euro_bulgarian','si_nmah','si_npm','si_acm','si_nmai');
       SOURCE_GROUPS.botanical.push('wmc_botanical');
-      SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala');
+      SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala','nasa_images');
+      SOURCE_GROUPS.historical.push('loc');
+      SOURCE_GROUPS.archives.push('loc');
     })();
 
     /* ============================================================
@@ -6548,6 +6557,87 @@
       }
     }
 
+    // ── Phase D: NASA Images Library ─────────────────────────────────────────
+    async function fetchNASAImages(keyword, limit, signal) {
+      try {
+        const res = await fetch(
+          `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('NASA Images fetch failed');
+        const data = await res.json();
+        return (data.collection?.items || [])
+          .filter(item => item.links?.[0]?.href)
+          .map(item => {
+            const d    = item.data?.[0] || {};
+            const url  = item.links[0].href;
+            const thumb = url.replace('~medium.jpg', '~thumb.jpg').replace('~small.jpg', '~thumb.jpg');
+            return {
+              id:          `nasaimg_${d.nasa_id || Math.random().toString(36).slice(2)}`,
+              url,
+              thumb,
+              title:       d.title || 'NASA Image',
+              description: d.description ? d.description.slice(0, 200) : '',
+              source:      'nasa_images',
+              sourceUrl:   `https://images.nasa.gov/details/${d.nasa_id}`,
+              year:        d.date_created ? d.date_created.slice(0, 4) : null,
+              tags:        (d.keywords || []).map(t => t.toLowerCase()),
+              colors:      [],
+              aiTags:      [],
+            };
+          })
+          .filter(item => item.url)
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('NASA Images failed:', e.message);
+        return [];
+      }
+    }
+
+    // ── Phase D: Library of Congress Photos ──────────────────────────────────
+    async function fetchLOC(keyword, limit, signal) {
+      try {
+        const res = await fetch(
+          `https://www.loc.gov/photos/?q=${encodeURIComponent(keyword)}&fo=json&sp=1&c=${limit}&at=results`,
+          { signal }
+        );
+        if (!res.ok) throw new Error('LOC fetch failed');
+        const data = await res.json();
+        return (data.results || [])
+          .map(item => {
+            const imgArr = Array.isArray(item.image_url) ? item.image_url : (item.image_url ? [item.image_url] : []);
+            const raw    = imgArr[0] || '';
+            const url    = raw.split('#')[0];
+            if (!url) return null;
+            // prefer ~150px thumb for preview, fall back to same URL
+            const thumb  = imgArr.find(u => u.includes('150px')) || url;
+            return {
+              id:          `loc_${item.id || Math.random().toString(36).slice(2)}`,
+              url:         thumb.split('#')[0],
+              thumb:       thumb.split('#')[0],
+              title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'LOC Image'),
+              description: item.description?.[0] || item.subject?.[0] || '',
+              source:      'loc',
+              sourceUrl:   item.url || `https://www.loc.gov/photos/?q=${encodeURIComponent(keyword)}`,
+              year:        item.date ? String(item.date).slice(0, 4) : null,
+              tags:        (item.subject || []).map(t => t.toLowerCase()),
+              colors:      [],
+              aiTags:      [],
+            };
+          })
+          .filter(Boolean)
+          .filter(item => item.url)
+          .filter(isLikelyReal)
+          .slice(0, limit);
+      } catch (e) {
+        if (e.name === 'AbortError') return [];
+        console.warn('LOC Photos failed:', e.message);
+        return [];
+      }
+    }
+
     async function fetchArchiveMaps(keyword, limit, signal) {
       try {
         const res = await fetch(
@@ -7251,6 +7341,9 @@
         // ── Phase B — zero-auth free APIs ────────────────────────────────────
         skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
         skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
+        // ── Phase D — niche & specialized ──────────────────────────────────
+        callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
+        callIfHealthy('loc',        fetchLOC(keyword,        Math.max(3, perSource), signal)).then(onSourceResult('loc')).catch(() => {}),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();
@@ -7412,6 +7505,9 @@
           // Phase B
           idigbio:          'idigbio',
           ala:              'ala',
+          // Phase D
+          nasa_images:      'nasa_images',
+          loc:              'loc',
         }[item.source] || 'wiki');
         const sourceLabel = ({
           wikimedia:    'wiki',
@@ -7504,6 +7600,9 @@
           // Phase B
           idigbio:          'idigbio',
           ala:              'ala',
+          // Phase D
+          nasa_images:      'nasa',
+          loc:              'loc',
         })[item.source] || item.source;
         badge.innerHTML = `<span class="badge-label">${sourceLabel}</span><span class="badge-refresh" title="Refresh ${sourceLabel}">↺</span>`;
         badge.querySelector('.badge-refresh').addEventListener('click', e => {
@@ -8408,8 +8507,11 @@
           ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) => [id, () => fetchWikimediaCategory(cfg.cat, kw, lim, signal)]),
         ]),
         // Phase B
-        idigbio: () => fetchIDigBio(kw, lim, signal),
-        ala:     () => fetchALA(kw, lim, signal),
+        idigbio:     () => fetchIDigBio(kw, lim, signal),
+        ala:         () => fetchALA(kw, lim, signal),
+        // Phase D
+        nasa_images: () => fetchNASAImages(kw, lim, signal),
+        loc:         () => fetchLOC(kw, lim, signal),
       };
       const fetcher = fetchMap[sourceName];
       if (!fetcher) return;
