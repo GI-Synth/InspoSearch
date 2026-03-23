@@ -7203,9 +7203,11 @@
       const alt2       = keywords[2] || altKeyword;
 
       // all slots always run — key-gated sources return [] when no key set
-      // Scale per-source budget dynamically as source registry grows.
-      const activeCallCount = Math.max(ALL_SOURCES.length + (STATE.manifestSources || []).length, 1);
-      const perSource  = Math.max(1, Math.ceil(totalCount / activeCallCount));
+      // Use realistic productive source count, not total registered count.
+      // ~60 sources reliably return results on any query.
+      // This ensures the slider value matches actual images shown.
+      const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+      const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
       const fetchBatch = perSource + 4;
 
       const seenIds = new Set();
@@ -8590,18 +8592,37 @@
       if (btn) btn.textContent = 'loading…';
       STATE.currentPage++;
       const page      = STATE.currentPage;
-      const perSource = Math.ceil(STATE.imageCount / 6);
+      // Use realistic productive source count, not total registered count.
+      // ~60 sources reliably return results on any query.
+      const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+      const perSource = Math.max(2, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
       const offset    = (page - 1) * STATE.imageCount;
       const kw        = STATE.keywords[0] || STATE.query;
       const ac        = new AbortController();
       const signal    = ac.signal;
+      // Use the same ALL_SOURCES pool as fetchAll, not a hardcoded list of 6.
       const fetches = [
-        fetchMet(kw, perSource, signal, offset),
-        fetchChicagoArt(kw, perSource, signal, page),
-        fetchEuropeana(kw, perSource, signal, offset + 1),
-        fetchGBIF(kw, perSource, signal, offset),
-        fetchOpenverse(kw, perSource, signal, page),
-        fetchLOC(kw, perSource, signal, page),
+        callIfHealthy('met',         fetchMet(kw, perSource, signal, offset)),
+        callIfHealthy('chicago',     fetchChicagoArt(kw, perSource, signal, page)),
+        callIfHealthy('europeana',   fetchEuropeana(kw, perSource, signal, offset + 1)),
+        callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
+        callIfHealthy('openverse',   fetchOpenverse(kw, perSource, signal, page)),
+        callIfHealthy('loc',         fetchLOC(kw, perSource, signal, page)),
+        callIfHealthy('wikimedia',   fetchWikimedia(kw, perSource, signal)),
+        callIfHealthy('archive',     fetchArchive(kw, perSource, signal)),
+        callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
+        callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
+        callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal)),
+        callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal)),
+        callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal)),
+        callIfHealthy('gallica',     fetchGallica(kw, perSource, signal)),
+        callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal)),
+        callIfHealthy('trove',       fetchTrove(kw, perSource, signal)),
+        callIfHealthy('digitalnz',   fetchDigitalNZ(kw, perSource, signal)),
+        callIfHealthy('nypl',        fetchNYPL(kw, perSource, signal)),
+        callIfHealthy('walters',     fetchWalters(kw, perSource, signal)),
+        callIfHealthy('tate',        fetchTate(kw, perSource, signal)),
+        callIfHealthy('bhl',         fetchBHL(kw, perSource, signal)),
       ];
       const settled = await Promise.allSettled(fetches);
       const items   = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
