@@ -3,11 +3,11 @@
 !/README.md
 !/CONTRIBUTING.md
 
-# Internal / planning
-scripts/
-package.json
-package-lock.json
-.github/
+# Internal / planning (test scripts only — fetch-cors-blocked.js is tracked)
+scripts/test-*.cjs
+scripts/test-*.js
+scripts/validate-sources.js
+scripts/phase1_iiif_tests.cjs
 
 # OS files
 .DS_Store
