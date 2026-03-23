@@ -2834,8 +2834,8 @@
       'wmc_scientific','wmc_street',
       // Phase B — zero-auth free APIs (2)
       'idigbio','ala',
-      // Phase D — niche & specialized (2)
-      'nasa_images','loc',
+      // Phase D — niche & specialized (1)
+      'nasa_images',
     ];
 
     const SOURCE_GROUPS = {
@@ -6596,48 +6596,6 @@
       }
     }
 
-    // ── Phase D: Library of Congress Photos ──────────────────────────────────
-    async function fetchLOC(keyword, limit, signal) {
-      try {
-        const res = await fetch(
-          `https://www.loc.gov/photos/?q=${encodeURIComponent(keyword)}&fo=json&sp=1&c=${limit}&at=results`,
-          { signal }
-        );
-        if (!res.ok) throw new Error('LOC fetch failed');
-        const data = await res.json();
-        return (data.results || [])
-          .map(item => {
-            const imgArr = Array.isArray(item.image_url) ? item.image_url : (item.image_url ? [item.image_url] : []);
-            const raw    = imgArr[0] || '';
-            const url    = raw.split('#')[0];
-            if (!url) return null;
-            // prefer ~150px thumb for preview, fall back to same URL
-            const thumb  = imgArr.find(u => u.includes('150px')) || url;
-            return {
-              id:          `loc_${item.id || Math.random().toString(36).slice(2)}`,
-              url:         thumb.split('#')[0],
-              thumb:       thumb.split('#')[0],
-              title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'LOC Image'),
-              description: item.description?.[0] || item.subject?.[0] || '',
-              source:      'loc',
-              sourceUrl:   item.url || `https://www.loc.gov/photos/?q=${encodeURIComponent(keyword)}`,
-              year:        item.date ? String(item.date).slice(0, 4) : null,
-              tags:        (item.subject || []).map(t => t.toLowerCase()),
-              colors:      [],
-              aiTags:      [],
-            };
-          })
-          .filter(Boolean)
-          .filter(item => item.url)
-          .filter(isLikelyReal)
-          .slice(0, limit);
-      } catch (e) {
-        if (e.name === 'AbortError') return [];
-        console.warn('LOC Photos failed:', e.message);
-        return [];
-      }
-    }
-
     async function fetchArchiveMaps(keyword, limit, signal) {
       try {
         const res = await fetch(
@@ -7343,7 +7301,6 @@
         skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
         // ── Phase D — niche & specialized ──────────────────────────────────
         callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
-        callIfHealthy('loc',        fetchLOC(keyword,        Math.max(3, perSource), signal)).then(onSourceResult('loc')).catch(() => {}),
       ]);
 
       if (!isSilent && !all.length) showEmptyState();
@@ -10764,6 +10721,7 @@
 
       // expose for init check
       window._showOnboarding = show;
+      window._refreshOnboardingStats = populateStats;
     })();
 
     /* Track DOM refs for badge/input per source */
@@ -11994,6 +11952,7 @@
 
         if (added > 0) {
           buildKeyRows();
+          window._refreshOnboardingStats?.();
           console.log(`[insposearch] Manifest loaded — ${added} additional sources registered.`);
         }
       } catch (e) {
