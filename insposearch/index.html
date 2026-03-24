@@ -5260,7 +5260,7 @@
       try {
         const s = withTimeout(signal, 5000);
         const res = await fetch(
-          `http://www.kulturarvsdata.se/ksamsok/api?method=search&hitsPerPage=${limit}&startRecord=1&query=itemName%3D${encodeURIComponent(keyword)}&recordSchema=json`,
+          `https://www.kulturarvsdata.se/ksamsok/api?method=search&hitsPerPage=${limit}&startRecord=1&query=itemName%3D${encodeURIComponent(keyword)}&recordSchema=json`,
           { signal: s }
         );
         if (!res.ok) throw new Error('SOCH failed');
