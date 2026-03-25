@@ -1,0 +1,10275 @@
+﻿/* ============================================================
+   1. CONSTANTS & CONFIG
+============================================================ */
+const CONSTANTS = {
+  IMAGE_COUNT_DEFAULT:  24,
+  IMAGE_COUNT_MIN:       6,
+  IMAGE_COUNT_MAX:      150,
+  GEMINI_KEY_STORAGE:   'inspo_gemini_key',
+  CLAUDE_KEY_STORAGE:   'inspo_claude_key',
+  OPENAI_KEY_STORAGE:   'inspo_openai_key',
+  DATAMUSE_MAX:          8,
+  WIKIMEDIA_LIMIT:      25,
+  MET_LIMIT:            20,
+  MET_DETAIL_LIMIT:     15,
+  ARCHIVE_LIMIT:        15,
+  DEBOUNCE_SLIDER:     200,
+  RETRY_DELAY:        2000,
+  MAX_RESULTS:         500,
+  MAX_CHAT_HISTORY:     20,
+};
+
+/* ============================================================
+   BADGE_META — single consolidated lookup for badge CSS class + display label
+   Each key maps to [cssClass, displayLabel].
+============================================================ */
+const BADGE_META = {
+  wikimedia:        ['wiki','wiki'],       met:              ['met','met'],
+  archive:          ['archive','archive'], nasa:             ['nasa','nasa'],
+  rijksmuseum:      ['rijks','rijks'],     europeana:        ['euro','euro'],
+  harvard:          ['harvard','harvard'], smithsonian:      ['smithsonian','si'],
+  pexels:           ['pexels','pexels'],   inaturalist:      ['inaturalist','nature'],
+  loc:              ['loc','loc'],         openlibrary:      ['openlibrary','books'],
+  chicago:          ['chicago','chicago'], cleveland:        ['cleveland','cleveland'],
+  va:               ['va','v&a'],          flickr:           ['flickr','flickr'],
+  pixabay:          ['pixabay','pixabay'], wikiart:          ['wikiart','wikiart'],
+  nordic:           ['nordic','nordic'],   getty:            ['getty','getty'],
+  nga:              ['nga','nga'],         gbif:             ['gbif','gbif'],
+  eol:              ['eol','eol'],         apod:             ['apod','apod'],
+  gallica:          ['gallica','gallica'], chronicling:      ['chronicling','chronicle'],
+  openverse:        ['openverse','openverse'], trove:        ['trove','trove'],
+  digitalnz:        ['digitalnz','nz'],    bhl:              ['bhl','bhl'],
+  carnegie:         ['carnegie','carnegie'], prado:          ['prado','prado'],
+  parismusees:      ['parismusees','paris'], yale:           ['yale','yale'],
+  picsum:           ['picsum','picsum'],   usgs:             ['usgs','usgs'],
+  cooperhewitt:     ['cooperhewitt','design'], tate:         ['tate','tate'],
+  finna:            ['finna','finna'],     soch:             ['soch','sweden'],
+  joconde:          ['joconde','orsay'],   mnw:              ['mnw','warsaw'],
+  tepapa:           ['tepapa','tepapa'],   dpla:             ['dpla','dpla'],
+  artsy:            ['artsy','artsy'],     pas:              ['pas','finds'],
+  smg:              ['smg','science'],     auckland:         ['auckland','auckland'],
+  photogrammar:     ['photogrammar','fsa'], wellcome:        ['wellcome','wellcome'],
+  maas:             ['maas','maas'],       smk:              ['smk','denmark'],
+  thyssen:          ['thyssen','thyssen'], wdl:              ['wdl','wdl'],
+  walters:          ['walters','walters'], princeton:        ['princeton','princeton'],
+  wikidata:         ['wikidata','wikidata'], noaa:           ['noaa','noaa'],
+  hubble:           ['hubble','hubble'],   cornell:          ['cornell','cornell'],
+  folger:           ['folger','folger'],   onb:              ['onb','austria'],
+  nypl:             ['nypl','nypl'],       mak:              ['mak','mak'],
+  mna:              ['mna','mna'],         louvre:           ['louvre','louvre'],
+  mia:              ['mia','mia'],         lacma:            ['lacma','lacma'],
+  munch:            ['munch','munch'],     mauritshuis:      ['mauritshuis','mauritshuis'],
+  nationalmuseumse: ['nationalmuseumse','stockholm'], naturalis: ['naturalis','naturalis'],
+  nmaahc:           ['nmaahc','nmaahc'],   nasm:             ['nasm','nasm'],
+  whitney:          ['whitney','whitney'], nationalzoo:      ['nationalzoo','zoo'],
+  gbiflit:          ['gbiflit','gbif-lit'], freersackler:   ['freersackler','freersackler'],
+  ago:              ['ago','ago'],         pem:              ['pem','pem'],
+  npg:              ['npg','npg'],         louvread:         ['louvread','louvread'],
+  unsplash:         ['unsplash','unsplash'], bodleian:       ['bodleian','bodleian'],
+  bsb:              ['bsb','bsb'],         cudl:             ['cudl','cambridge'],
+  idigbio:          ['idigbio','idigbio'], ala:              ['ala','ala'],
+  nasa_images:      ['nasa_images','nasa'],
+};
+
+/* ============================================================
+   POPUP DETECTION + IMMEDIATE THEME APPLY
+   (run before any render to prevent flash)
+============================================================ */
+const _isBoardPopup = new URLSearchParams(location.search).get('boardpopup') === '1';
+(function () {
+  const t = localStorage.getItem('inspo_theme');
+  if (t === 'dark')  document.body.classList.add('dark');
+  if (t === 'light') document.body.classList.remove('dark');
+})();
+
+/* ============================================================
+   2. STATE
+   Single global object — never use separate global vars.
+============================================================ */
+const STATE = {
+  query:               '',      // current search string
+  keywords:            [],      // expanded keyword array
+  results:             [],      // all fetched ImageItem[]
+  selected:            [],      // selected ImageItem[]
+  view:                'grid',  // 'grid' | 'board' | '3d'
+  sketchMode:          false,   // boolean
+  imageCount:          24,      // slider value
+  geminiKey:           null,    // string | null (localStorage)
+  claudeKey:           null,    // string | null (localStorage)
+  openaiKey:           null,    // string | null (localStorage)
+  openaiEndpoint:      '',      // custom OpenAI-compatible base URL
+  aiProvider:          'gemini', // 'gemini' | 'claude' | 'openai'
+  chatHistory:         [],      // [{role, content}] conversation log
+  chatSnapshot:        null,    // { base64, metadata } grid snapshot
+  europeanaKey:        null,    // string | null (localStorage)
+  harvardKey:          null,    // string | null (localStorage)
+  smithsonianKey:      null,    // string | null (localStorage)
+  pexelsKey:           null,    // string | null (localStorage)
+  pixabayKey:          null,    // string | null (localStorage)
+  troveKey:            null,    // string | null (localStorage)
+  digitalnzKey:        null,    // string | null (localStorage)
+  dplaKey:             null,    // string | null (localStorage)
+  artsyId:             null,    // string | null (localStorage)
+  artsySecret:         null,    // string | null (localStorage)
+  artsyToken:          null,    // runtime only — not persisted
+  sourceHealth:        {},       // { sourceName: { hits, misses, lastSeen } }
+  loading:             false,   // boolean
+  abortController:     null,    // AbortController | null
+  prefetchedQuery:     '',      // last query prefetched
+  prefetchedKeywords:  [],      // keywords for prefetchedQuery
+  currentPage:         1,        // current load-more page
+  hubbleCache:         [],      // cached Hubble images (refreshed every 6h)
+  hubbleCacheTimestamp: null,   // Date.now() of last Hubble fetch
+  crossRefMode:        null,    // null | 'connect' | 'interpret'
+  lastGeminiCall:      null,    // timestamp of last Gemini API call (rate limiting)
+  geminiDailyCount:    0,       // calls made today
+  geminiDailyDate:     null,    // YYYY-MM-DD string for reset check
+  disabledSources:     new Set(),  // source IDs to skip in searches
+  activePreset:        null,    // 'all'|'none'|group name|null (custom mix)
+  crossRefTerms:       [],      // the 8 terms used in cross-ref search
+  referenceImages:     [],      // pinned reference images
+  floatingBarVisible:  false,   // boolean
+  floatingBarHidden:   false,   // user dismissed via × (hide, not clear)
+  fuseIndex:           null,    // Fuse.js search index on loaded results
+  whitneyCache:        [],      // cached Whitney artworks (refreshed every 24h)
+  whitneyCacheTimestamp: null,  // Date.now() of last Whitney fetch
+  searchMode:          'explore', // 'explore' | 'exact'
+  pendingOnboardingSearch: false, // first-visit guided search
+};
+
+// Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
+const _secondaryControllers = new Set();
+
+const ONBOARDING_TERMS = ['shadow', 'texture', 'light', 'ruins'];
+
+/* ── Exact-mode source filtering (Phase 2) ── */
+// Queries that signal biological/nature intent → skip space sources
+const NATURE_QUERY_TERMS = [
+  'beetle','moth','butterfly','lichen','fungus','coral','species','genus',
+  'flora','fauna','specimen','fern','moss','algae','mushroom','insect',
+  'arachnid','amphibian','reptile','crustacean','orchid','seabird','mammal',
+  'polypore','bryophyte','cephalopod','dragonfly','grasshopper','termite',
+  'cicada','barnacle','echinoderm','nudibranch','mycelium','lichen',
+  'wildflower','blossom','seedpod','herbarium','bird','fish','whale',
+  'shark','snake','lizard','frog','toad','newt','salamander','worm',
+];
+// Queries that signal space/astronomical intent → skip nature sources
+const SPACE_QUERY_TERMS = [
+  'nebula','galaxy','supernova','quasar','exoplanet','asteroid','comet',
+  'meteor','orbit','telescope','aurora','cosmos','pulsar','black hole',
+  'solar flare','spacecraft','satellite','mars','jupiter','saturn','venus',
+  'milky way','constellation','hubble','voyager','iss','astronaut','lunar',
+];
+// Source IDs that are domain-locked to nature biology
+const NATURE_ONLY_SOURCES = new Set([
+  'inaturalist','gbif','eol','naturalis','nationalzoo','gbiflit',
+  'idigbio','ala',
+]);
+// Source IDs that are domain-locked to space/astronomy
+const SPACE_ONLY_SOURCES = new Set([
+  'nasa','apod','hubble','noaa',
+]);
+
+function classifyQuery(q) {
+  const lower = (q || '').toLowerCase();
+  const isNature = NATURE_QUERY_TERMS.some(t => lower.includes(t));
+  const isSpace  = SPACE_QUERY_TERMS.some(t => lower.includes(t));
+  return { isNature, isSpace };
+}
+
+/* Returns true when sourceId should be skipped in exact mode for this query */
+function skipInExactMode(sourceId, queryClass) {
+  if (STATE.searchMode !== 'exact') return false;
+  // Non-nature query → skip nature-only sources
+  if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
+  // Non-space query → skip space-only sources
+  if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+  return false;
+}
+
+const SOURCE_DOMAINS = {
+  wikimedia: 'commons.wikimedia.org',
+  met: 'metmuseum.org',
+  archive: 'archive.org',
+  nasa: 'images.nasa.gov',
+  inaturalist: 'inaturalist.org',
+  loc: 'loc.gov',
+  openlibrary: 'openlibrary.org',
+  chicago: 'artic.edu',
+  cleveland: 'clevelandart.org',
+  va: 'vam.ac.uk',
+  wikiart: 'wikiart.org',
+  flickr: 'flickr.com',
+  rijksmuseum: 'rijksmuseum.nl',
+  rijks: 'rijksmuseum.nl',
+  europeana: 'europeana.eu',
+  harvard: 'harvardartmuseums.org',
+  smithsonian: 'si.edu',
+  pexels: 'pexels.com',
+  pixabay: 'pixabay.com',
+  getty: 'getty.edu',
+  nga: 'nga.gov',
+  gbif: 'gbif.org',
+  eol: 'eol.org',
+  apod: 'apod.nasa.gov',
+  gallica: 'gallica.bnf.fr',
+  chronicling: 'chroniclingamerica.loc.gov',
+  openverse: 'openverse.org',
+  trove: 'trove.nla.gov.au',
+  digitalnz: 'digitalnz.org',
+  bhl: 'biodiversitylibrary.org',
+  prado: 'museodelprado.es',
+  yale: 'britishart.yale.edu',
+  usgs: 'usgs.gov',
+  tate: 'tate.org.uk',
+  dpla: 'dp.la',
+  artsy: 'artsy.net',
+  nypl: 'digitalcollections.nypl.org',
+  louvre: 'louvre.fr',
+  lacma: 'lacma.org',
+  whitney: 'whitney.org',
+  gemini: 'aistudio.google.com',
+  // Phase 2
+  unsplash: 'unsplash.com',
+  bodleian: 'digital.bodleian.ox.ac.uk',
+  bsb: 'digitale-sammlungen.de',
+  cudl: 'cudl.lib.cam.ac.uk',
+};
+
+/* ============================================================
+   3. SEED_MAP
+   Hardcoded associations for art/design terms.
+============================================================ */
+const SEED_MAP = {
+  brutalism:    ['concrete', 'monolithic', 'raw', 'void', 'weight'],
+  fashion:      ['silhouette', 'drape', 'texture', 'body', 'volume'],
+  nature:       ['organic', 'erosion', 'growth', 'decay', 'light'],
+  minimal:      ['reduction', 'negative space', 'restraint', 'grid', 'white'],
+  dark:         ['shadow', 'depth', 'contrast', 'absence', 'night'],
+  color:        ['pigment', 'saturation', 'hue', 'spectrum', 'dye'],
+  architecture: ['structure', 'facade', 'material', 'threshold', 'proportion'],
+  portrait:     ['gaze', 'skin', 'expression', 'identity', 'presence'],
+  abstract:     ['form', 'gesture', 'mark', 'field', 'tension'],
+  vintage:      ['patina', 'grain', 'fade', 'archive', 'memory'],
+};
+
+/* Load API keys from localStorage if present */
+STATE.geminiKey      = localStorage.getItem(CONSTANTS.GEMINI_KEY_STORAGE) || null;
+STATE.claudeKey      = localStorage.getItem(CONSTANTS.CLAUDE_KEY_STORAGE)  || null;
+STATE.openaiKey      = localStorage.getItem(CONSTANTS.OPENAI_KEY_STORAGE)  || null;
+STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint')        || '';
+STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')            || 'gemini';
+STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')    || null;
+STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')      || null;
+STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key')  || null;
+STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')       || null;
+STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')      || null;
+STATE.troveKey       = localStorage.getItem('inspo_trove_key')        || null;
+STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')    || null;
+STATE.dplaKey        = localStorage.getItem('inspo_dpla_key')         || null;
+STATE.artsyId        = localStorage.getItem('inspo_artsy_id')         || null;
+STATE.artsySecret    = localStorage.getItem('inspo_artsy_secret')     || null;
+STATE.unsplashKey    = localStorage.getItem('inspo_unsplash_key')     || null;
+
+/* ============================================================
+   SOURCE REGISTRY
+   66 unique source IDs used by callIfHealthy (all fetchAll calls)
+============================================================ */
+const ALL_SOURCES = [
+  'wikimedia','met','archive','nasa','inaturalist','loc','openlibrary',
+  'chicago','cleveland','va','wikiart','nordic','flickr','europeana',
+  'rijksmuseum','harvard','smithsonian','pexels','pixabay','getty','nga',
+  'gbif','eol','apod','gallica','chronicling','openverse','trove','digitalnz',
+  'bhl','carnegie','prado','parismusees','yale','picsum','usgs','cooperhewitt',
+  'tate','finna','soch','joconde','mnw','tepapa','dpla','artsy','pas','smg',
+  'auckland','photogrammar','wellcome','maas','smk','thyssen','wdl','walters',
+  'princeton','wikidata','noaa','hubble','cornell','folger','onb','nypl',
+  'mak','mna','louvre',
+  // Batch 7
+  'mia','lacma','munch','mauritshuis','nationalmuseumse','naturalis',
+  'nmaahc','nasm','whitney','nationalzoo','gbiflit','freersackler',
+  'ago','pem','npg','louvread',
+  // Phase 2
+  'unsplash','bodleian','bsb','cudl',
+  // Phase A — Aggregator Sub-Collections (60)
+  // A1: Europeana sub-collections (20)
+  'euro_rijksmuseum','euro_fashion','euro_ddb','euro_bnf','euro_bne',
+  'euro_kb','euro_bn_pl','euro_nkr','euro_photography','euro_sounds',
+  'euro_newspapers','euro_kulturpool','euro_hispana','euro_nuk',
+  'euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian',
+  'euro_romanian','euro_bulgarian',
+  // A2: DPLA hub sub-collections (15)
+  'dpla_california','dpla_commonwealth','dpla_empire','dpla_mountain_west',
+  'dpla_minnesota','dpla_michigan','dpla_illinois','dpla_kentucky',
+  'dpla_south_carolina','dpla_georgia','dpla_texas','dpla_pacific_nw',
+  'dpla_ohio','dpla_pennsylvania','dpla_new_england',
+  // A3: Smithsonian sub-museums (15)
+  'si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp',
+  'si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2',
+  'si_npm','si_acm','si_renwick',
+  // A4: Wikimedia category filters (10)
+  'wmc_fashion','wmc_architecture','wmc_paintings','wmc_sculptures',
+  'wmc_maps','wmc_natural_history','wmc_portraits','wmc_botanical',
+  'wmc_scientific','wmc_street',
+  // Phase B — zero-auth free APIs (2)
+  'idigbio','ala',
+  // Phase D — niche & specialized (1)
+  'nasa_images',
+  // Phase E — CORS-blocked, cache-first (5)
+  'nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national',
+];
+
+const SOURCE_GROUPS = {
+  museums:     ['met','rijksmuseum','chicago','cleveland','va','getty','nga',
+               'walters','princeton','tate','smk','thyssen','prado','louvre',
+               'joconde','mnw','parismusees','cooperhewitt','carnegie','harvard',
+               'yale','folger','maas','auckland','tepapa','wellcome','smg',
+               'pas','photogrammar','cornell','mna','onb','nypl','mak',
+               'mia','lacma','munch','mauritshuis','nationalmuseumse',
+               'ago','pem','nmaahc','nasm','whitney','freersackler',
+               'npg','louvread'],
+  photography: ['flickr','pexels','pixabay','noaa','nasa','apod','hubble',
+               'loc','nypl','archive','chronicling','openverse','trove',
+               'digitalnz','wikidata','inaturalist','usgs','finna',
+               'mia','lacma','whitney','unsplash'],
+  nature:      ['inaturalist','gbif','eol','bhl','noaa','hubble','apod',
+               'nasa','usgs','naturalis','nationalzoo','gbiflit'],
+  historical:  ['archive','chronicling','gallica','loc','trove','digitalnz',
+               'wdl','bhl','folger','onb','nypl','soch','nordic',
+               'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb'],
+  artdesign:   ['wikiart','wikidata','openverse','cooperhewitt','tate','va',
+               'artsy','dpla','europeana','getty','nga','carnegie','maas',
+               'smk','thyssen','wellcome','rijksmuseum','parismusees',
+               'chicago','cleveland',
+               'mia','lacma','mauritshuis','whitney','munch','freersackler'],
+  maps:        ['loc','usgs','nypl','wdl','bsb','bodleian','cudl'],
+  fashion:     ['va','nordic','cooperhewitt','mak','maas','smk','parismusees'],
+  science:     ['nasa','apod','hubble','noaa','usgs','gbif','eol',
+               'inaturalist','smg','naturalis','nasm','nationalzoo','gbiflit'],
+  botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
+  archives:    ['archive','loc','gallica','chronicling','openverse','bhl',
+               'trove','digitalnz','nypl','folger','onb','soch','finna',
+               'wdl','photogrammar','wikidata','bodleian','cudl','bsb'],
+};
+
+/* ── Source metadata for filtering (Phase 2) ── */
+const SOURCE_META = {
+  wikimedia:        { category: ['photos','archives','art'],        region: 'global',   access: 'no_key' },
+  met:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  archive:          { category: ['archives','photos','historical'], region: 'global',   access: 'no_key' },
+  nasa:             { category: ['science','photos'],               region: 'global',   access: 'no_key' },
+  inaturalist:      { category: ['nature','science'],               region: 'global',   access: 'no_key' },
+  loc:              { category: ['archives','historical','maps'],   region: 'americas', access: 'no_key' },
+  openlibrary:      { category: ['archives'],                       region: 'global',   access: 'no_key' },
+  chicago:          { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  cleveland:        { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  va:               { category: ['museums','art','fashion'],        region: 'uk',       access: 'no_key' },
+  wikiart:          { category: ['art'],                            region: 'global',   access: 'no_key' },
+  nordic:           { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key' },
+  flickr:           { category: ['photos'],                         region: 'global',   access: 'no_key' },
+  europeana:        { category: ['museums','art','archives'],       region: 'europe',   access: 'free_key' },
+  rijksmuseum:      { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  harvard:          { category: ['museums','art'],                  region: 'americas', access: 'free_key' },
+  smithsonian:      { category: ['museums','science','art'],        region: 'americas', access: 'no_key' },
+  pexels:           { category: ['photos'],                         region: 'global',   access: 'free_key' },
+  pixabay:          { category: ['photos','art'],                   region: 'global',   access: 'free_key' },
+  getty:            { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  nga:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  gbif:             { category: ['nature','science'],               region: 'global',   access: 'no_key' },
+  eol:              { category: ['nature','science'],               region: 'global',   access: 'no_key' },
+  apod:             { category: ['science','photos'],               region: 'global',   access: 'no_key' },
+  gallica:          { category: ['archives','art','historical'],    region: 'europe',   access: 'no_key' },
+  chronicling:      { category: ['archives','historical'],          region: 'americas', access: 'no_key' },
+  openverse:        { category: ['photos','art'],                   region: 'global',   access: 'no_key' },
+  trove:            { category: ['archives','historical','photos'], region: 'oceania',  access: 'free_key' },
+  digitalnz:        { category: ['archives','historical'],          region: 'oceania',  access: 'free_key' },
+  bhl:              { category: ['botanical','nature','archives'],  region: 'global',   access: 'no_key' },
+  carnegie:         { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  prado:            { category: ['museums','art'],                  region: 'europe',   access: 'no_key', corsBlocked: true },
+  parismusees:      { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key', corsBlocked: true },
+  yale:             { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  picsum:           { category: ['photos'],                         region: 'global',   access: 'no_key' },
+  usgs:             { category: ['science','photos','maps'],        region: 'americas', access: 'no_key' },
+  cooperhewitt:     { category: ['museums','art','fashion','design','architecture'], region: 'americas', access: 'no_key' },
+  tate:             { category: ['museums','art'],                  region: 'uk',       access: 'no_key' },
+  finna:            { category: ['archives','museums','historical'],region: 'europe',   access: 'no_key' },
+  soch:             { category: ['archives','historical'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  joconde:          { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  mnw:              { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  tepapa:           { category: ['museums','art'],                  region: 'oceania',  access: 'no_key' },
+  dpla:             { category: ['archives','art','historical'],    region: 'americas', access: 'free_key' },
+  artsy:            { category: ['art'],                            region: 'global',   access: 'paid_key' },
+  pas:              { category: ['archives','historical'],          region: 'uk',       access: 'no_key' },
+  smg:              { category: ['museums','science'],              region: 'uk',       access: 'no_key' },
+  auckland:         { category: ['museums','art'],                  region: 'oceania',  access: 'no_key' },
+  photogrammar:     { category: ['archives','photos','historical'], region: 'americas', access: 'no_key' },
+  wellcome:         { category: ['archives','science','art'],       region: 'uk',       access: 'no_key' },
+  maas:             { category: ['museums','science','art','fashion'], region: 'oceania',  access: 'no_key' },
+  smk:              { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key' },
+  thyssen:          { category: ['museums','art'],                  region: 'europe',   access: 'no_key', corsBlocked: true },
+  wdl:              { category: ['archives','maps','historical'],   region: 'global',   access: 'no_key' },
+  walters:          { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  princeton:        { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  wikidata:         { category: ['archives','art','photos'],        region: 'global',   access: 'no_key' },
+  noaa:             { category: ['science','photos','nature'],      region: 'americas', access: 'no_key' },
+  hubble:           { category: ['science','photos'],               region: 'global',   access: 'no_key' },
+  cornell:          { category: ['archives','botanical','nature'],  region: 'americas', access: 'no_key' },
+  folger:           { category: ['archives','historical'],          region: 'americas', access: 'no_key' },
+  onb:              { category: ['archives','historical'],          region: 'europe',   access: 'no_key' },
+  nypl:             { category: ['archives','photos','maps'],       region: 'americas', access: 'no_key' },
+  mak:              { category: ['museums','art','fashion'],        region: 'europe',   access: 'no_key' },
+  mna:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  louvre:           { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  mia:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  lacma:            { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  munch:            { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  mauritshuis:      { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  nationalmuseumse: { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  naturalis:        { category: ['nature','science'],               region: 'europe',   access: 'no_key' },
+  nmaahc:           { category: ['museums','art','historical'],     region: 'americas', access: 'no_key' },
+  nasm:             { category: ['museums','science'],              region: 'americas', access: 'no_key' },
+  whitney:          { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  nationalzoo:      { category: ['nature','science'],               region: 'americas', access: 'no_key' },
+  gbiflit:          { category: ['botanical','nature','archives'],  region: 'global',   access: 'no_key' },
+  freersackler:     { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  ago:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  pem:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
+  npg:              { category: ['museums','art'],                  region: 'uk',       access: 'no_key' },
+  louvread:         { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
+  // Phase 2 sources
+  unsplash:         { category: ['photos'],                         region: 'global',   access: 'free_key' },
+  bodleian:         { category: ['archives','art','maps'],          region: 'uk',       access: 'no_key', corsBlocked: true },
+  bsb:              { category: ['archives','maps','historical'],   region: 'europe',   access: 'no_key', corsBlocked: true },
+  cudl:             { category: ['archives','historical','maps'],   region: 'uk',       access: 'no_key', corsBlocked: true },
+  // Phase A — Europeana sub-collections (20)
+  euro_rijksmuseum:  { category: ['museums','art'],               region: 'europe',   access: 'free_key' },
+  euro_fashion:      { category: ['museums','art','fashion'],     region: 'europe',   access: 'free_key' },
+  euro_ddb:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_bnf:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_bne:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_kb:           { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_bn_pl:        { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_nkr:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_photography:  { category: ['photos','archives'],           region: 'europe',   access: 'free_key' },
+  euro_sounds:       { category: ['archives'],                    region: 'europe',   access: 'free_key' },
+  euro_newspapers:   { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_kulturpool:   { category: ['museums','archives'],          region: 'europe',   access: 'free_key' },
+  euro_hispana:      { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_nuk:          { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_estonian:     { category: ['museums','historical'],        region: 'europe',   access: 'free_key' },
+  euro_lithuanian:   { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_latvian:      { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_hungarian:    { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_romanian:     { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  euro_bulgarian:    { category: ['archives','historical'],       region: 'europe',   access: 'free_key' },
+  // Phase A — DPLA hub sub-collections (15)
+  dpla_california:     { category: ['archives','photos','historical'], region: 'americas', access: 'free_key' },
+  dpla_commonwealth:   { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_empire:         { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_mountain_west:  { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_minnesota:      { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_michigan:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_illinois:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_kentucky:       { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_south_carolina: { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_georgia:        { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_texas:          { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_pacific_nw:     { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_ohio:           { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_pennsylvania:   { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  dpla_new_england:    { category: ['archives','historical'],          region: 'americas', access: 'free_key' },
+  // Phase A — Smithsonian sub-museums (15)
+  si_nmah:    { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+  si_nmnh:    { category: ['museums','science','nature'],       region: 'americas', access: 'no_key' },
+  si_npg_dc:  { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+  si_saam:    { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+  si_hmsg:    { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+  si_nzp:     { category: ['nature','science'],                 region: 'americas', access: 'no_key' },
+  si_chndm:   { category: ['museums','design','art','fashion'], region: 'americas', access: 'no_key' },
+  si_fsg:     { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+  si_nmafa:   { category: ['museums','art'],                    region: 'americas', access: 'no_key' },
+  si_nmai:    { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+  si_nmaahc2: { category: ['museums','art','historical'],       region: 'americas', access: 'no_key' },
+  si_nasm2:   { category: ['museums','science'],                region: 'americas', access: 'no_key' },
+  si_npm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+  si_acm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
+  si_renwick: { category: ['museums','art','design'],           region: 'americas', access: 'no_key' },
+  // Phase A — Wikimedia category filters (10)
+  wmc_fashion:         { category: ['art','fashion'],      region: 'global',   access: 'no_key' },
+  wmc_architecture:    { category: ['art'],                region: 'global',   access: 'no_key' },
+  wmc_paintings:       { category: ['art','museums'],      region: 'global',   access: 'no_key' },
+  wmc_sculptures:      { category: ['art','museums'],      region: 'global',   access: 'no_key' },
+  wmc_maps:            { category: ['maps','historical'],  region: 'global',   access: 'no_key' },
+  wmc_natural_history: { category: ['nature','science'],   region: 'global',   access: 'no_key' },
+  wmc_portraits:       { category: ['art','photos'],       region: 'global',   access: 'no_key' },
+  wmc_botanical:       { category: ['botanical','nature'], region: 'global',   access: 'no_key' },
+  wmc_scientific:      { category: ['science'],            region: 'global',   access: 'no_key' },
+  wmc_street:          { category: ['photos'],             region: 'global',   access: 'no_key' },
+  // Phase B — zero-auth free APIs
+  idigbio:            { category: ['nature','science'],               region: 'global',   access: 'no_key' },
+  ala:                { category: ['nature','science'],               region: 'oceania',  access: 'no_key' },
+  // Phase D — niche & specialized
+  nasa_images:        { category: ['science','space','photos'],       region: 'global',   access: 'no_key' },
+  loc:                { category: ['historical','archives','photos'], region: 'usa',      access: 'no_key' },
+  // Phase E — CORS-blocked, cache-first
+  nhm_london:              { category: ['nature','science'],          region: 'uk',       access: 'no_key' },
+  wallace_collection:      { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+  fitzwilliam:             { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+  national_gallery_london: { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+  scottish_national:       { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+};
+
+/* ============================================================
+   PHASE A — SUB-COLLECTION LOOKUP TABLES
+============================================================ */
+const EUROPEANA_PROVIDERS = {
+  euro_rijksmuseum:  { filterParam: 'DATA_PROVIDER', filterValue: 'Rijksmuseum',                                         name: 'Rijksmuseum (Europeana)' },
+  euro_fashion:      { filterParam: 'PROVIDER',      filterValue: 'Europeana Fashion',                                   name: 'Europeana Fashion' },
+  euro_ddb:          { filterParam: 'DATA_PROVIDER', filterValue: 'Deutsche Digitale Bibliothek',                        name: 'Deutsche Digitale Bibliothek' },
+  euro_bnf:          { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioth\u00e8que nationale de France',               name: 'BnF via Europeana' },
+  euro_bne:          { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioteca Nacional de Espa\u00f1a',                  name: 'National Library of Spain' },
+  euro_kb:           { filterParam: 'DATA_PROVIDER', filterValue: 'Koninklijke Bibliotheek',                             name: 'National Library of Netherlands' },
+  euro_bn_pl:        { filterParam: 'DATA_PROVIDER', filterValue: 'Biblioteka Narodowa',                                 name: 'National Library of Poland' },
+  euro_nkr:          { filterParam: 'DATA_PROVIDER', filterValue: 'N\u00e1rodn\u00ed knihovna \u010cR',               name: 'National Library of Czech Republic' },
+  euro_photography:  { filterParam: 'PROVIDER',      filterValue: 'Europeana Photography',                              name: 'Europeana Photography' },
+  euro_sounds:       { filterParam: 'PROVIDER',      filterValue: 'Europeana Sounds',        extra: 'TYPE:IMAGE',       name: 'Europeana Sounds (Images)' },
+  euro_newspapers:   { filterParam: 'PROVIDER',      filterValue: 'Europeana Newspapers',                               name: 'Europeana Newspapers' },
+  euro_kulturpool:   { filterParam: 'DATA_PROVIDER', filterValue: 'Kulturpool',                                         name: 'Kulturpool Austria' },
+  euro_hispana:      { filterParam: 'DATA_PROVIDER', filterValue: 'Hispana',                                            name: 'Hispana Spain' },
+  euro_nuk:          { filterParam: 'DATA_PROVIDER', filterValue: 'Digital Library of Slovenia',                        name: 'Digital Library of Slovenia' },
+  euro_estonian:     { filterParam: 'DATA_PROVIDER', filterValue: 'Estonian National Museum',                           name: 'Estonian National Museum' },
+  euro_lithuanian:   { filterParam: 'DATA_PROVIDER', filterValue: 'Lithuanian Central State Archives',                  name: 'Lithuanian Archives' },
+  euro_latvian:      { filterParam: 'DATA_PROVIDER', filterValue: 'National Library of Latvia',                         name: 'Latvian National Library' },
+  euro_hungarian:    { filterParam: 'DATA_PROVIDER', filterValue: 'Orsz\u00e1gos Sz\u00e9ch\u00e9nyi K\u00f6nyvt\u00e1r', name: 'Hungarian National Library' },
+  euro_romanian:     { filterParam: 'DATA_PROVIDER', filterValue: 'Romanian National Library',                          name: 'Romanian National Library' },
+  euro_bulgarian:    { filterParam: 'DATA_PROVIDER', filterValue: 'Bulgarian National Library',                         name: 'Bulgarian National Library' },
+};
+
+const DPLA_HUBS = {
+  dpla_california:     { provider: 'California Digital Library',                         name: 'California Digital Library' },
+  dpla_commonwealth:   { provider: 'Digital Commonwealth',                              name: 'Digital Commonwealth (DPLA)' },
+  dpla_empire:         { provider: 'Empire State Digital Network',                      name: 'Empire State Network (NY)' },
+  dpla_mountain_west:  { provider: 'Mountain West Digital Library',                     name: 'Mountain West Digital Library' },
+  dpla_minnesota:      { provider: 'Minnesota Digital Library',                         name: 'Minnesota Digital Library' },
+  dpla_michigan:       { provider: 'Michigan Digital Library',                          name: 'Michigan Digital Library' },
+  dpla_illinois:       { provider: 'Illinois Digital Heritage Hub',                     name: 'Illinois Digital Heritage' },
+  dpla_kentucky:       { provider: 'Kentucky Digital Library',                          name: 'Kentucky Digital Library' },
+  dpla_south_carolina: { provider: 'South Carolina Digital Library',                    name: 'South Carolina Digital Library' },
+  dpla_georgia:        { provider: 'Georgia HomePLACE',                                 name: 'Georgia HomePLACE' },
+  dpla_texas:          { provider: 'Texas Digital Library',                             name: 'Texas Digital Library' },
+  dpla_pacific_nw:     { provider: 'Pacific Northwest Digital Collections',             name: 'Pacific Northwest Collections' },
+  dpla_ohio:           { provider: 'Ohio Network of American History Research Centers', name: 'Ohio Digital Network' },
+  dpla_pennsylvania:   { provider: 'PA Digital',                                        name: 'Pennsylvania Digital Collections' },
+  dpla_new_england:    { provider: 'New England Digital Collections',                   name: 'New England Digital Collections' },
+};
+
+const SI_UNITS = {
+  si_nmah:    { code: 'NMAH',   name: 'Nat\u2019l Museum of American History' },
+  si_nmnh:    { code: 'NMNH',   name: 'Nat\u2019l Museum of Natural History' },
+  si_npg_dc:  { code: 'NPG',    name: 'National Portrait Gallery (SI)' },
+  si_saam:    { code: 'SAAM',   name: 'American Art Museum (SI)' },
+  si_hmsg:    { code: 'HMSG',   name: 'Hirshhorn Museum' },
+  si_nzp:     { code: 'NZP',    name: 'Smithsonian National Zoo' },
+  si_chndm:   { code: 'CHNDM',  name: 'Cooper Hewitt Design (SI)' },
+  si_fsg:     { code: 'FSG',    name: 'Freer|Sackler Asian Art' },
+  si_nmafa:   { code: 'NMAFA',  name: 'African Art Museum (SI)' },
+  si_nmai:    { code: 'NMAI',   name: 'American Indian Museum (SI)' },
+  si_nmaahc2: { code: 'NMAAHC',name: 'African American History (SI)' },
+  si_nasm2:   { code: 'NASM',   name: 'Air and Space Museum (SI)' },
+  si_npm:     { code: 'NPM',    name: 'Postal Museum (SI)' },
+  si_acm:     { code: 'ACM',    name: 'Anacostia Community Museum (SI)' },
+  si_renwick: { code: 'SAAM',   name: 'Renwick Gallery (SI)' },
+};
+
+const WIKIMEDIA_CATS = {
+  wmc_fashion:         { cat: 'Fashion',                 name: 'Wikimedia Fashion' },
+  wmc_architecture:    { cat: 'Architecture',            name: 'Wikimedia Architecture' },
+  wmc_paintings:       { cat: 'Paintings',               name: 'Wikimedia Paintings' },
+  wmc_sculptures:      { cat: 'Sculptures',              name: 'Wikimedia Sculptures' },
+  wmc_maps:            { cat: 'Historical_maps',         name: 'Wikimedia Historical Maps' },
+  wmc_natural_history: { cat: 'Natural_history',         name: 'Wikimedia Natural History' },
+  wmc_portraits:       { cat: 'Portraits',               name: 'Wikimedia Portraits' },
+  wmc_botanical:       { cat: 'Botanical_illustrations', name: 'Wikimedia Botanical Illustrations' },
+  wmc_scientific:      { cat: 'Scientific_diagrams',     name: 'Wikimedia Scientific Diagrams' },
+  wmc_street:          { cat: 'Street_photography',      name: 'Wikimedia Street Photography' },
+};
+
+/* Extend source groups with Phase A sub-collections */
+(function() {
+  SOURCE_GROUPS.fashion.push('euro_fashion', 'wmc_fashion', 'si_chndm');
+  SOURCE_GROUPS.museums.push('si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp','si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2','si_npm','si_acm','si_renwick','euro_rijksmuseum','euro_kulturpool','euro_estonian');
+  SOURCE_GROUPS.archives.push(...Object.keys(EUROPEANA_PROVIDERS), ...Object.keys(DPLA_HUBS));
+  SOURCE_GROUPS.artdesign.push('euro_rijksmuseum','euro_fashion','wmc_paintings','wmc_sculptures','wmc_portraits','wmc_architecture','wmc_fashion','si_saam','si_hmsg','si_renwick','si_nmafa','si_fsg');
+  SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','wmc_natural_history','wmc_botanical','idigbio','ala');
+  SOURCE_GROUPS.maps.push('wmc_maps');
+  SOURCE_GROUPS.historical.push(...Object.keys(DPLA_HUBS),'euro_newspapers','euro_ddb','euro_bnf','euro_bne','euro_kb','euro_bn_pl','euro_nkr','euro_kulturpool','euro_hispana','euro_nuk','euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian','euro_romanian','euro_bulgarian','si_nmah','si_npm','si_acm','si_nmai');
+  SOURCE_GROUPS.botanical.push('wmc_botanical');
+  SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala','nasa_images');
+  SOURCE_GROUPS.historical.push('loc');
+  SOURCE_GROUPS.archives.push('loc');
+  // Phase E — CORS-blocked, cache-first
+  SOURCE_GROUPS.museums.push('nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national');
+  SOURCE_GROUPS.nature.push('nhm_london');
+  SOURCE_GROUPS.science.push('nhm_london');
+})();
+
+/* ============================================================
+   SOURCE HEALTH TRACKER
+============================================================ */
+function loadSourceHealth() {
+  try {
+    const saved = sessionStorage.getItem('inspo_health');
+    if (saved) STATE.sourceHealth = JSON.parse(saved);
+  } catch (e) {}
+}
+
+let _healthWriteTimer = null;
+function _flushSourceHealth() {
+  try { sessionStorage.setItem('inspo_health', JSON.stringify(STATE.sourceHealth)); } catch (e) {}
+  _healthWriteTimer = null;
+}
+
+function recordSourceResult(sourceName, resultCount) {
+  const h = STATE.sourceHealth;
+  if (!h[sourceName]) h[sourceName] = { hits: 0, misses: 0, lastSeen: 0 };
+  if (resultCount > 0) {
+    h[sourceName].hits++;
+    h[sourceName].misses  = 0;
+    h[sourceName].lastSeen = Date.now();
+  } else {
+    h[sourceName].misses++;
+  }
+  if (!_healthWriteTimer) _healthWriteTimer = setTimeout(_flushSourceHealth, 2000);
+}
+
+function isSourceHealthy(sourceName) {
+  const h = STATE.sourceHealth[sourceName];
+  if (!h) return true;           // never tried — always allow
+  if (h.misses >= 3) return false; // 3 consecutive misses — skip
+  return true;
+}
+
+function callIfHealthy(sourceName, fetchPromise) {
+  if (STATE.disabledSources.has(sourceName)) return Promise.resolve([]);
+  if (!isSourceHealthy(sourceName)) return Promise.resolve([]);
+  return fetchPromise;
+}
+
+function updateSourcesActiveCounter() {
+  const active = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id)).length;
+  const el = document.getElementById('sources-active-counter');
+  if (el) el.textContent = active + ' sources active';
+}
+
+loadSourceHealth();
+loadDisabledSources();
+updateSourcesActiveCounter();
+
+/* -- Gemini daily counter helpers -- */
+function loadGeminiCounter() {
+  try {
+    const stored = localStorage.getItem('inspo_gemini_count');
+    if (!stored) return;
+    const data = JSON.parse(stored);
+    const today = new Date().toISOString().slice(0, 10);
+    if (data.date === today) {
+      STATE.geminiDailyCount = data.count || 0;
+      STATE.geminiDailyDate  = data.date;
+    } else {
+      STATE.geminiDailyCount = 0;
+      STATE.geminiDailyDate  = today;
+      localStorage.setItem('inspo_gemini_count', JSON.stringify({ count: 0, date: today }));
+    }
+  } catch(e) {}
+}
+
+function incrementGeminiCounter() {
+  try {
+    STATE.geminiDailyCount++;
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('inspo_gemini_count',
+      JSON.stringify({ count: STATE.geminiDailyCount, date: today }));
+    updateGeminiCounterUI();
+  } catch(e) {}
+}
+
+function updateGeminiCounterUI() {
+  const el = document.getElementById('gemini-usage-counter');
+  if (!el) return;
+  const count = STATE.geminiDailyCount;
+  if (count >= 1500) {
+    el.textContent = 'daily limit reached — resets midnight';
+    el.style.color = '#E24B4A';
+    disableGeminiButtons();
+  } else if (count >= 1400) {
+    el.textContent = `✦ ${count} used — approaching limit`;
+    el.style.color = 'var(--accent)';
+  } else {
+    el.textContent = `✦ ${count} / 1500 used today`;
+    el.style.color = 'var(--ink-3)';
+  }
+}
+
+function disableGeminiButtons() {
+  ['analyse-btn', 'interpret-btn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.classList.add('disabled'); btn.setAttribute('disabled', true); }
+  });
+}
+
+function getAITagsCache(itemId) {
+  try {
+    const raw = localStorage.getItem('inspo_aitags_' + itemId);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.timestamp > 86400000) {
+      localStorage.removeItem('inspo_aitags_' + itemId);
+      return null;
+    }
+    return data.tags;
+  } catch(e) { return null; }
+}
+
+function setAITagsCache(itemId, tags) {
+  try {
+    localStorage.setItem('inspo_aitags_' + itemId,
+      JSON.stringify({ tags, timestamp: Date.now() }));
+  } catch(e) {}
+}
+
+loadGeminiCounter();
+
+function loadDisabledSources() {
+  try {
+    const saved = localStorage.getItem('inspo_disabled_sources');
+    if (saved) STATE.disabledSources = new Set(JSON.parse(saved));
+  } catch(e) {}
+}
+
+function saveDisabledSources() {
+  try {
+    localStorage.setItem('inspo_disabled_sources',
+      JSON.stringify([...STATE.disabledSources]));
+  } catch(e) {}
+}
+
+function toggleSource(sourceId) {
+  if (STATE.disabledSources.has(sourceId)) {
+    STATE.disabledSources.delete(sourceId);
+  } else {
+    STATE.disabledSources.add(sourceId);
+  }
+  STATE.activePreset = null; // custom mix — clear preset highlight
+  saveDisabledSources();
+  updateSourcesActiveCounter();
+  updatePresetButtons();
+}
+
+function applyPreset(preset) {
+  if (preset === 'all') {
+    STATE.disabledSources = new Set();
+  } else if (preset === 'none') {
+    STATE.disabledSources = new Set(ALL_SOURCES);
+  } else {
+    const group = SOURCE_GROUPS[preset];
+    if (!group) return;
+    STATE.disabledSources = new Set(ALL_SOURCES.filter(s => !group.includes(s)));
+  }
+  STATE.activePreset = preset;
+  saveDisabledSources();
+  updateSourcesActiveCounter();
+  buildKeyRows();
+  updatePresetButtons();
+}
+
+function updatePresetButtons() {
+  const panel = document.getElementById('source-presets');
+  if (!panel) return;
+  panel.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === STATE.activePreset);
+  });
+}
+
+/* ── Phase 2: source view filtering ── */
+const SOURCE_VIEW_FILTER = { region: '', access: '', category: '' };
+
+function applySourceFilter() {
+  const { region, access, category } = SOURCE_VIEW_FILTER;
+  let visible = 0;
+  document.querySelectorAll('#keys-rows-container .key-source-row').forEach(row => {
+    const id = row.dataset.sourceId;
+    // support toggleId (e.g. rijks → rijksmuseum)
+    const src = KEY_SOURCES.find(s => s.id === id || s.toggleId === id);
+    const meta = SOURCE_META[src?.toggleId || id] || SOURCE_META[id] || {};
+    const regMatch = !region || meta.region === region;
+    const accMatch = !access || meta.access === access;
+    const catMatch = !category || (meta.category || []).includes(category);
+    const show = regMatch && accMatch && catMatch;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const countEl = document.getElementById('filter-source-count');
+  if (countEl) countEl.textContent = visible ? `${visible} sources` : '';
+}
+
+function setSourceViewFilter(dimension, value) {
+  SOURCE_VIEW_FILTER[dimension] = value;
+  // update pill active states
+  const bar = document.getElementById('source-view-filters');
+  if (bar) {
+    bar.querySelectorAll(`.filter-pill[data-filter="${dimension}"]`).forEach(pill => {
+      pill.classList.toggle('active', pill.dataset.value === value);
+    });
+  }
+  applySourceFilter();
+}
+
+/* ============================================================
+   4. UTILITIES
+============================================================ */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function stripHtml(str) {
+  if (!str) return '';
+  return str.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function withTimeout(signal, ms = 3000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  if (signal.aborted) {
+    clearTimeout(timer);
+    controller.abort();
+  } else {
+    signal.addEventListener('abort', () => {
+      clearTimeout(timer);
+      controller.abort();
+    }, { once: true });
+  }
+  return controller.signal;
+}
+
+// ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
+async function fetchFromDataCache(sourceId, keyword) {
+  try {
+    const res = await fetch(`/data/${sourceId}.json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.items || !data.items.length) return null;
+    // Filter items by keyword (simple title/tag match)
+    const kw = keyword.toLowerCase();
+    const filtered = data.items.filter(item =>
+      (item.title && item.title.toLowerCase().includes(kw)) ||
+      (item.tags && item.tags.some(t => t.toLowerCase().includes(kw)))
+    );
+    // If keyword filter returns nothing, return random sample
+    const results = filtered.length > 0 ? filtered :
+      data.items.sort(() => Math.random() - 0.5).slice(0, 20);
+    return results.slice(0, STATE.perSource || 20);
+  } catch { return null; }
+}
+
+function pickOnboardingTerm() {
+  return ONBOARDING_TERMS[Math.floor(Math.random() * ONBOARDING_TERMS.length)];
+}
+
+function getSourceConfig(sourceId) {
+  return KEY_SOURCES.find(s => s.id === sourceId || s.toggleId === sourceId) || null;
+}
+
+function getSourceName(sourceId) {
+  return getSourceConfig(sourceId)?.name || sourceId;
+}
+
+function getSourceDomain(sourceId) {
+  const fromConfig = getSourceConfig(sourceId)?.getKeyUrl;
+  if (fromConfig) {
+    try { return new URL(fromConfig).hostname; } catch {}
+  }
+  return SOURCE_DOMAINS[sourceId] || (sourceId + '.org');
+}
+
+function getSourceMonogram(label) {
+  return (label || '')
+    .replace(/[^a-z0-9\s]/gi, ' ')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => w[0] || '')
+    .join('')
+    .toUpperCase() || '??';
+}
+
+function createSourceIdentity(sourceId, labelText) {
+  const sourceLabel = labelText || getSourceName(sourceId);
+  const domain = getSourceDomain(sourceId);
+  const wrapper = document.createElement('span');
+  wrapper.className = 'source-identity';
+
+  const iconWrap = document.createElement('span');
+  iconWrap.className = 'source-icon-wrap';
+
+  const icon = document.createElement('img');
+  icon.className = 'source-icon';
+  icon.alt = sourceLabel + ' icon';
+  icon.src = 'https://' + domain + '/favicon.ico';
+
+  const mono = document.createElement('span');
+  mono.className = 'source-mono';
+  mono.textContent = getSourceMonogram(sourceLabel);
+
+  icon.onerror = () => {
+    icon.style.display = 'none';
+    mono.style.display = 'inline-flex';
+  };
+
+  iconWrap.appendChild(icon);
+  iconWrap.appendChild(mono);
+
+  const label = document.createElement('span');
+  label.className = 'source-label';
+  label.textContent = sourceLabel;
+
+  wrapper.appendChild(iconWrap);
+  wrapper.appendChild(label);
+
+  return wrapper;
+}
+
+function scoreItemRelevance(item, query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) return 0;
+  const terms = q.split(/\s+/).filter(Boolean);
+  const title = (item.title || '').toLowerCase();
+  const desc = (item.description || '').toLowerCase();
+  const tags = (item.tags || []).join(' ').toLowerCase();
+  const text = `${title} ${desc} ${tags}`;
+
+  let score = 0;
+  if (title.includes(q)) score += 9;
+  if (desc.includes(q)) score += 4;
+  if (text.includes(q)) score += 5;
+
+  let termMatches = 0;
+  terms.forEach(t => {
+    if (title.includes(t)) { score += 3; termMatches++; }
+    else if (desc.includes(t)) { score += 2; termMatches++; }
+    else if (tags.includes(t)) { score += 2; termMatches++; }
+  });
+
+  if (terms.length > 1 && termMatches === terms.length) score += 4;
+  return score;
+}
+
+function getDisplayResults(items, query) {
+  const base = Array.isArray(items) ? [...items] : [];
+  if (!base.length) return [];
+
+  if (STATE.searchMode === 'exact') {
+    const terms = (query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const ranked = base
+      // Layer 2 gate: at least one query term must appear in the item's text
+      .filter(item => {
+        if (!terms.length) return true;
+        const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        return terms.some(t => hay.includes(t));
+      })
+      .map(item => ({ item, score: scoreItemRelevance(item, query) }))
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(x => x.item);
+    return ranked.slice(0, STATE.imageCount);
+  }
+
+  return shuffle(base).slice(0, STATE.imageCount);
+}
+
+function showQuietTip(targetId, text, tipKey) {
+  if (!text) return;
+  if (tipKey && localStorage.getItem(tipKey)) return;
+  const target = document.getElementById(targetId);
+  if (!target) return;
+
+  if (tipKey) localStorage.setItem(tipKey, '1');
+
+  const rect = target.getBoundingClientRect();
+  const tip = document.createElement('div');
+  tip.className = 'quiet-tip';
+  tip.textContent = text;
+  document.body.appendChild(tip);
+
+  const left = Math.max(10, Math.min(window.innerWidth - 230, rect.left + (rect.width / 2) - 90));
+  const top = Math.max(10, rect.top - 38);
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+
+  requestAnimationFrame(() => tip.classList.add('visible'));
+  setTimeout(() => {
+    tip.classList.remove('visible');
+    setTimeout(() => tip.remove(), 260);
+  }, 2600);
+}
+
+/* ============================================================
+   5. STOPWORDS & TAG EXTRACTION
+============================================================ */
+const STOPWORDS = new Set([
+  'the','a','an','of','in','on','at','to','for','with','by','from',
+  'and','or','but','is','are','was','were','be','been','being',
+  'have','has','had','do','does','did','will','would','could','should',
+  'this','that','these','those','it','its','he','she','they',
+  'image','photo','photograph','picture','file','view','unknown',
+  'untitled','circa','century','collection','museum','gallery',
+  'work','object','item','piece','detail','figure','plate','sheet'
+]);
+
+function extractTags(item) {
+  const text = `${item.title} ${item.description}`;
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !STOPWORDS.has(w));
+  const combined = [...new Set([...item.tags, ...words])];
+  return combined.slice(0, 12);
+}
+
+/* ============================================================
+   6. ANTI-AI FILTER
+============================================================ */
+function isLikelyReal(item) {
+  const banned = [
+    'midjourney', 'stable diffusion', 'dall-e', 'dall e',
+    'ai generated', 'ai-generated', 'artificial intelligence generated',
+    'deepfake', 'neural network generated', 'stylegan',
+    'generative ai', 'text-to-image'
+  ];
+  const text = `${item.title} ${item.description} ${item.url}`.toLowerCase();
+  return !banned.some(b => text.includes(b));
+}
+
+/* ============================================================
+   7. 24H CACHE
+============================================================ */
+const CACHE_PREFIX    = 'inspo_cache_';
+const CACHE_TTL       = 24 * 60 * 60 * 1000;
+const CACHE_MAX_BYTES = 4 * 1024 * 1024;
+
+function cacheKey(keyword) {
+  return CACHE_PREFIX + keyword.toLowerCase().trim();
+}
+
+function cacheGet(keyword) {
+  try {
+    const raw = localStorage.getItem(cacheKey(keyword));
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+      localStorage.removeItem(cacheKey(keyword));
+      return null;
+    }
+    return entry;
+  } catch { return null; }
+}
+
+function cacheSet(keyword, results, keywords) {
+  try {
+    pruneCache();
+    const entry = { results, keywords, timestamp: Date.now() };
+    localStorage.setItem(cacheKey(keyword), JSON.stringify(entry));
+  } catch { pruneCache(true); }
+}
+
+function cacheClear(keyword) {
+  localStorage.removeItem(cacheKey(keyword));
+}
+
+function pruneCache(aggressive = false) {
+  const entries = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(CACHE_PREFIX)) continue;
+    try {
+      const raw = localStorage.getItem(k);
+      const entry = JSON.parse(raw);
+      entries.push({ k, timestamp: entry.timestamp, size: raw.length });
+    } catch { localStorage.removeItem(k); }
+  }
+  const now = Date.now();
+  entries.forEach(e => {
+    if (now - e.timestamp > CACHE_TTL) localStorage.removeItem(e.k);
+  });
+  if (aggressive) {
+    const remaining = entries.filter(e => now - e.timestamp <= CACHE_TTL);
+    remaining.sort((a, b) => a.timestamp - b.timestamp);
+    let totalSize = remaining.reduce((s, e) => s + e.size, 0);
+    while (totalSize > CACHE_MAX_BYTES && remaining.length) {
+      const oldest = remaining.shift();
+      localStorage.removeItem(oldest.k);
+      totalSize -= oldest.size;
+    }
+  }
+}
+
+function getCacheAge(keyword) {
+  try {
+    const raw = localStorage.getItem(cacheKey(keyword));
+    if (!raw) return null;
+    const entry = JSON.parse(raw);
+    return Date.now() - entry.timestamp;
+  } catch { return null; }
+}
+
+function formatCacheAge(ms) {
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  return `${hrs}h ago`;
+}
+
+/* ============================================================
+   8. KEYWORD EXPANSION (Datamuse + SEED_MAP)
+============================================================ */
+async function expandKeywords(keyword) {
+  if (!STATE.keywordExpansion) return [keyword];
+  try {
+    const [trg, ml] = await Promise.allSettled([
+      fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`)
+        .then(r => r.json()),
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`)
+        .then(r => r.json()),
+    ]);
+    const words = [
+      ...(trg.status === 'fulfilled' ? trg.value : []),
+      ...(ml.status  === 'fulfilled' ? ml.value  : []),
+    ].map(w => w.word);
+    const seeds = SEED_MAP[keyword.toLowerCase()] || [];
+    return [...new Set([keyword, ...seeds, ...words])].slice(0, 12);
+  } catch (err) {
+    console.warn('expandKeywords failed:', err.message);
+    return [keyword];
+  }
+}
+
+/* ============================================================
+   9. NORMALISERS
+============================================================ */
+function normalizeWikimedia(page) {
+  const info = page.imageinfo?.[0];
+  if (!info?.url) return null;
+  const u = info.url.toLowerCase();
+  if (u.endsWith('.svg') || u.endsWith('.gif')) return null;
+  const meta = info.extmetadata || {};
+  return {
+    id:          `wiki_${page.pageid}`,
+    url:         info.url,
+    thumb:       info.thumburl || info.url,
+    title:       (page.title || '').replace('File:', '').replace(/\.[^.]+$/, ''),
+    description: stripHtml(meta.ImageDescription?.value || ''),
+    source:      'wikimedia',
+    sourceUrl:   info.descriptionurl || '',
+    year:        (meta.DateTimeOriginal?.value || '').slice(0, 4) || null,
+    tags:        [],
+    colors:      [],
+    aiTags:      [],
+  };
+}
+
+function normalizeMet(obj) {
+  const img = obj.primaryImageSmall || obj.primaryImage;
+  if (!img) return null;
+  return {
+    id:          `met_${obj.objectID}`,
+    url:         img,
+    thumb:       img,
+    title:       obj.title || 'Untitled',
+    description: [obj.artistDisplayName, obj.medium, obj.culture].filter(Boolean).join(' — '),
+    source:      'met',
+    sourceUrl:   obj.objectURL || '',
+    year:        (obj.objectDate || '').match(/\d{4}/)?.[0] || null,
+    tags:        (obj.tags || []).map(t => t.term.toLowerCase()),
+    colors:      [],
+    aiTags:      [],
+  };
+}
+
+function normalizeArchive(doc) {
+  const thumb = `https://archive.org/services/img/${doc.identifier}`;
+  const desc = Array.isArray(doc.description)
+    ? doc.description.join(' ')
+    : (doc.description || '');
+  const subjects = Array.isArray(doc.subject)
+    ? doc.subject
+    : (doc.subject ? [doc.subject] : []);
+  return {
+    id:          `archive_${doc.identifier}`,
+    url:         thumb,
+    thumb:       thumb,
+    title:       Array.isArray(doc.title) ? doc.title[0] : (doc.title || 'Untitled'),
+    description: desc,
+    source:      'archive',
+    sourceUrl:   `https://archive.org/details/${doc.identifier}`,
+    year:        (doc.date || '').slice(0, 4) || null,
+    tags:        subjects.map(s => String(s).toLowerCase()),
+    colors:      [],
+    aiTags:      [],
+  };
+}
+
+/* ============================================================
+   10. API FETCH FUNCTIONS
+============================================================ */
+async function fetchWikimedia(keyword, limit, signal) {
+
+  try {
+    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
+    const res = await fetch(searchUrl, { signal });
+    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; return fetchWikimediaRetry(keyword, limit, signal); }
+    const data = await res.json();
+    const hits = (data.query?.search || []).filter(h => {
+      const t = h.title.toLowerCase();
+      return !t.includes('.svg') && !t.includes('diagram') && !t.includes('map')
+          && !t.includes('logo') && !t.includes('icon') && !t.includes('chart');
+    });
+    if (!hits.length) return [];
+
+    // Batch up to 10 titles per request
+    const results = [];
+    for (let i = 0; i < hits.length; i += 10) {
+      const batch = hits.slice(i, i + 10);
+      const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
+      try {
+        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
+        const infoRes = await fetch(infoUrl, { signal });
+        const infoData = await infoRes.json();
+        for (const page of Object.values(infoData.query?.pages || {})) {
+          const item = normalizeWikimedia(page);
+          if (!item) continue;
+          if (!item.url.match(/\.(jpe?g|png)(\?|$)/i)) continue;
+          item.tags = extractTags(item);
+          if (isLikelyReal(item)) results.push(item);
+        }
+      } catch (batchErr) {
+        console.warn('Wikimedia batch failed:', batchErr.message);
+      }
+    }
+    return results;
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('Wikimedia failed:', err.message);
+    return [];
+  }
+}
+
+async function fetchWikimediaRetry(keyword, limit, signal) {
+
+  try {
+    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
+    const res = await fetch(searchUrl, { signal });
+    const data = await res.json();
+    const hits = (data.query?.search || []);
+    if (!hits.length) return [];
+    const titles = hits.slice(0, 10).map(h => encodeURIComponent(h.title)).join('|');
+    const infoRes = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`, { signal });
+    const infoData = await infoRes.json();
+    return Object.values(infoData.query?.pages || {})
+      .map(normalizeWikimedia).filter(Boolean)
+      .filter(item => isLikelyReal(item))
+      .map(item => { item.tags = extractTags(item); return item; });
+  } catch { return []; }
+}
+
+async function fetchWikimediaCategory(category, keyword, limit, signal) {
+  try {
+    const catPart = `incategory:${category}`;
+    const srsearch = keyword ? `${encodeURIComponent(keyword)}+${catPart}` : catPart;
+    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${srsearch}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
+    const res = await fetch(searchUrl, { signal });
+    if (res.status === 429) return [];
+    const data = await res.json();
+    const hits = (data.query?.search || []).filter(h => {
+      const t = h.title.toLowerCase();
+      return !t.includes('.svg') && !t.includes('logo') && !t.includes('icon') && !t.includes('chart');
+    });
+    if (!hits.length) return [];
+    const results = [];
+    for (let i = 0; i < hits.length; i += 10) {
+      const batch = hits.slice(i, i + 10);
+      const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
+      try {
+        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
+        const infoRes = await fetch(infoUrl, { signal });
+        const infoData = await infoRes.json();
+        for (const page of Object.values(infoData.query?.pages || {})) {
+          const item = normalizeWikimedia(page);
+          if (!item) continue;
+          if (!item.url.match(/\.(jpe?g|png)(\?|$)/i)) continue;
+          item.tags = extractTags(item);
+          if (isLikelyReal(item)) results.push(item);
+        }
+      } catch (batchErr) { console.warn('WMC category batch failed:', batchErr.message); }
+    }
+    return results;
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('Wikimedia category failed:', err.message);
+    return [];
+  }
+}
+
+async function fetchMet(keyword, limit, signal, offset = 0) {
+
+  try {
+    const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword)}&hasImages=true&offset=${offset}`;
+    const res = await fetch(searchUrl, { signal });
+    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; }
+    const data = await res.json();
+    const ids = (data.objectIDs || []).slice(0, limit);
+    if (!ids.length) return [];
+    const fetches = ids.slice(0, CONSTANTS.MET_DETAIL_LIMIT).map(id =>
+      fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal })
+        .then(r => r.json())
+        .catch(() => null)
+    );
+    const objects = await Promise.all(fetches);
+    return objects
+      .filter(Boolean)
+      .map(normalizeMet)
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .map(item => { item.tags = extractTags(item); return item; });
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('Met failed:', err.message);
+    return [];
+  }
+}
+
+async function fetchArchive(keyword, limit, signal) {
+  const s = withTimeout(signal, 5000);
+  // Note: run via localhost or Netlify to avoid file:// CORS warnings
+  try {
+    const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`;
+    const res = await fetch(url, { signal: s });
+    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (s.aborted) return []; }
+    const data = await res.json();
+    const docs = data.response?.docs || [];
+    return docs
+      .map(normalizeArchive)
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .map(item => { item.tags = extractTags(item); return item; });
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('Archive.org unavailable (CORS) — skipping source');
+    return [];
+  }
+}
+
+/* ============================================================
+   10b. NASA / RIJKSMUSEUM / EUROPEANA
+============================================================ */
+async function fetchNASA(keyword, limit, signal) {
+
+  try {
+    const res = await fetch(
+      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NASA fetch failed');
+    const data = await res.json();
+    const items = data.collection?.items || [];
+    return items
+      .filter(item => item.links?.[0]?.href && item.data?.[0])
+      .map(item => {
+        const meta = item.data[0];
+        return {
+          id:          `nasa_${meta.nasa_id}`,
+          url:         item.links[0].href,
+          thumb:       item.links[0].href,
+          title:       meta.title || 'NASA Image',
+          description: meta.description || '',
+          source:      'nasa',
+          sourceUrl:   `https://images.nasa.gov/details/${meta.nasa_id}`,
+          year:        (meta.date_created || '').slice(0, 4) || null,
+          tags:        (meta.keywords || []).map(k => k.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('NASA failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchRijksmuseum(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://data.rijksmuseum.nl/search/collection?description=${encodeURIComponent(keyword)}&imageAvailable=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Rijks failed');
+    const data = await res.json();
+    const items = data.orderedItems || [];
+
+    // Resolve first `limit` identifiers in parallel
+    const resolved = await Promise.allSettled(
+      items.slice(0, limit).map(item =>
+        fetch(item.id, {
+          signal,
+          headers: { Accept: 'application/json' }
+        }).then(r => r.json())
+      )
+    );
+
+    return resolved
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value)
+      .filter(obj => obj.representation?.[0]?.id)
+      .map(obj => ({
+        id:          `rijks_${obj.id?.split('/').pop()}`,
+        url:         obj.representation[0].id,
+        thumb:       obj.representation[0].id,
+        title:       obj._label || 'Rijksmuseum Object',
+        description: '',
+        source:      'rijksmuseum',
+        sourceUrl:   obj.id || '',
+        year:        null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Rijksmuseum failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchEuropeana(keyword, limit, signal, start = 1) {
+  if (!STATE.europeanaKey) return [];
+
+  try {
+    const res = await fetch(
+      `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&start=${start}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Europeana fetch failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.edmIsShownBy?.[0] || item.edmPreview?.[0])
+      .map(item => ({
+        id:          `euro_${item.id.replace(/\//g, '_')}`,
+        url:         item.edmIsShownBy?.[0] || item.edmPreview?.[0],
+        thumb:       item.edmPreview?.[0] || item.edmIsShownBy?.[0],
+        title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Untitled'),
+        description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
+        source:      'europeana',
+        sourceUrl:   item.guid || '',
+        year:        (item.year?.[0] || '').toString().slice(0, 4) || null,
+        tags:        (item.dcSubject || []).map(s => s.toLowerCase()),
+        colors:      [],
+        aiTags:      [],
+      }))
+      .map(item => { item.tags = extractTags(item); return item; })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Europeana failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, limit, signal, extraQf = '') {
+  if (!STATE.europeanaKey) return [];
+  try {
+    let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&qf=${filterParam}:${encodeURIComponent(filterValue)}`;
+    if (extraQf) url += `&qf=${encodeURIComponent(extraQf)}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error('Europeana filtered fetch failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.edmIsShownBy?.[0] || item.edmPreview?.[0])
+      .map(item => ({
+        id:          `eurofilt_${filterParam}_${item.id.replace(/\//g, '_')}`,
+        url:         item.edmIsShownBy?.[0] || item.edmPreview?.[0],
+        thumb:       item.edmPreview?.[0] || item.edmIsShownBy?.[0],
+        title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Untitled'),
+        description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
+        source:      'europeana',
+        sourceUrl:   item.guid || '',
+        year:        (item.year?.[0] || '').toString().slice(0, 4) || null,
+        tags:        (item.dcSubject || []).map(s => s.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .map(item => { item.tags = extractTags(item); return item; })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Europeana filtered failed:', e.message);
+    return [];
+  }
+}
+
+/* ============================================================
+   10c. HARVARD / SMITHSONIAN / PEXELS
+============================================================ */
+async function fetchHarvard(keyword, limit, signal) {
+  if (!STATE.harvardKey) return [];
+
+  try {
+    const res = await fetch(
+      `https://api.harvardartmuseums.org/object?apikey=${STATE.harvardKey}&keyword=${encodeURIComponent(keyword)}&hasimage=1&size=${limit}&fields=objectid,title,description,dated,primaryimageurl,url,people,medium`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Harvard fetch failed');
+    const data = await res.json();
+    return (data.records || [])
+      .filter(obj => obj.primaryimageurl)
+      .map(obj => ({
+        id:          `harvard_${obj.objectid}`,
+        url:         obj.primaryimageurl,
+        thumb:       obj.primaryimageurl,
+        title:       obj.title || 'Untitled',
+        description: [obj.people?.[0]?.name, obj.medium, obj.dated].filter(Boolean).join(' — '),
+        source:      'harvard',
+        sourceUrl:   obj.url || '',
+        year:        (obj.dated || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors:      [],
+        aiTags:      [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Harvard failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchSmithsonian(keyword, limit, signal) {
+  try {
+
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Smithsonian fetch failed');
+    const data = await res.json();
+    const rows = data.response?.rows || [];
+    return rows
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `si_${row.id}`,
+          url:         media.thumbnail || media.content,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'Untitled',
+          description: row.content?.indexedStructured?.object_type?.[0] || '',
+          source:      'smithsonian',
+          sourceUrl:   `https://www.si.edu/object/${row.id}`,
+          year:        (row.content?.indexedStructured?.date?.[0] || '').slice(0, 4) || null,
+          tags:        (row.content?.indexedStructured?.topic || []).map(t => t.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Smithsonian failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
+  try {
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=${unitCode}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Smithsonian unit fetch failed');
+    const data = await res.json();
+    const rows = data.response?.rows || [];
+    return rows
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `si_${unitCode.toLowerCase()}_${row.id}`,
+          url:         media.thumbnail || media.content,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'Untitled',
+          description: row.content?.indexedStructured?.object_type?.[0] || '',
+          source:      'smithsonian',
+          sourceUrl:   `https://www.si.edu/object/${row.id}`,
+          year:        (row.content?.indexedStructured?.date?.[0] || '').slice(0, 4) || null,
+          tags:        (row.content?.indexedStructured?.topic || []).map(t => t.toLowerCase()),
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Smithsonian unit fetch failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchPexels(keyword, limit, signal) {
+  if (!STATE.pexelsKey) return [];
+
+  try {
+    const res = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(keyword)}&per_page=${limit}`,
+      {
+        signal,
+        headers: { Authorization: STATE.pexelsKey }
+      }
+    );
+    if (!res.ok) throw new Error('Pexels fetch failed');
+    const data = await res.json();
+    return (data.photos || []).map(photo => ({
+      id:          `pexels_${photo.id}`,
+      url:         photo.src.large,
+      thumb:       photo.src.medium,
+      title:       photo.alt || 'Pexels Photo',
+      description: `Photo by ${photo.photographer}`,
+      source:      'pexels',
+      sourceUrl:   photo.url,
+      year:        null,
+      tags:        [],
+      colors:      [],
+      aiTags:      [],
+    }))
+    .filter(isLikelyReal)
+    .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Pexels failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchINaturalist(keyword, limit, signal) {
+
+  try {
+    const res = await fetch(
+      `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(keyword)}&photos=true&per_page=${limit}&order=votes&license=cc-by,cc-by-nc,cc0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('iNaturalist fetch failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(obs => obs.photos && obs.photos.length)
+      .map(obs => {
+        const rawUrl  = obs.photos[0].url || '';
+        const thumb   = rawUrl.replace('/square.', '/medium.');
+        const fullUrl = rawUrl.replace('/square.', '/large.');
+        const title   = (obs.taxon && (obs.taxon.preferred_common_name || obs.taxon.name))
+                      || obs.species_guess || 'Observation';
+        return {
+          id:          `inaturalist_${obs.id}`,
+          url:         fullUrl,
+          thumb,
+          title,
+          description: obs.description || obs.place_guess || '',
+          source:      'inaturalist',
+          sourceUrl:   `https://www.inaturalist.org/observations/${obs.id}`,
+          year:        obs.observed_on ? obs.observed_on.slice(0, 4) : null,
+          tags:        [title, obs.place_guess].filter(Boolean),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(item => item.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('iNaturalist failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchLOC(keyword, limit, signal, sp = 1) {
+
+  try {
+    const res = await fetch(
+      `https://www.loc.gov/search/?q=${encodeURIComponent(keyword)}&fo=json&fa=online-format:image&c=${limit}&sp=${sp}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('LOC fetch failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.image_url)
+      .map(item => {
+        const img   = Array.isArray(item.image_url)
+          ? (Array.isArray(item.image_url[0]) ? item.image_url[0][0] : item.image_url[0])
+          : item.image_url;
+        const title = Array.isArray(item.title) ? item.title[0] : (item.title || 'LOC Image');
+        const desc  = Array.isArray(item.description) ? item.description[0] : (item.description || '');
+        return {
+          id:          `loc_${encodeURIComponent(item.id || title)}`,
+          url:         img,
+          thumb:       img,
+          title,
+          description: desc,
+          source:      'loc',
+          sourceUrl:   item.id || '',
+          year:        item.date ? String(item.date).slice(0, 4) : null,
+          tags:        (item.subject || []).map(t => t.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(item => item.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('LOC failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchOpenLibrary(keyword, limit, signal) {
+
+  try {
+    const res = await fetch(
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(keyword)}&fields=cover_i,title,author_name,subject,first_publish_year&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('OpenLibrary fetch failed');
+    const data = await res.json();
+    return (data.docs || [])
+      .filter(doc => doc.cover_i)
+      .map(doc => ({
+        id:          `openlibrary_${doc.cover_i}`,
+        url:         `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`,
+        thumb:       `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`,
+        title:       doc.title || 'Book Cover',
+        description: (doc.author_name || [])[0] || '',
+        source:      'openlibrary',
+        sourceUrl:   `https://openlibrary.org/search?q=${encodeURIComponent(doc.title || '')}`,
+        year:        doc.first_publish_year ? String(doc.first_publish_year) : null,
+        tags:        (doc.subject || []).slice(0, 5).map(t => t.toLowerCase()),
+        colors:      [],
+        aiTags:      [],
+      }))
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('OpenLibrary failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchChicagoArt(keyword, limit, signal, page = 1) {
+  try {
+
+    const res = await fetch(
+      `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(keyword)}&limit=${limit}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles&page=${page}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('AIC failed');
+    const data = await res.json();
+    const iiif = data.config?.iiif_url || 'https://www.artic.edu/iiif/2';
+    return (data.data || [])
+      .filter(obj => obj.image_id)
+      .map(obj => ({
+        id:          `aic_${obj.id}`,
+        url:         `${iiif}/${obj.image_id}/full/843,/0/default.jpg`,
+        thumb:       `${iiif}/${obj.image_id}/full/400,/0/default.jpg`,
+        title:       obj.title || 'Untitled',
+        description: [obj.artist_display, obj.medium_display, obj.date_display]
+          .filter(Boolean).join(' — '),
+        source:      'chicago',
+        sourceUrl:   `https://www.artic.edu/artworks/${obj.id}`,
+        year:        (obj.date_display || '').match(/\d{4}/)?.[0] || null,
+        tags:        (obj.subject_titles || []).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('AIC failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchCleveland(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(keyword)}&has_image=1&limit=${limit}&skip=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Cleveland failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(obj => obj.images?.web?.url)
+      .map(obj => ({
+        id:          `cle_${obj.id}`,
+        url:         obj.images.web.url,
+        thumb:       obj.images.web.url,
+        title:       obj.title || 'Untitled',
+        description: [obj.creators?.[0]?.description, obj.technique, obj.creation_date]
+          .filter(Boolean).join(' — '),
+        source:      'cleveland',
+        sourceUrl:   obj.url || `https://www.clevelandart.org/art/${obj.id}`,
+        year:        (obj.creation_date || '').match(/\d{4}/)?.[0] || null,
+        tags:        (obj.tags || []).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Cleveland failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchVA(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(keyword)}&images_exist=1&page_size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('V&A failed');
+    const data = await res.json();
+    return (data.records || [])
+      .filter(obj => obj._primaryImageId)
+      .map(obj => ({
+        id:          `va_${obj.systemNumber}`,
+        url:         `https://framemark.vam.ac.uk/collections/${obj._primaryImageId}/full/735,/0/default.jpg`,
+        thumb:       `https://framemark.vam.ac.uk/collections/${obj._primaryImageId}/full/400,/0/default.jpg`,
+        title:       obj._primaryTitle || 'Untitled',
+        description: [obj._primaryMaker?.name, obj._primaryDate]
+          .filter(Boolean).join(' — '),
+        source:      'va',
+        sourceUrl:   `https://collections.vam.ac.uk/item/${obj.systemNumber}`,
+        year:        (obj._primaryDate || '').match(/\d{4}/)?.[0] || null,
+        tags:        obj._currentLocation?.displayName
+          ? [obj._currentLocation.displayName.toLowerCase()] : [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('V&A failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchFlickrCommons(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=a6d819499131071f21efa8a74b2accc8&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&sort=relevance`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Flickr failed');
+    const data = await res.json();
+    return (data.photos?.photo || [])
+      .map(p => ({
+        id:          `flickr_${p.id}`,
+        url:         `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
+        thumb:       `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_m.jpg`,
+        title:       p.title || 'Flickr Photo',
+        description: '',
+        source:      'flickr',
+        sourceUrl:   `https://www.flickr.com/photos/${p.owner}/${p.id}`,
+        year:        null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Flickr failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchPixabay(keyword, limit, signal) {
+  if (!STATE.pixabayKey) return [];
+  const pbKey = 'pixabay_' + keyword;
+  const pbCached = cacheGet(pbKey);
+  if (pbCached) return pbCached.results.slice(0, limit);
+  try {
+
+    const res = await fetch(
+      `https://pixabay.com/api/?key=${STATE.pixabayKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=${limit}&safesearch=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Pixabay failed');
+    const data = await res.json();
+    const results = (data.hits || [])
+      .map(img => ({
+        id:          `pixabay_${img.id}`,
+        url:         img.largeImageURL,
+        thumb:       img.webformatURL,
+        title:       img.tags || 'Pixabay Image',
+        description: `by ${img.user}`,
+        source:      'pixabay',
+        sourceUrl:   img.pageURL,
+        year:        null,
+        tags:        (img.tags || '').split(',').map(t => t.trim().toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+    cacheSet(pbKey, results, [keyword]);
+    return results;
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Pixabay failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchWikiArt(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://www.wikiart.org/en/search/${encodeURIComponent(keyword)}/1?json=2&layout=new`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('WikiArt failed');
+    const data = await res.json();
+    const paintings = data.Paintings || [];
+    return paintings
+      .filter(p => p.image)
+      .map(p => ({
+        id:          `wikiart_${p.id}`,
+        url:         p.image,
+        thumb:       p.image,
+        title:       p.title || 'Untitled',
+        description: [p.artistName, p.completitionYear]
+          .filter(Boolean).join(' — '),
+        source:      'wikiart',
+        sourceUrl:   p.artistUrl
+          ? `https://www.wikiart.org${p.artistUrl}`
+          : 'https://www.wikiart.org',
+        year:        p.completitionYear?.toString() || null,
+        tags:        [p.style, p.genre, p.period]
+          .filter(Boolean).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('WikiArt failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNordicMuseum(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://api.nordiskamuseet.se/v1/objects?search=${encodeURIComponent(keyword)}&mediaLicense=*&page_size=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Nordic failed');
+    const data = await res.json();
+    return (data.objects || data.items || [])
+      .filter(obj => obj.imageUrl || obj.image_url || obj.media?.[0]?.uri)
+      .map(obj => {
+        const img = obj.imageUrl || obj.image_url || obj.media?.[0]?.uri;
+        return {
+          id:          `nordic_${obj.id}`,
+          url:         img,
+          thumb:       img,
+          title:       obj.title || obj.name || 'Nordic Object',
+          description: obj.description || obj.material || '',
+          source:      'nordic',
+          sourceUrl:   obj.url || `https://www.nordiskamuseet.se/en/objects/${obj.id}`,
+          year:        (obj.date || obj.year || '').toString().slice(0, 4) || null,
+          tags:        (obj.tags || obj.keywords || []).map(t => t.toLowerCase()),
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Nordic Museum failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchGetty(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://data.getty.edu/museum/collection/object?q=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Getty failed');
+    const data = await res.json();
+    return (data.items || [])
+      .map(item => {
+        const imgUrl = item.subject_of?.[0]?.digitally_shown_by?.[0]?.access_point?.[0]?.id;
+        if (!imgUrl) return null;
+        return {
+          id:          `getty_${(item.id || '').split('/').pop()}`,
+          url:         imgUrl,
+          thumb:       imgUrl,
+          title:       item.label?.en?.[0] || 'Getty Object',
+          description: item.produced_by?.carried_out_by?.[0]?.label?.en?.[0] || '',
+          source:      'getty',
+          sourceUrl:   item.id || '',
+          year:        item.timespan?.begin_of_the_begin?.slice(0, 4) || null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Getty failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNGA(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.nga.gov/art/tms/objects?q=${encodeURIComponent(keyword)}&hasimages=1&limit=${limit}&offset=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NGA failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.iiifThumbUrl)
+      .map(item => ({
+        id:          `nga_${item.objectId}`,
+        url:         (item.iiifThumbUrl || '').replace('/thumb/', '/full/'),
+        thumb:       item.iiifThumbUrl,
+        title:       item.title || 'NGA Object',
+        description: item.people?.[0]?.displayName || '',
+        source:      'nga',
+        sourceUrl:   item.url || '',
+        year:        (item.displayDate || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('NGA failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchGBIF(keyword, limit, signal, offset = 0) {
+  try {
+
+    const res = await fetch(
+      `https://api.gbif.org/v1/occurrence/search?q=${encodeURIComponent(keyword)}&mediaType=StillImage&limit=${limit}&offset=${offset}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('GBIF failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.media?.[0]?.identifier)
+      .map(item => ({
+        id:          `gbif_${item.key}`,
+        url:         item.media[0].identifier,
+        thumb:       item.media[0].identifier,
+        title:       item.species || item.verbatimScientificName || 'Species',
+        description: item.country || '',
+        source:      'gbif',
+        sourceUrl:   `https://www.gbif.org/occurrence/${item.gbifID || item.key}`,
+        year:        (item.eventDate || '').slice(0, 4) || null,
+        tags:        [item.species, item.country].filter(Boolean).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('GBIF failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchEOL(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://eol.org/api/search/1.0.json?q=${encodeURIComponent(keyword)}&page=1`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('EOL search failed');
+    const data = await res.json();
+    const results = (data.results || []).slice(0, Math.min(5, limit));
+    if (!results.length) return [];
+    const pages = await Promise.allSettled(
+      results.map(r =>
+        fetch(`https://eol.org/api/pages/1.0/${r.id}.json?images_per_page=1&details=true`, { signal })
+          .then(r2 => r2.json())
+      )
+    );
+    return pages
+      .filter(p => p.status === 'fulfilled')
+      .map((p, i) => {
+        const media = p.value?.taxonConcept?.dataObjects?.[0];
+        if (!media?.eolMediaURL) return null;
+        return {
+          id:          `eol_${results[i].id}`,
+          url:         media.eolMediaURL,
+          thumb:       media.eolMediaURL,
+          title:       results[i].title || 'EOL Species',
+          description: '',
+          source:      'eol',
+          sourceUrl:   `https://eol.org/pages/${results[i].id}`,
+          year:        null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('EOL failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchAPOD(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=${limit}&thumbs=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('APOD failed');
+    const data = await res.json();
+    return (Array.isArray(data) ? data : [])
+      .filter(item => item.media_type === 'image')
+      .map(item => ({
+        id:          `apod_${(item.date || '').replace(/-/g, '')}`,
+        url:         item.hdurl || item.url,
+        thumb:       item.url,
+        title:       item.title || 'NASA APOD',
+        description: item.explanation?.slice(0, 120) || '',
+        source:      'apod',
+        sourceUrl:   `https://apod.nasa.gov/apod/ap${(item.date || '').replace(/-/g, '').slice(2)}.html`,
+        year:        (item.date || '').slice(0, 4) || null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('APOD failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchGallica(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 5000);
+    const query = `dc.type+all+"image"+and+${encodeURIComponent(keyword)}`;
+    const res = await fetch(
+      `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=${query}&maximumRecords=${limit}&startRecord=1&format=json`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Gallica failed');
+    const data = await res.json();
+    const records = data.records?.record || [];
+    return records
+      .map(rec => {
+        const d = rec.recordData;
+        const identifier = d?.['dc:identifier']?.[0] || '';
+        if (!identifier) return null;
+        return {
+          id:          `gallica_${identifier.split('/').pop()}`,
+          url:         identifier + '.thumbnail',
+          thumb:       identifier + '.thumbnail',
+          title:       d?.['dc:title']?.[0] || 'Gallica Item',
+          description: d?.['dc:description']?.[0] || '',
+          source:      'gallica',
+          sourceUrl:   identifier,
+          year:        d?.['dc:date']?.[0]?.slice(0, 4) || null,
+          tags:        (d?.['dc:subject'] || []).map(t => t.toLowerCase()),
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Gallica failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchChroniclingAmerica(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://chroniclingamerica.loc.gov/search/pages/results/?andtext=${encodeURIComponent(keyword)}&format=json&rows=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('ChronAm failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.id)
+      .map(item => ({
+        id:          `chron_${item.id.replace(/\//g, '_')}`,
+        url:         `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:50/0/default.jpg`,
+        thumb:       `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:25/0/default.jpg`,
+        title:       `${item.title || 'Newspaper'} — ${(item.date || '').slice(0, 4)}`,
+        description: item.ocr_eng?.slice(0, 100) || '',
+        source:      'chronicling',
+        sourceUrl:   `https://chroniclingamerica.loc.gov${item.id}`,
+        year:        (item.date || '').slice(0, 4) || null,
+        tags:        (item.subject || []).map(s => s.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('ChronAm failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchOpenverse(keyword, limit, signal, page = 1) {
+  try {
+
+    const res = await fetch(
+      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(keyword)}&license_type=commercial&page_size=${limit}&page=${page}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Openverse failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.url)
+      .map(item => ({
+        id:          `openverse_${item.id}`,
+        url:         item.url,
+        thumb:       item.thumbnail || item.url,
+        title:       item.title || 'Openverse Image',
+        description: item.creator ? `by ${item.creator}` : '',
+        source:      'openverse',
+        sourceUrl:   item.foreign_landing_url || item.url,
+        year:        null,
+        tags:        (item.tags || []).map(t => t.name?.toLowerCase()).filter(Boolean),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Openverse failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchTrove(keyword, limit, signal) {
+  if (!STATE.troveKey) return [];
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://api.trove.nla.gov.au/v3/result?q=${encodeURIComponent(keyword)}&category=picture&encoding=json&n=${limit}&key=${STATE.troveKey}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Trove failed');
+    const data = await res.json();
+    const works = data.response?.zone?.[0]?.records?.work || [];
+    return works
+      .map(item => {
+        const thumb = item.identifier?.find(i => i.linktype === 'thumbnail')?.value || '';
+        if (!thumb) return null;
+        return {
+          id:          `trove_${item.id}`,
+          url:         thumb,
+          thumb:       thumb,
+          title:       item.title || 'Trove Item',
+          description: item.contributor?.[0] || '',
+          source:      'trove',
+          sourceUrl:   item.troveUrl || '',
+          year:        (item.issued || '').slice(0, 4) || null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Trove failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchDigitalNZ(keyword, limit, signal) {
+  if (!STATE.digitalnzKey) return [];
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://api.digitalnz.org/records.json?text=${encodeURIComponent(keyword)}&and[category][]=Images&per_page=${limit}&api_key=${STATE.digitalnzKey}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('DigitalNZ failed');
+    const data = await res.json();
+    return (data.search?.results || [])
+      .filter(item => item.thumbnail_url)
+      .map(item => ({
+        id:          `dnz_${item.id}`,
+        url:         item.thumbnail_url,
+        thumb:       item.thumbnail_url,
+        title:       item.title || 'DigitalNZ Item',
+        description: item.description || '',
+        source:      'digitalnz',
+        sourceUrl:   item.landing_url || '',
+        year:        item.date?.[0]?.slice(0, 4) || null,
+        tags:        (item.subject || []).map(s => s.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('DigitalNZ failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchBHL(keyword, limit, signal) {
+  try {
+
+    const BHL_KEY = '00000000-0000-0000-0000-000000000000';
+    const res = await fetch(
+      `https://www.biodiversitylibrary.org/api3?op=GetTitleSearchSimple&title=${encodeURIComponent(keyword)}&apikey=${BHL_KEY}&format=json`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('BHL failed');
+    const data = await res.json();
+    const titles = (data.Result || []).slice(0, 3);
+    if (!titles.length) return [];
+    const itemID = titles[0].Items?.[0]?.ItemID;
+    if (!itemID) return [];
+    const res2 = await fetch(
+      `https://www.biodiversitylibrary.org/api3?op=GetItemMetadata&id=${itemID}&pages=true&ocr=false&parts=false&apikey=${BHL_KEY}&format=json`,
+      { signal }
+    );
+    if (!res2.ok) throw new Error('BHL pages failed');
+    const data2 = await res2.json();
+    const titleFull = data2.Result?.[0]?.FullTitle || 'BHL Title';
+    const pages = (data2.Result?.[0]?.Pages || []).filter(p => p.PageID).slice(0, limit);
+    return pages
+      .map(page => ({
+        id:          `bhl_${page.PageID}`,
+        url:         `https://www.biodiversitylibrary.org/pagethumb/${page.PageID}/500/500`,
+        thumb:       `https://www.biodiversitylibrary.org/pagethumb/${page.PageID}/200/200`,
+        title:       `${titleFull} p.${page.PageNumber || '?'}`,
+        description: '',
+        source:      'bhl',
+        sourceUrl:   `https://www.biodiversitylibrary.org/page/${page.PageID}`,
+        year:        null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('BHL failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchCarnegie(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.collection.carnegieart.org/artworks?search[search]=${encodeURIComponent(keyword)}&per_page=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Carnegie failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(item => item.image_url)
+      .map(item => ({
+        id:          `cmoa_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image_url,
+        thumb:       item.image_url,
+        title:       item.title || 'CMOA Object',
+        description: item.artist || '',
+        source:      'carnegie',
+        sourceUrl:   `https://collection.carnegieart.org/objects/${encodeURIComponent(item.id || '')}`,
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Carnegie failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchPrado(keyword, limit, signal) {
+  // Try pre-fetched data cache first
+  const cached = await fetchFromDataCache('prado', keyword);
+  if (cached) return cached;
+  // Fall back to direct API (may fail due to CORS)
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://www.museodelprado.es/api/v1/artwork?language=en&keyword=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Prado failed');
+    const data = await res.json();
+    return (data.items || data.artworks || [])
+      .filter(item => item.image?.large || item.image?.medium || item.image?.small)
+      .map(item => ({
+        id:          `prado_${item.id}`,
+        url:         item.image?.large || item.image?.medium || item.image?.small,
+        thumb:       item.image?.small || item.image?.medium || item.image?.large,
+        title:       item.title || 'Prado Work',
+        description: item.artist?.name || '',
+        source:      'prado',
+        sourceUrl:   `https://www.museodelprado.es/en/the-collection/art-work/${item.slug || item.id}`,
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return []; // CORS best-effort — fail silently
+  }
+}
+
+async function fetchParisMusees(keyword, limit, signal) {
+  // Try pre-fetched data cache first
+  const cached = await fetchFromDataCache('parismusees', keyword);
+  if (cached) return cached;
+  // Fall back to direct API (may fail due to CORS)
+  try {
+    const s = withTimeout(signal, 5000);
+    const body = JSON.stringify({
+      query: `{ nodeQuery(filter: {conditions: [{field: "title", value: "${keyword.replace(/"/g, '')}", operator: LIKE}]}, limit: ${limit}) { entities { ... on NodeOeuvre { title field_auteur field_datation field_visuels { entity { thumbnail { url } } } } } } }`,
+    });
+    const res = await fetch('https://apicollections.parismusees.paris.fr/graphql', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      signal: s,
+    });
+    if (!res.ok) throw new Error('ParisMusees failed');
+    const data = await res.json();
+    const entities = data.data?.nodeQuery?.entities || [];
+    return entities
+      .map((entity, i) => {
+        const imgUrl = entity.field_visuels?.[0]?.entity?.thumbnail?.url;
+        if (!imgUrl) return null;
+        return {
+          id:          `paris_${i}_${Date.now()}`,
+          url:         imgUrl,
+          thumb:       imgUrl,
+          title:       entity.title || 'Paris Musées Item',
+          description: entity.field_auteur || '',
+          source:      'parismusees',
+          sourceUrl:   'https://www.parismusees.paris.fr',
+          year:        (entity.field_datation || '').match(/\d{4}/)?.[0] || null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return []; // CORS best-effort — fail silently
+  }
+}
+
+async function fetchYale(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://collections.britishart.yale.edu/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Yale failed');
+    const data = await res.json();
+    return (data.docs || data.items || [])
+      .filter(item => item.id)
+      .map(item => {
+        const iiifId = String(item.id).replace('obj:', '');
+        return {
+          id:          `yale_${iiifId}`,
+          url:         `https://images.britishart.yale.edu/iiif/2/${iiifId}/full/!800,800/0/default.jpg`,
+          thumb:       `https://images.britishart.yale.edu/iiif/2/${iiifId}/full/!400,400/0/default.jpg`,
+          title:       item.title || 'Yale YCBA Work',
+          description: item.artist || '',
+          source:      'yale',
+          sourceUrl:   `https://collections.britishart.yale.edu/catalog/${item.id}`,
+          year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Yale failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchPicsum(keyword, limit, signal) {
+  const textureTerms = ['texture', 'abstract', 'minimal', 'surface', 'light', 'pattern', 'grain', 'void', 'blur'];
+  if (!textureTerms.some(t => keyword.toLowerCase().includes(t))) return [];
+  try {
+
+    const randomPage = Math.floor(Math.random() * 30) + 1;
+    const res = await fetch(
+      `https://picsum.photos/v2/list?page=${randomPage}&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Picsum failed');
+    const data = await res.json();
+    return (Array.isArray(data) ? data : [])
+      .map(item => ({
+        id:          `picsum_${item.id}`,
+        url:         `https://picsum.photos/id/${item.id}/800/600`,
+        thumb:       `https://picsum.photos/id/${item.id}/400/300`,
+        title:       `Photo by ${item.author}`,
+        description: '',
+        source:      'picsum',
+        sourceUrl:   item.url || '',
+        year:        null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Picsum failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchUSGS(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://www.sciencebase.gov/catalog/items?q=${encodeURIComponent(keyword)}&filter=tags%3Dimage&format=json&max=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('USGS failed');
+    const data = await res.json();
+    return (data.items || [])
+      .map(item => {
+        const imgUrl = item.webLinks?.find(l => l.type === 'thumbnail')?.uri || '';
+        if (!imgUrl) return null;
+        return {
+          id:          `usgs_${item.id}`,
+          url:         imgUrl,
+          thumb:       imgUrl,
+          title:       item.title || 'USGS Item',
+          description: item.summary?.slice(0, 100) || '',
+          source:      'usgs',
+          sourceUrl:   item.link?.url || '',
+          year:        item.dates?.[0]?.dateString?.slice(0, 4) || null,
+          tags:        [],
+          colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('USGS failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchCooperHewitt(keyword, limit, signal) {
+  try {
+
+    const CH_TOKEN = '4d47366a4e7f1abe2bd9d882dc86e0b5';
+    const res = await fetch(
+      `https://collection.cooperhewitt.org/api/rest/?method=cooperhewitt.search.objects&query=${encodeURIComponent(keyword)}&has_images=1&per_page=${limit}&access_token=${CH_TOKEN}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('CooperHewitt failed');
+    const data = await res.json();
+    return (data.objects || [])
+      .filter(item => item.images?.[0]?.b?.url)
+      .map(item => ({
+        id:          `ch_${item.id}`,
+        url:         item.images[0].b.url,
+        thumb:       item.images[0].z?.url || item.images[0].b.url,
+        title:       item.title || 'Cooper Hewitt Object',
+        description: item.medium || '',
+        source:      'cooperhewitt',
+        sourceUrl:   item.url || '',
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('CooperHewitt failed:', e.message);
+    return [];
+  }
+}
+
+/* ============================================================
+   10B. BATCH 3 FETCH FUNCTIONS
+============================================================ */
+
+// C01 — Tate Collection
+async function fetchTate(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://www.tate.org.uk/api/v1/artworks?q=${encodeURIComponent(keyword)}&page=1&pageSize=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Tate failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.thumbnail?.url)
+      .map(item => ({
+        id:          'tate_' + item.id,
+        url:         item.thumbnail.url,
+        thumb:       item.thumbnail.url,
+        title:       item.title || 'Tate Artwork',
+        description: item.artist?.[0]?.name || '',
+        source:      'tate',
+        sourceUrl:   `https://www.tate.org.uk/art/artworks/${item.id}`,
+        year:        (item.dateText || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Tate failed:', e.message);
+    return [];
+  }
+}
+
+// C02 — Finnish Heritage Agency (Finna.fi)
+async function fetchFinna(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.finna.fi/api/v1/search?lookfor=${encodeURIComponent(keyword)}&type=AllFields&filter[]=format:0%2FImage%2F&limit=${limit}&field[]=id&field[]=title&field[]=summary&field[]=images&field[]=year`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Finna failed');
+    const data = await res.json();
+    return (data.records || [])
+      .filter(item => item.images?.[0])
+      .map(item => ({
+        id:          'finna_' + String(item.id).replace(/[^a-z0-9]/gi, '_'),
+        url:         'https://finna.fi' + item.images[0],
+        thumb:       'https://finna.fi' + item.images[0],
+        title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Finnish Heritage'),
+        description: item.summary?.[0] || '',
+        source:      'finna',
+        sourceUrl:   `https://www.finna.fi/Record/${encodeURIComponent(item.id)}`,
+        year:        item.year || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Finna failed:', e.message);
+    return [];
+  }
+}
+
+// C03 — Swedish National Heritage Board (CORS best-effort)
+async function fetchSOCH(keyword, limit, signal) {
+  // Try pre-fetched data cache first
+  const cached = await fetchFromDataCache('soch', keyword);
+  if (cached) return cached;
+  // Fall back to direct API (may fail due to CORS)
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://www.kulturarvsdata.se/ksamsok/api?method=search&hitsPerPage=${limit}&startRecord=1&query=itemName%3D${encodeURIComponent(keyword)}&recordSchema=json`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('SOCH failed');
+    const data = await res.json();
+    const records = data.result?.records || [];
+    return records
+      .map((entry, i) => {
+        const rec = entry.record || {};
+        const thumb = rec.thumbnailSource?.[0];
+        if (!thumb) return null;
+        return {
+          id:          'soch_' + i,
+          url:         thumb,
+          thumb:       thumb,
+          title:       rec.itemName?.[0] || 'Swedish Heritage Item',
+          description: '',
+          source:      'soch',
+          sourceUrl:   rec.url?.[0] || '',
+          year:        null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(Boolean)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    return [];
+  }
+}
+
+// C04 — Joconde (French national museum database)
+async function fetchJoconde(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 8000);
+    const res = await fetch(
+      `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?where=search(title%2C%22${encodeURIComponent(keyword)}%22)&limit=${limit}&select=ref,title,auteur,datation,domaine,lien`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Joconde failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.ref)
+      .map(item => ({
+        id:          'joconde_' + item.ref,
+        url:         `https://www.pop.culture.gouv.fr/medias/cible/${item.ref}.jpg`,
+        thumb:       `https://www.pop.culture.gouv.fr/medias/cible/${item.ref}.jpg`,
+        title:       item.title || 'French Museum Object',
+        description: item.auteur || '',
+        source:      'joconde',
+        sourceUrl:   item.lien || '',
+        year:        (item.datation || '').match(/\d{4}/)?.[0] || null,
+        tags:        [item.domaine].filter(Boolean).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Joconde failed:', e.message);
+    return [];
+  }
+}
+
+// C05 — Polish National Museum Warsaw
+async function fetchMNW(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.mnw.art.pl/api/v1/objects?search=${encodeURIComponent(keyword)}&per_page=${limit}&has_image=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('MNW failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(item => item.image_url)
+      .map(item => ({
+        id:          'mnw_' + item.id,
+        url:         item.image_url,
+        thumb:       item.image_url,
+        title:       item.title || 'MNW Object',
+        description: item.author || '',
+        source:      'mnw',
+        sourceUrl:   `https://cyfrowe.mnw.art.pl/pl/katalog/${item.id}`,
+        year:        (item.dating || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('MNW failed:', e.message);
+    return [];
+  }
+}
+
+// C06 — Museum of New Zealand Te Papa
+async function fetchTePapa(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://collections.tepapa.govt.nz/search/${encodeURIComponent(keyword)}?filters=hasMedia:true&size=${limit}&from=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Te Papa failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.media?.[0]?.previewUrl)
+      .map(item => ({
+        id:          'tepapa_' + item.id,
+        url:         item.media[0].previewUrl,
+        thumb:       item.media[0].previewUrl,
+        title:       item.title || 'Te Papa Object',
+        description: item.primaryMaker?.title || '',
+        source:      'tepapa',
+        sourceUrl:   `https://collections.tepapa.govt.nz/object/${item.id}`,
+        year:        (item.productionDates?.[0]?.verbatim || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Te Papa failed:', e.message);
+    return [];
+  }
+}
+
+// C07 — DPLA (Digital Public Library of America)
+async function fetchDPLA(keyword, limit, signal) {
+  if (!STATE.dplaKey) return [];
+  try {
+
+    const res = await fetch(
+      `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('DPLA failed');
+    const data = await res.json();
+    return (data.docs || [])
+      .filter(item => item.object)
+      .map(item => ({
+        id:          'dpla_' + item.id,
+        url:         item.object,
+        thumb:       item.object,
+        title:       item.sourceResource?.title?.[0] || 'DPLA Item',
+        description: item.sourceResource?.contributor?.[0] || '',
+        source:      'dpla',
+        sourceUrl:   `https://dp.la/item/${item.id}`,
+        year:        (item.sourceResource?.date?.displayDate || '').slice(0, 4) || null,
+        tags:        (item.sourceResource?.subject || []).map(s => s.name?.toLowerCase()).filter(Boolean),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('DPLA failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchDPLAProvider(provider, keyword, limit, signal) {
+  if (!STATE.dplaKey) return [];
+  try {
+    const res = await fetch(
+      `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource&provider=${encodeURIComponent(provider)}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('DPLA provider fetch failed');
+    const data = await res.json();
+    return (data.docs || [])
+      .filter(item => item.object)
+      .map(item => ({
+        id:          'dplap_' + item.id,
+        url:         item.object,
+        thumb:       item.object,
+        title:       item.sourceResource?.title?.[0] || 'DPLA Item',
+        description: item.sourceResource?.contributor?.[0] || '',
+        source:      'dpla',
+        sourceUrl:   `https://dp.la/item/${item.id}`,
+        year:        (item.sourceResource?.date?.displayDate || '').slice(0, 4) || null,
+        tags:        (item.sourceResource?.subject || []).map(s => s.name?.toLowerCase()).filter(Boolean),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('DPLA provider fetch failed:', e.message);
+    return [];
+  }
+}
+
+// C08 — Artsy (xapp token, two-credential)
+async function fetchArtsy(keyword, limit, signal) {
+  if (!STATE.artsyId || !STATE.artsySecret) return [];
+  try {
+
+    // Acquire or reuse xapp token
+    if (!STATE.artsyToken) {
+      const tokenRes = await fetch('https://api.artsy.net/api/tokens/xapp_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: STATE.artsyId, client_secret: STATE.artsySecret }),
+        signal,
+      });
+      if (!tokenRes.ok) throw new Error('Artsy token failed');
+      const tokenData = await tokenRes.json();
+      STATE.artsyToken = tokenData.token;
+    }
+    const res = await fetch(
+      `https://api.artsy.net/api/artworks?q=${encodeURIComponent(keyword)}&size=${limit}`,
+      { headers: { 'X-Xapp-Token': STATE.artsyToken }, signal }
+    );
+    if (!res.ok) throw new Error('Artsy search failed');
+    const data = await res.json();
+    return (data._embedded?.artworks || [])
+      .filter(item => item._links?.thumbnail?.href)
+      .map(item => ({
+        id:          'artsy_' + item.id,
+        url:         item._links.thumbnail.href,
+        thumb:       item._links.thumbnail.href,
+        title:       item.title || 'Artsy Artwork',
+        description: item.date || '',
+        source:      'artsy',
+        sourceUrl:   (item._links?.self?.href || '').replace('api.artsy.net/api', 'www.artsy.net'),
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Artsy failed:', e.message);
+    STATE.artsyToken = null; // reset on error so next search retries token
+    return [];
+  }
+}
+
+// C09 — Portable Antiquities Scheme (UK finds)
+async function fetchPAS(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://finds.org.uk/api/search.json?q=${encodeURIComponent(keyword)}&has_images=1&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('PAS failed');
+    const data = await res.json();
+    return (data.hits || [])
+      .filter(item => item.thumbnail)
+      .map(item => ({
+        id:          'pas_' + item.id,
+        url:         item.thumbnail,
+        thumb:       item.thumbnail,
+        title:       item.title || 'UK Find',
+        description: (item.broadperiod ? item.broadperiod + ' — ' : '') + (item.description || '').slice(0, 80),
+        source:      'pas',
+        sourceUrl:   `https://finds.org.uk/database/artefacts/record/id/${item.id}`,
+        year:        (item.created || '').slice(0, 4) || null,
+        tags:        [item.broadperiod?.toLowerCase()].filter(Boolean),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('PAS failed:', e.message);
+    return [];
+  }
+}
+
+// C10 — Science Museum Group UK
+async function fetchSMG(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://collection.sciencemuseumgroup.org.uk/search/objects?q=${encodeURIComponent(keyword)}&has_image=1&page[number]=1&page[size]=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('SMG failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(item => item.attributes?.images?.[0]?.processed?.medium?.location)
+      .map(item => ({
+        id:          'smg_' + item.id,
+        url:         item.attributes.images[0].processed.medium.location,
+        thumb:       item.attributes.images[0].processed.medium.location,
+        title:       item.attributes?.summary_title || 'Science Museum Object',
+        description: item.attributes?.description?.[0]?.value?.slice(0, 100) || '',
+        source:      'smg',
+        sourceUrl:   item.links?.self || '',
+        year:        null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('SMG failed:', e.message);
+    return [];
+  }
+}
+
+// C11 — Auckland War Memorial Museum
+async function fetchAuckland(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.aucklandmuseum.com/id/media/v2/mediaartifact/?q=${encodeURIComponent(keyword)}&size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Auckland failed');
+    const data = await res.json();
+    return (data.hits?.hits || [])
+      .filter(item => item._source?.media_id?.[0])
+      .map(item => {
+        const src = item._source;
+        const mediaId = src.media_id[0];
+        const thumb = `https://api.aucklandmuseum.com/id/media/v2/mediaartifact/${mediaId}`;
+        return {
+          id:          'auck_' + item._id.replace(/\//g, '_'),
+          url:         thumb,
+          thumb:       thumb,
+          title:       src.dc_title?.[0] || 'Auckland Museum Object',
+          description: src.dc_description?.[0]?.slice(0, 100) || '',
+          source:      'auckland',
+          sourceUrl:   `https://www.aucklandmuseum.com/collection/${item._id}`,
+          year:        (src.dc_date?.[0] || '').slice(0, 4) || null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Auckland failed:', e.message);
+    return [];
+  }
+}
+
+// C12 — Photogrammar (FSA/OWI Depression photographs)
+async function fetchPhotogrammar(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://photogrammar.org/api/search?query=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Photogrammar failed');
+    const data = await res.json();
+    return (data.photos || [])
+      .filter(item => item.lc_id)
+      .map(item => ({
+        id:          'fsa_' + item.lc_id,
+        url:         `https://tile.loc.gov/image-services/iiif/service:fsa:${item.lc_id}/full/pct:50/0/default.jpg`,
+        thumb:       `https://tile.loc.gov/image-services/iiif/service:fsa:${item.lc_id}/full/pct:25/0/default.jpg`,
+        title:       item.title || 'FSA Photograph',
+        description: [item.photographer, item.county, item.state].filter(Boolean).join(', '),
+        source:      'photogrammar',
+        sourceUrl:   `https://photogrammar.org/photos/${item.lc_id}`,
+        year:        item.year || null,
+        tags:        [item.photographer, item.state].filter(Boolean).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Photogrammar failed:', e.message);
+    return [];
+  }
+}
+
+// C13 — Wellcome Collection
+async function fetchWellcome(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.wellcomecollection.org/catalogue/v2/works?query=${encodeURIComponent(keyword)}&workType=k&items.locations.locationType=iiif-image&pageSize=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Wellcome failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.thumbnail?.url)
+      .map(item => ({
+        id:          'wellcome_' + item.id,
+        url:         item.thumbnail.url + '/full/400,/0/default.jpg',
+        thumb:       item.thumbnail.url + '/full/400,/0/default.jpg',
+        title:       item.title || 'Wellcome Item',
+        description: item.contributors?.[0]?.agent?.label || '',
+        source:      'wellcome',
+        sourceUrl:   `https://wellcomecollection.org/works/${item.id}`,
+        year:        item.production?.[0]?.dates?.[0]?.label?.match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Wellcome failed:', e.message);
+    return [];
+  }
+}
+
+// C14 — Powerhouse Museum (MAAS) Sydney
+async function fetchMAAS(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://collection.maas.museum/api/search?q=${encodeURIComponent(keyword)}&has_image=yes&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('MAAS failed');
+    const data = await res.json();
+    return (data.records || [])
+      .filter(item => item.images?.[0]?.url)
+      .map(item => ({
+        id:          'maas_' + String(item.id).replace(/\//g, '_'),
+        url:         item.images[0].url,
+        thumb:       item.images[0].url,
+        title:       item.title || 'Powerhouse Object',
+        description: item.maker?.[0] || '',
+        source:      'maas',
+        sourceUrl:   `https://collection.maas.museum/object/${encodeURIComponent(item.id)}`,
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('MAAS failed:', e.message);
+    return [];
+  }
+}
+
+// C15 — Statens Museum for Kunst (Denmark)
+async function fetchSMK(keyword, limit, signal) {
+  try {
+
+    const res = await fetch(
+      `https://api.smk.dk/api/v1/art/search/?keys=${encodeURIComponent(keyword)}&has_image=true&offset=0&rows=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('SMK failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.image_thumbnail)
+      .map(item => ({
+        id:          'smk_' + item.object_number,
+        url:         (item.image_thumbnail || '').replace('/thumb/', '/full/'),
+        thumb:       item.image_thumbnail,
+        title:       item.titles?.[0]?.title || 'SMK Artwork',
+        description: item.artist?.[0] || '',
+        source:      'smk',
+        sourceUrl:   `https://open.smk.dk/artwork/image/${item.object_number}`,
+        year:        item.production_date?.[0]?.period?.match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('SMK failed:', e.message);
+    return [];
+  }
+}
+
+// C16 — Museo Thyssen-Bornemisza (CORS best-effort)
+async function fetchThyssen(keyword, limit, signal) {
+  // Try pre-fetched data cache first
+  const cached = await fetchFromDataCache('thyssen', keyword);
+  if (cached) return cached;
+  // Fall back to direct API (may fail due to CORS)
+  try {
+    const s = withTimeout(signal, 5000);
+    const res = await fetch(
+      `https://www.museothyssen.org/api/v1/coleccion/obras?search=${encodeURIComponent(keyword)}&page=1&per_page=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Thyssen failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(item => item.imagen_url)
+      .map(item => ({
+        id:          'thyssen_' + item.id,
+        url:         item.imagen_url,
+        thumb:       item.imagen_url,
+        title:       item.titulo || 'Thyssen Artwork',
+        description: item.autor || '',
+        source:      'thyssen',
+        sourceUrl:   `https://www.museothyssen.org/coleccion/obras/${item.id}`,
+        year:        (item.fecha || '').match(/\d{4}/)?.[0] || null,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    return [];
+  }
+}
+
+// ── BATCH 4 FETCH FUNCTIONS ──────────────────────────────────
+
+async function fetchWalters(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://api.thewalters.org/v1/objects.json?keyword=${encodeURIComponent(keyword)}&orderBy=relevance&page=1&pageSize=${limit}&apikey=`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Walters failed');
+    const data = await res.json();
+    return (data.Items || [])
+      .filter(item => item.PrimaryImage?.Lg)
+      .map(item => ({
+        id:          'walters_' + item.ObjectID,
+        url:         item.PrimaryImage.Lg,
+        thumb:       item.PrimaryImage.Sm || item.PrimaryImage.Lg,
+        title:       item.Title || 'Walters Object',
+        description: [item.Artist, item.Dated].filter(Boolean).join(' — '),
+        year:        (item.Dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'walters',
+        sourceUrl:   item.ResourceURL || '',
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Walters failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchPrinceton(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://data.artmuseum.princeton.edu/search?query=${encodeURIComponent(keyword)}&size=${limit}&from=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Princeton failed');
+    const data = await res.json();
+    return (data.hits?.hits || [])
+      .filter(item => item._source?.images?.[0]?.iiifbaseuri)
+      .map(item => {
+        const base = item._source.images[0].iiifbaseuri;
+        return {
+          id:          'princeton_' + item._id,
+          url:         base + '/full/!800,800/0/default.jpg',
+          thumb:       base + '/full/!400,400/0/default.jpg',
+          title:       item._source.title || 'Princeton Object',
+          description: item._source.displaymaker || '',
+          year:        (item._source.displaydate || '').match(/\d{4}/)?.[0] || null,
+          source:      'princeton',
+          sourceUrl:   `https://artmuseum.princeton.edu/collections/objects/${item._source.id}`,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Princeton failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchWikidata(keyword, limit, signal) {
+  try {
+    const sparql = `SELECT ?item ?itemLabel ?image ?date WHERE {
+  ?item wdt:P18 ?image.
+  ?item rdfs:label ?itemLabel.
+  FILTER(LANG(?itemLabel) = "en")
+  FILTER(CONTAINS(LCASE(?itemLabel), LCASE("${keyword.replace(/"/g, '')}")))
+  OPTIONAL { ?item wdt:P571 ?date. }
+} LIMIT ${limit}`.trim();
+    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
+    const res = await fetch(url, {
+      signal,
+      headers: {
+        'Accept': 'application/sparql-results+json',
+        'User-Agent': 'InpoSearch/1.0',
+      },
+    });
+    if (!res.ok) throw new Error('Wikidata failed');
+    const data = await res.json();
+    return (data.results?.bindings || [])
+      .filter(b => b.image?.value)
+      .map(b => ({
+        id:          'wd_' + b.item.value.split('/').pop(),
+        url:         b.image.value.replace('http://', 'https://'),
+        thumb:       b.image.value.replace('http://', 'https://') + '?width=400',
+        title:       b.itemLabel?.value || 'Wikidata Item',
+        description: '',
+        year:        b.date?.value?.slice(0, 4) || null,
+        source:      'wikidata',
+        sourceUrl:   b.item.value.replace('http://', 'https://'),
+        tags:        [b.itemLabel?.value?.toLowerCase()].filter(Boolean),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Wikidata failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNOAA(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.photolib.noaa.gov/api/search?q=${encodeURIComponent(keyword)}&format=json&rows=${limit}&start=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NOAA failed');
+    const data = await res.json();
+    return (data.response?.docs || [])
+      .filter(item => item.url_full)
+      .map(item => ({
+        id:          'noaa_' + item.id,
+        url:         item.url_full,
+        thumb:       item.url_thumbnail || item.url_full,
+        title:       item.title || 'NOAA Photo',
+        description: item.photographer || '',
+        year:        (item.date || '').slice(0, 4) || null,
+        source:      'noaa',
+        sourceUrl:   `https://www.photolib.noaa.gov/search?q=${encodeURIComponent(keyword)}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('NOAA failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchHubble(keyword, limit, signal) {
+  try {
+    const cacheAge = STATE.hubbleCacheTimestamp
+      ? Date.now() - STATE.hubbleCacheTimestamp
+      : Infinity;
+
+    if (!STATE.hubbleCache.length || cacheAge > 6 * 60 * 60 * 1000) {
+      const res = await fetch(
+        'https://hubblesite.org/api/v3/external_feed?service=NEWS_IMAGES&page=all',
+        { signal }
+      );
+      if (!res.ok) throw new Error('Hubble failed');
+      const data = await res.json();
+      STATE.hubbleCache = (data || [])
+        .filter(item => item.thumbnail_url)
+        .map(item => ({
+          id:          'hubble_' + item.id,
+          url:         (item.thumbnail_url || '').replace('_thumb', ''),
+          thumb:       item.thumbnail_url,
+          title:       item.name || 'Hubble Image',
+          description: (item.description || '').slice(0, 100),
+          year:        item.news_id?.slice(0, 4) || null,
+          source:      'hubble',
+          sourceUrl:   `https://hubblesite.org/contents/news-releases/${item.news_id || ''}`,
+          tags:        ['space', 'astronomy', 'nebula', 'hubble'],
+          colors: [], aiTags: [],
+        }))
+        .filter(i => i.thumb);
+      STATE.hubbleCacheTimestamp = Date.now();
+    }
+
+    const kw = keyword.toLowerCase();
+    const matched = STATE.hubbleCache.filter(item =>
+      (item.title + ' ' + item.description + ' ' + item.tags.join(' '))
+        .toLowerCase().includes(kw)
+    );
+
+    const pool = matched.length > 0 ? matched : STATE.hubbleCache;
+    return shuffle([...pool]).slice(0, limit);
+  } catch (e) {
+    console.warn('Hubble failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchCornell(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://digital.library.cornell.edu/catalog.json?q=${encodeURIComponent(keyword)}&f[format][]=Image&per_page=${limit}&page=1`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Cornell failed');
+    const data = await res.json();
+    return (data.data || [])
+      .filter(item => item.attributes?.thumbnail_path_ss)
+      .map(item => {
+        const thumb = 'https://digital.library.cornell.edu' + item.attributes.thumbnail_path_ss;
+        const url   = thumb.replace('thumbnail', 'large');
+        return {
+          id:          'cornell_' + item.id.replace(/[^a-z0-9]/gi, '_'),
+          url,
+          thumb,
+          title:       item.attributes.title_tesim?.[0] || 'Cornell Item',
+          description: item.attributes.creator_tesim?.[0] || '',
+          year:        item.attributes.date_created_tesim?.[0]?.match(/\d{4}/)?.[0] || null,
+          source:      'cornell',
+          sourceUrl:   `https://digital.library.cornell.edu/catalog/${item.id}`,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Cornell failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchFolger(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 6000);
+    const res = await fetch(
+      `https://collections.folger.edu/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&format=json`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('Folger failed');
+    const data = await res.json();
+    return (data.response?.docs || [])
+      .filter(item => item.thumbnail_path)
+      .map(item => ({
+        id:          'folger_' + item.id.replace(/[^a-z0-9]/gi, '_'),
+        url:         item.thumbnail_path,
+        thumb:       item.thumbnail_path,
+        title:       item.title_display || 'Folger Item',
+        description: item.author_display?.[0] || '',
+        year:        (item.pub_date || '').match(/\d{4}/)?.[0] || null,
+        source:      'folger',
+        sourceUrl:   `https://collections.folger.edu/detail/${item.id}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchONB(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 6000);
+    const res = await fetch(
+      `https://api.onb.ac.at/api/v1/search?q=${encodeURIComponent(keyword)}&imageOnly=true&rows=${limit}&start=0`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('ONB failed');
+    const data = await res.json();
+    return (data.docs || [])
+      .filter(item => item.thumbnail)
+      .map(item => ({
+        id:          'onb_' + item.id.replace(/[^a-z0-9]/gi, '_'),
+        url:         item.thumbnail,
+        thumb:       item.thumbnail,
+        title:       item.title || 'ÖNB Item',
+        description: item.creator?.[0] || '',
+        year:        (item.date || '').slice(0, 4) || null,
+        source:      'onb',
+        sourceUrl:   `https://digital.onb.ac.at/search?q=${encodeURIComponent(keyword)}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchNYPL(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://api.repo.nypl.org/api/v2/items/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&page=1`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NYPL failed');
+    const data = await res.json();
+    const results = data.nyplAPI?.response?.result || [];
+    return results
+      .filter(item => item.imageLinks?.imageLink?.[0])
+      .map(item => {
+        const url = item.imageLinks.imageLink[0];
+        return {
+          id:          'nypl_' + item.uuid,
+          url,
+          thumb:       url.replace('t=w', 't=t'),
+          title:       item.title || 'NYPL Item',
+          description: '',
+          year:        item.dateStructured?.[0]?.decade || null,
+          source:      'nypl',
+          sourceUrl:   `https://digitalcollections.nypl.org/items/${item.uuid}`,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('NYPL failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchMAK(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 6000);
+    const res = await fetch(
+      `https://sammlung.mak.at/api/v1/search?q=${encodeURIComponent(keyword)}&has_image=true&per_page=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('MAK failed');
+    const data = await res.json();
+    return (data.objects || [])
+      .filter(item => item.image_url)
+      .map(item => ({
+        id:          'mak_' + String(item.id).replace(/[^a-z0-9]/gi, '_'),
+        url:         item.image_url,
+        thumb:       item.image_url,
+        title:       item.title || 'MAK Object',
+        description: item.artist || '',
+        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
+        source:      'mak',
+        sourceUrl:   `https://sammlung.mak.at/en/objectdb/detail/${item.id}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchMNA(keyword, limit, signal) {
+  try {
+    const s = withTimeout(signal, 6000);
+    const res = await fetch(
+      `https://mna.inah.gob.mx/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal: s }
+    );
+    if (!res.ok) throw new Error('MNA failed');
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.results || []);
+    return items
+      .filter(item => item.image || item.image_url)
+      .map(item => ({
+        id:          'mna_' + String(item.id || item.objectId || Math.random()).replace(/[^a-z0-9]/gi, '_'),
+        url:         item.image || item.image_url,
+        thumb:       item.image || item.image_url,
+        title:       item.title || item.nombre || 'MNA Object',
+        description: item.culture || item.cultura || '',
+        year:        (item.date || item.fecha || '').match(/\d{4}/)?.[0] || null,
+        source:      'mna',
+        sourceUrl:   `https://mna.inah.gob.mx`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+// ── BATCH 7 FETCH FUNCTIONS ──────────────────────────────────
+
+async function fetchMia(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://search.artsmia.org/?q=${encodeURIComponent(keyword)}&size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Mia failed');
+    const data = await res.json();
+    return (data.hits?.hits || [])
+      .filter(hit => hit._source?.image === 'valid' && hit._source?.restricted === 0)
+      .map(hit => ({
+        id:          `mia_${hit._id}`,
+        url:         `https://api.artsmia.org/images/${hit._id}/large.jpg`,
+        thumb:       `https://api.artsmia.org/images/${hit._id}/medium.jpg`,
+        title:       hit._source.title || 'Mia Object',
+        description: hit._source.artist || '',
+        year:        (hit._source.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'mia',
+        sourceUrl:   `https://collections.artsmia.org/art/${hit._id}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Mia failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchLACMA(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://collections.lacma.org/api/search?q=${encodeURIComponent(keyword)}&f[]=has_image:true&f[]=public_domain:true&rows=${limit}&start=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('LACMA failed');
+    const data = await res.json();
+    return (data.response?.docs || [])
+      .filter(item => item.thumbnail_url_s)
+      .map(item => ({
+        id:          `lacma_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.thumbnail_url_s,
+        thumb:       item.thumbnail_url_s,
+        title:       item.title_s || 'LACMA Object',
+        description: item.artist_s || '',
+        year:        (item.date_s || '').match(/\d{4}/)?.[0] || null,
+        source:      'lacma',
+        sourceUrl:   `https://collections.lacma.org/node/${(item.id || '').split(':')[1] || ''}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchMunch(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.munchmuseet.no/api/v1/works?q=${encodeURIComponent(keyword)}&limit=${limit}&hasImage=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Munch failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.image?.url)
+      .map(item => ({
+        id:          `munch_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image.url,
+        thumb:       item.image.url,
+        title:       item.title || 'Munch Work',
+        description: item.technique || '',
+        year:        (item.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'munch',
+        sourceUrl:   `https://www.munchmuseet.no/en/the-collection/${item.id || ''}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchMauritshuis(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.mauritshuis.nl/api/collection/search?query=${encodeURIComponent(keyword)}&limit=${limit}&imageAvailable=true`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Mauritshuis failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(item => item.image)
+      .map(item => ({
+        id:          `mauritshuis_${item.id || ''}`,
+        url:         item.image,
+        thumb:       item.image,
+        title:       item.title || 'Mauritshuis Object',
+        description: item.maker || '',
+        year:        (item.dating || '').match(/\d{4}/)?.[0] || null,
+        source:      'mauritshuis',
+        sourceUrl:   `https://www.mauritshuis.nl/en/our-collection/artworks/${item.id || ''}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchNationalmuseumSE(keyword, limit, signal) {
+  // Swedish national museum via Wikimedia Commons incategory:Nationalmuseum
+  try {
+    const searchRes = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}+incategory:Nationalmuseum&srnamespace=6&srlimit=${limit}&format=json&origin=*`,
+      { signal }
+    );
+    if (!searchRes.ok) throw new Error('NationalmuseumSE search failed');
+    const searchData = await searchRes.json();
+    const titles = (searchData.query?.search || []).map(r => r.title);
+    if (!titles.length) return [];
+    const infoRes = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join('|'))}&prop=imageinfo&iiprop=url|extmetadata&format=json&origin=*`,
+      { signal }
+    );
+    if (!infoRes.ok) throw new Error('NationalmuseumSE imageinfo failed');
+    const infoData = await infoRes.json();
+    return Object.values(infoData.query?.pages || {})
+      .filter(p => p.imageinfo?.[0]?.url)
+      .map(p => {
+        const info = p.imageinfo[0];
+        const meta = info.extmetadata || {};
+        const title = (meta.ObjectName?.value || p.title || '').replace(/^File:/i, '');
+        return {
+          id:          `nmse_${p.pageid}`,
+          url:         info.url,
+          thumb:       info.url,
+          title:       title || 'Nationalmuseum Work',
+          description: meta.Artist?.value?.replace(/<[^>]+>/g, '') || '',
+          year:        (meta.DateTimeOriginal?.value || meta.Date?.value || '').match(/\d{4}/)?.[0] || null,
+          source:      'nationalmuseumse',
+          sourceUrl:   info.descriptionurl || '',
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchNaturalis(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://api.biodiversitydata.nl/v2/specimen/search/?_search=${encodeURIComponent(keyword)}&_hasImage=true&_size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Naturalis failed');
+    const data = await res.json();
+    return (data.resultSet || [])
+      .map(r => r.item)
+      .filter(item => item?.associatedMultiMediaUris?.[0]?.accessURI)
+      .map(item => ({
+        id:          `naturalis_${String(item.unitID || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.associatedMultiMediaUris[0].accessURI,
+        thumb:       item.associatedMultiMediaUris[0].accessURI,
+        title:       item.identifications?.[0]?.scientificName?.fullScientificName || 'Naturalis Specimen',
+        description: item.gatheringEvent?.country || '',
+        year:        item.gatheringEvent?.dateTimeBegin?.slice(0, 4) || null,
+        source:      'naturalis',
+        sourceUrl:   `https://bioportal.naturalis.nl/specimen/${encodeURIComponent(item.unitID || '')}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('Naturalis failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNMAAHC(keyword, limit, signal) {
+  try {
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NMAAHC`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NMAAHC failed');
+    const data = await res.json();
+    return (data.response?.rows || [])
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `nmaahc_${row.id}`,
+          url:         media.content || media.thumbnail,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'NMAAHC Object',
+          description: '',
+          source:      'nmaahc',
+          sourceUrl:   `https://nmaahc.si.edu/object/${row.id}`,
+          year:        null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('NMAAHC failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNASM(keyword, limit, signal) {
+  try {
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NASM`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NASM failed');
+    const data = await res.json();
+    return (data.response?.rows || [])
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `nasm_${row.id}`,
+          url:         media.content || media.thumbnail,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'NASM Object',
+          description: '',
+          source:      'nasm',
+          sourceUrl:   `https://airandspace.si.edu/collection/id/${row.id}`,
+          year:        null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('NASM failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchNationalZoo(keyword, limit, signal) {
+  try {
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NZP`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NationalZoo failed');
+    const data = await res.json();
+    return (data.response?.rows || [])
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `zoo_${row.id}`,
+          url:         media.content || media.thumbnail,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'National Zoo',
+          description: '',
+          source:      'nationalzoo',
+          sourceUrl:   `https://nationalzoo.si.edu/animals`,
+          year:        null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('NationalZoo failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchFreerSackler(keyword, limit, signal) {
+  try {
+    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const res = await fetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=FSG`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('FreerSackler failed');
+    const data = await res.json();
+    return (data.response?.rows || [])
+      .filter(row => row.indexedStructured?.online_media?.[0])
+      .map(row => {
+        const media = row.indexedStructured.online_media[0];
+        return {
+          id:          `fsg_${row.id}`,
+          url:         media.content || media.thumbnail,
+          thumb:       media.thumbnail || media.content,
+          title:       row.title || 'Freer|Sackler Object',
+          description: '',
+          source:      'freersackler',
+          sourceUrl:   `https://asia.si.edu/object/${row.id}`,
+          year:        null,
+          tags: [], colors: [], aiTags: [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('FreerSackler failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchWhitney(keyword, limit, signal) {
+  try {
+    const cacheAge = STATE.whitneyCacheTimestamp
+      ? Date.now() - STATE.whitneyCacheTimestamp
+      : Infinity;
+
+    if (!STATE.whitneyCache.length ||
+        cacheAge > 24 * 60 * 60 * 1000) {
+      const res = await fetch(
+        'https://raw.githubusercontent.com/whitneymuseum/open-access/master/collection/artworks.csv',
+        { signal }
+      );
+      if (!res.ok) throw new Error('Whitney failed');
+      const text = await res.text();
+      const lines = text.split('\n');
+      const headers = lines[0].split(',')
+        .map(h => h.replace(/"/g, '').trim());
+      STATE.whitneyCache = lines.slice(1)
+        .map(line => {
+          const vals = line.split(',');
+          return Object.fromEntries(
+            headers.map((h, i) => [h, (vals[i] || '').replace(/"/g, '').trim()])
+          );
+        })
+        .filter(a => a.imageURL && a.imageURL.startsWith('http'))
+        .map((a, i) => ({
+          id:          `whitney_${a.ObjectID || i}`,
+          url:         a.imageURL,
+          thumb:       a.imageURL,
+          title:       a.Title || 'Whitney Artwork',
+          description: a.Artist || '',
+          year:        (a.Date || '').match(/\d{4}/)?.[0] || null,
+          source:      'whitney',
+          sourceUrl:   `https://whitney.org/collection/works/${a.ObjectID}`,
+          tags:        [a.Classification, a.Medium]
+                         .filter(Boolean).map(t => t.toLowerCase()),
+          colors: [], aiTags: [],
+        }));
+      STATE.whitneyCacheTimestamp = Date.now();
+    }
+
+    const kw = keyword.toLowerCase();
+    const matched = STATE.whitneyCache.filter(item =>
+      (item.title + ' ' + item.description + ' ' + item.tags.join(' '))
+        .toLowerCase().includes(kw)
+    );
+    const pool = matched.length > 0 ? matched : STATE.whitneyCache;
+    return shuffle([...pool]).slice(0, limit);
+  } catch (e) {
+    console.warn('Whitney failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchGBIFLiterature(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://api.gbif.org/v1/occurrence/search?q=${encodeURIComponent(keyword)}&mediaType=StillImage&basisOfRecord=LITERATURE&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('GBIF Literature failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(obs => obs.media?.[0]?.identifier)
+      .map(obs => ({
+        id:          `gbiflit_${obs.key}`,
+        url:         obs.media[0].identifier,
+        thumb:       obs.media[0].identifier,
+        title:       obs.scientificName || obs.species || 'GBIF Literature',
+        description: obs.references || '',
+        year:        (obs.year || '').toString() || null,
+        source:      'gbiflit',
+        sourceUrl:   `https://www.gbif.org/occurrence/${obs.key}`,
+        tags:        [obs.species, obs.kingdom].filter(Boolean).map(t => t.toLowerCase()),
+        colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('GBIF Literature failed:', e.message);
+    return [];
+  }
+}
+
+// ── Phase B: iDigBio ── biodiversity media records ────────────────────
+async function fetchIDigBio(keyword, limit, signal) {
+  try {
+    const rq = encodeURIComponent(JSON.stringify({ hasImage: true }));
+    const res = await fetch(
+      `https://search.idigbio.org/v2/search/media?rq=${rq}&q=${encodeURIComponent(keyword)}&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('iDigBio fetch failed');
+    const data = await res.json();
+    return (data.items || [])
+      .filter(item => item.indexTerms && item.indexTerms.accessuri)
+      .map(item => ({
+        id:          `idigbio_${item.uuid}`,
+        url:         item.indexTerms.accessuri,
+        thumb:       item.indexTerms.accessuri,
+        title:       (item.data && (item.data['dcterms:title'] || item.data['ac:tag'])) || 'iDigBio Image',
+        description: (item.data && (item.data['dcterms:description'] || '')) || '',
+        source:      'idigbio',
+        sourceUrl:   `https://www.idigbio.org/portal/mediarecords/${item.uuid}`,
+        year:        ((item.data && item.data['dcterms:available']) || '').slice(0, 4) || null,
+        tags:        [item.indexTerms.tag].filter(Boolean),
+        colors:      [],
+        aiTags:      [],
+      }))
+      .filter(item => item.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('iDigBio failed:', e.message);
+    return [];
+  }
+}
+
+// ── Phase B: ALA ── Atlas of Living Australia images ─────────────────────
+async function fetchALA(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://biocache.ala.org.au/ws/occurrences/search?q=${encodeURIComponent(keyword)}&fq=multimedia:Image&pageSize=${limit}&fl=uuid,scientificName,vernacularName,stateProvince,images`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('ALA fetch failed');
+    const data = await res.json();
+    return (data.occurrences || [])
+      .filter(occ => occ.images && occ.images.length)
+      .map(occ => {
+        const imgId = occ.images[0];
+        const url   = `https://images.ala.org.au/image/${imgId}/original`;
+        const thumb = `https://images.ala.org.au/image/${imgId}/thumbnail`;
+        const title = occ.vernacularName || occ.scientificName || 'ALA Image';
+        return {
+          id:          `ala_${occ.uuid || imgId}`,
+          url,
+          thumb,
+          title,
+          description: occ.stateProvince || occ.scientificName || '',
+          source:      'ala',
+          sourceUrl:   `https://biocache.ala.org.au/occurrences/${occ.uuid}`,
+          year:        null,
+          tags:        [occ.scientificName, occ.vernacularName].filter(Boolean).map(t => t.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(item => item.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('ALA failed:', e.message);
+    return [];
+  }
+}
+
+// ── Phase D: NASA Images Library ─────────────────────────────────────────
+async function fetchNASAImages(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NASA Images fetch failed');
+    const data = await res.json();
+    return (data.collection?.items || [])
+      .filter(item => item.links?.[0]?.href)
+      .map(item => {
+        const d    = item.data?.[0] || {};
+        const url  = item.links[0].href;
+        const thumb = url.replace('~medium.jpg', '~thumb.jpg').replace('~small.jpg', '~thumb.jpg');
+        return {
+          id:          `nasaimg_${d.nasa_id || Math.random().toString(36).slice(2)}`,
+          url,
+          thumb,
+          title:       d.title || 'NASA Image',
+          description: d.description ? d.description.slice(0, 200) : '',
+          source:      'nasa_images',
+          sourceUrl:   `https://images.nasa.gov/details/${d.nasa_id}`,
+          year:        d.date_created ? d.date_created.slice(0, 4) : null,
+          tags:        (d.keywords || []).map(t => t.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(item => item.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('NASA Images failed:', e.message);
+    return [];
+  }
+}
+
+// ── New CORS-blocked sources (cache-first) ───────────────────────────────
+
+// NHM London — Natural History Museum Data Portal (CKAN datastore_search)
+// Resource ID for the specimen collection: 05ff2255-c38a-40c9-b657-4ccb55ab2feb
+// NHM media store URL pattern: https://www.nhm.ac.uk/services/media-store/asset/{uuid}/contents/preview
+// Raw record shape (for reference): { _id, scientificName, genus, family, locality,
+//   collectionCode, associatedMedia, occurrenceID, year, dateIdentified, … }
+// associatedMedia is pipe-separated when multiple assets are present; take index 0.
+// Uncomment the line below to inspect new field shapes in the browser console:
+// console.log('[NHM] raw record sample:', records[0]);
+async function fetchNHMLondon(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('nhm_london', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'nhm_london' }));
+  try {
+    // Request extra rows so we still hit `limit` after filtering to records with images
+    const url = `https://data.nhm.ac.uk/api/3/action/datastore_search` +
+      `?resource_id=05ff2255-c38a-40c9-b657-4ccb55ab2feb` +
+      `&q=${encodeURIComponent(keyword)}` +
+      `&limit=${limit * 3}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(`NHM fetch failed: ${res.status}`);
+    const data = await res.json();
+    if (!data.success) throw new Error('NHM API returned success:false');
+    const records = data.result?.records || [];
+    return records
+      // Only return records that have an associated image asset
+      .filter(r => r.associatedMedia && String(r.associatedMedia).trim())
+      .map(r => {
+        // associatedMedia may be pipe-delimited; take the first URL
+        const mediaUrl = String(r.associatedMedia).split('|')[0].trim();
+        const title    = r.scientificName || r.genus || 'NHM Specimen';
+        const descParts = [r.family, r.collectionCode, r.locality].filter(Boolean);
+        return {
+          id:          `nhm_${r._id}`,
+          url:         mediaUrl,
+          thumb:       mediaUrl,
+          title,
+          description: descParts.join(' — '),
+          source:      'nhm_london',
+          sourceUrl:   r.occurrenceID || `https://data.nhm.ac.uk/object/${r._id}`,
+          year:        (String(r.year || r.dateIdentified || '')).match(/\d{4}/)?.[0] || null,
+          tags:        [r.scientificName, r.genus, r.family, r.collectionCode, r.locality]
+                         .filter(Boolean).map(t => t.toLowerCase()),
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('NHM London failed:', err.message);
+    return [];
+  }
+}
+
+// Wallace Collection London
+async function fetchWallaceCollection(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('wallace_collection', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'wallace_collection' }));
+  return [];
+}
+
+// Fitzwilliam Museum Cambridge
+async function fetchFitzwilliam(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('fitzwilliam', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'fitzwilliam' }));
+  return [];
+}
+
+// National Gallery London
+async function fetchNationalGalleryLondon(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('national_gallery_london', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'national_gallery_london' }));
+  return [];
+}
+
+// Scottish National Gallery
+async function fetchScottishNational(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('scottish_national', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'scottish_national' }));
+  return [];
+}
+
+async function fetchArchiveMaps(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image+AND+subject:map&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Archive Maps failed');
+    const data = await res.json();
+    return (data.response?.docs || []).map(doc => ({
+      id:          `archivemap_${doc.identifier}`,
+      url:         `https://archive.org/services/img/${doc.identifier}`,
+      thumb:       `https://archive.org/services/img/${doc.identifier}`,
+      title:       Array.isArray(doc.title) ? doc.title[0] : (doc.title || 'Archive Map'),
+      description: Array.isArray(doc.description) ? doc.description[0] : (doc.description || ''),
+      source:      'archive',
+      sourceUrl:   `https://archive.org/details/${doc.identifier}`,
+      year:        (doc.date || '').slice(0, 4) || null,
+      tags:        (Array.isArray(doc.subject) ? doc.subject : [doc.subject])
+                     .filter(Boolean).map(s => s.toLowerCase()),
+      colors: [], aiTags: [],
+    }))
+    .filter(isLikelyReal)
+    .slice(0, limit);
+  } catch (e) {
+    console.warn('Archive Maps failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchOpenLibrarySubjects(keyword, limit, signal) {
+  if (keyword.length < 4) return [];
+  try {
+    const slug = keyword.toLowerCase().replace(/\s+/g, '_');
+    const res = await fetch(
+      `https://openlibrary.org/subjects/${encodeURIComponent(slug)}.json?limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('OL subjects failed');
+    const data = await res.json();
+    return (data.works || [])
+      .filter(w => w.cover_id)
+      .map(w => ({
+        id:          `olsubj_${w.cover_id}`,
+        url:         `https://covers.openlibrary.org/b/id/${w.cover_id}-L.jpg`,
+        thumb:       `https://covers.openlibrary.org/b/id/${w.cover_id}-M.jpg`,
+        title:       w.title || 'Book',
+        description: w.authors?.[0]?.name || '',
+        year:        w.first_publish_year?.toString() || null,
+        source:      'openlibrary',
+        sourceUrl:   `https://openlibrary.org${w.key}`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    console.warn('OL Subjects failed:', e.message);
+    return [];
+  }
+}
+
+async function fetchAGO(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.ago.ca/api/collection/search?q=${encodeURIComponent(keyword)}&limit=${limit}&type=artwork`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('AGO failed');
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.results || data.items || []);
+    return items
+      .filter(item => item.image || item.image_url || item.imageUrl)
+      .map(item => ({
+        id:          `ago_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image || item.image_url || item.imageUrl,
+        thumb:       item.image || item.image_url || item.imageUrl,
+        title:       item.title || 'AGO Object',
+        description: item.artist || item.maker || '',
+        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'ago',
+        sourceUrl:   `https://www.ago.ca/collection`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchPEM(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.pem.org/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('PEM failed');
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.results || data.items || []);
+    return items
+      .filter(item => item.image || item.image_url || item.imageUrl)
+      .map(item => ({
+        id:          `pem_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image || item.image_url || item.imageUrl,
+        thumb:       item.image || item.image_url || item.imageUrl,
+        title:       item.title || 'PEM Object',
+        description: item.artist || item.maker || '',
+        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'pem',
+        sourceUrl:   `https://www.pem.org/collections`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchNPG(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.npg.org.uk/api/search?query=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('NPG failed');
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.results || data.items || []);
+    return items
+      .filter(item => item.image || item.primaryImage || item.imageUrl)
+      .map(item => ({
+        id:          `npg_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image || item.primaryImage || item.imageUrl,
+        thumb:       item.image || item.primaryImage || item.imageUrl,
+        title:       item.title || 'NPG Portrait',
+        description: item.sitter || item.artist || '',
+        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'npg',
+        sourceUrl:   `https://www.npg.org.uk/collections`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchLouvreAD(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://www.louvreabudhabi.ae/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('LouvreAD failed');
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : (data.results || data.items || []);
+    return items
+      .filter(item => item.image || item.image_url || item.imageUrl)
+      .map(item => ({
+        id:          `louvread_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.image || item.image_url || item.imageUrl,
+        thumb:       item.image || item.image_url || item.imageUrl,
+        title:       item.title || 'Louvre AD Object',
+        description: item.artist || item.maker || '',
+        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
+        source:      'louvread',
+        sourceUrl:   `https://www.louvreabudhabi.ae/en/collections`,
+        tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    return [];
+  }
+}
+
+/* ============================================================
+   10z. PHASE 2 — NEW SOURCE FETCHERS
+============================================================ */
+
+/* Unsplash photography — free key required */
+async function fetchUnsplash(keyword, limit, signal) {
+  if (!STATE.unsplashKey) return [];
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=${Math.min(limit, 30)}&client_id=${STATE.unsplashKey}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Unsplash failed');
+    const data = await res.json();
+    return (data.results || [])
+      .filter(p => p.urls?.regular)
+      .map(p => ({
+        id:          `unsplash_${p.id}`,
+        url:         p.urls.regular,
+        thumb:       p.urls.small || p.urls.regular,
+        title:       p.description || p.alt_description || 'Unsplash Photo',
+        description: p.user?.name ? `Photo by ${p.user.name}` : '',
+        source:      'unsplash',
+        sourceUrl:   p.links?.html || '',
+        year:        p.created_at ? p.created_at.slice(0, 4) : null,
+        tags:        (p.tags || []).map(t => (t.title || t.type || '')).filter(Boolean),
+        colors:      [],
+        aiTags:      [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Unsplash failed:', e.message);
+    return [];
+  }
+}
+
+/* Bodleian Libraries (Oxford) — no key, best-effort CORS */
+async function fetchBodleian(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://digital.bodleian.ox.ac.uk/api/v1/search/?q=${encodeURIComponent(keyword)}&rows=${limit}&start=0&t=image`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Bodleian failed');
+    const data = await res.json();
+    return (data.objects || [])
+      .filter(obj => obj.thumbnail || obj.thumbnail_url)
+      .map(obj => ({
+        id:          `bodleian_${String(obj.pk || obj.id || Math.random()).replace(/[^a-z0-9]/gi, '_')}`,
+        url:         obj.thumbnail || obj.thumbnail_url,
+        thumb:       obj.thumbnail || obj.thumbnail_url,
+        title:       obj.name || obj.label || obj.title || 'Bodleian Object',
+        description: (obj.description || obj.subjects?.join(', ') || '').slice(0, 200),
+        source:      'bodleian',
+        sourceUrl:   obj.links?.self || `https://digital.bodleian.ox.ac.uk/objects/${obj.pk || obj.id}/`,
+        year:        (String(obj.date || obj.year || '')).match(/\d{4}/)?.[0] || null,
+        tags:        (obj.subjects || obj.topics || []).map(s => String(s).toLowerCase()),
+        colors:      [],
+        aiTags:      [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('Bodleian failed:', e.message);
+    return [];
+  }
+}
+
+/* Bayerische Staatsbibliothek / BSB Munich — no key, best-effort CORS */
+async function fetchBSB(keyword, limit, signal) {
+  try {
+    const res = await fetch(
+      `https://api.digitale-sammlungen.de/search/v1/json?q=${encodeURIComponent(keyword)}&size=${limit}&page=0`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('BSB failed');
+    const data = await res.json();
+    const items = data.hits?.items || data.results || [];
+    return items
+      .filter(item => item.thumbnail_url || item.image_url)
+      .map(item => ({
+        id:          `bsb_${String(item.id || Math.random()).replace(/[^a-z0-9]/gi, '_')}`,
+        url:         item.thumbnail_url || item.image_url,
+        thumb:       item.thumbnail_url || item.image_url,
+        title:       item.title || item.name || 'BSB Object',
+        description: item.subtitle || item.origin || '',
+        source:      'bsb',
+        sourceUrl:   item.link || `https://www.digitale-sammlungen.de/en/view/bsb${item.id}`,
+        year:        String(item.year || item.date || '').match(/\d{4}/)?.[0] || null,
+        tags:        [],
+        colors:      [],
+        aiTags:      [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('BSB failed:', e.message);
+    return [];
+  }
+}
+
+/* Cambridge Digital Library (CUDL) — no key, best-effort CORS */
+async function fetchCUDL(keyword, limit, signal) {
+  // Try pre-fetched data cache first
+  const cached = await fetchFromDataCache('cudl', keyword);
+  if (cached) return cached;
+  // Fall back to direct API (may fail due to CORS)
+  try {
+    const res = await fetch(
+      `https://services.cudl.lib.cam.ac.uk/v1/search?query=${encodeURIComponent(keyword)}&start=1&end=${limit}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('CUDL failed');
+    const data = await res.json();
+    const items = data.results?.items || data.items || [];
+    return items
+      .filter(item => item.thumbnailUrl || item.thumbnail)
+      .map(item => {
+        const thumb = item.thumbnailUrl || item.thumbnail || '';
+        return {
+          id:          `cudl_${String(item.fileID || item.id || Math.random()).replace(/[^a-z0-9]/gi, '_')}`,
+          url:         thumb,
+          thumb:       thumb,
+          title:       item.title || (item.descriptiveMetadata?.[0]?.title?.['#text'] ?? 'CUDL Object'),
+          description: '',
+          source:      'cudl',
+          sourceUrl:   `https://cudl.lib.cam.ac.uk/view/${item.fileID || item.id}`,
+          year:        null,
+          tags:        [],
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('CUDL failed:', e.message);
+    return [];
+  }
+}
+
+/* Generic IIIF Content Search adapter — used by manifest-loaded sources */
+async function fetchIIIFCollection(config, keyword, limit, signal) {
+  try {
+    const qp = config.queryParam || 'q';
+    // Support non-standard paging params from manifest extraParams.
+    // If per_page exists, force it to the slider value and do not append &limit.
+    let extraParams = config.extraParams || '';
+    const hasPerPage = /(^|&)per_page=/.test(extraParams);
+    if (hasPerPage) {
+      extraParams = extraParams.replace(/(^|&)per_page=[^&]*/g, `$1per_page=${String(limit)}`);
+    }
+    if (extraParams.includes('{limit}')) {
+      extraParams = extraParams.replace(/\{limit\}/g, String(limit));
+    }
+    const extra = extraParams ? `&${extraParams}` : '';
+    const limitParam = hasPerPage ? '' : `&limit=${limit}`;
+    const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}${limitParam}${extra}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
+    const data = await res.json();
+
+    // Walk resultsPath (dot-notation) to get items array.
+    // Use '$' as resultsPath to indicate the root response is already the array.
+    let items = data;
+    const rp = config.resultsPath;
+    if (rp !== '$') {
+      for (const key of (rp || 'resources').split('.')) {
+        items = items?.[key];
+        if (!items) break;
+      }
+    }
+    if (!Array.isArray(items)) return [];
+
+    const getField = (obj, path) => {
+      let v = obj;
+      for (const k of path.split('.')) { v = v?.[k]; if (v == null) break; }
+      return v;
+    };
+
+    return items
+      .filter(item => getField(item, config.imageField || 'thumbnail'))
+      .map((item, i) => {
+        const rawImg = getField(item, config.imageField || 'thumbnail') || '';
+        // 1. imageBaseUrl: prefix relative verbatim paths
+        let imgUrl = (config.imageBaseUrl && rawImg && !rawImg.startsWith('http'))
+          ? config.imageBaseUrl + rawImg
+          : rawImg;
+        // 2. imageUrlTemplate: construct URL from a non-URL ID field value.
+        //    Fires when template is configured AND the value is non-empty but not yet an absolute URL.
+        //    This handles sources like DigitalCommonwealth where imageField returns an ID, not a URL.
+        if (config.imageUrlTemplate && rawImg && !imgUrl.startsWith('http')) {
+          imgUrl = config.imageUrlTemplate.replace('{id}', rawImg);
+          // Apply imageBaseUrl to template result too, if still relative
+          if (config.imageBaseUrl && imgUrl && !imgUrl.startsWith('http')) {
+            imgUrl = config.imageBaseUrl + imgUrl;
+          }
+        }
+        const rawThumb = getField(item, config.thumbField || config.imageField || 'thumbnail') || rawImg;
+        let thumbUrl = (config.imageBaseUrl && rawThumb && !rawThumb.startsWith('http'))
+          ? config.imageBaseUrl + rawThumb
+          : rawThumb;
+        // Apply template to thumb too if not yet a URL
+        if (config.imageUrlTemplate && rawThumb && !thumbUrl.startsWith('http')) {
+          thumbUrl = config.imageUrlTemplate.replace('{id}', rawThumb);
+          if (config.imageBaseUrl && thumbUrl && !thumbUrl.startsWith('http')) {
+            thumbUrl = config.imageBaseUrl + thumbUrl;
+          }
+        }
+        thumbUrl = thumbUrl || imgUrl;
+        return {
+          id:          `${config.id}_${i}_${String(getField(item, '@id') || i).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
+          url:         String(imgUrl),
+          thumb:       String(thumbUrl),
+          title:       String(getField(item, config.titleField || 'label') || 'Untitled'),
+          description: String(getField(item, config.descField || '') || ''),
+          source:      config.id,
+          sourceUrl:   String(getField(item, config.sourceUrlField || '@id') || ''),
+          year:        null,
+          tags:        [],
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn(`IIIF ${config.id} failed:`, e.message);
+    return [];
+  }
+}
+
+/* IIIF Content Search v1 adapter — handles @context-based IIIF Search responses */
+async function fetchIIIFSearch(config, keyword, limit, signal) {
+  try {
+    const qp = config.queryParam || 'q';
+    const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}`;
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(`IIIF Search ${config.id} failed: ${res.status}`);
+    const data = await res.json();
+
+    // IIIF Content Search v1 format: { @context, @type: "sc:AnnotationList", resources: [...] }
+    // IIIF Content Search v2 format: { @context, type: "AnnotationPage", items: [...] }
+    let items = data.resources || data.items || [];
+    if (!Array.isArray(items)) return [];
+
+    const getField = (obj, path) => {
+      if (!path || !obj) return undefined;
+      let v = obj;
+      for (const k of path.split('.')) { v = v?.[k]; if (v == null) break; }
+      return v;
+    };
+
+    return items
+      .filter(item => {
+        // v1 format: check resource['@id']; v2 format: check body or resource
+        const imgUrl = item.resource?.['@id'] || item.body?.['@id'] || item['@id'];
+        return imgUrl && (imgUrl.includes('image') || imgUrl.includes('iiif') || imgUrl.endsWith('.jpg') || imgUrl.endsWith('.png'));
+      })
+      .map((item, i) => {
+        // Extract image URL (v1: resource['@id'], v2: body['@id'])
+        const imgUrl = item.resource?.['@id'] || item.body?.['@id'] || item['@id'] || '';
+        
+        // Extract title from label, chars, or annotation
+        const title = item.resource?.label || item.body?.label || item.label || 
+                     (item.chars && item.chars.substring(0, 100)) || 'IIIF Search Result';
+        
+        // Extract canvas URL (source reference)
+        const sourceUrl = item.on || item.target?.['@id'] || '';
+        
+        // Extract description if available
+        const description = item.description || item.body?.value || '';
+
+        return {
+          id:          `${config.id}_${i}_${String(sourceUrl).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
+          url:         String(imgUrl),
+          thumb:       String(imgUrl), // IIIF typically provides good thumbnails
+          title:       String(title),
+          description: String(description),
+          source:      config.id,
+          sourceUrl:   String(sourceUrl),
+          year:        null,
+          tags:        [],
+          colors:      [],
+          aiTags:      [],
+        };
+      })
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn(`IIIF Search ${config.id} failed:`, e.message);
+    return [];
+  }
+}
+
+/* ============================================================
+   11. INTERLEAVE & SHUFFLE
+============================================================ */
+function interleave(arrays) {
+  const result = [];
+  const max = Math.max(...arrays.map(a => a.length));
+  for (let i = 0; i < max; i++) {
+    for (const arr of arrays) {
+      if (arr[i]) result.push(arr[i]);
+    }
+  }
+  return result;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ============================================================
+   12. FETCH ORCHESTRATION
+============================================================ */
+async function fetchAll(keywords, totalCount, isSilent = false) {
+  // isSilent = true means background/cross-ref call — don't cancel existing requests
+  // Use a local abort controller so parallel cross-ref calls don't cancel each other
+  let signal;
+  if (isSilent) {
+    const localAC = new AbortController();
+    signal = localAC.signal;
+  } else {
+    if (STATE.abortController) STATE.abortController.abort();
+    STATE.abortController = new AbortController();
+    signal = STATE.abortController.signal;
+  }
+
+  const keyword    = keywords[0];
+  const altKeyword = keywords[1] || keyword;
+  const alt2       = keywords[2] || altKeyword;
+
+  // all slots always run — key-gated sources return [] when no key set
+  // Use realistic productive source count, not total registered count.
+  // ~60 sources reliably return results on any query.
+  // This ensures the slider value matches actual images shown.
+  const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+  const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
+  const fetchBatch = perSource + 4;
+
+  const seenIds = new Set();
+  const all = [];
+  const exactQueryClass = classifyQuery(keyword);
+
+  const onSourceResult = sourceName => items => {
+    if (signal.aborted) return;
+    // Layer 2: hard gate in exact mode — discard items with zero keyword presence
+    if (STATE.searchMode === 'exact' && items && items.length) {
+      const terms = keyword.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      items = items.filter(item => {
+        const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        return terms.some(t => hay.includes(t));
+      });
+    }
+    recordSourceResult(sourceName, (items || []).length);
+    updateSourcesActiveCounter();
+    if (!items || !items.length) return;
+    const fresh = items.filter(item => !seenIds.has(item.id));
+    fresh.forEach(item => seenIds.add(item.id));
+    all.push(...fresh);
+    const preview = STATE.searchMode === 'exact'
+      ? getDisplayResults(fresh, STATE.query)
+      : shuffle(fresh.slice(0, perSource));
+    renderGrid(preview);
+  };
+
+  await Promise.allSettled([
+    // ── Batch 1 ────────────────────────────────────────────
+    callIfHealthy('wikimedia',    fetchWikimedia(keyword,                       fetchBatch, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    callIfHealthy('wikimedia',    fetchWikimedia('Featured_picture ' + keyword, fetchBatch, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    callIfHealthy('met',          fetchMet(keywords.join(' '),                  fetchBatch, signal)).then(onSourceResult('met')).catch(() => {}),
+    callIfHealthy('archive',      fetchArchive(altKeyword,                      fetchBatch, signal)).then(onSourceResult('archive')).catch(() => {}),
+    skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
+    skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    fetchBatch, signal)).then(onSourceResult('inaturalist')).catch(() => {}),
+    callIfHealthy('loc',          fetchLOC(keyword,                             fetchBatch, signal)).then(onSourceResult('loc')).catch(() => {}),
+    callIfHealthy('openlibrary',  fetchOpenLibrary(keyword,                     fetchBatch, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
+    callIfHealthy('chicago',      fetchChicagoArt(keyword,                      fetchBatch, signal)).then(onSourceResult('chicago')).catch(() => {}),
+    callIfHealthy('cleveland',    fetchCleveland(keyword,                       fetchBatch, signal)).then(onSourceResult('cleveland')).catch(() => {}),
+    callIfHealthy('va',           fetchVA(keyword,                              fetchBatch, signal)).then(onSourceResult('va')).catch(() => {}),
+    callIfHealthy('wikiart',      fetchWikiArt(keyword,                         fetchBatch, signal)).then(onSourceResult('wikiart')).catch(() => {}),
+    callIfHealthy('nordic',       fetchNordicMuseum(keyword,                    fetchBatch, signal)).then(onSourceResult('nordic')).catch(() => {}),
+    callIfHealthy('flickr',       fetchFlickrCommons(keyword,                   fetchBatch, signal)).then(onSourceResult('flickr')).catch(() => {}),
+    callIfHealthy('europeana',    fetchEuropeana(keyword,                       fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('europeana',    fetchEuropeana(alt2,                          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('europeana',    fetchEuropeana(keyword + ' fashion',          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('europeana',    fetchEuropeana(keyword + ' textile costume',  fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword,                     fetchBatch, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
+    callIfHealthy('harvard',      fetchHarvard(keyword,                         fetchBatch, signal)).then(onSourceResult('harvard')).catch(() => {}),
+    callIfHealthy('smithsonian',  fetchSmithsonian(keyword,                     fetchBatch, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
+    callIfHealthy('pexels',       fetchPexels(keyword,                          fetchBatch, signal)).then(onSourceResult('pexels')).catch(() => {}),
+    callIfHealthy('pixabay',      fetchPixabay(keyword,                         fetchBatch, signal)).then(onSourceResult('pixabay')).catch(() => {}),
+    // ── Batch 2 ────────────────────────────────────────────
+    callIfHealthy('getty',        fetchGetty(keyword,                           fetchBatch, signal)).then(onSourceResult('getty')).catch(() => {}),
+    callIfHealthy('nga',          fetchNGA(keyword,                             fetchBatch, signal)).then(onSourceResult('nga')).catch(() => {}),
+    skipInExactMode('gbif',  exactQueryClass) ? Promise.resolve() : callIfHealthy('gbif',  fetchGBIF(keyword,  fetchBatch, signal)).then(onSourceResult('gbif')).catch(() => {}),
+    skipInExactMode('eol',   exactQueryClass) ? Promise.resolve() : callIfHealthy('eol',   fetchEOL(keyword,   fetchBatch, signal)).then(onSourceResult('eol')).catch(() => {}),
+    skipInExactMode('apod',  exactQueryClass) ? Promise.resolve() : callIfHealthy('apod',  fetchAPOD(keyword,  fetchBatch, signal)).then(onSourceResult('apod')).catch(() => {}),
+    callIfHealthy('gallica',      fetchGallica(keyword,                         fetchBatch, signal)).then(onSourceResult('gallica')).catch(() => {}),
+    callIfHealthy('chronicling',  fetchChroniclingAmerica(keyword,              fetchBatch, signal)).then(onSourceResult('chronicling')).catch(() => {}),
+    callIfHealthy('openverse',    fetchOpenverse(keyword,                       fetchBatch, signal)).then(onSourceResult('openverse')).catch(() => {}),
+    callIfHealthy('trove',        fetchTrove(keyword,                           fetchBatch, signal)).then(onSourceResult('trove')).catch(() => {}),
+    callIfHealthy('digitalnz',    fetchDigitalNZ(keyword,                       fetchBatch, signal)).then(onSourceResult('digitalnz')).catch(() => {}),
+    callIfHealthy('bhl',          fetchBHL(keyword,                             fetchBatch, signal)).then(onSourceResult('bhl')).catch(() => {}),
+    callIfHealthy('carnegie',     fetchCarnegie(keyword,                        fetchBatch, signal)).then(onSourceResult('carnegie')).catch(() => {}),
+    callIfHealthy('prado',        fetchPrado(keyword,                           fetchBatch, signal)).then(onSourceResult('prado')).catch(() => {}),
+    callIfHealthy('parismusees',  fetchParisMusees(keyword,                     fetchBatch, signal)).then(onSourceResult('parismusees')).catch(() => {}),
+    callIfHealthy('yale',         fetchYale(keyword,                            fetchBatch, signal)).then(onSourceResult('yale')).catch(() => {}),
+    callIfHealthy('picsum',       fetchPicsum(keyword,                          fetchBatch, signal)).then(onSourceResult('picsum')).catch(() => {}),
+    callIfHealthy('usgs',         fetchUSGS(keyword,                            fetchBatch, signal)).then(onSourceResult('usgs')).catch(() => {}),
+    callIfHealthy('cooperhewitt', fetchCooperHewitt(keyword,                    fetchBatch, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
+    // ── Batch 3 ────────────────────────────────────────────
+    callIfHealthy('tate',         fetchTate(keyword,                            fetchBatch, signal)).then(onSourceResult('tate')).catch(() => {}),
+    callIfHealthy('finna',        fetchFinna(keyword,                           fetchBatch, signal)).then(onSourceResult('finna')).catch(() => {}),
+    callIfHealthy('soch',         fetchSOCH(keyword,                            fetchBatch, signal)).then(onSourceResult('soch')).catch(() => {}),
+    callIfHealthy('joconde',      fetchJoconde(keyword,                         fetchBatch, signal)).then(onSourceResult('joconde')).catch(() => {}),
+    callIfHealthy('mnw',          fetchMNW(keyword,                             fetchBatch, signal)).then(onSourceResult('mnw')).catch(() => {}),
+    callIfHealthy('tepapa',       fetchTePapa(keyword,                          fetchBatch, signal)).then(onSourceResult('tepapa')).catch(() => {}),
+    callIfHealthy('dpla',         fetchDPLA(keyword,                            fetchBatch, signal)).then(onSourceResult('dpla')).catch(() => {}),
+    callIfHealthy('artsy',        fetchArtsy(keyword,                           fetchBatch, signal)).then(onSourceResult('artsy')).catch(() => {}),
+    callIfHealthy('pas',          fetchPAS(keyword,                             fetchBatch, signal)).then(onSourceResult('pas')).catch(() => {}),
+    callIfHealthy('smg',          fetchSMG(keyword,                             fetchBatch, signal)).then(onSourceResult('smg')).catch(() => {}),
+    callIfHealthy('auckland',     fetchAuckland(keyword,                        fetchBatch, signal)).then(onSourceResult('auckland')).catch(() => {}),
+    callIfHealthy('photogrammar', fetchPhotogrammar(keyword,                    fetchBatch, signal)).then(onSourceResult('photogrammar')).catch(() => {}),
+    callIfHealthy('wellcome',     fetchWellcome(keyword,                        fetchBatch, signal)).then(onSourceResult('wellcome')).catch(() => {}),
+    callIfHealthy('maas',         fetchMAAS(keyword,                            fetchBatch, signal)).then(onSourceResult('maas')).catch(() => {}),
+    callIfHealthy('smk',          fetchSMK(keyword,                             fetchBatch, signal)).then(onSourceResult('smk')).catch(() => {}),
+    callIfHealthy('thyssen',      fetchThyssen(keyword,                         fetchBatch, signal)).then(onSourceResult('thyssen')).catch(() => {}),
+    // ── C17: WDL (extra LOC call) ──────────────────────────
+    callIfHealthy('wdl',          fetchLOC('wdl ' + keyword,                   fetchBatch, signal)
+      .then(r => r.map(i => ({ ...i, source: 'wdl', id: i.id.replace('loc_', 'wdl_') }))))
+      .then(onSourceResult('wdl')).catch(() => {}),
+    // ── C18: Wikimedia Artwork extra calls ─────────────────
+    callIfHealthy('wikimedia',    fetchWikimedia('Artwork ' + keyword,          fetchBatch, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    callIfHealthy('wikimedia',    fetchWikimedia(keyword + ' painting',         fetchBatch, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    // ── Batch 4 — new sources ──────────────────────────────
+    callIfHealthy('walters',      fetchWalters(keyword,                         perSource+4, signal)).then(onSourceResult('walters')).catch(() => {}),
+    callIfHealthy('princeton',    fetchPrinceton(keyword,                       perSource+4, signal)).then(onSourceResult('princeton')).catch(() => {}),
+    callIfHealthy('wikidata',     fetchWikidata(keyword,                        perSource+4, signal)).then(onSourceResult('wikidata')).catch(() => {}),
+    skipInExactMode('noaa',   exactQueryClass) ? Promise.resolve() : callIfHealthy('noaa',   fetchNOAA(keyword,   perSource+4, signal)).then(onSourceResult('noaa')).catch(() => {}),
+    skipInExactMode('hubble', exactQueryClass) ? Promise.resolve() : callIfHealthy('hubble', fetchHubble(keyword, perSource+4, signal)).then(onSourceResult('hubble')).catch(() => {}),
+    callIfHealthy('cornell',      fetchCornell(keyword,                         perSource+4, signal)).then(onSourceResult('cornell')).catch(() => {}),
+    callIfHealthy('folger',       fetchFolger(keyword,                          perSource+4, signal)).then(onSourceResult('folger')).catch(() => {}),
+    callIfHealthy('onb',          fetchONB(keyword,                             perSource+4, signal)).then(onSourceResult('onb')).catch(() => {}),
+    callIfHealthy('nypl',         fetchNYPL(keyword,                            perSource+4, signal)).then(onSourceResult('nypl')).catch(() => {}),
+    callIfHealthy('mak',          fetchMAK(keyword,                             perSource+4, signal)).then(onSourceResult('mak')).catch(() => {}),
+    callIfHealthy('mna',          fetchMNA(keyword,                             perSource+4, signal)).then(onSourceResult('mna')).catch(() => {}),
+    // ── Batch 4 — extra calls (reusing existing functions) ─
+    callIfHealthy('louvre',       fetchJoconde(keyword + ' Louvre',             perSource+4, signal)
+      .then(r => r.map(i => ({ ...i, id: i.id.replace('joconde_', 'louvre_'), source: 'louvre' }))))
+      .then(onSourceResult('louvre')).catch(() => {}),
+    callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' drawing',        perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
+    callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' print',          perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
+    callIfHealthy('bhl',          fetchBHL('illustrated ' + keyword,            perSource+4, signal)).then(onSourceResult('bhl')).catch(() => {}),
+    callIfHealthy('smithsonian',  fetchSmithsonian(keyword + ' photograph',     perSource+4, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
+    callIfHealthy('archive',      fetchArchive(keyword + ' visual art',         perSource+4, signal)).then(onSourceResult('archive')).catch(() => {}),
+    callIfHealthy('wikimedia',    fetchWikimedia(keyword + ' filetype:bitmap',  perSource+4, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    // ── Batch 7 ────────────────────────────────────────────
+    callIfHealthy('mia',              fetchMia(keyword,                            perSource+2, signal)).then(onSourceResult('mia')).catch(() => {}),
+    callIfHealthy('lacma',            fetchLACMA(keyword,                          perSource+2, signal)).then(onSourceResult('lacma')).catch(() => {}),
+    callIfHealthy('munch',            fetchMunch(keyword,                          perSource+2, signal)).then(onSourceResult('munch')).catch(() => {}),
+    callIfHealthy('mauritshuis',      fetchMauritshuis(keyword,                    perSource+2, signal)).then(onSourceResult('mauritshuis')).catch(() => {}),
+    callIfHealthy('nationalmuseumse', fetchNationalmuseumSE(keyword,               perSource+2, signal)).then(onSourceResult('nationalmuseumse')).catch(() => {}),
+    skipInExactMode('naturalis',   exactQueryClass) ? Promise.resolve() : callIfHealthy('naturalis',   fetchNaturalis(keyword,      perSource+2, signal)).then(onSourceResult('naturalis')).catch(() => {}),
+    callIfHealthy('nmaahc',           fetchNMAAHC(keyword,                         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
+    callIfHealthy('nasm',             fetchNASM(keyword,                           perSource+2, signal)).then(onSourceResult('nasm')).catch(() => {}),
+    callIfHealthy('whitney',          fetchWhitney(keyword,                        perSource+2, signal)).then(onSourceResult('whitney')).catch(() => {}),
+    skipInExactMode('nationalzoo', exactQueryClass) ? Promise.resolve() : callIfHealthy('nationalzoo', fetchNationalZoo(keyword,     perSource+2, signal)).then(onSourceResult('nationalzoo')).catch(() => {}),
+    skipInExactMode('gbiflit',     exactQueryClass) ? Promise.resolve() : callIfHealthy('gbiflit',     fetchGBIFLiterature(keyword,  perSource+2, signal)).then(onSourceResult('gbiflit')).catch(() => {}),
+    callIfHealthy('freersackler',     fetchFreerSackler(keyword,                   perSource+2, signal)).then(onSourceResult('freersackler')).catch(() => {}),
+    callIfHealthy('archive',          fetchArchiveMaps(keyword,                    perSource+2, signal)).then(onSourceResult('archive')).catch(() => {}),
+    callIfHealthy('openlibrary',      fetchOpenLibrarySubjects(keyword,            perSource+2, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
+    callIfHealthy('ago',              fetchAGO(keyword,                            perSource+2, signal)).then(onSourceResult('ago')).catch(() => {}),
+    callIfHealthy('pem',              fetchPEM(keyword,                            perSource+2, signal)).then(onSourceResult('pem')).catch(() => {}),
+    callIfHealthy('npg',              fetchNPG(keyword,                            perSource+2, signal)).then(onSourceResult('npg')).catch(() => {}),
+    callIfHealthy('louvread',         fetchLouvreAD(keyword,                       perSource+2, signal)).then(onSourceResult('louvread')).catch(() => {}),
+    // ── Batch 7 — extra calls (reusing existing functions) ─
+    callIfHealthy('met',              fetchMet('heilbrunn ' + keyword,             perSource+2, signal)).then(onSourceResult('met')).catch(() => {}),
+    callIfHealthy('nmaahc',           fetchNMAAHC(keyword + ' photograph',         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
+    callIfHealthy('cooperhewitt',     fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
+    callIfHealthy('wikimedia',        fetchWikimedia('incategory:Drawings ' + keyword, perSource+2, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+    callIfHealthy('wellcome',         fetchWellcome(keyword + ' illustration',      perSource+2, signal)).then(onSourceResult('wellcome')).catch(() => {}),
+    // ── Phase 2 — new sources ─────────────────────────────
+    callIfHealthy('unsplash',         fetchUnsplash(keyword,                        perSource+2, signal)).then(onSourceResult('unsplash')).catch(() => {}),
+    callIfHealthy('bodleian',         fetchBodleian(keyword,                        perSource+2, signal)).then(onSourceResult('bodleian')).catch(() => {}),
+    callIfHealthy('bsb',              fetchBSB(keyword,                             perSource+2, signal)).then(onSourceResult('bsb')).catch(() => {}),
+    callIfHealthy('cudl',             fetchCUDL(keyword,                            perSource+2, signal)).then(onSourceResult('cudl')).catch(() => {}),
+    // ── Phase 2 — manifest-loaded IIIF sources (injected dynamically) ─
+    ...(STATE.manifestSources || []).map(cfg => {
+      const adapterFunc = cfg.adapter === 'iiif_content_search' ? fetchIIIFSearch : fetchIIIFCollection;
+      return callIfHealthy(cfg.id, adapterFunc(cfg, keyword, perSource+2, signal)
+        .then(r => r.map(i => ({ ...i, source: i.source || cfg.id }))))
+        .then(onSourceResult(cfg.id)).catch(() => {})
+    }),
+    // ── Phase A — Europeana sub-collections (20) ─────────────────────────
+    ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) =>
+      callIfHealthy(id, fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, keyword, Math.max(2, Math.ceil(perSource/3)), signal, cfg.extra || '')
+        .then(r => r.map(i => ({ ...i, source: id }))))
+        .then(onSourceResult(id)).catch(() => {})
+    ),
+    // ── Phase A — DPLA hub sub-collections (15) ─────────────────────────
+    ...Object.entries(DPLA_HUBS).map(([id, cfg]) =>
+      callIfHealthy(id, fetchDPLAProvider(cfg.provider, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+        .then(r => r.map(i => ({ ...i, source: id }))))
+        .then(onSourceResult(id)).catch(() => {})
+    ),
+    // ── Phase A — Smithsonian sub-museums (15) ──────────────────────────
+    ...Object.entries(SI_UNITS).map(([id, cfg]) =>
+      callIfHealthy(id, fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+        .then(r => r.map(i => ({ ...i, source: id }))))
+        .then(onSourceResult(id)).catch(() => {})
+    ),
+    // ── Phase A — Wikimedia category filters (10) ─────────────────────────
+    ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) =>
+      callIfHealthy(id, fetchWikimediaCategory(cfg.cat, keyword, Math.max(2, Math.ceil(perSource/2)), signal)
+        .then(r => r.map(i => ({ ...i, source: id }))))
+        .then(onSourceResult(id)).catch(() => {})
+    ),
+    // ── Phase B — zero-auth free APIs ────────────────────────────────────
+    skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
+    skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
+    // ── Phase D — niche & specialized ──────────────────────────────────
+    callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
+    // ── Phase E — CORS-blocked, cache-first ─────────────────────────────
+    callIfHealthy('nhm_london',              fetchNHMLondon(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('nhm_london')).catch(() => {}),
+    callIfHealthy('wallace_collection',      fetchWallaceCollection(keyword,      Math.max(3, perSource), signal)).then(onSourceResult('wallace_collection')).catch(() => {}),
+    callIfHealthy('fitzwilliam',             fetchFitzwilliam(keyword,            Math.max(3, perSource), signal)).then(onSourceResult('fitzwilliam')).catch(() => {}),
+    callIfHealthy('national_gallery_london', fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal)).then(onSourceResult('national_gallery_london')).catch(() => {}),
+    callIfHealthy('scottish_national',       fetchScottishNational(keyword,       Math.max(3, perSource), signal)).then(onSourceResult('scottish_national')).catch(() => {}),
+  ]);
+
+  if (!isSilent && !all.length) showEmptyState();
+  return all;
+}
+
+/* ============================================================
+   13. RENDER ENGINE
+============================================================ */
+function showLoading(msg = 'searching...') {
+  document.getElementById('loading-indicator').textContent = msg;
+}
+function hideLoading() {
+  document.getElementById('loading-indicator').textContent = '';
+}
+
+/* -- Toast notification -- */
+let _toastTimer = null;
+function showToast(msg, duration = 4000) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('visible');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('visible'), duration);
+}
+
+/* -- Show failed-image toast after search settles -- */
+function checkFailedImages() {
+  const n = STATE._failedImages || 0;
+  if (n > 0) showToast(`${n} image${n > 1 ? 's' : ''} failed to load`);
+}
+
+const renderedIds = new Set();
+function clearGrid() {
+  document.getElementById('image-grid').innerHTML = '';
+  renderedIds.clear();
+}
+
+/* -- IntersectionObserver for lazy image loading -- */
+const _lazyObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const img = entry.target;
+    if (img.dataset.src) {
+      img.src = img.dataset.src;
+      delete img.dataset.src;
+    }
+    _lazyObserver.unobserve(img);
+  });
+}, { rootMargin: '200px' });
+
+function showEmptyState() {
+  const grid = document.getElementById('image-grid');
+  if (!grid.querySelector('.empty-state')) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;min-height:calc(100vh - 4px);">
+        <p>nothing found — try different words</p>
+        <span>try: texture / light / form / shadow</span>
+      </div>`;
+  }
+}
+
+const _gridItemMap = new Map();
+
+function renderGrid(items) {
+  const grid = document.getElementById('image-grid');
+  // Remove empty-state placeholder once real cards arrive
+  if (items.length) {
+    const emptyState = grid.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+  }
+  if (!items.length) return;
+
+  const CHUNK = 12;
+  let cursor = 0;
+
+  function flush() {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(cursor + CHUNK, items.length);
+    for (; cursor < end; cursor++) {
+      const item = items[cursor];
+      if (renderedIds.has(item.id)) continue; // skip duplicate
+      renderedIds.add(item.id);
+    const card = document.createElement('div');
+    card.className = 'image-card';
+    card.id = 'card-' + item.id;
+    card.dataset.id = item.id;
+    card.setAttribute('data-source', item.source);
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', (item.title || 'image') + ' — ' + (item.source || 'source'));
+
+    const img = document.createElement('img');
+    img.dataset.src = item.thumb;  // deferred — loaded by IntersectionObserver
+    img.alt = item.title || '';
+    img.loading = 'lazy';
+    img.onload  = () => {
+      if (img.naturalWidth <= 1 || img.naturalHeight <= 1) {
+        card.remove();
+        return;
+      }
+      img.classList.add('loaded');
+      if (STATE.sketchMode) applySketchToCard(card, img);
+    };
+    img.onerror = () => { STATE._failedImages = (STATE._failedImages || 0) + 1; card.remove(); };
+    _lazyObserver.observe(img);
+
+    const badge = document.createElement('span');
+    const _sm = BADGE_META[item.source];
+    badge.className = 'source-badge badge-' + (_sm ? _sm[0] : 'wiki');
+    const sourceLabel = _sm ? _sm[1] : item.source;
+    badge.innerHTML = `<span class="badge-label">${sourceLabel}</span><span class="badge-refresh" title="Refresh ${sourceLabel}">↺</span>`;
+
+    card.appendChild(img);
+    card.appendChild(badge);
+
+    // Deep-zoom button
+    const zoomBtn = document.createElement('button');
+    zoomBtn.className = 'zoom-btn';
+    zoomBtn.innerHTML = '⤢';
+    zoomBtn.title = 'Deep zoom';
+    card.appendChild(zoomBtn);
+
+    card.draggable = true;
+
+    _gridItemMap.set(item.id, item);
+
+      frag.appendChild(card);
+    }
+    grid.appendChild(frag);
+    if (cursor < items.length) requestAnimationFrame(flush);
+  }
+  flush();
+}
+
+/* ── Delegated event listeners on #image-grid ── */
+(function setupGridDelegation() {
+  const grid = document.getElementById('image-grid');
+
+  function getItemFromCard(card) {
+    return card ? _gridItemMap.get(card.dataset.id) : null;
+  }
+
+  grid.addEventListener('click', e => {
+    // Badge refresh
+    const refresh = e.target.closest('.badge-refresh');
+    if (refresh) {
+      e.stopPropagation();
+      const card = refresh.closest('.image-card');
+      const item = getItemFromCard(card);
+      if (item) refreshSource(item.source);
+      return;
+    }
+    // Deep-zoom button
+    const zoom = e.target.closest('.zoom-btn');
+    if (zoom) {
+      e.stopPropagation();
+      const card = zoom.closest('.image-card');
+      const item = getItemFromCard(card);
+      if (item) openDeepZoom(item);
+      return;
+    }
+    // Card click
+    const card = e.target.closest('.image-card');
+    const item = getItemFromCard(card);
+    if (!item) return;
+    if (e.ctrlKey || e.metaKey) {
+      e.stopPropagation();
+      toggleSelection(item);
+      if (STATE.crossRefMode) {
+        if (!STATE.referenceImages.find(r => r.id === item.id)) {
+          STATE.referenceImages.push(item);
+          showReferenceStrip(STATE.referenceImages);
+          if (STATE.crossRefMode === 'interpret' && STATE.geminiKey) {
+            runInterpret();
+          } else {
+            runConnect();
+          }
+        }
+      }
+      return;
+    }
+    toggleSelection(item);
+    updatePanel();
+  });
+
+  grid.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.image-card');
+    const item = getItemFromCard(card);
+    if (!item) return;
+    e.preventDefault();
+    toggleSelection(item);
+    updatePanel();
+  });
+
+  grid.addEventListener('dragstart', e => {
+    const card = e.target.closest('.image-card');
+    const item = getItemFromCard(card);
+    if (!item) return;
+    e.dataTransfer.setData('text/plain', item.id);
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      id: item.id, thumb: item.thumb, title: item.title,
+      source: item.source, tags: item.tags || [],
+      sourceUrl: item.sourceUrl || '', year: item.year || '',
+      colors: item.colors || [],
+    }));
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+
+  grid.addEventListener('dblclick', e => {
+    const card = e.target.closest('.image-card');
+    const item = getItemFromCard(card);
+    if (!item) return;
+    e.stopPropagation();
+    if (!STATE.selected.find(s => s.id === item.id)) {
+      STATE.selected.push(item);
+      card.classList.add('selected');
+      const img2 = card.querySelector('img');
+      if (img2 && img2.complete && img2.naturalWidth > 1) {
+        try { item.colors = getDominantColors(img2); } catch {}
+      }
+      updateFloatingBar();
+    }
+    const boardCanvas = document.getElementById('board-canvas');
+    if (document.getElementById('board-overlay')?.classList.contains('open')) {
+      let alreadyOnBoard = false;
+      boardCanvas.querySelectorAll('.board-card').forEach(bc => {
+        if (boardCardMap.get(bc)?.id === item.id) alreadyOnBoard = true;
+      });
+      if (!alreadyOnBoard) {
+        const offset = (STATE.selected.length - 1) * 16;
+        createBoardCard(item,
+          24 + (offset % 320),
+          24 + Math.floor(offset / 320) * 180,
+          boardCanvas);
+      }
+    }
+    if (typeof persistBoardState === 'function') persistBoardState();
+    if (typeof broadcastBoardSync  === 'function') broadcastBoardSync();
+  });
+})();
+
+/* ============================================================
+   PHASE 3 — SELECTION & PANEL
+============================================================ */
+
+/* -- Color extraction (Canvas API fallback + color-thief upgrade) -- */
+function getDominantColors(imgEl, count = 10) {
+  try {
+    if (window.ColorThief) {
+      const ct = new ColorThief();
+      // color-thief needs image already loaded and from same origin / with crossOrigin
+      if (imgEl.complete && imgEl.naturalWidth > 0) {
+        const palette = ct.getPalette(imgEl, Math.min(count, 12));
+        return palette.map(rgb => `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`);
+      }
+    }
+    // Fallback: original canvas bucket method
+    const canvas = document.createElement('canvas');
+    canvas.width = 50; canvas.height = 50;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0, 50, 50);
+    const data = ctx.getImageData(0, 0, 50, 50).data;
+    const buckets = {};
+    for (let i = 0; i < data.length; i += 16) {
+      const r = Math.round(data[i]   / 32) * 32;
+      const g = Math.round(data[i+1] / 32) * 32;
+      const b = Math.round(data[i+2] / 32) * 32;
+      const key = `${r},${g},${b}`;
+      buckets[key] = (buckets[key] || 0) + 1;
+    }
+    return Object.entries(buckets)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, count)
+      .map(([key]) => `rgb(${key})`);
+  } catch {
+    return [];
+  }
+}
+
+/* -- Async color extraction — deferred to idle callback to avoid main-thread jank -- */
+function getDominantColorsAsync(imgEl, count = 10) {
+  return new Promise(resolve => {
+    const run = () => resolve(getDominantColors(imgEl, count));
+    // Try to load color-thief first, then extract
+    if (!window.ColorThief && typeof loadColorThief === 'function') {
+      loadColorThief(() => {
+        loadTinyColor(() => {
+          if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(run, { timeout: 500 });
+          } else {
+            setTimeout(run, 0);
+          }
+        });
+      });
+    } else {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(run, { timeout: 500 });
+      } else {
+        setTimeout(run, 0);
+      }
+    }
+  });
+}
+
+/* -- Related searches via Datamuse -- */
+async function getRelated(tag) {
+  try {
+    const [trg, lc] = await Promise.allSettled([
+      fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(tag)}&max=5`).then(r => r.json()),
+      fetch(`https://api.datamuse.com/words?lc=${encodeURIComponent(tag)}&max=3`).then(r => r.json()),
+    ]);
+    return [
+      ...(trg.status === 'fulfilled' ? trg.value : []),
+      ...(lc.status  === 'fulfilled' ? lc.value  : []),
+    ].map(w => w.word);
+  } catch {
+    return [];
+  }
+}
+
+/* -- Get color name from rgb string using TinyColor (or fallback) -- */
+function getColorName(rgbStr) {
+  if (window.tinycolor) {
+    const tc = tinycolor(rgbStr);
+    const named = tc.toName();
+    if (named) return named;
+    // Approximate: find nearest CSS named color
+    const hex = tc.toHexString();
+    const hsl = tc.toHsl();
+    // Give a descriptive name based on hue/sat/lum
+    if (hsl.s < 0.1) {
+      if (hsl.l < 0.15) return 'Black';
+      if (hsl.l < 0.35) return 'Dark Gray';
+      if (hsl.l < 0.65) return 'Gray';
+      if (hsl.l < 0.85) return 'Light Gray';
+      return 'White';
+    }
+    const hue = hsl.h;
+    let name = '';
+    if (hue < 15) name = 'Red';
+    else if (hue < 40) name = 'Orange';
+    else if (hue < 65) name = 'Yellow';
+    else if (hue < 160) name = 'Green';
+    else if (hue < 200) name = 'Cyan';
+    else if (hue < 260) name = 'Blue';
+    else if (hue < 300) name = 'Purple';
+    else if (hue < 340) name = 'Pink';
+    else name = 'Red';
+    if (hsl.l < 0.3) name = 'Dark ' + name;
+    else if (hsl.l > 0.7) name = 'Light ' + name;
+    return name;
+  }
+  return rgbStr;
+}
+
+/* -- Render colour dots (replaces old renderSwatches) -- */
+function renderColorDots(colors) {
+  const container = document.getElementById('swatches');
+  container.innerHTML = '';
+  colors.forEach(color => {
+    const hex = window.tinycolor ? tinycolor(color).toHexString() : color;
+    const name = getColorName(color);
+
+    const dot = document.createElement('div');
+    dot.className = 'color-dot';
+    dot.style.background = color;
+
+    // Tooltip with name + hex stacked
+    const tooltip = document.createElement('div');
+    tooltip.className = 'color-dot-tooltip';
+    tooltip.innerHTML = '<span class="dot-name">' + name + '</span><span class="dot-hex">' + hex + '</span>';
+    dot.appendChild(tooltip);
+
+    // Copied badge
+    const badge = document.createElement('span');
+    badge.className = 'dot-copied-badge';
+    badge.textContent = '\u2713';
+    dot.appendChild(badge);
+
+    // Click: copy hex to clipboard
+    dot.addEventListener('click', () => {
+      navigator.clipboard.writeText(hex).then(() => {
+        dot.classList.add('copied');
+        setTimeout(() => dot.classList.remove('copied'), 500);
+      });
+    });
+
+    container.appendChild(dot);
+  });
+}
+
+/* -- Backwards compat alias -- */
+function renderSwatches(colors) { renderColorDots(colors); }
+
+/* -- Render tag pills in panel -- */
+function renderPanelTags(tags) {
+  const container = document.getElementById('tags-container');
+  container.innerHTML = '';
+  tags.forEach(tag => {
+    const pill = document.createElement('button');
+    pill.className = 'tag';
+    pill.textContent = tag;
+    pill.addEventListener('click', () => {
+      document.getElementById('search-input').value = tag;
+      runSearch(tag);
+    });
+    container.appendChild(pill);
+  });
+}
+
+/* -- Render related explore links -- */
+async function renderRelated(tags) {
+  const container = document.getElementById('related-container');
+  container.innerHTML = '<span class="loading-indicator" style="animation:none;opacity:0.5;">loading...</span>';
+
+  const topTags = tags.slice(0, 3);
+  const results = await Promise.allSettled(topTags.map(t => getRelated(t)));
+  const allWords = results
+    .flatMap(r => r.status === 'fulfilled' ? r.value : [])
+    .filter(w => !tags.includes(w));
+  const unique = [...new Set(allWords)].slice(0, 8);
+
+  container.innerHTML = '';
+  if (!unique.length) {
+    container.innerHTML = '<span style="font-family:var(--font-ui);font-size:10px;color:var(--ink-3);">—</span>';
+    return;
+  }
+  unique.forEach(word => {
+    const link = document.createElement('div');
+    link.className = 'related-link';
+    link.textContent = `explore ${word}`;
+    link.addEventListener('click', () => {
+      document.getElementById('search-input').value = word;
+      runSearch(word);
+    });
+    container.appendChild(link);
+  });
+}
+
+/* -- Render source info block -- */
+function renderSourceInfo(items) {
+  const el = document.getElementById('source-info');
+  if (!items.length) { el.innerHTML = ''; return; }
+
+  // Show info for the most recently selected item
+  const item = items[items.length - 1];
+  const sourceLabel = getSourceName(item.source);
+  el.innerHTML = '';
+
+  const title = document.createElement('div');
+  title.style.cssText = 'margin-bottom:6px;color:var(--ink);font-weight:400;';
+  title.textContent = item.title || '—';
+
+  const sourceLine = document.createElement('div');
+  sourceLine.appendChild(createSourceIdentity(item.source, sourceLabel));
+  if (item.year) {
+    const year = document.createElement('span');
+    year.textContent = ' · ' + item.year;
+    sourceLine.appendChild(year);
+  }
+
+  el.appendChild(title);
+  el.appendChild(sourceLine);
+
+  if (item.sourceUrl) {
+    const linkWrap = document.createElement('div');
+    linkWrap.style.marginTop = '4px';
+    const link = document.createElement('a');
+    link.href = item.sourceUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.cssText = 'color:var(--accent);border-bottom:1px solid var(--line-strong);';
+    link.textContent = 'view original ↗';
+    linkWrap.appendChild(link);
+    el.appendChild(linkWrap);
+  }
+}
+
+/* -- Full panel update -- */
+async function updatePanel() {
+  const panel = document.getElementById('panel');
+  const emptyHint = document.getElementById('panel-empty-hint');
+  const colorsSection = document.getElementById('panel-colors');
+  const tagsSection = document.getElementById('panel-tags');
+  const relatedSection = document.getElementById('panel-related');
+  const sourceSection = document.getElementById('panel-source');
+  const aiSection = document.getElementById('panel-ai-tags');
+  const analyseSection = document.getElementById('analyse-section');
+
+  // Reposition sketch overlay after panel transition completes
+  if (_fabricCanvas) setTimeout(positionFabricOverlay, 420);
+
+  if (!STATE.selected.length) {
+    panel.classList.add('open');
+    if (emptyHint) emptyHint.style.display = 'block';
+    colorsSection.style.display = 'none';
+    tagsSection.style.display = 'none';
+    relatedSection.style.display = 'none';
+    sourceSection.style.display = 'none';
+    aiSection.style.display = 'none';
+    analyseSection.style.display = 'none';
+    document.getElementById('no-key-note').textContent = '';
+    return;
+  }
+
+  panel.classList.add('open');
+  if (emptyHint) emptyHint.style.display = 'none';
+  sourceSection.style.display = '';
+
+  // Aggregate colors from all selected images (deduplicated)
+  const allColors = [];
+  STATE.selected.forEach(item => {
+    (item.colors || []).forEach(c => {
+      if (!allColors.includes(c)) allColors.push(c);
+    });
+  });
+  if (allColors.length) {
+    colorsSection.style.display = '';
+    renderSwatches(allColors.slice(0, 10));
+  } else {
+    colorsSection.style.display = 'none';
+  }
+
+  // Merge & deduplicate tags from all selected
+  const allTags = [...new Set(STATE.selected.flatMap(i => i.tags || []))];
+  if (allTags.length) {
+    tagsSection.style.display = '';
+    relatedSection.style.display = '';
+    renderPanelTags(allTags.slice(0, 16));
+    renderRelated(allTags);
+  } else {
+    tagsSection.style.display = 'none';
+    relatedSection.style.display = 'none';
+  }
+
+  // Source info
+  renderSourceInfo(STATE.selected);
+
+  // AI key note
+  const noKeyNote = document.getElementById('no-key-note');
+  const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  noKeyNote.textContent = hasAiKey ? '' : 'no key — add an ai key for vision';
+
+  updateAnalyseButton(STATE.selected[STATE.selected.length - 1]);
+
+  showQuietTip('panel-colors', 'palette appears here as you select references', 'inspo_tip_palette');
+}
+
+/* -- toggleSelection — shared by click handler + floating bar -- */
+function toggleSelection(item) {
+  const idx = STATE.selected.findIndex(s => s.id === item.id);
+  const card = document.getElementById('card-' + item.id);
+  if (idx === -1) {
+    STATE.selected.push(item);
+    card?.classList.add('selected');
+    // Extract colors asynchronously to avoid main-thread jank
+    const img = card?.querySelector('img');
+    if (img && img.complete && img.naturalWidth > 1) {
+      getDominantColorsAsync(img).then(colors => {
+        item.colors = colors;
+        // Re-render swatches if this item is still selected
+        if (STATE.selected.includes(item)) {
+          const allColors = [...new Set(STATE.selected.flatMap(i => i.colors || []))];
+          if (allColors.length) renderSwatches(allColors.slice(0, 10));
+        }
+      });
+    }
+  } else {
+    STATE.selected.splice(idx, 1);
+    card?.classList.remove('selected');
+  }
+  updateFloatingBar();
+}
+
+/* -- Panel close button -- */
+document.getElementById('panel-close').addEventListener('click', () => {
+  // Deselect all
+  STATE.selected = [];
+  document.querySelectorAll('.image-card.selected').forEach(c => c.classList.remove('selected'));
+  updateFloatingBar();
+  hideFloatingBar();
+  document.getElementById('panel').classList.remove('open');
+  // Reposition sketch overlay after panel closes
+  if (_fabricCanvas) setTimeout(positionFabricOverlay, 420);
+});
+
+document.getElementById('analyse-btn').addEventListener('click', () => {
+  runGeminiOnSelected();
+});
+
+/* -- Escape key: clear all selections -- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    STATE.selected = [];
+    document.querySelectorAll('.image-card.selected')
+      .forEach(c => c.classList.remove('selected'));
+    updateFloatingBar();
+    hideFloatingBar();
+  }
+});
+
+/* -- Arrow key navigation within image grid -- */
+document.getElementById('image-grid').addEventListener('keydown', (e) => {
+  if (!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)) return;
+  const cards = [...document.querySelectorAll('.image-card')];
+  if (!cards.length) return;
+  const idx = cards.indexOf(document.activeElement);
+  if (idx === -1) return;
+  e.preventDefault();
+  // Estimate columns from grid layout
+  const gridEl = document.getElementById('image-grid');
+  const cols = Math.round(gridEl.clientWidth / cards[0].offsetWidth) || 1;
+  let next = idx;
+  if (e.key === 'ArrowRight') next = Math.min(idx + 1, cards.length - 1);
+  if (e.key === 'ArrowLeft')  next = Math.max(idx - 1, 0);
+  if (e.key === 'ArrowDown')  next = Math.min(idx + cols, cards.length - 1);
+  if (e.key === 'ArrowUp')    next = Math.max(idx - cols, 0);
+  cards[next].focus();
+});
+
+/* ============================================================
+   PHASE 14 — FLOATING BAR + CROSS-REFERENCE
+============================================================ */
+
+/* -- scoreTerms: frequency-score metadata terms across selected images -- */
+function scoreTerms(selectedItems) {
+  const scores = {};
+
+  selectedItems.forEach(item => {
+    // Tags get double weight
+    (item.tags || []).forEach(tag => {
+      if (tag.length < 3 || STOPWORDS.has(tag)) return;
+      scores[tag] = (scores[tag] || 0) + 2;
+    });
+
+    // Title + description words get single weight
+    const words = (item.title + ' ' + (item.description || ''))
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !STOPWORDS.has(w));
+
+    const wordSet = new Set(words);
+    wordSet.forEach(word => {
+      if (!(item.tags || []).includes(word)) {
+        scores[word] = (scores[word] || 0) + 1;
+      }
+    });
+  });
+
+  return Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([term]) => term);
+}
+
+/* -- runConnect: metadata-based cross-reference search -- */
+async function runConnect() {
+  if (STATE.selected.length < 2) return;
+
+  const connectBtn = document.getElementById('connect-btn');
+  connectBtn.textContent = 'connecting...';
+
+  const terms = scoreTerms(STATE.selected);
+
+  STATE.crossRefMode = 'connect';
+  STATE.crossRefTerms = terms;
+  STATE.referenceImages = [...STATE.selected];
+
+  await crossRefSearch(terms, 'connect');
+
+  connectBtn.textContent = STATE.crossRefMode === 'connect' ? 'reconnect' : 'connect';
+}
+
+/* -- runInterpret: AI conceptual analysis (routes to active provider) -- */
+async function runInterpret() {
+  if (STATE.selected.length < 2) return;
+  // Require at least one AI key
+  const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  if (!hasKey) return;
+
+  // Gemini daily limit check
+  if ((STATE.aiProvider || 'gemini') === 'gemini' && STATE.geminiDailyCount >= 1500) {
+    console.warn('[ai] daily limit reached');
+    return;
+  }
+
+  // Rate limiting
+  const elapsed = Date.now() - (STATE.lastGeminiCall || 0);
+  if (elapsed < 2000) await sleep(2000 - elapsed);
+  STATE.lastGeminiCall = Date.now();
+
+  const interpretBtn = document.getElementById('interpret-btn');
+  const originalHTML = interpretBtn.innerHTML;
+  interpretBtn.innerHTML = '<span>interpreting...</span>';
+
+  try {
+    const descriptions = STATE.selected.map((item, i) =>
+      `Image ${i+1}: "${item.title}"${item.description ? ' \u2014 ' + item.description : ''}` +
+      `${item.tags?.length ? '. Tags: ' + item.tags.slice(0,8).join(', ') : ''}` +
+      `${item.year ? '. Year: ' + item.year : ''}`
+    ).join('\n');
+
+    const prompt = `You are a visual research assistant for artists and graphic designers. Given these ${STATE.selected.length} image descriptions, identify the 8 most interesting conceptual themes, moods, or visual territories they collectively point toward. Think beyond the obvious \u2014 consider anachronism, cultural tension, material contrasts, historical echoes, cinematic references, art movements, emotional textures. Return ONLY a valid JSON array of 8 short search terms (2-4 words max each). No explanation, no markdown, no other text.\n\nImages:\n${descriptions}`;
+
+    const text = await callAI(prompt);
+
+    let terms;
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      terms = JSON.parse(clean);
+      if (!Array.isArray(terms)) throw new Error('not array');
+      terms = terms.filter(t => typeof t === 'string').slice(0, 8);
+    } catch(e) {
+      console.warn('Interpret parse failed, falling back to connect');
+      terms = scoreTerms(STATE.selected);
+    }
+
+    STATE.crossRefMode = 'interpret';
+    STATE.crossRefTerms = terms;
+    STATE.referenceImages = [...STATE.selected];
+
+    if ((STATE.aiProvider || 'gemini') === 'gemini') incrementGeminiCounter();
+    await crossRefSearch(terms, 'interpret');
+
+  } catch(e) {
+    console.warn('Interpret failed:', e.message);
+    STATE.crossRefMode = 'connect';
+    STATE.crossRefTerms = scoreTerms(STATE.selected);
+    await crossRefSearch(STATE.crossRefTerms, 'connect');
+  } finally {
+    interpretBtn.innerHTML = originalHTML;
+  }
+}
+
+/* -- crossRefSearch: run term set as parallel searches -- */
+async function crossRefSearch(terms, mode) {
+  if (!terms || terms.length === 0) return;
+
+  // Abort any current search
+  if (STATE.abortController) STATE.abortController.abort();
+  STATE.abortController = new AbortController();
+
+  // Show reference strip + concept pills
+  showReferenceStrip(STATE.referenceImages);
+  showConceptPills(terms, mode);
+
+  // Clear grid and start loading
+  clearGrid();
+  showLoading('cross-referencing...');
+
+  // Run all terms as parallel searches
+  const perTerm = Math.ceil(STATE.imageCount / terms.length);
+  STATE.results = [];
+
+  const searchPromises = terms.map(term =>
+    fetchAll([term], perTerm, true).catch(() => [])
+  );
+
+  const settled = await Promise.allSettled(searchPromises);
+  // Collect results from each per-term fetchAll into STATE.results
+  settled.forEach(r => {
+    if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length) {
+      const existingIds = new Set(STATE.results.map(x => x.id));
+      const novel = r.value.filter(item => !existingIds.has(item.id));
+      STATE.results.push(...novel);
+    }
+  });
+
+  hideLoading();
+
+  if (STATE.results.length === 0) {
+    showEmptyState();
+  }
+}
+
+/* -- showReferenceStrip / hideReferenceStrip -- */
+function showReferenceStrip(images) {
+  const strip = document.getElementById('reference-strip');
+  const thumbsContainer = document.getElementById('reference-thumbs');
+  thumbsContainer.innerHTML = '';
+
+  images.forEach(item => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;width:60px;height:60px;flex-shrink:0;';
+
+    const img = document.createElement('img');
+    img.src = item.thumb;
+    img.style.cssText = 'width:60px;height:60px;object-fit:cover;display:block;';
+    img.title = item.title;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.style.cssText = `
+      position:absolute;top:2px;right:2px;
+      width:16px;height:16px;
+      background:var(--bg-panel);border:1px solid var(--line);
+      color:var(--ink);font-size:10px;
+      cursor:pointer;display:none;
+      align-items:center;justify-content:center;
+      padding:0;line-height:1;
+    `;
+
+    wrapper.addEventListener('mouseenter', () => { removeBtn.style.display = 'flex'; });
+    wrapper.addEventListener('mouseleave', () => { removeBtn.style.display = 'none'; });
+
+    removeBtn.addEventListener('click', () => {
+      STATE.referenceImages = STATE.referenceImages.filter(r => r.id !== item.id);
+      STATE.selected = STATE.selected.filter(s => s.id !== item.id);
+      document.getElementById('card-' + item.id)?.classList.remove('selected');
+
+      if (STATE.referenceImages.length < 2) {
+        hideReferenceStrip();
+        hideConceptPills();
+        STATE.crossRefMode = null;
+        updateFloatingBar();
+        return;
+      }
+      // Re-run analysis with updated references
+      if (STATE.crossRefMode === 'interpret' && STATE.geminiKey) {
+        runInterpret();
+      } else {
+        runConnect();
+      }
+    });
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    thumbsContainer.appendChild(wrapper);
+  });
+
+  strip.style.display = 'flex';
+}
+
+function hideReferenceStrip() {
+  document.getElementById('reference-strip').style.display = 'none';
+}
+
+/* -- showConceptPills / hideConceptPills -- */
+function showConceptPills(terms, mode) {
+  const container = document.getElementById('concept-pills');
+  const modeLabel = document.getElementById('pills-mode-label');
+
+  // Clear existing pills (keep mode label)
+  container.querySelectorAll('.concept-pill').forEach(p => p.remove());
+  // Also remove dynamic controls (add btn, refresh, escalate)
+  container.querySelectorAll('.pill-control').forEach(p => p.remove());
+
+  modeLabel.textContent = mode === 'interpret' ? 'interpreted' : 'connected';
+
+  terms.forEach(term => {
+    const pill = document.createElement('span');
+    pill.className = 'concept-pill tag pill-item';
+    pill.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:pointer;';
+
+    const prefix = document.createElement('span');
+    prefix.style.color = 'var(--accent)';
+    prefix.textContent = mode === 'interpret' ? '\u2726' : '\u25cb';
+
+    const label = document.createElement('span');
+    label.textContent = term;
+
+    const removeSpan = document.createElement('span');
+    removeSpan.textContent = '\u00d7';
+    removeSpan.style.cssText = 'opacity:0.4;font-size:10px;margin-left:2px;';
+    removeSpan.addEventListener('click', (e) => {
+      e.stopPropagation();
+      STATE.crossRefTerms = STATE.crossRefTerms.filter(t => t !== term);
+      pill.remove();
+      if (STATE.crossRefTerms.length > 0) {
+        crossRefSearch(STATE.crossRefTerms, mode);
+      }
+    });
+
+    pill.appendChild(prefix);
+    pill.appendChild(label);
+    pill.appendChild(removeSpan);
+
+    // Click pill = single-term search
+    pill.addEventListener('click', () => runSearch(term));
+    container.appendChild(pill);
+  });
+
+  // "+" button to add custom term
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn pill-control';
+  addBtn.style.cssText = 'width:auto;padding:3px 8px;font-size:9px;display:inline-flex;align-items:center;';
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'add term';
+    input.className = 'search-input';
+    input.style.cssText = 'width:100px;font-size:10px;display:inline-block;margin:0;';
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        const newTerm = input.value.trim().toLowerCase();
+        STATE.crossRefTerms.push(newTerm);
+        input.replaceWith(addBtn);
+        showConceptPills(STATE.crossRefTerms, mode);
+        crossRefSearch(STATE.crossRefTerms, mode);
+      }
+      if (e.key === 'Escape') input.replaceWith(addBtn);
+    });
+    addBtn.replaceWith(input);
+    input.focus();
+  });
+  container.appendChild(addBtn);
+
+  // ↻ refresh button
+  const refreshBtn = document.createElement('span');
+  refreshBtn.className = 'pill-control';
+  refreshBtn.style.cssText = `
+    font-family:var(--font-ui);font-size:9px;color:var(--accent);
+    cursor:pointer;padding:0 8px;letter-spacing:0.06em;
+    transition:opacity 0.3s ease;
+  `;
+  refreshBtn.textContent = '\u21bb refresh';
+  refreshBtn.addEventListener('click', () => {
+    if (mode === 'interpret' && STATE.geminiKey) runInterpret();
+    else runConnect();
+  });
+  container.appendChild(refreshBtn);
+
+  // ✦ interpret escalation button (only in connect mode with gemini key)
+  if (mode === 'connect' && STATE.geminiKey) {
+    const escalateBtn = document.createElement('span');
+    escalateBtn.className = 'pill-control';
+    escalateBtn.style.cssText = `
+      font-family:var(--font-ui);font-size:9px;color:var(--ink-3);
+      cursor:pointer;padding:0 8px;letter-spacing:0.06em;
+      transition:opacity 0.3s ease;
+      border-left:1px solid var(--line);
+    `;
+    escalateBtn.innerHTML = '\u2726 interpret';
+    escalateBtn.addEventListener('click', runInterpret);
+    container.appendChild(escalateBtn);
+  }
+
+  container.style.display = 'flex';
+}
+
+function hideConceptPills() {
+  document.getElementById('concept-pills').style.display = 'none';
+}
+
+function updateFloatingBar() {
+  const bar            = document.getElementById('floating-bar');
+  const thumbsContainer = document.getElementById('bar-thumbs');
+  const countEl        = document.getElementById('bar-count');
+  const interpretBtn   = document.getElementById('interpret-btn');
+  const canvas         = document.getElementById('canvas');
+
+  if (STATE.selected.length < 2) {
+    bar.classList.remove('visible');
+    bar.classList.remove('bar-hidden');
+    canvas.classList.remove('bar-active');
+    STATE.floatingBarVisible = false;
+    STATE.floatingBarHidden = false;
+    // Hide sidebar toggle when no selections
+    document.getElementById('bar-toggle-section').style.display = 'none';
+    return;
+  }
+
+  // Update thumbnails (max 5 shown)
+  thumbsContainer.innerHTML = '';
+  STATE.selected.slice(0, 5).forEach(item => {
+    const img = document.createElement('img');
+    img.src = item.thumb;
+    img.className = 'bar-thumb';
+    img.title = item.title;
+    img.addEventListener('click', () => toggleSelection(item));
+    thumbsContainer.appendChild(img);
+  });
+  if (STATE.selected.length > 5) {
+    const more = document.createElement('span');
+    more.style.cssText = `
+      font-size: 9px;
+      color: var(--ink-3);
+      font-family: var(--font-ui);
+      padding: 0 4px;
+    `;
+    more.textContent = `+${STATE.selected.length - 5}`;
+    thumbsContainer.appendChild(more);
+  }
+
+  // Update count
+  countEl.textContent = `${STATE.selected.length} selected`;
+
+  // Interpret button state
+  const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  if (!hasAiKey) {
+    interpretBtn.classList.add('disabled');
+  } else {
+    interpretBtn.classList.remove('disabled');
+  }
+
+  // Respect user's hide intent — don't auto-show if they dismissed the bar
+  if (STATE.floatingBarHidden) {
+    document.getElementById('bar-toggle-section').style.display = '';
+    return;
+  }
+
+  // Show bar
+  bar.classList.remove('bar-hidden');
+  bar.classList.add('visible');
+  canvas.classList.add('bar-active');
+  STATE.floatingBarVisible = true;
+  showQuietTip('connect-btn', 'connect maps shared concepts across selected images', 'inspo_tip_connect');
+}
+
+function hideFloatingBar() {
+  document.getElementById('floating-bar')?.classList.remove('visible');
+  document.getElementById('canvas')?.classList.remove('bar-active');
+  STATE.floatingBarVisible = false;
+}
+
+document.getElementById('connect-btn').addEventListener('click', () => {
+  if (STATE.selected.length < 2) return;
+  runConnect();
+});
+
+document.getElementById('interpret-btn').addEventListener('click', () => {
+  if (STATE.selected.length < 2) return;
+  if (!(STATE.geminiKey || STATE.claudeKey || STATE.openaiKey)) return;
+  runInterpret();
+});
+
+/* -- Clear All: clear selections but keep bar visible at same place -- */
+document.getElementById('bar-clear-btn').addEventListener('click', () => {
+  STATE.selected = [];
+  STATE.crossRefMode = null;
+  STATE.crossRefTerms = [];
+  STATE.referenceImages = [];
+  STATE.floatingBarHidden = false;
+  document.querySelectorAll('.image-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+  document.getElementById('bar-toggle-section').style.display = 'none';
+  hideReferenceStrip();
+  hideConceptPills();
+  updatePanel();
+  // Bar stays visible (updateFloatingBar will hide it naturally since selected < 2)
+  updateFloatingBar();
+});
+
+/* -- × button: clear all + close bar instantly -- */
+document.getElementById('bar-hide-btn').addEventListener('click', () => {
+  // Instantly hide bar
+  const bar = document.getElementById('floating-bar');
+  bar.classList.add('bar-hidden');
+  bar.classList.remove('visible');
+  document.getElementById('canvas').classList.remove('bar-active');
+  STATE.floatingBarVisible = false;
+  // Clear selections
+  STATE.selected = [];
+  STATE.crossRefMode = null;
+  STATE.crossRefTerms = [];
+  STATE.referenceImages = [];
+  STATE.floatingBarHidden = false;
+  document.querySelectorAll('.image-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+  document.getElementById('bar-toggle-section').style.display = 'none';
+  hideReferenceStrip();
+  hideConceptPills();
+  updatePanel();
+});
+
+/* -- Sidebar toggle: bring back floating bar -- */
+document.getElementById('btn-bar-toggle').addEventListener('click', () => {
+  STATE.floatingBarHidden = false;
+  const bar = document.getElementById('floating-bar');
+  bar.classList.remove('bar-hidden');
+  document.getElementById('bar-toggle-section').style.display = 'none';
+  updateFloatingBar();
+});
+
+document.getElementById('strip-clear-btn').addEventListener('click', () => {
+  // Instantly hide bar
+  const bar = document.getElementById('floating-bar');
+  bar.classList.add('bar-hidden');
+  bar.classList.remove('visible');
+  document.getElementById('canvas').classList.remove('bar-active');
+  STATE.floatingBarVisible = false;
+  STATE.floatingBarHidden = false;
+  STATE.selected = [];
+  STATE.crossRefMode = null;
+  STATE.crossRefTerms = [];
+  STATE.referenceImages = [];
+  document.querySelectorAll('.image-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+  document.getElementById('bar-toggle-section').style.display = 'none';
+  hideReferenceStrip();
+  hideConceptPills();
+  clearGrid();
+  showEmptyState();
+});
+
+/* ============================================================
+   FUSE.JS LOCAL FILTER
+============================================================ */
+function buildFuseIndex() {
+  if (!window.Fuse || !STATE.results.length) {
+    STATE.fuseIndex = null;
+    return;
+  }
+  STATE.fuseIndex = new Fuse(STATE.results, {
+    keys: ['title', 'tags', 'source', 'description'],
+    threshold: 0.35,
+    ignoreLocation: true,
+  });
+  // Show filter input when we have results
+  document.getElementById('local-filter-section').style.display = '';
+  document.getElementById('local-filter').value = '';
+}
+
+let _fuseFilterTimer = null;
+document.getElementById('local-filter').addEventListener('input', (e) => {
+  clearTimeout(_fuseFilterTimer);
+  _fuseFilterTimer = setTimeout(() => {
+    const val = e.target.value.trim();
+    clearGrid();
+    if (!val) {
+      // Restore full results
+      const visible = getDisplayResults(STATE.results, STATE.query);
+      if (visible.length) renderGrid(visible);
+      else showEmptyState();
+      return;
+    }
+    if (!STATE.fuseIndex) {
+      // Try building the index if Fuse is loaded now
+      if (window.Fuse) buildFuseIndex();
+      if (!STATE.fuseIndex) return;
+    }
+    const matches = STATE.fuseIndex.search(val).map(r => r.item);
+    if (matches.length) renderGrid(matches.slice(0, STATE.imageCount));
+    else showEmptyState();
+  }, 200);
+});
+
+/* ============================================================
+   14. KEYWORD PILLS RENDER
+============================================================ */
+function renderKeywordPills(keywords) {
+  const container = document.getElementById('keyword-pills');
+  container.innerHTML = '';
+  keywords.forEach(kw => {
+    const pill = document.createElement('button');
+    pill.className = 'tag';
+    pill.innerHTML = `${kw} <span style="color:var(--ink-3);font-size:9px;">×</span>`;
+    pill.addEventListener('click', () => {
+      STATE.keywords = STATE.keywords.filter(k => k !== kw);
+      renderKeywordPills(STATE.keywords);
+      // Re-run search with remaining keywords if any
+      if (STATE.keywords.length > 0 && STATE.results.length > 0) {
+        const final = shuffle(interleave(
+          // slice cached results; no re-fetch on pill removal
+          [STATE.results.filter(r => r.source === 'wikimedia'),
+           STATE.results.filter(r => r.source === 'met'),
+           STATE.results.filter(r => r.source === 'archive')]
+        )).slice(0, STATE.imageCount);
+        renderGrid(final);
+      }
+    });
+    container.appendChild(pill);
+  });
+}
+
+/* ============================================================
+   14b. CACHE INDICATOR
+============================================================ */
+function showCacheIndicator(query) {
+  const age = getCacheAge(query);
+  if (age === null) return;
+  document.getElementById('cache-age-text').textContent = 'cached · ' + formatCacheAge(age);
+  document.getElementById('cache-indicator').style.display = 'flex';
+}
+
+function updateCacheIndicator(query) {
+  const el = document.getElementById('cache-indicator');
+  if (el.style.display === 'none') return;
+  const age = getCacheAge(query);
+  if (age !== null) {
+    document.getElementById('cache-age-text').textContent = 'cached · ' + formatCacheAge(age);
+  }
+}
+
+function hideCacheIndicator() {
+  document.getElementById('cache-indicator').style.display = 'none';
+}
+
+function setSearchMode(mode, persist = true) {
+  const next = mode === 'exact' ? 'exact' : 'explore';
+  STATE.searchMode = next;
+  const btn = document.getElementById('btn-search-mode');
+  if (btn) {
+    btn.textContent = next;
+    btn.classList.toggle('exact', next === 'exact');
+  }
+  if (persist) localStorage.setItem('inspo_search_mode', next);
+
+  if (STATE.results.length) {
+    clearGrid();
+    const visible = getDisplayResults(STATE.results, STATE.query);
+    renderGrid(visible);
+    if (!visible.length) showEmptyState();
+  }
+}
+
+/* ============================================================
+   15. SEARCH ORCHESTRATION
+============================================================ */
+
+async function refreshSource(sourceName) {
+  if (!STATE.query) return;
+  const ac = new AbortController();
+  _secondaryControllers.add(ac);
+  const { signal } = ac;
+  const kw = STATE.keywords[0] || STATE.query;
+  const lim = STATE.imageCount;
+  const fetchMap = {
+    wikimedia:    () => fetchWikimedia(kw, lim, signal),
+    met:          () => fetchMet(kw, lim, signal),
+    archive:      () => fetchArchive(kw, lim, signal),
+    nasa:         () => fetchNASA(kw, lim, signal),
+    apod:         () => fetchAPOD(kw, lim, signal),
+    rijksmuseum:  () => fetchRijksmuseum(kw, lim, signal),
+    europeana:    () => fetchEuropeana(kw, lim, signal),
+    harvard:      () => fetchHarvard(kw, lim, signal),
+    smithsonian:  () => fetchSmithsonian(kw, lim, signal),
+    pexels:       () => fetchPexels(kw, lim, signal),
+    inaturalist:  () => fetchINaturalist(kw, lim, signal),
+    loc:          () => fetchLOC(kw, lim, signal),
+    openlibrary:  () => fetchOpenLibrary(kw, lim, signal),
+    chicago:      () => fetchChicagoArt(kw, lim, signal),
+    cleveland:    () => fetchCleveland(kw, lim, signal),
+    va:           () => fetchVA(kw, lim, signal),
+    flickr:       () => fetchFlickrCommons(kw, lim, signal),
+    pixabay:      () => fetchPixabay(kw, lim, signal),
+    wikiart:      () => fetchWikiArt(kw, lim, signal),
+    nordic:       () => fetchNordicMuseum(kw, lim, signal),
+    getty:        () => fetchGetty(kw, lim, signal),
+    nga:          () => fetchNGA(kw, lim, signal),
+    gbif:         () => fetchGBIF(kw, lim, signal),
+    eol:          () => fetchEOL(kw, lim, signal),
+    gallica:      () => fetchGallica(kw, lim, signal),
+    chronicling:  () => fetchChroniclingAmerica(kw, lim, signal),
+    openverse:    () => fetchOpenverse(kw, lim, signal),
+    trove:        () => fetchTrove(kw, lim, signal),
+    digitalnz:    () => fetchDigitalNZ(kw, lim, signal),
+    bhl:          () => fetchBHL(kw, lim, signal),
+    carnegie:     () => fetchCarnegie(kw, lim, signal),
+    prado:        () => fetchPrado(kw, lim, signal),
+    parismusees:  () => fetchParisMusees(kw, lim, signal),
+    yale:         () => fetchYale(kw, lim, signal),
+    picsum:       () => fetchPicsum(kw, lim, signal),
+    usgs:         () => fetchUSGS(kw, lim, signal),
+    cooperhewitt: () => fetchCooperHewitt(kw, lim, signal),
+    tate:         () => fetchTate(kw, lim, signal),
+    finna:        () => fetchFinna(kw, lim, signal),
+    soch:         () => fetchSOCH(kw, lim, signal),
+    joconde:      () => fetchJoconde(kw, lim, signal),
+    mnw:          () => fetchMNW(kw, lim, signal),
+    tepapa:       () => fetchTePapa(kw, lim, signal),
+    dpla:         () => fetchDPLA(kw, lim, signal),
+    artsy:        () => fetchArtsy(kw, lim, signal),
+    pas:          () => fetchPAS(kw, lim, signal),
+    smg:          () => fetchSMG(kw, lim, signal),
+    auckland:     () => fetchAuckland(kw, lim, signal),
+    photogrammar: () => fetchPhotogrammar(kw, lim, signal),
+    wellcome:     () => fetchWellcome(kw, lim, signal),
+    maas:         () => fetchMAAS(kw, lim, signal),
+    smk:          () => fetchSMK(kw, lim, signal),
+    thyssen:      () => fetchThyssen(kw, lim, signal),
+    // Phase A sub-collections
+    ...Object.fromEntries([
+      ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) => [id, () => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, kw, lim, signal, cfg.extra || '')]),
+      ...Object.entries(DPLA_HUBS).map(([id, cfg]) => [id, () => fetchDPLAProvider(cfg.provider, kw, lim, signal)]),
+      ...Object.entries(SI_UNITS).map(([id, cfg]) => [id, () => fetchSmithsonianUnit(cfg.code, kw, lim, signal)]),
+      ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) => [id, () => fetchWikimediaCategory(cfg.cat, kw, lim, signal)]),
+    ]),
+    // Phase B
+    idigbio:     () => fetchIDigBio(kw, lim, signal),
+    ala:         () => fetchALA(kw, lim, signal),
+    // Phase D
+    nasa_images: () => fetchNASAImages(kw, lim, signal),
+    loc:         () => fetchLOC(kw, lim, signal),
+  };
+  const fetcher = fetchMap[sourceName];
+  if (!fetcher) { _secondaryControllers.delete(ac); return; }
+  try {
+    const fresh = await fetcher().catch(() => []);
+    if (!fresh.length) return;
+    const existingIds = new Set(STATE.results.map(r => r.id));
+    const novel = fresh.filter(r => !existingIds.has(r.id));
+    if (novel.length > 0 && STATE.results.length < CONSTANTS.MAX_RESULTS) {
+      const room = CONSTANTS.MAX_RESULTS - STATE.results.length;
+      const batch = novel.slice(0, room);
+      STATE.results.push(...batch);
+      renderGrid(getDisplayResults(batch, STATE.query));
+    }
+  } finally {
+    _secondaryControllers.delete(ac);
+  }
+}
+
+function onSourceResultGlobal(items) {
+  if (!items.length) return;
+  if (STATE.results.length >= CONSTANTS.MAX_RESULTS) return;
+  const room = CONSTANTS.MAX_RESULTS - STATE.results.length;
+  const batch = items.slice(0, room);
+  STATE.results.push(...batch);
+  renderGrid(batch);
+}
+
+async function fetchMoreResults() {
+  if (STATE.loading || !STATE.query) return;
+  const startQuery = STATE.query;
+  STATE.loading = true;
+  const btn = document.getElementById('btn-load-more');
+  if (btn) btn.textContent = 'loading…';
+  STATE.currentPage++;
+  const page      = STATE.currentPage;
+  // Use realistic productive source count, not total registered count.
+  // ~60 sources reliably return results on any query.
+  const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+  const perSource = Math.max(2, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
+  const offset    = (page - 1) * STATE.imageCount;
+  const kw        = STATE.keywords[0] || STATE.query;
+  const ac        = new AbortController();
+  _secondaryControllers.add(ac);
+  const signal    = ac.signal;
+  // Use the same ALL_SOURCES pool as fetchAll, not a hardcoded list of 6.
+  const fetches = [
+    callIfHealthy('met',         fetchMet(kw, perSource, signal, offset)),
+    callIfHealthy('chicago',     fetchChicagoArt(kw, perSource, signal, page)),
+    callIfHealthy('europeana',   fetchEuropeana(kw, perSource, signal, offset + 1)),
+    callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
+    callIfHealthy('openverse',   fetchOpenverse(kw, perSource, signal, page)),
+    callIfHealthy('loc',         fetchLOC(kw, perSource, signal, page)),
+    callIfHealthy('wikimedia',   fetchWikimedia(kw, perSource, signal)),
+    callIfHealthy('archive',     fetchArchive(kw, perSource, signal)),
+    callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
+    callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
+    callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal)),
+    callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal)),
+    callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal)),
+    callIfHealthy('gallica',     fetchGallica(kw, perSource, signal)),
+    callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal)),
+    callIfHealthy('trove',       fetchTrove(kw, perSource, signal)),
+    callIfHealthy('digitalnz',   fetchDigitalNZ(kw, perSource, signal)),
+    callIfHealthy('nypl',        fetchNYPL(kw, perSource, signal)),
+    callIfHealthy('walters',     fetchWalters(kw, perSource, signal)),
+    callIfHealthy('tate',        fetchTate(kw, perSource, signal)),
+    callIfHealthy('bhl',         fetchBHL(kw, perSource, signal)),
+  ];
+  const settled = await Promise.allSettled(fetches);
+  if (STATE.query !== startQuery) { STATE.loading = false; _secondaryControllers.delete(ac); updateLoadMoreLabel(); return; }
+  const items   = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  const existingIds = new Set(STATE.results.map(r => r.id));
+  const novel = items.filter(r => !existingIds.has(r.id));
+  if (novel.length > 0 && STATE.results.length < CONSTANTS.MAX_RESULTS) {
+    const room = CONSTANTS.MAX_RESULTS - STATE.results.length;
+    const batch = novel.slice(0, room);
+    STATE.results.push(...batch);
+    renderGrid(batch);
+  }
+  STATE.loading = false;
+  _secondaryControllers.delete(ac);
+  updateLoadMoreLabel();
+}
+
+function updateLoadMoreLabel() {
+  const btn = document.getElementById('btn-load-more');
+  if (!btn) return;
+  btn.textContent = `load ${STATE.imageCount} more`;
+}
+
+async function runSearch(query, forceRefresh = false) {
+  if (!query.trim()) return;
+  // Abort any in-flight secondary fetches (refreshSource, fetchMoreResults)
+  for (const ac of _secondaryControllers) { try { ac.abort(); } catch (_) {} }
+  _secondaryControllers.clear();
+  if (STATE.disabledSources.size >= ALL_SOURCES.length) {
+    clearGrid();
+    document.getElementById('image-grid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;min-height:calc(100vh - 4px);">
+        <p>all sources disabled — enable some in api keys</p>
+        <span>click the key icon to manage sources</span>
+      </div>`;
+    return;
+  }
+  STATE.imageCount = parseInt(document.getElementById('count-slider').value) || 24;
+  STATE.query = query.trim();
+
+  // Reset cross-ref mode on new text search
+  if (STATE.crossRefMode) {
+    STATE.crossRefMode = null;
+    STATE.crossRefTerms = [];
+    STATE.referenceImages = [];
+    hideReferenceStrip();
+    hideConceptPills();
+    const cb = document.getElementById('connect-btn');
+    if (cb) cb.textContent = 'connect';
+    const ib = document.getElementById('interpret-btn');
+    if (ib) ib.innerHTML = '<span>interpret</span><span style="color:var(--accent)">\u2726</span>';
+  }
+
+  STATE.loading = true;
+  STATE.currentPage = 1;
+  STATE.results = [];          // immediately clear stale results (race-condition fix)
+  STATE._failedImages = 0;     // reset failed image counter
+  document.getElementById('more-container').style.display = 'none';
+  clearGrid();
+  showLoading();
+
+  // Start fetchAll immediately with the raw query — no wait for Datamuse
+  // In exact mode always use the bare query, never prefetched expansions
+  STATE.keywords = (STATE.searchMode !== 'exact' && STATE.prefetchedQuery === STATE.query && STATE.prefetchedKeywords.length)
+    ? STATE.prefetchedKeywords
+    : [STATE.query];
+  renderKeywordPills(STATE.keywords);
+
+  // Expand keywords in background; update pills when Datamuse returns
+  // Skipped entirely in exact mode — keywords must stay as [STATE.query]
+  if (STATE.searchMode !== 'exact' && STATE.keywords.length <= 1) {
+    expandKeywords(STATE.query).then(kws => {
+      STATE.keywords = kws;
+      renderKeywordPills(kws);
+    }).catch(() => {});
+  }
+
+  // 150 ms first-paint buffer — batch early results before any card appears
+  const _rrg = renderGrid;
+  let _buf = [];
+  const _batchTimer = setTimeout(() => {
+    renderGrid = _rrg;
+    if (_buf.length) _rrg(_buf.splice(0));
+  }, 150);
+  const _restore = () => {
+    clearTimeout(_batchTimer);
+    renderGrid = _rrg;
+    if (_buf.length) _rrg(_buf.splice(0));
+  };
+  renderGrid = items => _buf.push(...items);
+
+  // Check cache
+  hideCacheIndicator();
+  if (!forceRefresh) {
+    const cached = cacheGet(STATE.query);
+    if (cached) {
+      _restore();
+      STATE.results = cached.results;
+      if (cached.keywords?.length) STATE.keywords = cached.keywords;
+      renderGrid(getDisplayResults(STATE.results, STATE.query));
+      STATE.loading = false;
+      hideLoading();
+      showCacheIndicator(STATE.query);
+      document.getElementById('more-container').style.display = 'flex';
+      // Build Fuse.js index for local filtering
+      loadFuse(() => buildFuseIndex());
+      // Background refresh — silently append any newly discovered items
+      const bgQuery = STATE.query;
+      fetchAll(STATE.keywords, STATE.imageCount, true).then(fresh => {
+        if (STATE.query !== bgQuery) return; // query changed — discard stale results
+        const existingIds = new Set(STATE.results.map(r => r.id));
+        const novel = fresh.filter(r => !existingIds.has(r.id));
+        if (novel.length > STATE.results.length * 0.2) {
+          const merged = [...STATE.results, ...novel].slice(0, CONSTANTS.MAX_RESULTS);
+          STATE.results = merged;
+          cacheSet(STATE.query, STATE.results, STATE.keywords);
+          updateCacheIndicator(STATE.query);
+        }
+      }).catch(() => {});
+      return;
+    }
+  }
+
+  // Fetch all sources progressively — starts immediately with raw query
+  const all = await fetchAll(STATE.keywords, STATE.imageCount);
+  _restore();
+  STATE.results = all.slice(0, CONSTANTS.MAX_RESULTS);
+  cacheSet(STATE.query, STATE.results, STATE.keywords);
+
+  // ── Exact-mode post-processing ──────────────────────────────────────
+  if (STATE.searchMode === 'exact') {
+    const lq = STATE.query.toLowerCase();
+    // 3. Discard results from rogue sources that don't contain the exact query
+    //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
+    const ROGUE_SOURCES = new Set(['wikimedia', 'flickr']);
+    STATE.results = STATE.results.filter(r => {
+      if (!ROGUE_SOURCES.has(r.source)) return true;
+      return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
+    });
+    // 2. Promote results whose title/description contain the exact query phrase
+    STATE.results = [
+      ...STATE.results.filter(r => `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq)),
+      ...STATE.results.filter(r => !`${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq)),
+    ];
+  }
+  // ────────────────────────────────────────────────────────────────────
+
+  clearGrid();
+  const visible = getDisplayResults(STATE.results, STATE.query);
+  if (visible.length) renderGrid(visible);
+  else showEmptyState();
+
+  STATE.loading = false;
+  hideLoading();
+  showCacheIndicator(STATE.query);
+  document.getElementById('more-container').style.display = 'flex';
+  updateLoadMoreLabel();
+  // Build Fuse.js index for local filtering
+  loadFuse(() => buildFuseIndex());
+  // Check for failed images after a delay (images load lazily)
+  setTimeout(checkFailedImages, 3000);
+}
+
+/* ============================================================
+   16. EVENT LISTENERS
+============================================================ */
+
+// Search — Enter key
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const q = e.target.value.trim();
+    // If 2+ images selected and input empty: run connect instead of normal search
+    if (STATE.selected.length >= 2 && !q) {
+      e.preventDefault();
+      runConnect();
+      return;
+    }
+    if (q) runSearch(q);
+  }
+});
+
+document.getElementById('btn-search-mode').addEventListener('click', () => {
+  setSearchMode(STATE.searchMode === 'explore' ? 'exact' : 'explore');
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && String(e.key).toLowerCase() === 'e') {
+    e.preventDefault();
+    setSearchMode(STATE.searchMode === 'explore' ? 'exact' : 'explore');
+  }
+});
+
+// Refresh cache button
+document.getElementById('btn-refresh-cache').addEventListener('click', () => {
+  if (STATE.query) runSearch(STATE.query, true);
+});
+
+// Load more
+document.getElementById('btn-load-more').addEventListener('click', fetchMoreResults);
+
+// Prefetch keywords while typing (400 ms debounce)
+const debouncedPrefetch = debounce(async q => {
+  if (!q.trim() || q.trim() === STATE.query || STATE.searchMode === 'exact') return;
+  STATE.prefetchedQuery = q.trim();
+  STATE.prefetchedKeywords = await expandKeywords(q.trim());
+}, 400);
+
+document.getElementById('search-input').addEventListener('keyup', e => {
+  if (e.key !== 'Enter') debouncedPrefetch(e.target.value);
+});
+
+// Image count slider
+const countSlider = document.getElementById('count-slider');
+const countLabel  = document.getElementById('count-label');
+
+countSlider.addEventListener('input', () => {
+  STATE.imageCount = parseInt(countSlider.value, 10);
+  countLabel.textContent = STATE.imageCount + ' images';
+  updateLoadMoreLabel();
+});
+
+const debouncedRerender = debounce(() => {
+  if (STATE.results.length > 0) {
+    clearGrid();
+    const final = getDisplayResults(STATE.results, STATE.query);
+    renderGrid(final);
+  }
+}, CONSTANTS.DEBOUNCE_SLIDER);
+
+countSlider.addEventListener('input', debouncedRerender);
+
+// Dark mode toggle
+const themeToggle = document.getElementById('theme-toggle');
+themeToggle.addEventListener('click', () => {
+  const isDark = document.body.classList.toggle('dark');
+  themeToggle.textContent = isDark ? 'light' : 'dark';
+  localStorage.setItem('inspo_theme', isDark ? 'dark' : 'light');
+  if (typeof boardChannel !== 'undefined' && boardChannel) {
+    boardChannel.postMessage({ type: 'theme', dark: isDark });
+  }
+});
+
+// Initialise toggle label to match system preference
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  themeToggle.textContent = 'light';
+}
+
+/* ============================================================
+   PHASE 4 — SKETCH MODE & CONTROLS
+============================================================ */
+
+// Sobel edge detection → pencil sketch canvas
+function sketchToCanvas(imgEl) {
+  const MAX_W = 400;
+  let sw = imgEl.naturalWidth  || imgEl.offsetWidth  || 400;
+  let sh = imgEl.naturalHeight || imgEl.offsetHeight || 300;
+  if (sw > MAX_W) {
+    sh = Math.round(sh * (MAX_W / sw));
+    sw = MAX_W;
+  }
+  const off = document.createElement('canvas');
+  off.width  = sw;
+  off.height = sh;
+  const ctx = off.getContext('2d');
+  ctx.drawImage(imgEl, 0, 0, sw, sh);
+  const src  = ctx.getImageData(0, 0, sw, sh);
+  const gray = new Uint8ClampedArray(sw * sh);
+  for (let i = 0; i < sw * sh; i++) {
+    const p = i * 4;
+    gray[i] = 0.299 * src.data[p] + 0.587 * src.data[p + 1] + 0.114 * src.data[p + 2];
+  }
+  const out = ctx.createImageData(sw, sh);
+  for (let y = 1; y < sh - 1; y++) {
+    for (let x = 1; x < sw - 1; x++) {
+      const g = (r, c) => gray[(y + r) * sw + (x + c)];
+      const gx = -g(-1,-1) + g(-1,1) - 2*g(0,-1) + 2*g(0,1) - g(1,-1) + g(1,1);
+      const gy = -g(-1,-1) - 2*g(-1,0) - g(-1,1) + g(1,-1) + 2*g(1,0) + g(1,1);
+      const val = 255 - Math.min(255, Math.sqrt(gx * gx + gy * gy));
+      const p = (y * sw + x) * 4;
+      out.data[p] = out.data[p + 1] = out.data[p + 2] = val;
+      out.data[p + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  return off;
+}
+
+function applySketchToCard(card, img) {
+  if (card.querySelector('.sketch-overlay')) return;
+  // Immediate CSS placeholder
+  img.style.filter     = 'grayscale(1) contrast(1.4) brightness(1.1)';
+  img.style.transition = 'filter 0.5s ease';
+  // Defer expensive Sobel to idle time
+  const doSobel = () => {
+    if (!STATE.sketchMode) return;          // user toggled off
+    if (card.querySelector('.sketch-overlay')) return;
+    try {
+      const cvs = sketchToCanvas(img);
+      cvs.className = 'sketch-overlay';
+      img.style.opacity = '0';
+      img.style.filter  = '';
+      card.appendChild(cvs);
+      requestAnimationFrame(() => { cvs.style.opacity = '1'; });
+    } catch {
+      // CORS-tainted — keep CSS fallback already applied
+    }
+  };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(doSobel, { timeout: 2000 });
+  } else {
+    setTimeout(doSobel, 100);
+  }
+}
+
+function applySketchMode() {
+  const cards = Array.from(document.querySelectorAll('.image-card'));
+  const BATCH = 3;
+  let idx = 0;
+  function processBatch(deadline) {
+    if (!STATE.sketchMode) return;
+    let count = 0;
+    while (idx < cards.length && count < BATCH) {
+      if (typeof deadline !== 'undefined' && deadline.timeRemaining && deadline.timeRemaining() < 5 && count > 0) break;
+      const card = cards[idx++];
+      const img = card.querySelector('img');
+      if (img && img.complete && img.naturalWidth > 1) applySketchToCard(card, img);
+      count++;
+    }
+    if (idx < cards.length) {
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(processBatch, { timeout: 2000 });
+      } else {
+        setTimeout(() => processBatch(), 50);
+      }
+    }
+  }
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(processBatch, { timeout: 1000 });
+  } else {
+    setTimeout(() => processBatch(), 50);
+  }
+}
+
+function removeSketchMode() {
+  document.querySelectorAll('.sketch-overlay').forEach(c => c.remove());
+  document.querySelectorAll('.image-card img').forEach(img => {
+    img.style.opacity    = '';
+    img.style.filter     = '';
+    img.style.transition = '';
+  });
+}
+
+// B&W mode toggle (replaces old "sketch" which was actually grayscale)
+const btnBW = document.getElementById('btn-bw');
+btnBW.addEventListener('click', () => {
+  STATE.sketchMode = !STATE.sketchMode;
+  if (STATE.sketchMode) {
+    applySketchMode();
+    btnBW.textContent = 'colour';
+    btnBW.classList.add('active');
+  } else {
+    removeSketchMode();
+    btnBW.textContent = 'b&w';
+    btnBW.classList.remove('active');
+  }
+});
+
+// Sketch draw mode toggle (Fabric.js overlay on grid/board only)
+const btnSketch = document.getElementById('btn-sketch');
+btnSketch.addEventListener('click', () => {
+  if (_fabricCanvas) {
+    destroyFabricOverlay();
+    btnSketch.classList.remove('active');
+  } else {
+    initFabricOverlay();
+    btnSketch.classList.add('active');
+  }
+});
+
+/* ── Fabric.js sketch drawing overlay ── */
+let _fabricCanvas = null;
+
+function getGridBounds() {
+  const sidebar = document.getElementById('sidebar');
+  const panel = document.getElementById('panel');
+  const sidebarW = sidebar ? sidebar.offsetWidth : 0;
+  const panelW = (panel && panel.classList.contains('open')) ? panel.offsetWidth : 0;
+  return {
+    left: sidebarW,
+    top: 0,
+    width: window.innerWidth - sidebarW - panelW,
+    height: window.innerHeight,
+  };
+}
+
+function positionFabricOverlay() {
+  const overlay = document.getElementById('fabric-overlay');
+  const bounds = getGridBounds();
+  overlay.style.left   = bounds.left + 'px';
+  overlay.style.top    = bounds.top + 'px';
+  overlay.style.width  = bounds.width + 'px';
+  overlay.style.height = bounds.height + 'px';
+  if (_fabricCanvas) {
+    _fabricCanvas.setWidth(bounds.width);
+    _fabricCanvas.setHeight(bounds.height);
+  }
+}
+
+function setupFabricTools(fc, toolSelector, clearId, exportId) {
+  document.querySelectorAll(toolSelector).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(toolSelector).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tool = btn.dataset.tool;
+      const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1a18';
+      const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F7F5F2';
+      if (tool === 'pencil') {
+        fc.isDrawingMode = true;
+        fc.freeDrawingBrush = new fabric.PencilBrush(fc);
+        fc.freeDrawingBrush.color = inkColor;
+        fc.freeDrawingBrush.width = 2;
+      } else if (tool === 'eraser') {
+        fc.isDrawingMode = true;
+        fc.freeDrawingBrush = new fabric.PencilBrush(fc);
+        fc.freeDrawingBrush.color = bgColor;
+        fc.freeDrawingBrush.width = 16;
+      } else {
+        fc.isDrawingMode = false;
+        const cx = fc.getWidth() / 2, cy = fc.getHeight() / 2;
+        if (tool === 'text') {
+          const t = new fabric.IText('type here', { left: cx-60, top: cy, fontFamily:'DM Mono', fontSize:16, fill:inkColor });
+          fc.add(t); fc.setActiveObject(t);
+        } else if (tool === 'rect') {
+          const r = new fabric.Rect({ left:cx-50, top:cy-25, width:100, height:50, fill:'transparent', stroke:inkColor, strokeWidth:1 });
+          fc.add(r); fc.setActiveObject(r);
+        } else if (tool === 'line') {
+          const l = new fabric.Line([cx-100, cy, cx+100, cy], { stroke:inkColor, strokeWidth:1 });
+          fc.add(l); fc.setActiveObject(l);
+        }
+      }
+    });
+  });
+  document.getElementById(clearId)?.addEventListener('click', () => fc.clear());
+  document.getElementById(exportId)?.addEventListener('click', () => {
+    const dataUrl = fc.toDataURL({ format:'png', quality:1 });
+    const link = document.createElement('a');
+    link.download = `insposearch-sketch-${Date.now()}.png`;
+    link.href = dataUrl;
+    link.click();
+  });
+}
+
+function initFabricOverlay() {
+  loadFabric(() => {
+    const overlay = document.getElementById('fabric-overlay');
+    overlay.style.display = '';
+    positionFabricOverlay();
+
+    const canvasEl = document.getElementById('fabric-canvas');
+    const bounds = getGridBounds();
+    canvasEl.width = bounds.width;
+    canvasEl.height = bounds.height;
+
+    _fabricCanvas = new fabric.Canvas('fabric-canvas', {
+      isDrawingMode: true,
+      width: bounds.width,
+      height: bounds.height,
+    });
+    const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1a18';
+    _fabricCanvas.freeDrawingBrush.color = inkColor;
+    _fabricCanvas.freeDrawingBrush.width = 2;
+
+    setupFabricTools(_fabricCanvas, '.sketch-tool', 'sketch-clear', 'sketch-export');
+
+    document.getElementById('sketch-close').addEventListener('click', () => {
+      destroyFabricOverlay();
+      btnSketch.classList.remove('active');
+    });
+
+    window.addEventListener('resize', positionFabricOverlay);
+  });
+}
+
+function destroyFabricOverlay() {
+  if (_fabricCanvas) {
+    _fabricCanvas.dispose();
+    _fabricCanvas = null;
+  }
+  document.getElementById('fabric-overlay').style.display = 'none';
+  window.removeEventListener('resize', positionFabricOverlay);
+}
+
+// View toggle buttons — wire up grid/board/3d switching
+// Board and 3D controllers added in their own phases;
+// here we set active state and call the appropriate view switcher.
+function setActiveViewBtn(view) {
+  document.getElementById('btn-grid').classList.toggle('active', view === 'grid');
+  // btn-board active state managed by openBoardOverlay / closeBoardOverlay
+  document.getElementById('btn-3d').classList.toggle('active',   view === '3d');
+}
+
+// Fade-assisted view switch (200ms out → switch → 200ms in)
+// Board is now a floating overlay — btn-board toggles it independently
+function switchView(newView) {
+  if (newView === 'board') { toggleBoardOverlay(); return; }
+  if (STATE.view === newView) return;
+  const canvasEl = document.getElementById('canvas');
+  canvasEl.style.opacity = '0';
+  setTimeout(() => {
+    if (STATE.view === '3d' && typeof disposeThreeView === 'function') disposeThreeView();
+
+    STATE.view = newView;
+    setActiveViewBtn(newView);
+
+    const grid  = document.getElementById('image-grid');
+    const three = document.getElementById('three-canvas');
+
+    canvasEl.classList.remove('view-3d');
+
+    if (newView === 'grid') {
+      grid.style.display = '';
+      three.classList.remove('active');
+      if (STATE.results.length > 0) renderGrid(STATE.results.slice(0, STATE.imageCount));
+    } else if (newView === '3d') {
+      grid.style.display = 'none';
+      three.classList.add('active');
+      canvasEl.classList.add('view-3d');
+      loadThreeJS(initThreeView);
+    }
+
+    canvasEl.style.opacity = '1';
+  }, 200);
+}
+
+document.getElementById('btn-grid').addEventListener('click',  () => switchView('grid'));
+document.getElementById('btn-board').addEventListener('click', () => toggleBoardOverlay());
+document.getElementById('btn-3d').addEventListener('click',    () => switchView('3d'));
+
+// Initialise active state on load
+setActiveViewBtn('grid');
+
+console.log('[insposearch] Phase 4 — Sketch Mode & Controls ready.');
+
+/* ============================================================
+   PHASE 5 — BOARD VIEW
+============================================================ */
+
+// Track which item each board card represents (by card element)
+const boardCardMap = new WeakMap();
+
+// Per-card layout overrides — persisted to localStorage
+const boardPositions = {};
+
+// Single shared drag/resize state — avoids per-card document listener accumulation
+const boardInteract = { drag: null, resize: null };
+(function installBoardListeners() {
+  document.addEventListener('mousemove', e => {
+    if (boardInteract.drag) {
+      const { card, startX, startY, origLeft, origTop } = boardInteract.drag;
+      const boardEl = document.getElementById('board-canvas');
+      const bw = boardEl.offsetWidth, bh = boardEl.offsetHeight;
+      const cw = card.offsetWidth,   ch = card.offsetHeight;
+      card.style.left = Math.min(bw - cw, Math.max(0, origLeft + (e.clientX - startX))) + 'px';
+      card.style.top  = Math.min(bh - ch, Math.max(0, origTop  + (e.clientY - startY))) + 'px';
+    }
+    if (boardInteract.resize) {
+      const { card, startX, startW } = boardInteract.resize;
+      card.style.width = Math.max(80, Math.min(600, startW + (e.clientX - startX))) + 'px';
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (boardInteract.drag) {
+      const dc = boardInteract.drag.card;
+      const di = boardCardMap.get(dc);
+      // Snap to grid if enabled
+      if (_boardSnapEnabled) {
+        dc.style.left = snapToGrid(parseInt(dc.style.left, 10) || 0) + 'px';
+        dc.style.top  = snapToGrid(parseInt(dc.style.top,  10) || 0) + 'px';
+      }
+      if (di) {
+        boardPositions[di.id] = {
+          x: parseInt(dc.style.left, 10) || 0,
+          y: parseInt(dc.style.top,  10) || 0,
+          w: dc.offsetWidth,
+        };
+        if (typeof persistBoardState === 'function') persistBoardState();
+      }
+      dc.style.zIndex = '';
+      boardInteract.drag = null;
+    }
+    boardInteract.resize = null;
+  });
+})();
+
+function initBoardView() {
+  const boardEl = document.getElementById('board-canvas');
+  // Clear existing cards (keep export button)
+  boardEl.querySelectorAll('.board-card').forEach(c => c.remove());
+
+  if (!STATE.selected.length) {
+    // Show hint if nothing selected
+    if (!boardEl.querySelector('.board-hint')) {
+      const hint = document.createElement('div');
+      hint.className = 'board-hint';
+      hint.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--font-display);font-size:18px;font-weight:300;font-style:italic;color:var(--ink-3);pointer-events:none;text-align:center;';
+      hint.innerHTML = '<p>drag images here to start a board</p><span style="font-family:var(--font-ui);font-size:10px;letter-spacing:0.1em;">select references first, then arrange freely</span>';
+      boardEl.appendChild(hint);
+    }
+    return;
+  }
+
+  boardEl.querySelectorAll('.board-hint').forEach(h => h.remove());
+
+  const cols = Math.ceil(Math.sqrt(STATE.selected.length));
+  const cardW = 200;
+  const gap   = 24;
+
+  STATE.selected.forEach((item, i) => {
+    const saved = boardPositions[item.id];
+    const col   = i % cols;
+    const row   = Math.floor(i / cols);
+    const x     = saved ? saved.x : 24 + col * (cardW + gap);
+    const y     = saved ? saved.y : 24 + row * (cardW * 0.75 + gap);
+    const w     = saved ? saved.w : cardW;
+    createBoardCard(item, x, y, boardEl, w);
+  });
+}
+
+function createBoardCard(item, x, y, container, w = 200) {
+  const card = document.createElement('div');
+  card.className = 'board-card';
+  card.style.left  = x + 'px';
+  card.style.top   = y + 'px';
+  card.style.width = w + 'px';
+  boardCardMap.set(card, item);
+
+  const img = document.createElement('img');
+  img.src    = item.thumb;
+  img.alt    = item.title;
+  img.draggable = false;
+  img.style.cssText = 'display:block;width:100%;height:auto;';
+
+  const title = document.createElement('div');
+  title.className = 'board-title';
+  title.textContent = item.title;
+
+  const handle = document.createElement('div');
+  handle.className = 'resize-handle';
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'board-delete-btn';
+  deleteBtn.textContent = '×';
+  deleteBtn.title = 'remove from board';
+  deleteBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const removedItem = boardCardMap.get(card);
+    card.remove();
+    if (removedItem) {
+      if (_isBoardPopup) {
+        delete boardPositions[removedItem.id];
+        if (typeof persistBoardState === 'function') persistBoardState();
+        if (boardChannel) boardChannel.postMessage({ type: 'board-delete', itemId: removedItem.id });
+      } else {
+        STATE.selected = STATE.selected.filter(s => s.id !== removedItem.id);
+        delete boardPositions[removedItem.id];
+        document.getElementById('card-' + removedItem.id)?.classList.remove('selected');
+        updateFloatingBar();
+        updatePanel();
+        if (typeof persistBoardState === 'function') persistBoardState();
+        if (typeof broadcastBoardSync === 'function') broadcastBoardSync();
+      }
+      const boardEl = document.getElementById('board-canvas');
+      if (!boardEl.querySelectorAll('.board-card').length) initBoardView();
+    }
+  });
+
+  card.appendChild(img);
+  card.appendChild(title);
+  card.appendChild(handle);
+  card.appendChild(deleteBtn);
+  container.appendChild(card);
+
+  // Drag to reposition
+  card.addEventListener('mousedown', e => {
+    if (e.target === handle) return; // resize takes over
+    boardInteract.drag = {
+      card,
+      startX:   e.clientX,
+      startY:   e.clientY,
+      origLeft: parseInt(card.style.left, 10),
+      origTop:  parseInt(card.style.top,  10),
+    };
+    card.style.zIndex = '100';
+    e.preventDefault();
+  });
+
+  // Resize handle — bottom-right drag
+  handle.addEventListener('mousedown', e => {
+    boardInteract.resize = { card, startX: e.clientX, startW: card.offsetWidth };
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  // Double-click — open concept panel for this card's item
+  card.addEventListener('dblclick', e => {
+    if (e.target === handle) return;
+    const clickedItem = boardCardMap.get(card);
+    if (!clickedItem) return;
+    // Ensure item is in selected and panel is open
+    if (!STATE.selected.find(s => s.id === clickedItem.id)) {
+      STATE.selected.push(clickedItem);
+    }
+    updatePanel();
+  });
+}
+
+// Export board as PNG
+document.getElementById('btn-export').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-export');
+  btn.textContent = 'exporting...';
+  btn.disabled = true;
+  try {
+    await new Promise(resolve => loadHtml2Canvas(resolve));
+    const boardEl = document.getElementById('board-canvas');
+    const exportBg = getComputedStyle(document.documentElement)
+      .getPropertyValue('--bg').trim() || '#F7F5F2';
+    const cvs = await html2canvas(boardEl, {
+      backgroundColor: exportBg,
+      useCORS: true,
+      scale: 2,
+      ignoreElements: el => el.id === 'btn-export',
+    });
+    const link = document.createElement('a');
+    link.download = `insposearch-board-${Date.now()}.png`;
+    link.href = cvs.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.warn('Export failed:', err.message);
+  } finally {
+    btn.textContent = 'export';
+    btn.disabled = false;
+  }
+});
+
+console.log('[insposearch] Phase 5 — Board View ready.');
+
+/* ── Konva-assisted board enhancements ── */
+let _boardSnapEnabled = false;
+const SNAP_GRID = 24;
+
+function snapToGrid(val) {
+  return Math.round(val / SNAP_GRID) * SNAP_GRID;
+}
+
+document.getElementById('btn-snap-grid').addEventListener('click', () => {
+  _boardSnapEnabled = !_boardSnapEnabled;
+  const btn = document.getElementById('btn-snap-grid');
+  btn.style.opacity = _boardSnapEnabled ? '1' : '0.6';
+  btn.textContent = _boardSnapEnabled ? 'snap ✓' : 'snap';
+});
+
+/* ============================================================
+   PHASE 3 — MULTI-PROVIDER AI + CANVAS SNAPSHOT
+============================================================ */
+
+/* -- captureGridSnapshot: render visible grid to compressed JPEG + metadata -- */
+async function captureGridSnapshot() {
+  const canvasEl = document.getElementById('canvas');
+  const metadata = {
+    searchTerm:     STATE.query || '',
+    mode:           STATE.searchMode,
+    sourceCount:    [...new Set(STATE.results.map(r => r.source))].length,
+    imageCount:     STATE.results.length,
+    activeSources:  [...new Set(STATE.results.map(r => r.source))].slice(0, 8),
+    selectedImages: STATE.selected.slice(0, 5).map(s => ({
+      title: s.title, source: s.source, tags: (s.tags || []).slice(0, 4),
+    })),
+  };
+  try {
+    await new Promise(resolve => loadHtml2Canvas(resolve));
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0a0a0a';
+    const cvs = await html2canvas(canvasEl, {
+      backgroundColor: bg, useCORS: true, scale: 0.4, logging: false,
+      ignoreElements: el => el.id === 'reference-strip' || el.classList?.contains('empty-state'),
+    });
+    let quality = 0.7;
+    let dataUrl  = cvs.toDataURL('image/jpeg', quality);
+    while (dataUrl.length * 0.75 > 200000 && quality > 0.2) {
+      quality -= 0.15;
+      dataUrl = cvs.toDataURL('image/jpeg', quality);
+    }
+    return { base64: dataUrl.split(',')[1], metadata };
+  } catch (e) {
+    console.warn('[snapshot]', e.message);
+    return { base64: null, metadata };
+  }
+}
+
+/* -- callAI: central dispatcher — routes to active provider -- */
+async function callAI(prompt, base64 = null, mimeType = 'image/jpeg') {
+  const provider = STATE.aiProvider || 'gemini';
+  if (provider === 'claude' && STATE.claudeKey)  return _callClaude(prompt, base64, mimeType);
+  if (provider === 'openai'  && STATE.openaiKey) return _callOpenAI(prompt, base64, mimeType);
+  if (!STATE.geminiKey) throw new Error('no ai key — add a key in api keys panel');
+  return _callGeminiSingle(prompt, base64, mimeType);
+}
+
+/* -- callAIChat: multi-turn conversation dispatcher -- */
+async function callAIChat(history, systemPrompt, base64 = null, mimeType = 'image/jpeg') {
+  const provider = STATE.aiProvider || 'gemini';
+  if (provider === 'claude' && STATE.claudeKey)  return _callClaudeChat(history, systemPrompt, base64, mimeType);
+  if (provider === 'openai'  && STATE.openaiKey) return _callOpenAIChat(history, systemPrompt, base64, mimeType);
+  if (!STATE.geminiKey) throw new Error('no ai key — add a key in api keys panel');
+  return _callGeminiChat(history, systemPrompt, base64, mimeType);
+}
+
+/* -- Gemini single-turn -- */
+async function _callGeminiSingle(prompt, base64, mimeType) {
+  const parts = [];
+  if (base64) parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
+  parts.push({ text: prompt });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${STATE.geminiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.7, maxOutputTokens: 600 } }) }
+  );
+  if (!res.ok) throw new Error('Gemini ' + res.status);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+/* -- Gemini multi-turn -- */
+async function _callGeminiChat(history, systemPrompt, base64, mimeType) {
+  const contents = [];
+  // First user message may carry the snapshot
+  history.forEach((m, idx) => {
+    const parts = [];
+    if (idx === 0 && base64) parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
+    parts.push({ text: idx === 0 ? systemPrompt + '\n\n' + m.content : m.content });
+    contents.push({ role: m.role === 'assistant' ? 'model' : 'user', parts });
+  });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${STATE.geminiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents, generationConfig: { temperature: 0.7, maxOutputTokens: 600 } }) }
+  );
+  if (!res.ok) throw new Error('Gemini ' + res.status);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+/* -- Claude single-turn -- */
+async function _callClaude(prompt, base64, mimeType) {
+  const content = [];
+  if (base64) content.push({ type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } });
+  content.push({ type: 'text', text: prompt });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': STATE.claudeKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, messages: [{ role: 'user', content }] }),
+  });
+  if (!res.ok) throw new Error('Claude ' + res.status);
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* -- Claude multi-turn -- */
+async function _callClaudeChat(history, systemPrompt, base64, mimeType) {
+  const messages = history.map((m, idx) => {
+    if (idx === 0 && base64) {
+      return { role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+        { type: 'text', text: m.content },
+      ]};
+    }
+    return { role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content };
+  });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': STATE.claudeKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 600, system: systemPrompt, messages }),
+  });
+  if (!res.ok) throw new Error('Claude ' + res.status);
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* -- OpenAI single-turn -- */
+async function _callOpenAI(prompt, base64, mimeType) {
+  const base = (STATE.openaiEndpoint || 'https://api.openai.com').replace(/\/$/, '');
+  const userContent = [];
+  if (base64) userContent.push({ type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } });
+  userContent.push({ type: 'text', text: prompt });
+  const res = await fetch(base + '/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + STATE.openaiKey },
+    body: JSON.stringify({ model: 'gpt-4o', max_tokens: 600, messages: [{ role: 'user', content: userContent }] }),
+  });
+  if (!res.ok) throw new Error('OpenAI ' + res.status);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+/* -- OpenAI multi-turn -- */
+async function _callOpenAIChat(history, systemPrompt, base64, mimeType) {
+  const base = (STATE.openaiEndpoint || 'https://api.openai.com').replace(/\/$/, '');
+  const messages = [{ role: 'system', content: systemPrompt }];
+  history.forEach((m, idx) => {
+    if (idx === 0 && base64) {
+      messages.push({ role: 'user', content: [
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+        { type: 'text', text: m.content },
+      ]});
+    } else {
+      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+    }
+  });
+  const res = await fetch(base + '/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + STATE.openaiKey },
+    body: JSON.stringify({ model: 'gpt-4o', max_tokens: 600, messages }),
+  });
+  if (!res.ok) throw new Error('OpenAI ' + res.status);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+console.log('[insposearch] Phase 3 — Multi-provider AI + Canvas Snapshot ready.');
+
+
+/* ============================================================
+   PHASE 5B — BOARD OVERLAY · DRAG-TO-BOARD · PERSISTENCE · POP-OUT
+============================================================ */
+
+// BroadcastChannel for live sync between main window and pop-out
+const boardChannel = (typeof BroadcastChannel !== 'undefined')
+  ? new BroadcastChannel('inspo-board') : null;
+
+function persistBoardState() {
+  try {
+    const items = STATE.selected.map(s => ({
+      id: s.id, thumb: s.thumb, title: s.title, source: s.source,
+      tags: s.tags || [], sourceUrl: s.sourceUrl || '',
+      year: s.year || '', colors: s.colors || [],
+    }));
+    localStorage.setItem('inspo_board_state', JSON.stringify({
+      items, positions: boardPositions,
+      overlayOpen: STATE.boardOverlayOpen || false,
+    }));
+  } catch(e) {}
+}
+
+function loadBoardState() {
+  try {
+    const saved = localStorage.getItem('inspo_board_state');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    if (Array.isArray(data.items) && data.items.length) {
+      STATE.selected = data.items;
+      STATE.selected.forEach(item => {
+        document.getElementById('card-' + item.id)?.classList.add('selected');
+      });
+      if (typeof updateFloatingBar === 'function') updateFloatingBar();
+    }
+    if (data.positions) Object.assign(boardPositions, data.positions);
+    if (data.overlayOpen) requestAnimationFrame(() => openBoardOverlay());
+  } catch(e) {}
+}
+
+function broadcastBoardSync() {
+  if (!boardChannel) return;
+  boardChannel.postMessage({
+    type:      'board-sync',
+    items:     STATE.selected.map(s => ({
+      id: s.id, thumb: s.thumb, title: s.title, source: s.source,
+      tags: s.tags || [], sourceUrl: s.sourceUrl || '',
+      year: s.year || '', colors: s.colors || [],
+    })),
+    positions: { ...boardPositions },
+  });
+}
+
+// Main window: listen for events from pop-out
+if (boardChannel && !_isBoardPopup) {
+  boardChannel.onmessage = e => {
+    const msg = e.data;
+    if (msg.type === 'board-delete') {
+      STATE.selected = STATE.selected.filter(s => s.id !== msg.itemId);
+      delete boardPositions[msg.itemId];
+      document.getElementById('card-' + msg.itemId)?.classList.remove('selected');
+      updateFloatingBar();
+      updatePanel();
+      persistBoardState();
+      syncBoardOverlay();
+    }
+    if (msg.type === 'theme') {
+      document.body.classList.toggle('dark', msg.dark);
+      const tt = document.getElementById('theme-toggle');
+      if (tt) tt.textContent = msg.dark ? 'light' : 'dark';
+    }
+  };
+}
+
+function openBoardOverlay() {
+  document.getElementById('board-overlay').classList.add('open');
+  document.getElementById('btn-board').classList.add('active');
+  STATE.boardOverlayOpen = true;
+  syncBoardOverlay();
+  showQuietTip('board-overlay-header', 'boards let you drag, compare, and export references', 'inspo_tip_boards');
+}
+
+function closeBoardOverlay() {
+  destroyBoardSketch();
+  document.getElementById('board-overlay').classList.remove('open');
+  document.getElementById('btn-board').classList.remove('active');
+  STATE.boardOverlayOpen = false;
+}
+
+/* ── Board Sketch (Fabric canvas inside board overlay) ── */
+let _boardFabricCanvas = null;
+
+function initBoardSketch() {
+  loadFabric(() => {
+    const content = document.getElementById('board-overlay-content');
+    const canvasEl = document.getElementById('board-fabric-canvas');
+    const w = content.offsetWidth;
+    const h = content.offsetHeight;
+    canvasEl.width = w;
+    canvasEl.height = h;
+    canvasEl.style.display = '';
+    canvasEl.style.pointerEvents = 'auto';
+
+    _boardFabricCanvas = new fabric.Canvas('board-fabric-canvas', {
+      isDrawingMode: true,
+      width: w,
+      height: h,
+    });
+    const inkColor = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#1a1a18';
+    _boardFabricCanvas.freeDrawingBrush.color = inkColor;
+    _boardFabricCanvas.freeDrawingBrush.width = 2;
+
+    setupFabricTools(_boardFabricCanvas, '.board-sketch-tool', 'board-sketch-clear', 'board-sketch-export');
+
+    const toolbar = document.getElementById('board-sketch-toolbar');
+    toolbar.style.display = 'flex';
+  });
+}
+
+function destroyBoardSketch() {
+  if (_boardFabricCanvas) {
+    _boardFabricCanvas.dispose();
+    _boardFabricCanvas = null;
+  }
+  const canvasEl = document.getElementById('board-fabric-canvas');
+  if (canvasEl) {
+    canvasEl.style.display = 'none';
+    canvasEl.style.pointerEvents = 'none';
+  }
+  const toolbar = document.getElementById('board-sketch-toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+  document.getElementById('btn-board-sketch')?.classList.remove('active');
+}
+
+document.getElementById('btn-board-sketch').addEventListener('click', () => {
+  if (_boardFabricCanvas) {
+    destroyBoardSketch();
+  } else {
+    initBoardSketch();
+    document.getElementById('btn-board-sketch').classList.add('active');
+  }
+});
+
+function toggleBoardOverlay() {
+  document.getElementById('board-overlay').classList.contains('open')
+    ? closeBoardOverlay() : openBoardOverlay();
+}
+
+function syncBoardOverlay() {
+  if (!document.getElementById('board-overlay').classList.contains('open')) return;
+  initBoardView();
+}
+
+// Overlay header drag (freely moveable, including across screens)
+(function installOverlayDrag() {
+  const overlay = document.getElementById('board-overlay');
+  const header  = document.getElementById('board-overlay-header');
+  let drag = null;
+  header.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    const rect = overlay.getBoundingClientRect();
+    drag = { startX: e.clientX, startY: e.clientY, origLeft: rect.left, origTop: rect.top };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return;
+    overlay.style.right  = 'auto';
+    overlay.style.bottom = 'auto';
+    overlay.style.left   = Math.max(0, drag.origLeft + (e.clientX - drag.startX)) + 'px';
+    overlay.style.top    = Math.max(0, drag.origTop  + (e.clientY - drag.startY)) + 'px';
+  });
+  document.addEventListener('mouseup', () => { drag = null; });
+})();
+
+document.getElementById('board-overlay-close').addEventListener('click', closeBoardOverlay);
+
+document.getElementById('btn-board-popout').addEventListener('click', () => {
+  persistBoardState();
+  broadcastBoardSync();
+  const url = location.href.split('?')[0] + '?boardpopup=1';
+  window.open(url, 'inspo-board', 'width=900,height=700,resizable=yes');
+});
+
+// Drop handler on board canvas (drag from grid)
+(function installBoardDrop() {
+  const boardCanvas = document.getElementById('board-canvas');
+  boardCanvas.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  boardCanvas.addEventListener('drop', e => {
+    e.preventDefault();
+    const itemId = e.dataTransfer.getData('text/plain');
+    let item = STATE.results.find(r => r.id === itemId)
+            || STATE.selected.find(r => r.id === itemId);
+    if (!item) {
+      try {
+        const raw = e.dataTransfer.getData('application/json');
+        if (raw) item = JSON.parse(raw);
+      } catch {}
+    }
+    if (!item) return;
+    if (!STATE.selected.find(s => s.id === item.id)) {
+      STATE.selected.push(item);
+      const gc = document.getElementById('card-' + item.id);
+      if (gc) {
+        gc.classList.add('selected');
+        const gi = gc.querySelector('img');
+        if (gi && gi.complete && gi.naturalWidth > 1) {
+          try { item.colors = getDominantColors(gi); } catch {}
+        }
+      }
+      updateFloatingBar();
+    }
+    const rect = boardCanvas.getBoundingClientRect();
+    const x    = Math.max(0, e.clientX - rect.left - 100);
+    const y    = Math.max(0, e.clientY - rect.top  - 75);
+    let alreadyOnBoard = false;
+    boardCanvas.querySelectorAll('.board-card').forEach(bc => {
+      if (boardCardMap.get(bc)?.id === item.id) alreadyOnBoard = true;
+    });
+    if (!alreadyOnBoard) createBoardCard(item, x, y, boardCanvas);
+    persistBoardState();
+    broadcastBoardSync();
+  });
+})();
+
+// Pop-out mode: entire page becomes a fullscreen board window
+function initBoardPopupMode() {
+  const t = localStorage.getItem('inspo_theme');
+  if (t === 'dark')  document.body.classList.add('dark');
+  if (t === 'light') document.body.classList.remove('dark');
+
+  ['#sidebar', '#canvas', '#panel', '#keys-panel', '#ai-chat-panel'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (el) el.style.display = 'none';
+  });
+
+  const overlay = document.getElementById('board-overlay');
+  overlay.style.cssText = [
+    'position:fixed', 'inset:0', 'width:100%', 'height:100dvh',
+    'display:flex', 'flex-direction:column',
+    'background:var(--bg-panel)', 'border:none',
+    'box-shadow:none', 'resize:none', 'z-index:1',
+  ].join(';');
+  overlay.classList.add('open');
+
+  document.getElementById('board-overlay-header').style.cursor = 'default';
+  document.getElementById('btn-board-popout').style.display = 'none';
+
+  syncBoardOverlay();
+
+  if (boardChannel) {
+    boardChannel.onmessage = e => {
+      const msg = e.data;
+      if (msg.type === 'board-sync') {
+        STATE.selected = msg.items || [];
+        Object.assign(boardPositions, msg.positions || {});
+        persistBoardState();
+        initBoardView();
+      }
+      if (msg.type === 'theme') {
+        document.body.classList.toggle('dark', msg.dark);
+      }
+    };
+  }
+}
+
+// Restore board on load; initialise popup if launched as pop-out
+loadBoardState();
+if (_isBoardPopup) initBoardPopupMode();
+
+/* ============================================================
+   PHASE 6 — 3D VIEW (Three.js)
+============================================================ */
+
+/* ── Lazy script loaders ── */
+function loadScript(url, cb) {
+  if (document.querySelector('script[src="' + url + '"]')) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = url;
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+function loadThreeJS(cb) {
+  if (window.THREE) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', function() {
+    loadScript('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js', cb);
+  });
+}
+function loadHtml2Canvas(cb) {
+  if (window.html2canvas) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', cb);
+}
+
+/* ── New library lazy loaders ── */
+function loadColorThief(cb) {
+  if (window.ColorThief) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js', cb);
+}
+function loadTinyColor(cb) {
+  if (window.tinycolor) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js', cb);
+}
+function loadFuse(cb) {
+  if (window.Fuse) { cb(); return; }
+  loadScript('https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js', cb);
+}
+function loadKonva(cb) {
+  if (window.Konva) { cb(); return; }
+  loadScript('https://unpkg.com/konva@9/konva.min.js', cb);
+}
+function loadFabric(cb) {
+  if (window.fabric) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js', cb);
+}
+function loadOpenSeadragon(cb) {
+  if (window.OpenSeadragon) { cb(); return; }
+  loadScript('https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js', cb);
+}
+
+/* ── OpenSeadragon deep-zoom viewer ── */
+let _osdViewer = null;
+const IIIF_SOURCES = new Set(['met_iiif', 'wellcome_iiif', 'bodleian', 'cudl', 'bsb']);
+
+let _osdFabricCanvas = null;
+let _osdBwActive = false;
+
+function openDeepZoom(item) {
+  loadOpenSeadragon(() => {
+    const modal = document.getElementById('osd-modal');
+    modal.classList.add('open');
+
+    // Always prefer full-res url over thumb
+    let tileSources;
+    if (IIIF_SOURCES.has(item.source) && item.iiifManifest) {
+      tileSources = item.iiifManifest;
+    } else {
+      // Use sourceUrl-derived full image if available, then url, then thumb
+      tileSources = { type: 'image', url: item.url || item.thumb };
+    }
+
+    _osdViewer = OpenSeadragon({
+      id: 'osd-container',
+      tileSources: tileSources,
+      prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/',
+      showNavigator: true,
+      navigatorPosition: 'BOTTOM_RIGHT',
+      animationTime: 0.3,
+      immediateRender: true,
+      maxZoomPixelRatio: 6,
+      visibilityRatio: 0.8,
+    });
+
+    // Reset B&W and sketch state for this zoom session
+    _osdBwActive = false;
+    document.getElementById('osd-bw-toggle').textContent = 'b&w';
+    document.getElementById('osd-bw-toggle').style.opacity = '0.7';
+    document.getElementById('osd-sketch-toggle').textContent = 'sketch';
+    document.getElementById('osd-sketch-toggle').style.opacity = '0.7';
+    destroyOsdSketch();
+  });
+}
+
+function closeDeepZoom() {
+  destroyOsdSketch();
+  if (_osdViewer) {
+    _osdViewer.destroy();
+    _osdViewer = null;
+  }
+  _osdBwActive = false;
+  document.getElementById('osd-container').innerHTML = '';
+  document.getElementById('osd-container').style.filter = '';
+  document.getElementById('osd-modal').classList.remove('open');
+}
+
+// B&W toggle inside zoom
+document.getElementById('osd-bw-toggle').addEventListener('click', () => {
+  _osdBwActive = !_osdBwActive;
+  const container = document.getElementById('osd-container');
+  const btn = document.getElementById('osd-bw-toggle');
+  if (_osdBwActive) {
+    container.style.filter = 'grayscale(1) contrast(1.3) brightness(1.05)';
+    btn.textContent = 'colour';
+    btn.style.opacity = '1';
+  } else {
+    container.style.filter = '';
+    btn.textContent = 'b&w';
+    btn.style.opacity = '0.7';
+  }
+});
+
+// Sketch toggle inside zoom
+document.getElementById('osd-sketch-toggle').addEventListener('click', () => {
+  if (_osdFabricCanvas) {
+    destroyOsdSketch();
+    document.getElementById('osd-sketch-toggle').textContent = 'sketch';
+    document.getElementById('osd-sketch-toggle').style.opacity = '0.7';
+  } else {
+    initOsdSketch();
+    document.getElementById('osd-sketch-toggle').textContent = 'sketch ✓';
+    document.getElementById('osd-sketch-toggle').style.opacity = '1';
+  }
+});
+
+function initOsdSketch() {
+  loadFabric(() => {
+    const cvs = document.getElementById('osd-fabric-canvas');
+    const container = document.getElementById('osd-container');
+    cvs.style.display = '';
+    cvs.style.pointerEvents = 'auto';
+    cvs.width = container.offsetWidth;
+    cvs.height = container.offsetHeight;
+    cvs.style.width = container.offsetWidth + 'px';
+    cvs.style.height = container.offsetHeight + 'px';
+
+    _osdFabricCanvas = new fabric.Canvas('osd-fabric-canvas', {
+      isDrawingMode: true,
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+    });
+    _osdFabricCanvas.freeDrawingBrush.color = '#ffffff';
+    _osdFabricCanvas.freeDrawingBrush.width = 2;
+
+    const toolbar = document.getElementById('osd-sketch-toolbar');
+    toolbar.style.display = 'flex';
+
+    setupFabricTools(_osdFabricCanvas, '.osd-sketch-tool', 'osd-sketch-clear', 'osd-sketch-export');
+
+    document.getElementById('osd-sketch-close').addEventListener('click', () => {
+      destroyOsdSketch();
+      document.getElementById('osd-sketch-toggle').textContent = 'sketch';
+      document.getElementById('osd-sketch-toggle').style.opacity = '0.7';
+    });
+  });
+}
+
+function destroyOsdSketch() {
+  if (_osdFabricCanvas) {
+    _osdFabricCanvas.dispose();
+    _osdFabricCanvas = null;
+  }
+  const cvs = document.getElementById('osd-fabric-canvas');
+  if (cvs) { cvs.style.display = 'none'; cvs.style.pointerEvents = 'none'; }
+  const toolbar = document.getElementById('osd-sketch-toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+}
+
+document.getElementById('osd-close').addEventListener('click', closeDeepZoom);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('osd-modal').classList.contains('open')) {
+    closeDeepZoom();
+  }
+});
+
+let threeScene      = null;
+let threeCamera     = null;
+let threeRenderer   = null;
+let threeControls   = null;
+let threeAnimId     = null;
+let threeMeshes     = [];   // { mesh, item } pairs for raycasting
+let threeRaycaster  = null;
+let threeMouse      = null; // initialised inside initThreeView once THREE is loaded
+let threeHovered    = null;
+
+function getThreeBg() {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue('--bg').trim() || '#F7F5F2';
+  return parseInt(raw.replace('#', '0x'));
+}
+
+function getThreePosition(image, allImages) {
+  const sharedCount = allImages.filter(other =>
+    other.id !== image.id && other.tags.some(t => image.tags.includes(t))
+  ).length;
+  const angle  = Math.random() * Math.PI * 2;
+  const radius = sharedCount > 1
+    ? 2 + Math.random() * 2
+    : 6 + Math.random() * 3;
+  return new THREE.Vector3(
+    Math.cos(angle) * radius,
+    (Math.random() - 0.5) * 4,
+    Math.sin(angle) * radius
+  );
+}
+
+function initThreeView() {
+  if (!threeMouse) threeMouse = new THREE.Vector2(-9999, -9999);
+  const container = document.getElementById('three-canvas');
+  container.innerHTML = '';
+  threeMeshes = [];
+  threeHovered = null;
+
+  const items = STATE.selected.length ? STATE.selected : STATE.results.slice(0, STATE.imageCount);
+  if (!items.length) {
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.justifyContent = 'center';
+    container.innerHTML = '<p style="font-family:var(--font-display);font-size:18px;font-weight:300;font-style:italic;color:var(--ink-3);">select images first</p>';
+    return;
+  }
+
+  const w = container.offsetWidth  || window.innerWidth  - 240;
+  const h = container.offsetHeight || window.innerHeight;
+
+  // Scene
+  threeScene = new THREE.Scene();
+  threeScene.background = new THREE.Color(getThreeBg());
+
+  // Camera
+  threeCamera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+  threeCamera.position.set(0, 0, 12);
+
+  // Renderer
+  threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+  threeRenderer.setPixelRatio(window.devicePixelRatio);
+  threeRenderer.setSize(w, h);
+  container.appendChild(threeRenderer.domElement);
+
+  // OrbitControls
+  threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+  threeControls.enableDamping    = true;
+  threeControls.dampingFactor    = 0.05;
+  threeControls.enablePan        = true;
+  threeControls.mouseButtons     = {
+    LEFT:   THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT:  THREE.MOUSE.PAN,
+  };
+
+  // Raycaster
+  threeRaycaster = new THREE.Raycaster();
+
+  // Load each selected image as a textured plane
+  const loader = new THREE.TextureLoader();
+  loader.crossOrigin = 'anonymous';
+
+  items.forEach(item => {
+    const pos = getThreePosition(item, items);
+    const tex = loader.load(item.thumb, tex => {
+      // Adjust plane aspect to match image
+      const aspect = tex.image.width / tex.image.height || 1;
+      mesh.scale.set(aspect, 1, 1);
+    });
+    tex.crossOrigin = 'anonymous';
+
+    const geo  = new THREE.PlaneGeometry(1.6, 1.6);
+    const mat  = new THREE.MeshStandardMaterial({
+      map:           tex,
+      side:          THREE.DoubleSide,
+      emissive:      new THREE.Color(0xffffff),
+      emissiveMap:   tex,
+      emissiveIntensity: 0,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    // Rotate slightly toward camera for visual interest
+    mesh.lookAt(threeCamera.position);
+    threeScene.add(mesh);
+    threeMeshes.push({ mesh, item });
+  });
+
+  // Ambient + directional light (subtle — mostly emissive drives image appearance)
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  threeScene.add(ambient);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  dirLight.position.set(5, 5, 5);
+  threeScene.add(dirLight);
+
+  // Mouse move for hover — track on renderer canvas
+  threeRenderer.domElement.addEventListener('mousemove', onThreeMouseMove);
+  threeRenderer.domElement.addEventListener('click',     onThreeClick);
+
+  // Resize observer
+  const resizeObs = new ResizeObserver(() => {
+    const nw = container.offsetWidth;
+    const nh = container.offsetHeight;
+    threeCamera.aspect = nw / nh;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(nw, nh);
+  });
+  resizeObs.observe(container);
+  // Store so we can disconnect on dispose
+  threeRenderer._resizeObs = resizeObs;
+
+  // Animation loop
+  function animate() {
+    threeAnimId = requestAnimationFrame(animate);
+    threeControls.update();
+
+    // Hover highlight via emissiveIntensity lerp
+    threeMeshes.forEach(({ mesh, item }) => {
+      const target = (threeHovered && threeHovered.item.id === item.id) ? 0.3 : 0;
+      mesh.material.emissiveIntensity += (target - mesh.material.emissiveIntensity) * 0.12;
+    });
+
+    threeRenderer.render(threeScene, threeCamera);
+  }
+  animate();
+}
+
+function onThreeMouseMove(e) {
+  const rect = threeRenderer.domElement.getBoundingClientRect();
+  threeMouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+  threeMouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+
+  threeRaycaster.setFromCamera(threeMouse, threeCamera);
+  const hits = threeRaycaster.intersectObjects(threeMeshes.map(m => m.mesh));
+
+  if (hits.length) {
+    const hitMesh = hits[0].object;
+    threeHovered = threeMeshes.find(m => m.mesh === hitMesh) || null;
+    threeRenderer.domElement.style.cursor = 'pointer';
+  } else {
+    threeHovered = null;
+    threeRenderer.domElement.style.cursor = 'default';
+  }
+}
+
+function onThreeClick() {
+  if (!threeHovered) return;
+  const { item } = threeHovered;
+  // Add to selected if not already
+  if (!STATE.selected.find(s => s.id === item.id)) {
+    STATE.selected.push(item);
+  }
+  updatePanel();
+}
+
+function disposeThreeView() {
+  if (threeAnimId) {
+    cancelAnimationFrame(threeAnimId);
+    threeAnimId = null;
+  }
+  if (threeRenderer) {
+    if (threeRenderer._resizeObs) threeRenderer._resizeObs.disconnect();
+    threeRenderer.domElement.removeEventListener('mousemove', onThreeMouseMove);
+    threeRenderer.domElement.removeEventListener('click',     onThreeClick);
+    threeRenderer.dispose();
+    const container = document.getElementById('three-canvas');
+    if (threeRenderer.domElement.parentNode === container) {
+      container.removeChild(threeRenderer.domElement);
+    }
+    threeRenderer = null;
+  }
+  if (threeControls) { threeControls.dispose(); threeControls = null; }
+  threeMeshes.forEach(({ mesh }) => {
+    mesh.geometry.dispose();
+    if (mesh.material.map)         mesh.material.map.dispose();
+    if (mesh.material.emissiveMap) mesh.material.emissiveMap.dispose();
+    mesh.material.dispose();
+  });
+  threeMeshes  = [];
+  threeHovered = null;
+  threeScene   = null;
+  threeCamera  = null;
+}
+
+console.log('[insposearch] Phase 6 — 3D View ready.');
+
+/* ============================================================
+   PHASE 7 — KEYS PANEL
+============================================================ */
+
+/* Source config — data-driven, order matches spec */
+const KEY_SOURCES = [
+  {
+    id:        'nasa',
+    name:      'NASA Images',
+    desc:      'space, earth & history — 300k photos',
+    imageCount: 300000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'met',
+    name:      'The Met Museum',
+    desc:      '400k art objects, global collection',
+    imageCount: 400000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'wikimedia',
+    name:      'Wikimedia Commons',
+    desc:      'millions of real photos & documents',
+    imageCount: 90000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'archive',
+    name:      'Internet Archive',
+    desc:      'historical photos & ephemera',
+    imageCount: 20000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'inaturalist',
+    name:      'iNaturalist',
+    desc:      '50M nature observations, CC-licensed',
+    imageCount: 50000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'loc',
+    name:      'Library of Congress',
+    desc:      'US historical images & documents',
+    imageCount: 3000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'openlibrary',
+    name:      'Open Library',
+    desc:      'book covers — millions of editions',
+    imageCount: 10000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'chicago',
+    name:      'Art Institute of Chicago',
+    desc:      '50k CC0 artworks, no key needed',
+    imageCount: 50000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'cleveland',
+    name:      'Cleveland Museum of Art',
+    desc:      '64k artworks, CC0, no key needed',
+    imageCount: 64000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'va',
+    name:      'Victoria & Albert Museum',
+    desc:      '1M+ objects, fashion, design, decorative art',
+    imageCount: 1200000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'wikiart',
+    name:      'WikiArt',
+    desc:      '250k paintings, drawings, prints — all styles',
+    imageCount: 250000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nordic',
+    name:      'Nordic Museum',
+    desc:      'Scandinavian design, folk art, fashion',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'flickr',
+    name:      'Flickr Commons',
+    desc:      'public domain photography, Creative Commons',
+    imageCount: 500000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'rijks',
+    toggleId:  'rijksmuseum',
+    name:      'Rijksmuseum',
+    desc:      '800k Dutch masterworks — no key needed',
+    imageCount: 800000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'europeana',
+    name:      'Europeana',
+    desc:      '50M cultural objects across Europe',
+    imageCount: 50000000,
+    alwaysOn:  false,
+    stateKey:  'europeanaKey',
+    storageKey: 'inspo_europeana_key',
+    getKeyUrl: 'https://pro.europeana.eu/pages/get-api',
+  },
+  {
+    id:        'harvard',
+    name:      'Harvard Art Museums',
+    desc:      '250k global art objects, rich metadata',
+    imageCount: 250000,
+    alwaysOn:  false,
+    stateKey:  'harvardKey',
+    storageKey: 'inspo_harvard_key',
+    getKeyUrl: 'https://forms.gle/apBabyNeWuHMoM5x6',
+  },
+  {
+    id:         'smithsonian',
+    name:       'Smithsonian',
+    desc:       '4.5M objects across 19 museums — works now, key unlocks higher limits',
+    imageCount: 4500000,
+    alwaysOn:   true,
+    optionalKey: true,
+    stateKey:   'smithsonianKey',
+    storageKey: 'inspo_smithsonian_key',
+    getKeyUrl:  'https://api.data.gov/signup',
+    placeholder: 'optional — paste for higher limits',
+  },
+  {
+    id:        'pexels',
+    name:      'Pexels',
+    desc:      'contemporary photography, 170 countries',
+    imageCount: 3200000,
+    alwaysOn:  false,
+    stateKey:  'pexelsKey',
+    storageKey: 'inspo_pexels_key',
+    getKeyUrl: 'https://www.pexels.com/api',
+  },
+  {
+    id:        'pixabay',
+    name:      'Pixabay',
+    desc:      '2.7M CC0 photos & illustrations',
+    imageCount: 2700000,
+    alwaysOn:  false,
+    stateKey:  'pixabayKey',
+    storageKey: 'inspo_pixabay_key',
+    getKeyUrl: 'https://pixabay.com/api/docs/',
+  },
+  {
+    id:        'getty',
+    name:      'Getty Museum',
+    desc:      'open-access artworks from J. Paul Getty collection',
+    imageCount: 150000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nga',
+    name:      'National Gallery of Art',
+    desc:      'US national collection — open access, Washington DC',
+    imageCount: 50000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'gbif',
+    name:      'GBIF Biodiversity',
+    desc:      '2B+ nature observations with CC-licensed images',
+    imageCount: 2000000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'eol',
+    name:      'Encyclopedia of Life',
+    desc:      'species imagery — 2M+ taxa, CC-licensed',
+    imageCount: 2000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'apod',
+    name:      'NASA APOD Archive',
+    desc:      'astronomy picture of the day — 10,000+ images',
+    imageCount: 10000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'gallica',
+    name:      'Gallica (BnF)',
+    desc:      'French national library — 5M+ digitized documents',
+    imageCount: 5000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'chronicling',
+    name:      'Chronicling America',
+    desc:      'historic US newspapers 1770–1963, Library of Congress',
+    imageCount: 16000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'openverse',
+    name:      'Openverse',
+    desc:      '800M+ openly-licensed images & audio',
+    imageCount: 800000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'bhl',
+    name:      'Biodiversity Heritage Library',
+    desc:      '60M+ pages of natural history literature, public key',
+    imageCount: 60000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'carnegie',
+    name:      'Carnegie Museum of Art',
+    desc:      'Pittsburgh collection, open-access artworks',
+    imageCount: 30000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'prado',
+    name:      'Museo del Prado',
+    desc:      'Spanish masterworks — best-effort (CORS)',
+    imageCount: 17000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'parismusees',
+    name:      'Paris Musées',
+    desc:      '14 Paris museums — best-effort (CORS)',
+    imageCount: 330000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'yale',
+    name:      'Yale Center for British Art',
+    desc:      'British paintings & drawings, IIIF, no key',
+    imageCount: 60000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'picsum',
+    name:      'Lorem Picsum',
+    desc:      'high-quality texture & abstract photography (texture searches)',
+    imageCount: 1000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'usgs',
+    name:      'USGS ScienceBase',
+    desc:      'geological & aerial imagery, US government open data',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'cooperhewitt',
+    name:      'Cooper Hewitt',
+    desc:      'Smithsonian design museum — demo token built in',
+    imageCount: 200000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'trove',
+    name:      'Trove (NLA)',
+    desc:      'National Library of Australia — pictures & photos',
+    imageCount: 2000000,
+    alwaysOn:  false,
+    stateKey:  'troveKey',
+    storageKey: 'inspo_trove_key',
+    getKeyUrl: 'https://trove.nla.gov.au/about/create-something/using-api',
+  },
+  {
+    id:        'digitalnz',
+    name:      'DigitalNZ',
+    desc:      'New Zealand cultural heritage images',
+    imageCount: 30000000,
+    alwaysOn:  false,
+    stateKey:  'digitalnzKey',
+    storageKey: 'inspo_digitalnz_key',
+    getKeyUrl: 'https://digitalnz.org/developers',
+  },
+  {
+    id:        'tate',
+    name:      'Tate Collection',
+    desc:      'Tate London — British & international art, no key',
+    imageCount: 77000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'finna',
+    name:      'Finnish Heritage (Finna)',
+    desc:      '10M+ Finnish cultural heritage items, no key',
+    imageCount: 10000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'soch',
+    name:      'Swedish Heritage (SOCH)',
+    desc:      'Swedish cultural heritage — best-effort (CORS)',
+    imageCount: 1000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'joconde',
+    name:      'Joconde (France)',
+    desc:      'French national museum database — data.culture.gouv.fr',
+    imageCount: 500000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'mnw',
+    name:      'Muzeum Narodowe Warszawa',
+    desc:      'Polish National Museum Warsaw, open API',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'tepapa',
+    name:      'Te Papa (New Zealand)',
+    desc:      'Museum of NZ — Pacific & Māori taonga, no key',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'pas',
+    name:      'Portable Antiquities Scheme',
+    desc:      'UK archaeological finds — British Museum database',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'smg',
+    name:      'Science Museum Group',
+    desc:      'Science, technology & medicine history — London',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'auckland',
+    name:      'Auckland Museum',
+    desc:      'Auckland War Memorial Museum — NZ & Pacific',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'photogrammar',
+    name:      'Photogrammar (FSA)',
+    desc:      '170k FSA/OWI Depression-era photographs — Yale + LOC',
+    imageCount: 170000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'wellcome',
+    name:      'Wellcome Collection',
+    desc:      'History of medicine, science & the body — London',
+    imageCount: 250000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'maas',
+    name:      'Powerhouse (MAAS)',
+    desc:      'Powerhouse Museum Sydney — design, technology, decorative art',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'smk',
+    name:      'SMK (Denmark)',
+    desc:      'Statens Museum for Kunst — Danish national gallery',
+    imageCount: 40000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'thyssen',
+    name:      'Thyssen-Bornemisza',
+    desc:      'Museo Thyssen Madrid — best-effort (CORS)',
+    imageCount: 20000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'dpla',
+    name:      'DPLA',
+    desc:      'Digital Public Library of America — 50M+ items',
+    imageCount: 50000000,
+    alwaysOn:  false,
+    stateKey:  'dplaKey',
+    storageKey: 'inspo_dpla_key',
+    getKeyUrl: 'https://dp.la/info/developers',
+  },
+  {
+    id:        'artsy',
+    name:      'Artsy',
+    desc:      'Contemporary art marketplace — needs client_id + client_secret',
+    imageCount: 1000000,
+    alwaysOn:  false,
+    stateKey:  'artsyId',
+    storageKey: 'inspo_artsy_id',
+    getKeyUrl: 'https://developers.artsy.net',
+    artsyDual: true,
+  },
+  {
+    id:        'gemini',
+    name:      'Gemini Vision',
+    desc:      'AI visual analysis — tags any image · free, 1,500/day',
+    imageCount: 0,
+    alwaysOn:  false,
+    stateKey:  'geminiKey',
+    storageKey: 'inspo_gemini_key',
+    getKeyUrl: 'https://aistudio.google.com',
+    aiProvider: true,
+  },
+  {
+    id:        'claude',
+    name:      'Claude (Anthropic)',
+    desc:      'claude-sonnet-4-6 vision · bring your own key',
+    imageCount: 0,
+    alwaysOn:  false,
+    stateKey:  'claudeKey',
+    storageKey: 'inspo_claude_key',
+    getKeyUrl: 'https://console.anthropic.com',
+    aiProvider: true,
+  },
+  {
+    id:        'openai',
+    name:      'GPT-4o (OpenAI)',
+    desc:      'gpt-4o vision · bring your own key · or any OpenAI-compatible endpoint',
+    imageCount: 0,
+    alwaysOn:  false,
+    stateKey:  'openaiKey',
+    storageKey: 'inspo_openai_key',
+    getKeyUrl: 'https://platform.openai.com/api-keys',
+    aiProvider: true,
+    hasEndpoint: true,
+  },
+  // ── Batch 4 sources ────────────────────────────────────
+  {
+    id:        'walters',
+    name:      'Walters Art Museum',
+    desc:      '27k medieval & Renaissance objects',
+    imageCount: 27000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'princeton',
+    name:      'Princeton Art Museum',
+    desc:      'ancient & Asian art, IIIF',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'wikidata',
+    name:      'Wikidata',
+    desc:      'structured image data, 90M items',
+    imageCount: 90000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'noaa',
+    name:      'NOAA',
+    desc:      'ocean, weather & coastal photography',
+    imageCount: 50000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'hubble',
+    name:      'Hubble Telescope',
+    desc:      'space photography, cached 6h',
+    imageCount: 10000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'cornell',
+    name:      'Cornell Digital',
+    desc:      'botanical prints, ornithology',
+    imageCount: 100000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'folger',
+    name:      'Folger Library',
+    desc:      'Renaissance manuscripts',
+    imageCount: 100000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'onb',
+    name:      'Austrian Nat. Library',
+    desc:      '12M+ historical items',
+    imageCount: 12000000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nypl',
+    name:      'NYPL Digital',
+    desc:      'New York historical collections',
+    imageCount: 900000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'mak',
+    name:      'MAK Vienna',
+    desc:      'design & decorative arts',
+    imageCount: 100000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'louvre',
+    name:      'Louvre (via Joconde)',
+    desc:      '480k French museum objects',
+    imageCount: 480000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'mna',
+    name:      'MNA Mexico',
+    desc:      'Pre-Columbian & indigenous art',
+    imageCount: 50000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  // ── Batch 7 ────────────────────────────────────────────────
+  {
+    id:        'mia',
+    name:      'Minneapolis Inst. of Art',
+    desc:      '50k CC0 works',
+    imageCount: 50000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'lacma',
+    name:      'LACMA',
+    desc:      '20k LA museum public domain',
+    imageCount: 20000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'munch',
+    name:      'Munch Museum',
+    desc:      'Edvard Munch complete works',
+    imageCount: 28000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'mauritshuis',
+    name:      'Mauritshuis',
+    desc:      'Vermeer, Rembrandt — Dutch masters',
+    imageCount: 800,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nationalmuseumse',
+    name:      'Nationalmuseum Stockholm',
+    desc:      'Swedish art via Wikimedia',
+    imageCount: 6000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'naturalis',
+    name:      'Naturalis Biodiversity',
+    desc:      '42M Dutch natural history',
+    imageCount: 42000000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nmaahc',
+    name:      'NMAAHC (Smithsonian)',
+    desc:      'African American history & culture',
+    imageCount: 37000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nasm',
+    name:      'Air & Space (Smithsonian)',
+    desc:      'aviation, space exploration',
+    imageCount: 65000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'whitney',
+    name:      'Whitney Museum',
+    desc:      '25k American art — CC0 CSV',
+    imageCount: 25000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'nationalzoo',
+    name:      'National Zoo (Smithsonian)',
+    desc:      'animal photography',
+    imageCount: 10000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'gbiflit',
+    name:      'GBIF Literature',
+    desc:      'scientific book illustration specimens',
+    imageCount: 500000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'freersackler',
+    name:      'Freer|Sackler (Smithsonian)',
+    desc:      'Asian and African art',
+    imageCount: 40000,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'ago',
+    name:      'Art Gallery of Ontario',
+    desc:      'Canadian and international art',
+    imageCount: 100000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'pem',
+    name:      'Peabody Essex Museum',
+    desc:      'Asian export art, maritime',
+    imageCount: 40000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'npg',
+    name:      'National Portrait Gallery',
+    desc:      'British portraits 215k+',
+    imageCount: 215000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'louvread',
+    name:      'Louvre Abu Dhabi',
+    desc:      'cross-cultural universal art',
+    imageCount: 10000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  // ── Phase 2 sources ────────────────────────────────────
+  {
+    id:        'unsplash',
+    name:      'Unsplash',
+    desc:      '5M+ high-res photos, free key, CC0-style',
+    imageCount: 5000000,
+    alwaysOn:  false,
+    stateKey:  'unsplashKey',
+    storageKey: 'inspo_unsplash_key',
+    getKeyUrl: 'https://unsplash.com/developers',
+  },
+  {
+    id:        'bodleian',
+    name:      'Bodleian Libraries',
+    desc:      'Oxford University digital collections — manuscripts, maps, rare books',
+    imageCount: 400000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'bsb',
+    name:      'BSB Munich',
+    desc:      'Bayerische Staatsbibliothek — 15M digitized pages, maps, illuminated manuscripts',
+    imageCount: 1000000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'cudl',
+    name:      'Cambridge Digital Library',
+    desc:      'Cambridge University manuscripts, scientific records, rare books',
+    imageCount: 200000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+];
+
+/* ── Source stats helper (self-updating from KEY_SOURCES) ── */
+function formatCount(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B+';
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + 'k';
+  return String(n);
+}
+
+function getSourceStats() {
+  // Dedupe by source id so counts reflect real source inventory.
+  const deduped = new Map();
+  KEY_SOURCES
+    .filter(s => !s.aiProvider)
+    .forEach(s => deduped.set(s.id, s));
+  const db = Array.from(deduped.values());
+  const noKey = db.filter(s => s.alwaysOn);
+  const withKey = db.filter(s => !s.alwaysOn);
+  // Total sources in the fetch engine (ALL_SOURCES + manifest runtime sources)
+  const manifestActive = (STATE.manifestSources || []).length;
+  const totalFetchSources = ALL_SOURCES.length + manifestActive;
+  return {
+    totalSources:       db.length,
+    totalFetchSources:  totalFetchSources,
+    noKeySources:       noKey.length,
+    keySources:         withKey.length,
+    totalImagesNoKey:   noKey.reduce((a, s) => a + (s.imageCount || 0), 0),
+    totalImagesWithKey: db.reduce((a, s) => a + (s.imageCount || 0), 0),
+    allSources:         db,
+  };
+}
+
+/* ── Onboarding controller ── */
+(function initOnboarding() {
+  const el        = document.getElementById('onboarding');
+  const track     = document.getElementById('ob-track');
+  const dotsBox   = document.getElementById('ob-dots');
+  const prevBtn   = document.getElementById('ob-prev');
+  const nextBtn   = document.getElementById('ob-next');
+  const skipBtn   = document.getElementById('ob-skip');
+  const startBtn  = document.getElementById('ob-start');
+  const helpBtn   = document.getElementById('btn-help');
+  const TOTAL     = track.children.length;
+  let step        = 0;
+
+  // build dot indicators
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('button');
+    d.className = 'ob-dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsBox.appendChild(d);
+  }
+
+  function goTo(n) {
+    step = Math.max(0, Math.min(n, TOTAL - 1));
+    track.style.transform = `translateX(-${step * 100}%)`;
+    dotsBox.querySelectorAll('.ob-dot').forEach((d, i) =>
+      d.classList.toggle('active', i === step));
+    prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
+    nextBtn.style.display    = step === TOTAL - 1 ? 'none' : '';
+
+    // animate stat counters when landing on step 3
+    if (step === 3) {
+      document.querySelectorAll('#ob-stats-row [data-target]').forEach(el => {
+        animateCount(el, Number(el.dataset.target));
+      });
+    }
+  }
+
+  function populateStats() {
+    const s = getSourceStats();
+
+    // hero counter (step 0)
+    const heroEl = document.getElementById('ob-hero-count');
+    animateCount(heroEl, s.totalImagesWithKey);
+
+    // source count in step 0 tagline
+    const srcCountEl = document.getElementById('ob-source-count');
+    if (srcCountEl) srcCountEl.textContent = s.totalSources;
+
+    // stats row (step 3)
+    const statsRow = document.getElementById('ob-stats-row');
+    const fetchCountEl = document.getElementById('ob-fetch-count');
+    if (fetchCountEl) fetchCountEl.textContent = s.totalFetchSources;
+    statsRow.innerHTML = `
+      <div class="ob-stat">
+        <div class="ob-stat-num" id="ob-fetch-count" data-target="${s.totalFetchSources}">0</div>
+        <div class="ob-stat-label">sources</div>
+      </div>
+      <div class="ob-stat">
+        <div class="ob-stat-num" data-target="${s.totalSources}">0</div>
+        <div class="ob-stat-label">databases</div>
+      </div>
+      <div class="ob-stat">
+        <div class="ob-stat-num" data-target="${s.totalImagesNoKey}">0</div>
+        <div class="ob-stat-label">without keys</div>
+      </div>
+      <div class="ob-stat">
+        <div class="ob-stat-num" data-target="${s.totalImagesWithKey}">0</div>
+        <div class="ob-stat-label">with all keys</div>
+      </div>
+    `;
+
+    // category grid (step 3)
+    const catGrid = document.getElementById('ob-cat-grid');
+    const cats = [
+      { icon: '🏛', label: 'museums',      ids: SOURCE_GROUPS.museums },
+      { icon: '📷', label: 'photography',   ids: SOURCE_GROUPS.photography },
+      { icon: '🌿', label: 'nature',        ids: SOURCE_GROUPS.nature },
+      { icon: '📜', label: 'historical',    ids: SOURCE_GROUPS.historical },
+      { icon: '🎨', label: 'art & design',  ids: SOURCE_GROUPS.artdesign },
+    ];
+    catGrid.innerHTML = cats.map(c =>
+      `<div class="ob-cat">
+        <span>${c.icon}</span> ${c.label}
+        <span class="ob-cat-count">${c.ids.length} sources</span>
+      </div>`
+    ).join('');
+
+    // scrollable source list (step 3)
+    const listEl = document.getElementById('ob-source-list');
+    listEl.innerHTML = s.allSources.map(src =>
+      `<div class="ob-src-item">
+        <span>${src.name}${!src.alwaysOn ? '<span class="ob-src-key">key</span>' : ''}</span>
+        <span class="ob-src-count">${src.imageCount ? formatCount(src.imageCount) : '—'}</span>
+      </div>`
+    ).join('');
+  }
+
+  function animateCount(el, target) {
+    const dur = 1200;
+    const start = performance.now();
+    const fmt = n => {
+      if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B+';
+      if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M+';
+      return n.toLocaleString();
+    };
+    (function tick(now) {
+      const t = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      el.textContent = fmt(Math.floor(target * ease));
+      if (t < 1) requestAnimationFrame(tick);
+    })(start);
+  }
+
+  function show(prefillTerm = null, runGuidedSearch = false) {
+    el.style.display = 'flex';
+    el.classList.remove('hidden');
+    step = 0;
+    goTo(0);
+    populateStats();
+
+    if (prefillTerm) {
+      const input = document.getElementById('search-input');
+      if (input) input.value = prefillTerm;
+    }
+    STATE.pendingOnboardingSearch = !!runGuidedSearch;
+
+    requestAnimationFrame(() => el.classList.add('visible'));
+  }
+
+  function close() {
+    el.classList.remove('visible');
+    setTimeout(() => {
+      el.style.display = 'none';
+      el.classList.add('hidden');
+    }, 400);
+    localStorage.setItem('inspo_onboarding_seen', '1');
+    const input = document.getElementById('search-input');
+    const q = (input?.value || '').trim();
+    if (STATE.pendingOnboardingSearch && q && (q.toLowerCase() !== (STATE.query || '').toLowerCase() || !STATE.results.length)) {
+      runSearch(q);
+    }
+    STATE.pendingOnboardingSearch = false;
+    if (input) input.focus();
+  }
+
+  // nav events
+  nextBtn.addEventListener('click', () => goTo(step + 1));
+  prevBtn.addEventListener('click', () => goTo(step - 1));
+  skipBtn.addEventListener('click', close);
+  startBtn.addEventListener('click', close);
+  helpBtn.addEventListener('click', () => show());
+
+  // keyboard nav
+  el.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); goTo(step + 1); }
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(step - 1); }
+    if (e.key === 'Escape')     close();
+  });
+
+  // expose for init check
+  window._showOnboarding = show;
+  window._refreshOnboardingStats = populateStats;
+})();
+
+/* Track DOM refs for badge/input per source */
+const keyRowRefs = {};
+
+function updateKeysDot() {
+  const anySet = KEY_SOURCES
+    .filter(s => !s.alwaysOn)
+    .some(s => STATE[s.stateKey]);
+  document.getElementById('keys-dot').style.display = anySet ? 'inline-block' : 'none';
+}
+
+function setAIProvider(p) {
+  STATE.aiProvider = p;
+  localStorage.setItem('inspo_ai_provider', p);
+  document.querySelectorAll('.ai-provider-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.provider === p);
+  });
+  const badge = document.getElementById('chat-provider-badge');
+  if (badge) badge.textContent = p;
+}
+
+function buildKeyRows() {
+  const container = document.getElementById('keys-rows-container');
+  container.innerHTML = '';
+
+  let aiSectionInjected = false;
+
+  KEY_SOURCES.forEach(src => {
+    // Inject AI section header + provider pills before first AI key row
+    if (src.aiProvider && !aiSectionInjected) {
+      aiSectionInjected = true;
+      const divider = document.createElement('div');
+      divider.className = 'divider';
+      divider.style.margin = '14px 0 8px';
+      container.appendChild(divider);
+      const secLabel = document.createElement('div');
+      secLabel.className = 'section-label';
+      secLabel.style.marginBottom = '6px';
+      secLabel.textContent = 'ai provider';
+      container.appendChild(secLabel);
+      const pills = document.createElement('div');
+      pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;';
+      ['gemini', 'claude', 'openai'].forEach(p => {
+        const pill = document.createElement('button');
+        pill.className = 'btn ai-provider-pill' + (STATE.aiProvider === p ? ' active' : '');
+        pill.dataset.provider = p;
+        pill.textContent = p;
+        pill.addEventListener('click', () => setAIProvider(p));
+        pills.appendChild(pill);
+      });
+      container.appendChild(pills);
+    }
+
+    const row = document.createElement('div');
+    row.className = 'key-source-row';
+    row.dataset.sourceId = src.id;
+
+    // --- top row ---
+    const top = document.createElement('div');
+    top.className = 'key-source-top';
+
+    const name = document.createElement('span');
+    name.className = 'key-source-name';
+    name.textContent = '';
+    name.appendChild(createSourceIdentity(src.toggleId || src.id, src.name));
+
+    const isActive = src.alwaysOn || Boolean(src.stateKey && STATE[src.stateKey]);
+    const badge = document.createElement('span');
+    badge.className = 'key-status-badge ' + (isActive ? 'badge-active' : 'badge-inactive') + (src.cors ? ' badge-cors' : '');
+    badge.textContent = isActive ? (src.cors ? '✓ active (cors)' : '✓ active') : 'not set';
+    if (src.cors) badge.title = 'May be blocked on some networks';
+
+    // Source toggle button (left of name) — only for sources in ALL_SOURCES
+    const toggleId = src.toggleId || src.id;
+    if (ALL_SOURCES.includes(toggleId)) {
+      const isDisabled = STATE.disabledSources.has(toggleId);
+      if (isDisabled) row.classList.add('source-disabled');
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'source-toggle' + (isDisabled ? '' : ' enabled');
+      toggleBtn.textContent = isDisabled ? '○' : '●';
+      toggleBtn.title = isDisabled ? 'click to enable' : 'click to disable';
+      toggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleSource(toggleId);
+        buildKeyRows();
+      });
+      top.appendChild(toggleBtn);
+    }
+
+    top.appendChild(name);
+    top.appendChild(badge);
+
+    if (src.getKeyUrl) {
+      const link = document.createElement('a');
+      link.className = 'key-get-link';
+      link.textContent = '↗ get key';
+      link.href = src.getKeyUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.addEventListener('click', e => e.stopPropagation());
+      top.appendChild(link);
+    }
+
+    // --- description ---
+    const desc = document.createElement('div');
+    desc.className = 'key-source-desc';
+    desc.textContent = src.desc;
+
+    row.appendChild(top);
+    row.appendChild(desc);
+
+    // --- input row (key-required, or alwaysOn with optional upgrade key) ---
+    let inputRow = null;
+    let inputEl = null;
+    if (!src.alwaysOn || src.optionalKey) {
+      inputRow = document.createElement('div');
+      inputRow.className = 'key-source-input-row';
+
+      if (src.artsyDual) {
+        // Two-field input: client_id + client_secret
+        const idInput = document.createElement('input');
+        idInput.type = 'password';
+        idInput.className = 'key-source-input';
+        idInput.placeholder = 'client_id — press enter';
+        idInput.autocomplete = 'off';
+        idInput.style.marginBottom = '4px';
+
+        const secretInput = document.createElement('input');
+        secretInput.type = 'password';
+        secretInput.className = 'key-source-input';
+        secretInput.placeholder = 'client_secret — press enter';
+        secretInput.autocomplete = 'off';
+
+        const saveArtsy = () => {
+          const id  = idInput.value.trim();
+          const sec = secretInput.value.trim();
+          if (!id || !sec) return;
+          STATE.artsyId     = id;
+          STATE.artsySecret = sec;
+          STATE.artsyToken  = null; // reset cached token
+          localStorage.setItem('inspo_artsy_id',     id);
+          localStorage.setItem('inspo_artsy_secret', sec);
+          idInput.value = '';
+          secretInput.value = '';
+          inputRow.classList.remove('visible');
+          badge.className = 'key-status-badge badge-active';
+          badge.textContent = '\u2713 active';
+          updateKeysDot();
+        };
+
+        idInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); saveArtsy(); } });
+        secretInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); saveArtsy(); } });
+
+        badge.addEventListener('click', e => {
+          e.stopPropagation();
+          if (!STATE.artsyId) return;
+          if (!confirm('clear Artsy credentials?')) return;
+          STATE.artsyId = null; STATE.artsySecret = null; STATE.artsyToken = null;
+          localStorage.removeItem('inspo_artsy_id');
+          localStorage.removeItem('inspo_artsy_secret');
+          badge.className = 'key-status-badge badge-inactive';
+          badge.textContent = 'not set';
+          inputRow.classList.remove('visible');
+          updateKeysDot();
+        });
+
+        row.addEventListener('click', () => {
+          inputRow.classList.toggle('visible');
+          if (inputRow.classList.contains('visible')) idInput.focus();
+        });
+
+        inputRow.appendChild(idInput);
+        inputRow.appendChild(secretInput);
+        inputEl = idInput; // ref for keyRowRefs
+
+      } else {
+        inputEl = document.createElement('input');
+        inputEl.type = 'password';
+        inputEl.className = 'key-source-input';
+        inputEl.placeholder = src.placeholder || 'paste key and press enter';
+        inputEl.autocomplete = 'off';
+
+        inputRow.appendChild(inputEl);
+
+        // Optional: endpoint input for OpenAI-compatible sources
+        if (src.hasEndpoint) {
+          const epInput = document.createElement('input');
+          epInput.type = 'text';
+          epInput.className = 'key-source-input';
+          epInput.placeholder = 'endpoint url (optional — for self-hosted / Ollama)';
+          epInput.autocomplete = 'off';
+          epInput.style.marginTop = '4px';
+          if (STATE.openaiEndpoint) epInput.value = STATE.openaiEndpoint;
+          epInput.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const val = epInput.value.trim();
+            STATE.openaiEndpoint = val;
+            localStorage.setItem('inspo_openai_endpoint', val);
+            e.stopPropagation();
+          });
+          inputRow.appendChild(epInput);
+        }
+
+        // Save on Enter
+        inputEl.addEventListener('keydown', e => {
+          if (e.key !== 'Enter') return;
+          const val = inputEl.value.trim();
+          if (!val) return;
+          STATE[src.stateKey] = val;
+          localStorage.setItem(src.storageKey, val);
+          inputEl.value = '';
+          inputRow.classList.remove('visible');
+          badge.className = 'key-status-badge badge-active';
+          badge.textContent = '\u2713 active';
+          updateKeysDot();
+          // If it's the Gemini key, update the counter UI
+          if (src.stateKey === 'geminiKey') {
+            document.getElementById('no-key-note').textContent = '';
+            updateGeminiCounterUI();
+          }
+          // Auto-select this provider when key is entered
+          if (src.aiProvider) setAIProvider(src.id);
+          e.stopPropagation();
+        });
+
+        // Click badge when active → confirm clear
+        badge.addEventListener('click', e => {
+          e.stopPropagation();
+          if (!STATE[src.stateKey]) return;
+          if (!confirm(`clear ${src.name} key?`)) return;
+          STATE[src.stateKey] = null;
+          localStorage.removeItem(src.storageKey);
+          badge.className = 'key-status-badge badge-inactive';
+          badge.textContent = 'not set';
+          inputRow.classList.remove('visible');
+          updateKeysDot();
+          if (src.stateKey === 'geminiKey') {
+            document.getElementById('panel-ai-tags').style.display = 'none';
+            document.getElementById('no-key-note').textContent = 'no key — add gemini key for vision';
+          }
+          // If we just cleared the active provider key, fall back to gemini
+          if (src.aiProvider && STATE.aiProvider === src.id) {
+            setAIProvider('gemini');
+          }
+        });
+
+        // Click row body → toggle input visibility
+        row.addEventListener('click', () => {
+          if (src.alwaysOn && !src.optionalKey) return;
+          inputRow.classList.toggle('visible');
+          if (inputRow.classList.contains('visible')) inputEl.focus();
+        });
+      }
+
+      row.appendChild(inputRow);
+    }
+
+    keyRowRefs[src.id] = { badge, inputRow, inputEl };
+    container.appendChild(row);
+  });
+  // re-apply view filter after rebuild
+  applySourceFilter();
+}
+
+/* Build rows on load */
+buildKeyRows();
+updateKeysDot();
+updatePresetButtons();
+
+/* Show onboarding on first visit */
+if (!localStorage.getItem('inspo_onboarding_seen')) {
+  const firstTerm = pickOnboardingTerm();
+  const input = document.getElementById('search-input');
+  if (input) input.value = firstTerm;
+  runSearch(firstTerm).catch(() => {});
+  window._showOnboarding(firstTerm, true);
+}
+
+/* Preset buttons event delegation */
+document.getElementById('source-presets').addEventListener('click', e => {
+  const btn = e.target.closest('.preset-btn');
+  if (btn) applyPreset(btn.dataset.preset);
+});
+
+/* Phase 2: view filter pill event delegation */
+const viewFiltersEl = document.getElementById('source-view-filters');
+if (viewFiltersEl) {
+  viewFiltersEl.addEventListener('click', e => {
+    const pill = e.target.closest('.filter-pill');
+    if (!pill) return;
+    setSourceViewFilter(pill.dataset.filter, pill.dataset.value);
+  });
+}
+
+/* Gemini usage counter element — injected after Gemini row */
+(function() {
+  const geminiRow = document.querySelector('[data-source-id="gemini"]');
+  if (geminiRow) {
+    const counter = document.createElement('div');
+    counter.id = 'gemini-usage-counter';
+    counter.style.cssText = 'font-family:var(--font-ui);font-size:9px;letter-spacing:0.06em;color:var(--ink-3);margin-top:4px;padding:0 0 4px 0;';
+    geminiRow.appendChild(counter);
+    updateGeminiCounterUI();
+  }
+})();
+
+/* Export keys */
+document.getElementById('btn-export-keys').addEventListener('click', () => {
+  const KEY_LIST = [
+    'inspo_gemini_key', 'inspo_claude_key', 'inspo_openai_key', 'inspo_openai_endpoint',
+    'inspo_ai_provider', 'inspo_rijks_key', 'inspo_europeana_key',
+    'inspo_harvard_key', 'inspo_smithsonian_key', 'inspo_pexels_key',
+    'inspo_pixabay_key', 'inspo_trove_key', 'inspo_digitalnz_key',
+    'inspo_dpla_key', 'inspo_artsy_id', 'inspo_artsy_secret',
+    'inspo_unsplash_key',
+  ];
+  const keys = {};
+  KEY_LIST.forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v) keys[k] = v;
+  });
+  const blob = new Blob([JSON.stringify(keys, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'insposearch-keys.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+/* Import keys */
+document.getElementById('btn-import-keys').addEventListener('click', () => {
+  document.getElementById('keys-import-input').click();
+});
+
+document.getElementById('keys-import-input').addEventListener('change', e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (typeof data !== 'object' || Array.isArray(data)) return;
+      Object.entries(data).forEach(([k, v]) => {
+        if (typeof k === 'string' && k.startsWith('inspo_') && typeof v === 'string') {
+          localStorage.setItem(k, v);
+        }
+      });
+      // Reload all keys into STATE
+      STATE.geminiKey      = localStorage.getItem('inspo_gemini_key')      || null;
+      STATE.claudeKey      = localStorage.getItem('inspo_claude_key')      || null;
+      STATE.openaiKey      = localStorage.getItem('inspo_openai_key')      || null;
+      STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint') || '';
+      STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')     || 'gemini';
+      STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')   || null;
+      STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')     || null;
+      STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key') || null;
+      STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')      || null;
+      STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
+      STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
+      STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
+      // Refresh panel badges
+      buildKeyRows();
+      updateKeysDot();
+    } catch (err) {
+      console.warn('insposearch: failed to import keys:', err.message);
+    }
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* Panel open / close */
+document.getElementById('btn-keys').addEventListener('click', () => {
+  document.getElementById('keys-panel').classList.toggle('open');
+  document.getElementById('settings-panel').classList.remove('open');
+});
+
+document.getElementById('keys-panel-close').addEventListener('click', () => {
+  document.getElementById('keys-panel').classList.remove('open');
+});
+
+/* Gemini no-key note initial state */
+document.getElementById('no-key-note').textContent =
+  (STATE.geminiKey || STATE.claudeKey || STATE.openaiKey) ? '' : 'no key — add an ai key for vision';
+
+console.log('[insposearch] Phase 7 — Keys Panel ready.');
+
+/* ============================================================
+   PHASE 8 — GEMINI INTEGRATION
+============================================================ */
+
+/* -- Convert image URL to base64 for Gemini inline_data -- */
+async function urlToBase64(url) {
+  // Strategy 1: direct fetch with CORS mode
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    // Strategy 2: draw image to canvas and export as base64
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.min(img.naturalWidth, 200);
+          canvas.height = Math.round(
+            img.naturalHeight * (canvas.width / img.naturalWidth)
+          );
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl.split(',')[1]);
+        } catch (canvasErr) {
+          reject(canvasErr);
+        }
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+}
+
+/* -- analyzeWithGemini: AI vision tagging — routes to active provider -- */
+async function analyzeWithGemini(item) {
+  const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  if (!hasKey) { console.warn('[ai] no key'); return []; }
+
+  // Check in-memory cache
+  if (item.aiTags && item.aiTags.length > 0) return item.aiTags;
+
+  // Check localStorage cache
+  const cached = getAITagsCache(item.id);
+  if (cached) { item.aiTags = cached; return cached; }
+
+  // Gemini daily limit check
+  if ((STATE.aiProvider || 'gemini') === 'gemini' && STATE.geminiDailyCount >= 1500) {
+    renderAiSection(null, 'daily limit reached — resets at midnight');
+    return [];
+  }
+
+  // Rate limiting — minimum 2000ms between calls
+  const elapsed = Date.now() - (STATE.lastGeminiCall || 0);
+  if (elapsed < 2000) await sleep(2000 - elapsed);
+  STATE.lastGeminiCall = Date.now();
+
+  try {
+    const b64      = await urlToBase64(item.thumb);
+    const mimeType = item.thumb.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+    const prompt   = 'List 8 visual and conceptual tags for this image. Focus on: mood, texture, color palette name, era, style, emotion, material, and composition. Return only a JSON array of strings. No other text.';
+
+    const text = await callAI(prompt, b64, mimeType);
+
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      const fixed = clean.endsWith(']') ? clean : clean.replace(/,?\s*"[^"]*$/, '') + ']';
+      const tags  = JSON.parse(fixed);
+      const result = Array.isArray(tags) ? tags.filter(t => typeof t === 'string') : [];
+      if (result.length) {
+        setAITagsCache(item.id, result);
+        item.aiTags = result;
+        if ((STATE.aiProvider || 'gemini') === 'gemini') incrementGeminiCounter();
+      }
+      return result;
+    } catch (parseErr) {
+      console.warn('[ai] parse failed:', parseErr.message, text);
+      renderAiSection(null, 'AI analysis failed — showing metadata tags');
+      return [];
+    }
+  } catch (err) {
+    console.error('[ai] caught error:', err.name, err.message, err);
+    if (err.message?.includes('tainted') || err.message?.includes('cross-origin') || err.message?.includes('CORS')) {
+      renderAiSection(null, 'AI unavailable — image blocked by CORS. Try a Met image.');
+    } else if (err.message?.includes('no ai key')) {
+      renderAiSection(null, 'no key — add an AI key in api keys panel');
+    } else {
+      renderAiSection(null, `AI error: ${err.message || 'unavailable'}`);
+    }
+    return [];
+  }
+}
+
+/* -- Render AI tags section in panel -- */
+function renderAiSection(tags, errorMsg) {
+  const section   = document.getElementById('panel-ai-tags');
+  const container = document.getElementById('ai-tags-container');
+  container.innerHTML = '';
+
+  if (errorMsg) {
+    section.style.display = 'block';
+    container.innerHTML = `<span style="font-family:var(--font-ui);font-size:10px;color:var(--ink-3);">${errorMsg}</span>`;
+    return;
+  }
+
+  if (!tags || !tags.length) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  tags.forEach(tag => {
+    const pill = document.createElement('button');
+    pill.className = 'tag ai';
+    pill.textContent = tag;
+    pill.addEventListener('click', () => {
+      document.getElementById('search-input').value = tag;
+      runSearch(tag);
+    });
+    container.appendChild(pill);
+  });
+}
+
+/* -- Trigger AI analysis for latest selected item -- */
+async function runGeminiOnSelected() {
+  const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  if (!hasKey || !STATE.selected.length) return;
+  const item = STATE.selected[STATE.selected.length - 1];
+
+  // Already have AI tags for this item
+  if (item.aiTags && item.aiTags.length) {
+    document.getElementById('analyse-section').style.display = 'none';
+    renderAiSection(item.aiTags);
+    return;
+  }
+
+  // Show loading state in button
+  const analyseSection = document.getElementById('analyse-section');
+  const analyseBtn     = document.getElementById('analyse-btn');
+  const analyseLabel   = document.getElementById('analyse-btn-label');
+  if (analyseBtn)   { analyseBtn.disabled = true; }
+  if (analyseLabel) { analyseLabel.textContent = 'analysing…'; }
+
+  const tags = await analyzeWithGemini(item);
+  item.aiTags = tags;
+
+  // Hide button section — results (or error) shown in panel-ai-tags
+  if (analyseSection) analyseSection.style.display = 'none';
+
+  if (tags.length) {
+    renderAiSection(tags);
+  } else {
+    // analyzeWithGemini already rendered the error — re-enable button for retry
+    if (analyseBtn) analyseBtn.disabled = false;
+    if (analyseLabel) analyseLabel.textContent = 'retry analysis';
+    if (analyseSection) analyseSection.style.display = '';
+  }
+}
+
+/* -- Patch updatePanel to also trigger Gemini when key present -- */
+
+/* -- updateAnalyseButton: controls #analyse-section visibility and state -- */
+function updateAnalyseButton(item) {
+  const section = document.getElementById('analyse-section');
+  const btn     = document.getElementById('analyse-btn');
+  const label   = document.getElementById('analyse-btn-label');
+  if (!section || !btn || !item) return;
+
+  // Reset button state
+  btn.disabled = false;
+  if (label) label.textContent = 'analyse with ai';
+
+  // If cached or already analysed: show results directly, hide button
+  const cached = getAITagsCache(item.id);
+  if (cached && cached.length) {
+    section.style.display = 'none';
+    renderAiSection(cached);
+    return;
+  }
+  if (item.aiTags && item.aiTags.length) {
+    section.style.display = 'none';
+    renderAiSection(item.aiTags);
+    return;
+  }
+
+  // No results yet — show the button
+  document.getElementById('panel-ai-tags').style.display = 'none';
+  section.style.display = '';
+  const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+  if (!hasAiKey) {
+    btn.disabled = true;
+    btn.title = 'add an ai key to unlock';
+  } else {
+    btn.title = '';
+  }
+}
+
+/* ============================================================
+   PHASE 8 — POLISH
+============================================================ */
+
+// Ensure panel sections have correct initial visibility
+document.getElementById('panel-colors').style.display  = 'none';
+document.getElementById('panel-tags').style.display    = 'none';
+document.getElementById('panel-related').style.display = 'none';
+document.getElementById('panel-ai-tags').style.display = 'none';
+// no-key-note text was set in Phase 7 keys panel init — do not override here
+
+// Pulse the search input border-bottom to accent on focus (already in CSS)
+// Ensure label text stays lowercase in all states
+document.querySelectorAll('.btn').forEach(b => {
+  b.addEventListener('focus', () => b.style.outline = 'none');
+});
+
+// Keep canvas opacity reset if it somehow gets stuck (e.g. rapid clicks)
+document.getElementById('canvas').addEventListener('transitionend', e => {
+  if (e.propertyName === 'opacity' && e.target.style.opacity === '0') {
+    // Safety net: never leave canvas invisible longer than 400ms
+  }
+});
+
+// On window resize, keep Three.js renderer in sync
+// (ResizeObserver handles it per-renderer — this is a belt-and-suspenders
+//  fallback for the canvas element reference)
+window.addEventListener('resize', () => {
+  if (STATE.view === '3d' && threeRenderer && threeCamera) {
+    const c  = document.getElementById('three-canvas');
+    const nw = c.offsetWidth;
+    const nh = c.offsetHeight;
+    threeCamera.aspect = nw / nh;
+    threeCamera.updateProjectionMatrix();
+    threeRenderer.setSize(nw, nh);
+  }
+});
+
+// Reflect dark-mode changes in Three.js background
+function syncThreeBg() {
+  if (threeScene) threeScene.background = new THREE.Color(getThreeBg());
+}
+document.getElementById('theme-toggle').addEventListener('click', syncThreeBg);
+
+// Auto-focus search input on load
+document.getElementById('search-input').focus();
+
+console.log('[insposearch] Phase 8 — Gemini Integration ready.');
+
+/* ============================================================
+   PHASE 3B — AI CHAT PANEL
+============================================================ */
+(function initChatPanel() {
+  const CHAT_STARTERS = q => [
+    `what visual connections exist in these results?`,
+    `suggest 5 unexpected directions for "${q || 'this search'}"`,
+    `what art movements or historical periods are represented?`,
+    `find something surprising — what am I missing?`,
+    `I'm building a moodboard — what should I add to deepen it?`,
+  ];
+
+  function getChatSystemPrompt(meta) {
+    const sources = (meta.activeSources || []).join(', ') || 'multiple sources';
+    const sel = (meta.selectedImages || []).map(s => `"${s.title}" (${s.source})`).join(', ');
+    return `You are a visual research assistant inside InspoSearch, a multi-source creative research tool. ` +
+      `The user is searching for "${meta.searchTerm || 'unknown'}". ` +
+      `The grid shows ${meta.imageCount || 0} images from ${meta.sourceCount || 0} sources (${sources}). ` +
+      (sel ? `Selected: ${sel}. ` : '') +
+      `Be a concise creative research partner — not a chatbot. ` +
+      `When suggesting searches, wrap each term in double square brackets: [[term here]]. ` +
+      `Keep responses to 2-4 sentences, then list search suggestions as [[pills]].`;
+  }
+
+  function renderChatEmpty() {
+    const el = document.getElementById('chat-messages');
+    el.innerHTML = '';
+    const q = STATE.query || '';
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-empty';
+    const label = document.createElement('div');
+    label.className = 'chat-empty-label';
+    label.textContent = 'ask anything about your search';
+    wrap.appendChild(label);
+    CHAT_STARTERS(q).forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'chat-starter';
+      btn.textContent = s;
+      btn.addEventListener('click', () => sendChatMessage(s));
+      wrap.appendChild(btn);
+    });
+    el.appendChild(wrap);
+  }
+
+  function appendChatMessage(role, content) {
+    const messagesEl = document.getElementById('chat-messages');
+    messagesEl.querySelector('.chat-empty')?.remove();
+    const msg = document.createElement('div');
+    msg.className = `chat-msg ${role}`;
+
+    const label = document.createElement('div');
+    label.className = 'chat-msg-label';
+    label.textContent = role === 'user' ? 'you' : (STATE.aiProvider || 'gemini');
+    msg.appendChild(label);
+
+    if (role === 'assistant') {
+      // Strip [[pills]] from body text, collect them
+      const pills = [];
+      const re = /\[\[([^\]]+)\]\]/g;
+      let m;
+      while ((m = re.exec(content)) !== null) pills.push(m[1]);
+      const cleanText = content.replace(/\[\[([^\]]+)\]\]/g, '').trim();
+
+      const body = document.createElement('div');
+      body.textContent = cleanText;
+      msg.appendChild(body);
+
+      if (pills.length) {
+        const pillRow = document.createElement('div');
+        pillRow.className = 'chat-pills';
+        pills.forEach(p => {
+          const btn = document.createElement('button');
+          btn.className = 'chat-pill';
+          btn.textContent = p;
+          btn.addEventListener('click', () => {
+            document.getElementById('search-input').value = p;
+            runSearch(p);
+          });
+          pillRow.appendChild(btn);
+        });
+        msg.appendChild(pillRow);
+      }
+    } else {
+      const body = document.createElement('div');
+      body.textContent = content;
+      msg.appendChild(body);
+    }
+
+    messagesEl.appendChild(msg);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  async function sendChatMessage(text) {
+    if (!text?.trim()) return;
+    document.getElementById('chat-input').value = '';
+    appendChatMessage('user', text);
+    STATE.chatHistory.push({ role: 'user', content: text });
+    // Keep chatHistory bounded — preserve the first message (context) and trim oldest middle entries
+    if (STATE.chatHistory.length > CONSTANTS.MAX_CHAT_HISTORY) {
+      STATE.chatHistory = [STATE.chatHistory[0], ...STATE.chatHistory.slice(-(CONSTANTS.MAX_CHAT_HISTORY - 1))];
+    }
+
+    const thinkingEl = document.createElement('div');
+    thinkingEl.className = 'chat-thinking';
+    thinkingEl.textContent = '…';
+    const messagesEl = document.getElementById('chat-messages');
+    messagesEl.appendChild(thinkingEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    try {
+      const snap    = STATE.chatSnapshot;
+      const meta    = snap?.metadata || { searchTerm: STATE.query, imageCount: STATE.results.length, sourceCount: 0, activeSources: [], selectedImages: [] };
+      const sysPrompt = getChatSystemPrompt(meta);
+      // Only send the snapshot image on the very first user message
+      const isFirst = STATE.chatHistory.length === 1;
+      const base64  = (isFirst && snap?.base64) ? snap.base64 : null;
+
+      const reply = await callAIChat(STATE.chatHistory, sysPrompt, base64, 'image/jpeg');
+      thinkingEl.remove();
+      STATE.chatHistory.push({ role: 'assistant', content: reply });
+      appendChatMessage('assistant', reply);
+      // Update Gemini counter if Gemini was used
+      if ((STATE.aiProvider || 'gemini') === 'gemini') incrementGeminiCounter();
+    } catch (e) {
+      thinkingEl.remove();
+      appendChatMessage('assistant', `Could not reach AI: ${e.message}`);
+    }
+  }
+
+  async function refreshChatSnapshot() {
+    const btn = document.getElementById('btn-chat-snapshot');
+    if (btn) { btn.textContent = '↺ …'; btn.disabled = true; }
+    STATE.chatSnapshot = await captureGridSnapshot();
+    if (btn) { btn.textContent = '↺ context'; btn.disabled = false; }
+  }
+
+  async function openChat() {
+    document.getElementById('ai-chat-panel').classList.add('open');
+    document.getElementById('btn-ai-chat').classList.add('active');
+    if (_fabricCanvas) setTimeout(positionFabricOverlay, 380);
+    document.getElementById('chat-provider-badge').textContent = STATE.aiProvider || 'gemini';
+    // Reset history & snapshot when query changes
+    if (!STATE.chatHistory._query || STATE.chatHistory._query !== STATE.query) {
+      STATE.chatHistory = [];
+      STATE.chatHistory._query = STATE.query;
+      STATE.chatSnapshot = null;
+    }
+    if (!STATE.chatSnapshot && STATE.results.length) {
+      await refreshChatSnapshot();
+    }
+    if (!STATE.chatHistory.length) renderChatEmpty();
+  }
+
+  function closeChat() {
+    document.getElementById('ai-chat-panel').classList.remove('open');
+    document.getElementById('btn-ai-chat').classList.remove('active');
+    if (_fabricCanvas) setTimeout(positionFabricOverlay, 380);
+  }
+
+  document.getElementById('btn-ai-chat').addEventListener('click', () => {
+    document.getElementById('ai-chat-panel').classList.contains('open') ? closeChat() : openChat();
+  });
+  document.getElementById('ai-chat-close').addEventListener('click', closeChat);
+  document.getElementById('btn-chat-snapshot').addEventListener('click', refreshChatSnapshot);
+  document.getElementById('btn-chat-send').addEventListener('click', () => {
+    sendChatMessage(document.getElementById('chat-input').value.trim());
+  });
+  document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage(e.target.value.trim());
+    }
+  });
+})();
+
+console.log('[insposearch] Phase 3B — AI Chat Panel ready.');
+
+console.log('[insposearch] Phase 9 — Polish complete. insposearch is ready.');
+
+/* ============================================================
+   PHASE 10 — SETTINGS MODULE
+============================================================ */
+
+STATE.showBadges       = true;
+STATE.keywordExpansion = true;
+STATE.autoSearch       = false;
+STATE.rememberLast     = false;
+STATE.autoAnalyse      = false;
+STATE.searchMode       = 'explore';
+
+function applyBadgeVisibility() {
+  document.getElementById('canvas').classList.toggle('no-badges', !STATE.showBadges);
+}
+
+function updateSettingsCacheStatus() {
+  const el = document.getElementById('settings-cache-status');
+  if (!el) return;
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(CACHE_PREFIX)) count++;
+  }
+  el.textContent = count === 0 ? 'cache is empty' : `${count} search${count !== 1 ? 'es' : ''} cached`;
+}
+
+function updateSettingsPanelUI() {
+  const storedTheme = localStorage.getItem('inspo_theme');
+  document.getElementById('settings-theme-dark').classList.toggle('active', storedTheme === 'dark');
+  document.getElementById('settings-theme-light').classList.toggle('active', storedTheme === 'light');
+  document.getElementById('settings-theme-system').classList.toggle('active', storedTheme === 'system' || !storedTheme);
+
+  document.getElementById('settings-sketch-on').classList.toggle('active', STATE.sketchMode);
+  document.getElementById('settings-sketch-off').classList.toggle('active', !STATE.sketchMode);
+
+  document.getElementById('settings-badges-on').classList.toggle('active', STATE.showBadges);
+  document.getElementById('settings-badges-off').classList.toggle('active', !STATE.showBadges);
+
+  document.getElementById('settings-kwexp-on').classList.toggle('active', STATE.keywordExpansion);
+  document.getElementById('settings-kwexp-off').classList.toggle('active', !STATE.keywordExpansion);
+
+  document.getElementById('settings-autosearch-on').classList.toggle('active', STATE.autoSearch);
+  document.getElementById('settings-autosearch-off').classList.toggle('active', !STATE.autoSearch);
+
+  document.getElementById('settings-remember-on').classList.toggle('active', STATE.rememberLast);
+  document.getElementById('settings-remember-off').classList.toggle('active', !STATE.rememberLast);
+
+  document.getElementById('settings-autoanalyse-on').classList.toggle('active', STATE.autoAnalyse);
+  document.getElementById('settings-autoanalyse-off').classList.toggle('active', !STATE.autoAnalyse);
+
+  const count = STATE.geminiDailyCount;
+  const usageEl = document.getElementById('settings-gemini-usage');
+  if (usageEl) {
+    if (count >= 1500) {
+      usageEl.textContent = 'daily limit reached — resets midnight';
+      usageEl.style.color = '#E24B4A';
+    } else if (count >= 1400) {
+      usageEl.textContent = `✦ ${count} used — approaching limit`;
+      usageEl.style.color = 'var(--accent)';
+    } else {
+      usageEl.textContent = `✦ ${count} used today / 1500 free`;
+      usageEl.style.color = 'var(--ink-3)';
+    }
+  }
+  updateSettingsCacheStatus();
+}
+
+function loadSettings() {
+  const showBadges = localStorage.getItem('inspo_show_badges');
+  STATE.showBadges = showBadges === null ? true : showBadges !== 'false';
+
+  const kwExp = localStorage.getItem('inspo_keyword_expansion');
+  STATE.keywordExpansion = kwExp === null ? true : kwExp !== 'false';
+
+  STATE.autoSearch   = localStorage.getItem('inspo_auto_search')   === 'true';
+  STATE.rememberLast = localStorage.getItem('inspo_remember_last') === 'true';
+  STATE.autoAnalyse  = localStorage.getItem('inspo_auto_analyse')  === 'true';
+  STATE.searchMode   = localStorage.getItem('inspo_search_mode') === 'exact' ? 'exact' : 'explore';
+
+  applyBadgeVisibility();
+  setSearchMode(STATE.searchMode, false);
+
+  if (STATE.rememberLast) {
+    const lastQuery = localStorage.getItem('inspo_last_query');
+    if (lastQuery) document.getElementById('search-input').value = lastQuery;
+  }
+}
+
+/* -- Panel open/close -- */
+document.getElementById('btn-settings').addEventListener('click', () => {
+  const panel = document.getElementById('settings-panel');
+  const isOpen = panel.classList.toggle('open');
+  if (isOpen) {
+    document.getElementById('keys-panel').classList.remove('open');
+    updateSettingsPanelUI();
+  }
+});
+
+document.getElementById('settings-panel-close').addEventListener('click', () => {
+  document.getElementById('settings-panel').classList.remove('open');
+});
+
+/* -- Theme: shared applier -- */
+function applyThemePref(pref) {
+  if (pref === 'dark') {
+    document.body.classList.add('dark');
+    localStorage.setItem('inspo_theme', 'dark');
+  } else if (pref === 'light') {
+    document.body.classList.remove('dark');
+    localStorage.setItem('inspo_theme', 'light');
+  } else {
+    localStorage.setItem('inspo_theme', 'system');
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }
+  const isDark = document.body.classList.contains('dark');
+  const tt = document.getElementById('theme-toggle');
+  if (tt) tt.textContent = isDark ? 'light' : 'dark';
+  if (typeof syncThreeBg === 'function') syncThreeBg();
+  updateSettingsPanelUI();
+}
+
+document.getElementById('settings-theme-dark').addEventListener('click',   () => applyThemePref('dark'));
+document.getElementById('settings-theme-light').addEventListener('click',  () => applyThemePref('light'));
+document.getElementById('settings-theme-system').addEventListener('click', () => applyThemePref('system'));
+
+/* -- B&W mode from settings -- */
+document.getElementById('settings-sketch-on').addEventListener('click', () => {
+  if (!STATE.sketchMode) {
+    STATE.sketchMode = true;
+    applySketchMode();
+    const sb = document.getElementById('btn-bw');
+    sb.textContent = 'colour';
+    sb.classList.add('active');
+  }
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-sketch-off').addEventListener('click', () => {
+  if (STATE.sketchMode) {
+    STATE.sketchMode = false;
+    removeSketchMode();
+    const sb = document.getElementById('btn-bw');
+    sb.textContent = 'b&w';
+    sb.classList.remove('active');
+  }
+  updateSettingsPanelUI();
+});
+
+/* -- Source badges -- */
+document.getElementById('settings-badges-on').addEventListener('click', () => {
+  STATE.showBadges = true;
+  localStorage.setItem('inspo_show_badges', 'true');
+  applyBadgeVisibility();
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-badges-off').addEventListener('click', () => {
+  STATE.showBadges = false;
+  localStorage.setItem('inspo_show_badges', 'false');
+  applyBadgeVisibility();
+  updateSettingsPanelUI();
+});
+
+/* -- Keyword expansion -- */
+document.getElementById('settings-kwexp-on').addEventListener('click', () => {
+  STATE.keywordExpansion = true;
+  localStorage.setItem('inspo_keyword_expansion', 'true');
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-kwexp-off').addEventListener('click', () => {
+  STATE.keywordExpansion = false;
+  localStorage.setItem('inspo_keyword_expansion', 'false');
+  updateSettingsPanelUI();
+});
+
+/* -- Auto-search -- */
+document.getElementById('settings-autosearch-on').addEventListener('click', () => {
+  STATE.autoSearch = true;
+  localStorage.setItem('inspo_auto_search', 'true');
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-autosearch-off').addEventListener('click', () => {
+  STATE.autoSearch = false;
+  localStorage.setItem('inspo_auto_search', 'false');
+  updateSettingsPanelUI();
+});
+
+/* -- Remember query -- */
+document.getElementById('settings-remember-on').addEventListener('click', () => {
+  STATE.rememberLast = true;
+  localStorage.setItem('inspo_remember_last', 'true');
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-remember-off').addEventListener('click', () => {
+  STATE.rememberLast = false;
+  localStorage.setItem('inspo_remember_last', 'false');
+  updateSettingsPanelUI();
+});
+
+/* -- Auto-analyse -- */
+document.getElementById('settings-autoanalyse-on').addEventListener('click', () => {
+  STATE.autoAnalyse = true;
+  localStorage.setItem('inspo_auto_analyse', 'true');
+  updateSettingsPanelUI();
+});
+
+document.getElementById('settings-autoanalyse-off').addEventListener('click', () => {
+  STATE.autoAnalyse = false;
+  localStorage.setItem('inspo_auto_analyse', 'false');
+  updateSettingsPanelUI();
+});
+
+/* -- Clear AI cache -- */
+document.getElementById('btn-clear-ai-cache').addEventListener('click', () => {
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('inspo_aitags_')) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  const btn = document.getElementById('btn-clear-ai-cache');
+  const prev = btn.textContent;
+  btn.textContent = `cleared (${toRemove.length})`;
+  setTimeout(() => { btn.textContent = prev; }, 2000);
+});
+
+/* -- Clear search cache -- */
+document.getElementById('btn-clear-search-cache').addEventListener('click', () => {
+  const toRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(CACHE_PREFIX)) toRemove.push(k);
+  }
+  toRemove.forEach(k => localStorage.removeItem(k));
+  updateSettingsCacheStatus();
+});
+
+/* -- Clear all data -- */
+document.getElementById('btn-clear-all-data').addEventListener('click', () => {
+  if (!confirm('clear all settings, api keys, and cached data?\nthis cannot be undone.')) return;
+  localStorage.clear();
+  location.reload();
+});
+
+/* -- Export settings -- */
+document.getElementById('btn-settings-export').addEventListener('click', () => {
+  const data = { _version: '1.0', _exported: new Date().toISOString() };
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('inspo_')) data[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'insposearch-settings.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+/* -- Import settings -- */
+document.getElementById('btn-settings-import').addEventListener('click', () => {
+  document.getElementById('settings-import-input').click();
+});
+
+document.getElementById('settings-import-input').addEventListener('change', e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (typeof data !== 'object' || Array.isArray(data)) return;
+      Object.entries(data).forEach(([k, v]) => {
+        if (k.startsWith('inspo_') && typeof v === 'string') localStorage.setItem(k, v);
+      });
+      loadSettings();
+      STATE.geminiKey      = localStorage.getItem('inspo_gemini_key')      || null;
+      STATE.claudeKey      = localStorage.getItem('inspo_claude_key')      || null;
+      STATE.openaiKey      = localStorage.getItem('inspo_openai_key')      || null;
+      STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint') || '';
+      STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')     || 'gemini';
+      STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')   || null;
+      STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')     || null;
+      STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key') || null;
+      STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')      || null;
+      STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
+      STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
+      STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
+      buildKeyRows();
+      updateKeysDot();
+      const theme = localStorage.getItem('inspo_theme');
+      if (theme === 'dark')  { document.body.classList.add('dark');    document.getElementById('theme-toggle').textContent = 'light'; }
+      if (theme === 'light') { document.body.classList.remove('dark'); document.getElementById('theme-toggle').textContent = 'dark';  }
+      updateSettingsPanelUI();
+    } catch (err) {
+      console.warn('insposearch: failed to import settings:', err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+/* -- About: view guide -- */
+document.getElementById('btn-settings-guide').addEventListener('click', () => {
+  document.getElementById('settings-panel').classList.remove('open');
+  if (typeof window._showOnboarding === 'function') window._showOnboarding();
+});
+
+/* -- Auto-search debounce -- */
+const debouncedAutoSearch = debounce(q => {
+  if (!STATE.autoSearch || !q.trim() || q.trim() === STATE.query) return;
+  runSearch(q.trim());
+}, 800);
+
+document.getElementById('search-input').addEventListener('input', e => {
+  if (STATE.autoSearch) debouncedAutoSearch(e.target.value);
+});
+
+/* -- Remember last query on Enter -- */
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && STATE.rememberLast) {
+    const q = e.target.value.trim();
+    if (q) localStorage.setItem('inspo_last_query', q);
+  }
+});
+
+/* -- Sync settings panel when sidebar b&w/sketch/theme toggles are used -- */
+document.getElementById('btn-bw').addEventListener('click', () => {
+  if (document.getElementById('settings-panel').classList.contains('open')) updateSettingsPanelUI();
+});
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  if (document.getElementById('settings-panel').classList.contains('open')) updateSettingsPanelUI();
+});
+
+/* -- Auto-analyse: patch updatePanel to trigger AI on selection -- */
+(function patchUpdatePanelForAutoAnalyse() {
+  const _orig = updatePanel;
+  updatePanel = async function() {
+    await _orig();
+    const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
+    if (!STATE.autoAnalyse || !hasKey || !STATE.selected.length) return;
+    const item = STATE.selected[STATE.selected.length - 1];
+    if (item.aiTags && item.aiTags.length) return;
+    const cached = getAITagsCache(item.id);
+    if (cached) {
+      item.aiTags = cached;
+      renderAiSection(cached);
+      document.getElementById('analyse-section').style.display = 'none';
+    } else {
+      runGeminiOnSelected();
+    }
+  };
+})();
+
+/* -- Init -- */
+loadSettings();
+
+/* ── Phase 2: Load source manifest (extends KEY_SOURCES with community entries) ── */
+STATE.manifestSources = [];
+
+async function loadSourceManifest() {
+  try {
+    const res = await fetch('./sources.manifest.json');
+    if (!res.ok) return;
+    const manifest = await res.json();
+    const sources = manifest.sources || [];
+
+    let added = 0;
+    for (const cfg of sources) {
+      if (!cfg.active) continue;
+      // Skip sources already registered (hardcoded)
+      if (KEY_SOURCES.find(s => s.id === cfg.id)) continue;
+
+      // Register in KEY_SOURCES for panel display
+      KEY_SOURCES.push({
+        id:         cfg.id,
+        name:       cfg.name,
+        desc:       cfg.description || '',
+        imageCount: cfg.imageCount || 0,
+        alwaysOn:   !cfg.keyRequired,
+        stateKey:   cfg.keyRequired ? cfg.id + 'Key' : null,
+        storageKey: cfg.keyRequired ? 'inspo_' + cfg.id + '_key' : null,
+        getKeyUrl:  cfg.getKeyUrl || null,
+        cors:       cfg.corsMode !== 'direct' ? undefined : undefined,
+      });
+
+      // Register in ALL_SOURCES for health tracking
+      if (!ALL_SOURCES.includes(cfg.id)) {
+        ALL_SOURCES.push(cfg.id);
+      }
+
+      // Register/update metadata for filtering — manifest is authoritative
+      SOURCE_META[cfg.id] = {
+        category: cfg.category || SOURCE_META[cfg.id]?.category || [],
+        region:   cfg.region   || SOURCE_META[cfg.id]?.region   || 'global',
+        access:   cfg.keyRequired ? 'free_key' : (SOURCE_META[cfg.id]?.access || 'no_key'),
+        corsBlocked: cfg.corsMode === 'prefetched' || SOURCE_META[cfg.id]?.corsBlocked || false,
+      };
+
+      // Queue for generic adapter in fetchAll
+      if (['iiif_search', 'simple_rest', 'iiif_content_search', 'iiif_collection'].includes(cfg.adapter) && cfg.endpoint) {
+        STATE.manifestSources.push(cfg);
+      }
+
+      added++;
+    }
+
+    if (added > 0) {
+      buildKeyRows();
+      window._refreshOnboardingStats?.();
+      console.log(`[insposearch] Manifest loaded — ${added} additional sources registered.`);
+    }
+  } catch (e) {
+    // Manifest is optional — fail silently
+    console.debug('[insposearch] sources.manifest.json not loaded:', e.message);
+  }
+}
+
+loadSourceManifest();
+
+console.log('[insposearch] Phase 10 — Settings Module ready.');
+
+// ── Mobile sidebar toggle ──────────────────────────────────
+(function () {
+  const mobileBtn = document.getElementById('mobile-menu-btn');
+  const backdrop  = document.getElementById('sidebar-backdrop');
+  const sidebar   = document.getElementById('sidebar');
+  if (!mobileBtn || !backdrop || !sidebar) return;
+
+  function openSidebar() {
+    sidebar.classList.add('mobile-open');
+    backdrop.classList.add('visible');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('mobile-open');
+    backdrop.classList.remove('visible');
+  }
+
+  mobileBtn.addEventListener('click', openSidebar);
+  backdrop.addEventListener('click', closeSidebar);
+
+  // Close sidebar when user triggers a search (taps search result area)
+  document.getElementById('search-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') closeSidebar();
+  });
+})();
