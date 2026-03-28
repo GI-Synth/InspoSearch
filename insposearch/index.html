@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>insposearch</title>
+  <meta name="description" content="Search 10,000+ museum, archive, and photo sources for creative inspiration — zero storage, infinite images.">
+  <meta property="og:title" content="insposearch">
+  <meta property="og:description" content="Search 10,000+ museum, archive, and photo sources for creative inspiration.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="insposearch">
+  <meta name="twitter:description" content="Search 10,000+ museum, archive, and photo sources for creative inspiration.">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,12 +54,15 @@
             class="search-input"
             placeholder="search"
             autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            enterkeyhint="search"
             spellcheck="false"
             aria-label="search images"
           >
           <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)">explore</button>
         </div>
-        <div id="loading-indicator" class="loading-indicator"></div>
+        <div id="loading-indicator" class="loading-indicator" role="status" aria-live="polite"></div>
         <div id="sources-active-counter" class="sources-active-counter"></div>
       </div>
 
@@ -65,6 +75,8 @@
           id="local-filter"
           placeholder="filter loaded..."
           autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
           spellcheck="false"
           style="
             width: 100%;
@@ -156,6 +168,25 @@
     ====================================================== -->
     <main id="canvas">
 
+      <!-- Persistent source info bar -->
+      <div id="source-info-bar">
+        <span id="sib-text"></span>
+        <button id="sib-api-badge" title="API key status">
+          <span id="sib-api-label">API</span>
+          <span id="sib-api-count"></span>
+        </button>
+        <div id="sib-api-dropdown" class="hidden">
+          <div class="sib-dd-header">
+            <span class="sib-dd-title">api keys</span>
+            <span class="sib-dd-hint">click a link → sign up → paste key in the keys panel</span>
+          </div>
+          <div id="sib-dd-list"></div>
+          <div class="sib-dd-footer">
+            keys are stored locally in your browser and sent directly to each API — never through our servers.
+          </div>
+        </div>
+      </div>
+
       <!-- Reference strip — shown when in cross-ref mode (above image grid) -->
       <div id="reference-strip" style="
         display: none;
@@ -208,7 +239,7 @@
       ">
         <span id="pills-mode-label" style="
           font-family: var(--font-ui);
-          font-size: 9px;
+          font-size: 10px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
           color: var(--ink-3);
@@ -218,7 +249,7 @@
 
       <!-- Grid view — default -->
       <div id="image-grid">
-        <div class="empty-state" id="empty-state" style="grid-column: 1 / -1; min-height: calc(100vh - 4px);">
+        <div class="empty-state" id="empty-state" style="grid-column: 1 / -1; min-height: calc(100dvh - 4px);">
           <p>begin with an image, a word, a feeling</p>
           <span>try: texture / light / form / shadow</span>
         </div>
@@ -553,7 +584,7 @@
       </div>
       <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input-row">
-        <textarea id="chat-input" placeholder="describe what you're working on…"></textarea>
+        <textarea id="chat-input" placeholder="describe what you're working on…" autocapitalize="sentences" enterkeyhint="send"></textarea>
         <button id="btn-chat-send">→</button>
       </div>
     </div>
@@ -605,9 +636,16 @@
       <div class="ob-viewport">
         <div class="ob-track" id="ob-track">
 
-          <!-- Step 0: Welcome -->
-          <div class="ob-step">
+          <!-- Step 0: Hero statement -->
+          <div class="ob-step ob-step-hero">
             <div class="ob-logo">insposearch</div>
+            <div class="ob-hero-statement">every museum, archive & database.<br>one search.</div>
+            <div class="ob-hero-sub">search <span id="ob-hero-src-count">—</span> sources and <span id="ob-hero-img-count">—</span> images simultaneously — no account, no storage, nothing to install.</div>
+          </div>
+
+          <!-- Step 1: Welcome -->
+          <div class="ob-step">
+            <div class="ob-logo" style="font-size:28px;">insposearch</div>
             <div class="ob-tagline">search museums, archives & databases at once</div>
             <div class="ob-big-num" id="ob-hero-count">—</div>
             <div class="ob-big-label">images at your fingertips</div>
@@ -628,27 +666,23 @@
 
           <!-- Step 2: Features -->
           <div class="ob-step">
-            <div class="ob-heading">what you can do</div>
+            <div class="ob-heading">not just a search engine</div>
             <div class="ob-features">
               <div class="ob-feat">
-                <span class="ob-feat-icon">⟷</span>
                 <div class="ob-feat-title">cross-reference</div>
-                <div class="ob-feat-desc">select 2+ images, hit connect — find visual connections across sources</div>
+                <div class="ob-feat-desc">select two images from different centuries, different continents — find the invisible thread between them</div>
               </div>
               <div class="ob-feat">
-                <span class="ob-feat-icon">✦</span>
                 <div class="ob-feat-title">interpret</div>
-                <div class="ob-feat-desc">ai reads your selection and discovers conceptual links between images</div>
+                <div class="ob-feat-desc">ai vision reads what you’re looking at and surfaces connections you wouldn’t find on your own</div>
               </div>
               <div class="ob-feat">
-                <span class="ob-feat-icon">▦</span>
                 <div class="ob-feat-title">boards</div>
-                <div class="ob-feat-desc">save images to boards, drag & arrange, export or pop out into a window</div>
+                <div class="ob-feat-desc">drag, arrange, export — build collections that live in your browser and pop out into their own window</div>
               </div>
               <div class="ob-feat">
-                <span class="ob-feat-icon">⚿</span>
                 <div class="ob-feat-title">api keys</div>
-                <div class="ob-feat-desc">unlock extra sources with free keys — paste once, saved forever</div>
+                <div class="ob-feat-desc">paste a free key, unlock an entire database — one time setup, permanent access</div>
               </div>
             </div>
           </div>
