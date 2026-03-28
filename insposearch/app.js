@@ -15,8 +15,11 @@ const CONSTANTS = {
   ARCHIVE_LIMIT:        15,
   DEBOUNCE_SLIDER:     200,
   RETRY_DELAY:        2000,
-  MAX_RESULTS:         500,
+  MAX_RESULTS:        2000,
   MAX_CHAT_HISTORY:     20,
+  HEALTH_MISS_LIMIT:     3,   // consecutive misses before disabling a source
+  FETCH_TIMEOUT:      5000,   // default safeFetch timeout (ms)
+  COUNTER_DEBOUNCE:    300,   // updateSourcesActiveCounter debounce (ms)
 };
 
 /* ============================================================
@@ -98,7 +101,9 @@ const STATE = {
   claudeKey:           null,    // string | null (localStorage)
   openaiKey:           null,    // string | null (localStorage)
   openaiEndpoint:      '',      // custom OpenAI-compatible base URL
-  aiProvider:          'gemini', // 'gemini' | 'claude' | 'openai'
+  ollamaEndpoint:      'http://localhost:11434', // Ollama base URL
+  ollamaModel:         'llava',  // default Ollama vision model
+  aiProvider:          'gemini', // 'gemini' | 'claude' | 'openai' | 'ollama'
   chatHistory:         [],      // [{role, content}] conversation log
   chatSnapshot:        null,    // { base64, metadata } grid snapshot
   europeanaKey:        null,    // string | null (localStorage)
@@ -135,6 +140,7 @@ const STATE = {
   whitneyCacheTimestamp: null,  // Date.now() of last Whitney fetch
   searchMode:          'explore', // 'explore' | 'exact'
   pendingOnboardingSearch: false, // first-visit guided search
+  _searchGen:          0,        // monotonic counter to detect stale results
 };
 
 // Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
@@ -258,6 +264,8 @@ STATE.geminiKey      = localStorage.getItem(CONSTANTS.GEMINI_KEY_STORAGE) || nul
 STATE.claudeKey      = localStorage.getItem(CONSTANTS.CLAUDE_KEY_STORAGE)  || null;
 STATE.openaiKey      = localStorage.getItem(CONSTANTS.OPENAI_KEY_STORAGE)  || null;
 STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint')        || '';
+STATE.ollamaEndpoint = localStorage.getItem('inspo_ollama_endpoint')        || 'http://localhost:11434';
+STATE.ollamaModel    = localStorage.getItem('inspo_ollama_model')           || 'llava';
 STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')            || 'gemini';
 STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')    || null;
 STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')      || null;
@@ -594,6 +602,363 @@ const WIKIMEDIA_CATS = {
   wmc_street:          { cat: 'Street_photography',      name: 'Wikimedia Street Photography' },
 };
 
+/* ============================================================
+   DYNAMIC SOURCE REGISTRY — scales to 10K+ sources, zero storage
+   Each entry is a lightweight config object; images are fetched
+   live from the aggregator API at search time.
+============================================================ */
+const DYNAMIC_REGISTRY = [];   // [{id, adapter, config, name, tags, keyRequired}]
+
+/* Adapter map — one function per protocol.
+   Each adapter takes (config, keyword, limit, signal) → Promise<items[]> */
+const ADAPTERS = {
+  europeana_provider:  (cfg, kw, lim, sig) => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, kw, lim, sig, cfg.extra || ''),
+  dpla_hub:            (cfg, kw, lim, sig) => fetchDPLAProvider(cfg.provider, kw, lim, sig),
+  smithsonian_unit:    (cfg, kw, lim, sig) => fetchSmithsonianUnit(cfg.code, kw, lim, sig),
+  wikimedia_category:  (cfg, kw, lim, sig) => fetchWikimediaCategory(cfg.cat, kw, lim, sig),
+  archive_collection:  (cfg, kw, lim, sig) => fetchArchiveCollection(cfg.collection, kw, lim, sig),
+  iiif_collection:     (cfg, kw, lim, sig) => fetchIIIFCollection(cfg, kw, lim, sig),
+  iiif_content_search: (cfg, kw, lim, sig) => fetchIIIFSearch(cfg, kw, lim, sig),
+};
+
+/* ── Extended query classification for smart source selection ── */
+const ART_QUERY_TERMS = [
+  'painting','sculpture','portrait','landscape','still life','mural','fresco',
+  'drawing','sketch','etching','engraving','lithograph','woodcut','watercolor',
+  'oil paint','acrylic','canvas','gallery','museum','exhibition','masterpiece',
+  'renaissance','baroque','impressionism','cubism','surrealism','abstract',
+  'art nouveau','art deco','pop art','minimalism','expressionism','fauvism',
+  'romanticism','neoclassicism','gothic','mannerism','futurism','constructivism',
+  'dada','pointillism','symbolism','realism','modernism','contemporary art',
+];
+const HISTORY_QUERY_TERMS = [
+  'ancient','medieval','victorian','colonial','empire','dynasty','civilization',
+  'ruins','artifact','relic','manuscript','archive','document','chronicle',
+  'antiquity','heritage','historic','war','battle','revolution','propaganda',
+  'vintage','retro','century','era','period','archaeological','excavation',
+];
+const ARCH_QUERY_TERMS = [
+  'architecture','building','facade','structure','tower','dome','arch','column',
+  'cathedral','church','mosque','temple','castle','palace','bridge','skyscraper',
+  'ruins','monument','fountain','lighthouse','windmill','stadium','interior',
+  'brutalist','modernist','gothic','romanesque','byzantine','art deco',
+];
+const DESIGN_QUERY_TERMS = [
+  'design','typography','graphic','pattern','textile','fabric','weaving','lace',
+  'embroidery','ceramic','pottery','porcelain','glass','stained glass','mosaic',
+  'tapestry','furniture','jewelry','metalwork','woodwork','lacquer','enamel',
+  'industrial design','packaging','poster','wallpaper','ornament','decoration',
+];
+const PHOTO_QUERY_TERMS = [
+  'photograph','photo','camera','film','exposure','darkroom','street photography',
+  'documentary','portrait','landscape','macro','aerial','panorama','bokeh',
+  'black and white','monochrome','color photography','daguerreotype','snapshot',
+];
+const SCIENCE_QUERY_TERMS = [
+  'science','microscope','telescope','astronomy','biology','chemistry','physics',
+  'anatomy','botany','zoology','geology','mineral','crystal','fossil','specimen',
+  'laboratory','experiment','diagram','illustration','medical','pharmaceutical',
+  'x-ray','cell','dna','molecule','atom','satellite','observatory',
+];
+
+function classifyQueryExtended(q) {
+  const lower = (q || '').toLowerCase();
+  const check = terms => terms.some(t => lower.includes(t));
+  return {
+    isNature:  check(NATURE_QUERY_TERMS),
+    isSpace:   check(SPACE_QUERY_TERMS),
+    isArt:     check(ART_QUERY_TERMS),
+    isHistory: check(HISTORY_QUERY_TERMS),
+    isArch:    check(ARCH_QUERY_TERMS),
+    isDesign:  check(DESIGN_QUERY_TERMS),
+    isPhoto:   check(PHOTO_QUERY_TERMS),
+    isScience: check(SCIENCE_QUERY_TERMS),
+  };
+}
+
+/* ── Extended Wikimedia Commons categories (200+) ── */
+const WIKIMEDIA_CATS_EXTENDED = [
+  // Art movements
+  {cat:'Art_Nouveau',name:'Art Nouveau',tags:['art','design']},
+  {cat:'Art_Deco',name:'Art Deco',tags:['art','design']},
+  {cat:'Baroque_art',name:'Baroque Art',tags:['art']},
+  {cat:'Renaissance_art',name:'Renaissance Art',tags:['art']},
+  {cat:'Impressionist_paintings',name:'Impressionist Paintings',tags:['art']},
+  {cat:'Cubism',name:'Cubism',tags:['art']},
+  {cat:'Surrealism',name:'Surrealism',tags:['art']},
+  {cat:'Abstract_art',name:'Abstract Art',tags:['art']},
+  {cat:'Pop_art',name:'Pop Art',tags:['art']},
+  {cat:'Minimalist_art',name:'Minimalist Art',tags:['art','design']},
+  {cat:'Gothic_art',name:'Gothic Art',tags:['art','history']},
+  {cat:'Romanticism',name:'Romanticism',tags:['art']},
+  {cat:'Expressionism',name:'Expressionism',tags:['art']},
+  {cat:'Neoclassicism',name:'Neoclassicism',tags:['art','arch']},
+  {cat:'Futurism',name:'Futurism',tags:['art']},
+  {cat:'Constructivism',name:'Constructivism',tags:['art','design']},
+  {cat:'Dadaism',name:'Dadaism',tags:['art']},
+  {cat:'Pointillism',name:'Pointillism',tags:['art']},
+  {cat:'Symbolism_(arts)',name:'Symbolism',tags:['art']},
+  {cat:'Fauvism',name:'Fauvism',tags:['art']},
+  {cat:'Mannerism',name:'Mannerism',tags:['art']},
+  {cat:'Realism_(art_movement)',name:'Realism',tags:['art']},
+  {cat:'Pre-Raphaelite_paintings',name:'Pre-Raphaelite',tags:['art']},
+  {cat:'Ukiyo-e',name:'Ukiyo-e',tags:['art','history']},
+  // Media & techniques
+  {cat:'Photographs',name:'Photographs',tags:['photo']},
+  {cat:'Drawings',name:'Drawings',tags:['art']},
+  {cat:'Engravings',name:'Engravings',tags:['art','history']},
+  {cat:'Etchings',name:'Etchings',tags:['art']},
+  {cat:'Lithographs',name:'Lithographs',tags:['art']},
+  {cat:'Watercolor_paintings',name:'Watercolors',tags:['art']},
+  {cat:'Woodcuts',name:'Woodcuts',tags:['art','history']},
+  {cat:'Prints',name:'Prints',tags:['art']},
+  {cat:'Posters',name:'Posters',tags:['design','history']},
+  {cat:'Illuminated_manuscripts',name:'Illuminated Manuscripts',tags:['art','history']},
+  {cat:'Book_illustrations',name:'Book Illustrations',tags:['art','design']},
+  {cat:'Collage',name:'Collage',tags:['art']},
+  {cat:'Silkscreen_prints',name:'Silkscreen Prints',tags:['art','design']},
+  {cat:'Pastel_paintings',name:'Pastels',tags:['art']},
+  {cat:'Frescoes',name:'Frescoes',tags:['art','arch']},
+  {cat:'Icons_(art)',name:'Icons',tags:['art','history']},
+  // Subjects
+  {cat:'Landscapes_in_art',name:'Landscapes in Art',tags:['art','nature']},
+  {cat:'Seascapes',name:'Seascapes',tags:['art','nature']},
+  {cat:'Still_life_paintings',name:'Still Life',tags:['art']},
+  {cat:'Religious_art',name:'Religious Art',tags:['art','history']},
+  {cat:'Mythology_in_art',name:'Mythology in Art',tags:['art','history']},
+  {cat:'Allegory_in_art',name:'Allegory in Art',tags:['art']},
+  {cat:'Genre_paintings',name:'Genre Paintings',tags:['art']},
+  {cat:'War_art',name:'War Art',tags:['art','history']},
+  {cat:'Animals_in_art',name:'Animals in Art',tags:['art','nature']},
+  {cat:'Flowers_in_art',name:'Flowers in Art',tags:['art','nature','design']},
+  {cat:'Self-portraits',name:'Self-Portraits',tags:['art']},
+  {cat:'Nudes_in_art',name:'Nudes in Art',tags:['art']},
+  {cat:'Interior_scenes_in_art',name:'Interior Scenes',tags:['art','design']},
+  {cat:'Dance_in_art',name:'Dance in Art',tags:['art']},
+  {cat:'Music_in_art',name:'Music in Art',tags:['art']},
+  {cat:'Food_and_drink_in_art',name:'Food in Art',tags:['art']},
+  // Architecture
+  {cat:'Castles',name:'Castles',tags:['arch','history']},
+  {cat:'Churches',name:'Churches',tags:['arch','history']},
+  {cat:'Mosques',name:'Mosques',tags:['arch','history']},
+  {cat:'Temples',name:'Temples',tags:['arch','history']},
+  {cat:'Bridges',name:'Bridges',tags:['arch']},
+  {cat:'Skyscrapers',name:'Skyscrapers',tags:['arch']},
+  {cat:'Ruins',name:'Ruins',tags:['arch','history']},
+  {cat:'Gardens',name:'Gardens',tags:['arch','nature','design']},
+  {cat:'Fountains',name:'Fountains',tags:['arch','design']},
+  {cat:'Lighthouses',name:'Lighthouses',tags:['arch','photo']},
+  {cat:'Windmills',name:'Windmills',tags:['arch','history']},
+  {cat:'Palaces',name:'Palaces',tags:['arch','history']},
+  {cat:'Domes',name:'Domes',tags:['arch']},
+  {cat:'Towers',name:'Towers',tags:['arch']},
+  {cat:'Staircases',name:'Staircases',tags:['arch','design']},
+  {cat:'Brutalist_architecture',name:'Brutalist Architecture',tags:['arch','design']},
+  {cat:'Art_Nouveau_architecture',name:'Art Nouveau Architecture',tags:['arch','design']},
+  {cat:'Gothic_architecture',name:'Gothic Architecture',tags:['arch','history']},
+  {cat:'Romanesque_architecture',name:'Romanesque Architecture',tags:['arch','history']},
+  {cat:'Byzantine_architecture',name:'Byzantine Architecture',tags:['arch','history']},
+  {cat:'Modernist_architecture',name:'Modernist Architecture',tags:['arch','design']},
+  // Nature & science
+  {cat:'Birds',name:'Birds',tags:['nature','science']},
+  {cat:'Insects',name:'Insects',tags:['nature','science']},
+  {cat:'Mammals',name:'Mammals',tags:['nature','science']},
+  {cat:'Reptiles',name:'Reptiles',tags:['nature','science']},
+  {cat:'Fish',name:'Fish',tags:['nature','science']},
+  {cat:'Trees',name:'Trees',tags:['nature']},
+  {cat:'Fungi',name:'Fungi',tags:['nature','science']},
+  {cat:'Fossils',name:'Fossils',tags:['nature','science','history']},
+  {cat:'Minerals',name:'Minerals',tags:['nature','science']},
+  {cat:'Crystals',name:'Crystals',tags:['nature','science']},
+  {cat:'Shells',name:'Shells',tags:['nature','science']},
+  {cat:'Corals',name:'Corals',tags:['nature','science']},
+  {cat:'Butterflies',name:'Butterflies',tags:['nature','science']},
+  {cat:'Spiders',name:'Spiders',tags:['nature','science']},
+  {cat:'Amphibians',name:'Amphibians',tags:['nature','science']},
+  {cat:'Wildflowers',name:'Wildflowers',tags:['nature']},
+  {cat:'Ferns',name:'Ferns',tags:['nature']},
+  {cat:'Mosses',name:'Mosses',tags:['nature']},
+  {cat:'Lichens',name:'Lichens',tags:['nature','science']},
+  {cat:'Seaweeds',name:'Seaweeds',tags:['nature','science']},
+  {cat:'Microscopy_images',name:'Microscopy',tags:['science']},
+  {cat:'Astronomy',name:'Astronomy',tags:['science','space']},
+  {cat:'Anatomy',name:'Anatomy',tags:['science']},
+  {cat:'Cartography',name:'Cartography',tags:['science','history']},
+  {cat:'Chemistry',name:'Chemistry',tags:['science']},
+  // History & culture
+  {cat:'Ancient_Egypt',name:'Ancient Egypt',tags:['history','art']},
+  {cat:'Ancient_Greece',name:'Ancient Greece',tags:['history','art']},
+  {cat:'Ancient_Rome',name:'Ancient Rome',tags:['history','art']},
+  {cat:'Medieval_art',name:'Medieval Art',tags:['history','art']},
+  {cat:'Victorian_era',name:'Victorian Era',tags:['history']},
+  {cat:'Propaganda_posters',name:'Propaganda Posters',tags:['history','design']},
+  {cat:'Vintage_advertisements',name:'Vintage Advertisements',tags:['history','design']},
+  {cat:'World_War_I_in_art',name:'World War I Art',tags:['history','art']},
+  {cat:'World_War_II_in_art',name:'World War II Art',tags:['history','art']},
+  {cat:'Film_stills',name:'Film Stills',tags:['history','photo']},
+  {cat:'Daguerreotypes',name:'Daguerreotypes',tags:['history','photo']},
+  {cat:'Stereoscopic_photographs',name:'Stereoscopic Photos',tags:['history','photo']},
+  {cat:'Postcards',name:'Postcards',tags:['history','photo']},
+  {cat:'Trade_cards',name:'Trade Cards',tags:['history','design']},
+  // Design & decorative arts
+  {cat:'Textiles',name:'Textiles',tags:['design']},
+  {cat:'Ceramics',name:'Ceramics',tags:['design','art']},
+  {cat:'Jewelry',name:'Jewelry',tags:['design']},
+  {cat:'Masks',name:'Masks',tags:['art','history']},
+  {cat:'Musical_instruments',name:'Musical Instruments',tags:['design','history']},
+  {cat:'Costumes',name:'Costumes',tags:['design','history']},
+  {cat:'Armour',name:'Armour',tags:['history','design']},
+  {cat:'Coins',name:'Coins',tags:['history']},
+  {cat:'Stamps',name:'Stamps',tags:['history','design']},
+  {cat:'Typography',name:'Typography',tags:['design']},
+  {cat:'Graphic_design',name:'Graphic Design',tags:['design']},
+  {cat:'Furniture',name:'Furniture',tags:['design']},
+  {cat:'Glassware',name:'Glassware',tags:['design','art']},
+  {cat:'Metalwork',name:'Metalwork',tags:['design']},
+  {cat:'Woodwork',name:'Woodwork',tags:['design']},
+  {cat:'Lacquerware',name:'Lacquerware',tags:['design','art']},
+  {cat:'Enamelware',name:'Enamelware',tags:['design','art']},
+  {cat:'Stained_glass',name:'Stained Glass',tags:['art','arch','design']},
+  {cat:'Mosaics',name:'Mosaics',tags:['art','arch','design']},
+  {cat:'Tapestries',name:'Tapestries',tags:['art','design']},
+  {cat:'Calligraphy',name:'Calligraphy',tags:['art','design']},
+  {cat:'Bookplates',name:'Bookplates',tags:['design','art']},
+  {cat:'Street_art',name:'Street Art',tags:['art','photo']},
+  {cat:'Graffiti',name:'Graffiti',tags:['art','photo']},
+  {cat:'Murals',name:'Murals',tags:['art','arch']},
+  {cat:'Embroidery',name:'Embroidery',tags:['design']},
+  {cat:'Quilts',name:'Quilts',tags:['design']},
+  {cat:'Wallpaper',name:'Wallpaper',tags:['design']},
+  {cat:'Clocks_and_watches',name:'Clocks & Watches',tags:['design','history']},
+  {cat:'Toys',name:'Toys',tags:['design','history']},
+  {cat:'Maps',name:'Maps',tags:['history','science']},
+  // Geography & regions
+  {cat:'Africa_in_art',name:'Africa in Art',tags:['art','history']},
+  {cat:'Asia_in_art',name:'Asia in Art',tags:['art','history']},
+  {cat:'Japan_in_art',name:'Japan in Art',tags:['art','history']},
+  {cat:'China_in_art',name:'China in Art',tags:['art','history']},
+  {cat:'India_in_art',name:'India in Art',tags:['art','history']},
+  {cat:'Americas_in_art',name:'Americas in Art',tags:['art','history']},
+  {cat:'Oceania_in_art',name:'Oceania in Art',tags:['art','history']},
+];
+
+/* ── Archive.org collections (no key needed) ── */
+const ARCHIVE_COLLECTIONS = [
+  {collection:'smithsonian_libraries',name:'Smithsonian Libraries',tags:['science','nature','history']},
+  {collection:'biodiversitylibrary',name:'Biodiversity Heritage Library',tags:['nature','science']},
+  {collection:'americana',name:'Americana',tags:['history']},
+  {collection:'prelinger',name:'Prelinger Archives',tags:['history','photo']},
+  {collection:'nasa',name:'NASA (Archive.org)',tags:['science','space']},
+  {collection:'maps_usgs',name:'USGS Maps (Archive.org)',tags:['science','history']},
+  {collection:'folklife',name:'Folklife',tags:['history','photo']},
+  {collection:'metropolitanmuseumofart-gallery',name:'Met Gallery (Archive.org)',tags:['art']},
+  {collection:'nypl',name:'NYPL (Archive.org)',tags:['history','art']},
+  {collection:'library_of_congress',name:'LOC (Archive.org)',tags:['history']},
+  {collection:'internetarchivebooks',name:'Internet Archive Books',tags:['history']},
+  {collection:'toronto',name:'University of Toronto',tags:['history']},
+  {collection:'getty_research',name:'Getty Research (Archive.org)',tags:['art']},
+  {collection:'wellcomelibrary',name:'Wellcome Library (Archive.org)',tags:['science','history']},
+  {collection:'blc',name:'British Library (Archive.org)',tags:['history']},
+  {collection:'europeanlibraries',name:'European Libraries',tags:['history']},
+  {collection:'cdl',name:'California Digital Library',tags:['history']},
+  {collection:'bostonpubliclibrary',name:'Boston Public Library',tags:['history','art']},
+  {collection:'iacl',name:'Archive.org Art & Culture',tags:['art','history']},
+  {collection:'animationandcartoons',name:'Animation & Cartoons',tags:['art','design']},
+  {collection:'coverartarchive',name:'Cover Art Archive',tags:['art','design']},
+  {collection:'flickrcommons',name:'Flickr Commons (Archive.org)',tags:['photo','history']},
+  {collection:'creativecommons',name:'Creative Commons Media',tags:['photo','art']},
+  {collection:'artsandmusicvideos',name:'Arts & Music Videos',tags:['art']},
+  {collection:'national_library_of_scotland',name:'National Library of Scotland',tags:['history']},
+  {collection:'national_library_of_australia',name:'National Library of Australia',tags:['history']},
+  {collection:'solarsystemcollection',name:'Solar System Collection',tags:['science','space']},
+  {collection:'hubblesite',name:'HubbleSite (Archive.org)',tags:['science','space']},
+  {collection:'vintage_postcards',name:'Vintage Postcards',tags:['history','photo']},
+  {collection:'maps',name:'Maps Collection',tags:['history','science']},
+  {collection:'war_posters',name:'War Posters',tags:['history','design']},
+  {collection:'vintage_cartoons',name:'Vintage Cartoons',tags:['art','history']},
+  {collection:'medicineintheamericas',name:'Medicine in the Americas',tags:['science','history']},
+  {collection:'textile_patterns',name:'Textile Patterns',tags:['design']},
+  {collection:'art_of_bookbinding',name:'Art of Bookbinding',tags:['art','design']},
+  {collection:'atsf_railroad',name:'Railroad Photography',tags:['history','photo']},
+  {collection:'rurallife',name:'Rural Life',tags:['history','photo','nature']},
+  {collection:'comics_and_cartoons',name:'Comics & Cartoons',tags:['art','design']},
+  {collection:'nih_photographs',name:'NIH Photographs',tags:['science','photo']},
+  {collection:'architectureinhelsinki',name:'Architecture in Helsinki',tags:['arch','photo']},
+];
+
+/* ── Populate dynamic registry at module load ── */
+(function populateStaticRegistry() {
+  // 1. Extended Wikimedia categories (150+)
+  for (const entry of WIKIMEDIA_CATS_EXTENDED) {
+    const id = 'wmc_' + entry.cat.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30);
+    DYNAMIC_REGISTRY.push({
+      id,
+      adapter: 'wikimedia_category',
+      config:  { cat: entry.cat },
+      name:    entry.name,
+      tags:    entry.tags || [],
+      keyRequired: null,
+    });
+  }
+  // 2. Archive.org collections (40+)
+  for (const entry of ARCHIVE_COLLECTIONS) {
+    const id = 'ia_' + entry.collection.replace(/[^a-z0-9]+/g, '_').slice(0, 30);
+    DYNAMIC_REGISTRY.push({
+      id,
+      adapter: 'archive_collection',
+      config:  { collection: entry.collection },
+      name:    entry.name,
+      tags:    entry.tags || [],
+      keyRequired: null,
+    });
+  }
+  console.log(`[insposearch] Static registry: ${DYNAMIC_REGISTRY.length} dynamic sources loaded.`);
+})();
+
+/* ── Smart source selector — picks relevant subset per query ── */
+function selectDynamicSources(keyword, maxCount = 150) {
+  const qc = classifyQueryExtended(keyword);
+  const hasAnyIntent = qc.isNature || qc.isSpace || qc.isArt || qc.isHistory ||
+                       qc.isArch || qc.isDesign || qc.isPhoto || qc.isScience;
+
+  // Map query intent flags to tag names
+  const intentTags = [];
+  if (qc.isNature)  intentTags.push('nature');
+  if (qc.isSpace)   intentTags.push('space');
+  if (qc.isArt)     intentTags.push('art');
+  if (qc.isHistory) intentTags.push('history');
+  if (qc.isArch)    intentTags.push('arch');
+  if (qc.isDesign)  intentTags.push('design');
+  if (qc.isPhoto)   intentTags.push('photo');
+  if (qc.isScience) intentTags.push('science');
+
+  const scored = DYNAMIC_REGISTRY
+    .filter(s => {
+      // Skip if key required but not set
+      if (s.keyRequired && !STATE[s.keyRequired]) return false;
+      // Skip if user disabled this source
+      if (STATE.disabledSources.has(s.id)) return false;
+      return true;
+    })
+    .map(s => {
+      let score = 1; // base score — everyone gets a chance
+      if (hasAnyIntent && s.tags && s.tags.length) {
+        const overlap = s.tags.filter(t => intentTags.includes(t)).length;
+        score += overlap * 5;
+        // Slightly penalize sources with zero overlap on a focused query
+        if (overlap === 0 && intentTags.length >= 2) score -= 1;
+      }
+      // Prefer sources with known large collections
+      if (s.imageCount && s.imageCount > 10000) score += 1;
+      // Add small random jitter to diversify between searches
+      score += Math.random() * 0.5;
+      return { ...s, _score: score };
+    })
+    .sort((a, b) => b._score - a._score);
+
+  return scored.slice(0, maxCount);
+}
+
 /* Extend source groups with Phase A sub-collections */
 (function() {
   SOURCE_GROUPS.fashion.push('euro_fashion', 'wmc_fashion', 'si_chndm');
@@ -645,7 +1010,7 @@ function recordSourceResult(sourceName, resultCount) {
 function isSourceHealthy(sourceName) {
   const h = STATE.sourceHealth[sourceName];
   if (!h) return true;           // never tried — always allow
-  if (h.misses >= 3) return false; // 3 consecutive misses — skip
+  if (h.misses >= CONSTANTS.HEALTH_MISS_LIMIT) return false;
   return true;
 }
 
@@ -655,11 +1020,15 @@ function callIfHealthy(sourceName, fetchPromise) {
   return fetchPromise;
 }
 
-function updateSourcesActiveCounter() {
-  const active = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id)).length;
+function _updateSourcesActiveCounterImmediate() {
+  const hardcoded = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id)).length;
+  const dynamic = DYNAMIC_REGISTRY.filter(s => !s.keyRequired || STATE[s.keyRequired]).length;
+  const active = hardcoded + dynamic;
   const el = document.getElementById('sources-active-counter');
   if (el) el.textContent = active + ' sources active';
 }
+// Fires 155+ times per search; debounce to avoid excessive DOM writes
+const updateSourcesActiveCounter = debounce(_updateSourcesActiveCounterImmediate, CONSTANTS.COUNTER_DEBOUNCE);
 
 loadSourceHealth();
 loadDisabledSources();
@@ -855,6 +1224,20 @@ function withTimeout(signal, ms = 3000) {
     }, { once: true });
   }
   return controller.signal;
+}
+
+// ── safeFetch — drop-in fetch replacement with timeout + 429 retry ──
+async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
+  const origSignal = opts.signal;
+  const s = origSignal ? withTimeout(origSignal, timeoutMs) : AbortSignal.timeout(timeoutMs);
+  const fetchOpts = { ...opts, signal: s };
+  let res = await fetch(url, fetchOpts);
+  if (res.status === 429) {
+    await sleep(CONSTANTS.RETRY_DELAY);
+    if (origSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    res = await fetch(url, fetchOpts);
+  }
+  return res;
 }
 
 // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
@@ -1232,7 +1615,7 @@ async function fetchWikimedia(keyword, limit, signal) {
 
   try {
     const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await fetch(searchUrl, { signal });
+    const res = await safeFetch(searchUrl, { signal });
     if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; return fetchWikimediaRetry(keyword, limit, signal); }
     const data = await res.json();
     const hits = (data.query?.search || []).filter(h => {
@@ -1245,11 +1628,12 @@ async function fetchWikimedia(keyword, limit, signal) {
     // Batch up to 10 titles per request
     const results = [];
     for (let i = 0; i < hits.length; i += 10) {
+      if (signal?.aborted) break;
       const batch = hits.slice(i, i + 10);
       const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
       try {
         const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
-        const infoRes = await fetch(infoUrl, { signal });
+        const infoRes = await safeFetch(infoUrl, { signal });
         const infoData = await infoRes.json();
         for (const page of Object.values(infoData.query?.pages || {})) {
           const item = normalizeWikimedia(page);
@@ -1274,12 +1658,12 @@ async function fetchWikimediaRetry(keyword, limit, signal) {
 
   try {
     const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await fetch(searchUrl, { signal });
+    const res = await safeFetch(searchUrl, { signal });
     const data = await res.json();
     const hits = (data.query?.search || []);
     if (!hits.length) return [];
     const titles = hits.slice(0, 10).map(h => encodeURIComponent(h.title)).join('|');
-    const infoRes = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`, { signal });
+    const infoRes = await safeFetch(`https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`, { signal });
     const infoData = await infoRes.json();
     return Object.values(infoData.query?.pages || {})
       .map(normalizeWikimedia).filter(Boolean)
@@ -1293,7 +1677,7 @@ async function fetchWikimediaCategory(category, keyword, limit, signal) {
     const catPart = `incategory:${category}`;
     const srsearch = keyword ? `${encodeURIComponent(keyword)}+${catPart}` : catPart;
     const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${srsearch}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await fetch(searchUrl, { signal });
+    const res = await safeFetch(searchUrl, { signal });
     if (res.status === 429) return [];
     const data = await res.json();
     const hits = (data.query?.search || []).filter(h => {
@@ -1303,11 +1687,12 @@ async function fetchWikimediaCategory(category, keyword, limit, signal) {
     if (!hits.length) return [];
     const results = [];
     for (let i = 0; i < hits.length; i += 10) {
+      if (signal?.aborted) break;
       const batch = hits.slice(i, i + 10);
       const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
       try {
         const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
-        const infoRes = await fetch(infoUrl, { signal });
+        const infoRes = await safeFetch(infoUrl, { signal });
         const infoData = await infoRes.json();
         for (const page of Object.values(infoData.query?.pages || {})) {
           const item = normalizeWikimedia(page);
@@ -1330,7 +1715,7 @@ async function fetchMet(keyword, limit, signal, offset = 0) {
 
   try {
     const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword)}&hasImages=true&offset=${offset}`;
-    const res = await fetch(searchUrl, { signal });
+    const res = await safeFetch(searchUrl, { signal });
     if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; }
     const data = await res.json();
     const ids = (data.objectIDs || []).slice(0, limit);
@@ -1355,12 +1740,10 @@ async function fetchMet(keyword, limit, signal, offset = 0) {
 }
 
 async function fetchArchive(keyword, limit, signal) {
-  const s = withTimeout(signal, 5000);
   // Note: run via localhost or Netlify to avoid file:// CORS warnings
   try {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`;
-    const res = await fetch(url, { signal: s });
-    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (s.aborted) return []; }
+    const res = await safeFetch(url, { signal });
     const data = await res.json();
     const docs = data.response?.docs || [];
     return docs
@@ -1381,7 +1764,7 @@ async function fetchArchive(keyword, limit, signal) {
 async function fetchNASA(keyword, limit, signal) {
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
       { signal }
     );
@@ -1418,7 +1801,7 @@ async function fetchNASA(keyword, limit, signal) {
 async function fetchRijksmuseum(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://data.rijksmuseum.nl/search/collection?description=${encodeURIComponent(keyword)}&imageAvailable=true`,
       { signal }
     );
@@ -1465,7 +1848,7 @@ async function fetchEuropeana(keyword, limit, signal, start = 1) {
   if (!STATE.europeanaKey) return [];
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&start=${start}`,
       { signal }
     );
@@ -1501,7 +1884,7 @@ async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, limit, 
   try {
     let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&qf=${filterParam}:${encodeURIComponent(filterValue)}`;
     if (extraQf) url += `&qf=${encodeURIComponent(extraQf)}`;
-    const res = await fetch(url, { signal });
+    const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('Europeana filtered fetch failed');
     const data = await res.json();
     return (data.items || [])
@@ -1535,7 +1918,7 @@ async function fetchHarvard(keyword, limit, signal) {
   if (!STATE.harvardKey) return [];
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.harvardartmuseums.org/object?apikey=${STATE.harvardKey}&keyword=${encodeURIComponent(keyword)}&hasimage=1&size=${limit}&fields=objectid,title,description,dated,primaryimageurl,url,people,medium`,
       { signal }
     );
@@ -1569,7 +1952,7 @@ async function fetchSmithsonian(keyword, limit, signal) {
   try {
 
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images`,
       { signal }
     );
@@ -1606,7 +1989,7 @@ async function fetchSmithsonian(keyword, limit, signal) {
 async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=${unitCode}`,
       { signal }
     );
@@ -1643,7 +2026,7 @@ async function fetchPexels(keyword, limit, signal) {
   if (!STATE.pexelsKey) return [];
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.pexels.com/v1/search?query=${encodeURIComponent(keyword)}&per_page=${limit}`,
       {
         signal,
@@ -1677,7 +2060,7 @@ async function fetchPexels(keyword, limit, signal) {
 async function fetchINaturalist(keyword, limit, signal) {
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(keyword)}&photos=true&per_page=${limit}&order=votes&license=cc-by,cc-by-nc,cc0`,
       { signal }
     );
@@ -1718,7 +2101,7 @@ async function fetchINaturalist(keyword, limit, signal) {
 async function fetchLOC(keyword, limit, signal, sp = 1) {
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.loc.gov/search/?q=${encodeURIComponent(keyword)}&fo=json&fa=online-format:image&c=${limit}&sp=${sp}`,
       { signal }
     );
@@ -1759,7 +2142,7 @@ async function fetchLOC(keyword, limit, signal, sp = 1) {
 async function fetchOpenLibrary(keyword, limit, signal) {
 
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://openlibrary.org/search.json?q=${encodeURIComponent(keyword)}&fields=cover_i,title,author_name,subject,first_publish_year&limit=${limit}`,
       { signal }
     );
@@ -1791,7 +2174,7 @@ async function fetchOpenLibrary(keyword, limit, signal) {
 async function fetchChicagoArt(keyword, limit, signal, page = 1) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(keyword)}&limit=${limit}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles&page=${page}`,
       { signal }
     );
@@ -1825,7 +2208,7 @@ async function fetchChicagoArt(keyword, limit, signal, page = 1) {
 async function fetchCleveland(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(keyword)}&has_image=1&limit=${limit}&skip=0`,
       { signal }
     );
@@ -1858,7 +2241,7 @@ async function fetchCleveland(keyword, limit, signal) {
 async function fetchVA(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(keyword)}&images_exist=1&page_size=${limit}`,
       { signal }
     );
@@ -1891,10 +2274,9 @@ async function fetchVA(keyword, limit, signal) {
 
 async function fetchFlickrCommons(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=a6d819499131071f21efa8a74b2accc8&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&sort=relevance`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Flickr failed');
     const data = await res.json();
@@ -1927,7 +2309,7 @@ async function fetchPixabay(keyword, limit, signal) {
   if (pbCached) return pbCached.results.slice(0, limit);
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://pixabay.com/api/?key=${STATE.pixabayKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=${limit}&safesearch=true`,
       { signal }
     );
@@ -1960,7 +2342,7 @@ async function fetchPixabay(keyword, limit, signal) {
 async function fetchWikiArt(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.wikiart.org/en/search/${encodeURIComponent(keyword)}/1?json=2&layout=new`,
       { signal }
     );
@@ -1996,10 +2378,9 @@ async function fetchWikiArt(keyword, limit, signal) {
 
 async function fetchNordicMuseum(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.nordiskamuseet.se/v1/objects?search=${encodeURIComponent(keyword)}&mediaLicense=*&page_size=${limit}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Nordic failed');
     const data = await res.json();
@@ -2032,7 +2413,7 @@ async function fetchNordicMuseum(keyword, limit, signal) {
 async function fetchGetty(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://data.getty.edu/museum/collection/object?q=${encodeURIComponent(keyword)}&limit=${limit}`,
       { signal }
     );
@@ -2068,7 +2449,7 @@ async function fetchGetty(keyword, limit, signal) {
 async function fetchNGA(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.nga.gov/art/tms/objects?q=${encodeURIComponent(keyword)}&hasimages=1&limit=${limit}&offset=0`,
       { signal }
     );
@@ -2100,7 +2481,7 @@ async function fetchNGA(keyword, limit, signal) {
 async function fetchGBIF(keyword, limit, signal, offset = 0) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.gbif.org/v1/occurrence/search?q=${encodeURIComponent(keyword)}&mediaType=StillImage&limit=${limit}&offset=${offset}`,
       { signal }
     );
@@ -2132,7 +2513,7 @@ async function fetchGBIF(keyword, limit, signal, offset = 0) {
 async function fetchEOL(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://eol.org/api/search/1.0.json?q=${encodeURIComponent(keyword)}&page=1`,
       { signal }
     );
@@ -2177,7 +2558,7 @@ async function fetchEOL(keyword, limit, signal) {
 async function fetchAPOD(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=${limit}&thumbs=true`,
       { signal }
     );
@@ -2208,11 +2589,10 @@ async function fetchAPOD(keyword, limit, signal) {
 
 async function fetchGallica(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 5000);
     const query = `dc.type+all+"image"+and+${encodeURIComponent(keyword)}`;
-    const res = await fetch(
+    const res = await safeFetch(
       `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=${query}&maximumRecords=${limit}&startRecord=1&format=json`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Gallica failed');
     const data = await res.json();
@@ -2248,7 +2628,7 @@ async function fetchGallica(keyword, limit, signal) {
 async function fetchChroniclingAmerica(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://chroniclingamerica.loc.gov/search/pages/results/?andtext=${encodeURIComponent(keyword)}&format=json&rows=${limit}`,
       { signal }
     );
@@ -2280,7 +2660,7 @@ async function fetchChroniclingAmerica(keyword, limit, signal) {
 async function fetchOpenverse(keyword, limit, signal, page = 1) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.openverse.org/v1/images/?q=${encodeURIComponent(keyword)}&license_type=commercial&page_size=${limit}&page=${page}`,
       { signal }
     );
@@ -2312,10 +2692,9 @@ async function fetchOpenverse(keyword, limit, signal, page = 1) {
 async function fetchTrove(keyword, limit, signal) {
   if (!STATE.troveKey) return [];
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.trove.nla.gov.au/v3/result?q=${encodeURIComponent(keyword)}&category=picture&encoding=json&n=${limit}&key=${STATE.troveKey}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Trove failed');
     const data = await res.json();
@@ -2350,10 +2729,9 @@ async function fetchTrove(keyword, limit, signal) {
 async function fetchDigitalNZ(keyword, limit, signal) {
   if (!STATE.digitalnzKey) return [];
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.digitalnz.org/records.json?text=${encodeURIComponent(keyword)}&and[category][]=Images&per_page=${limit}&api_key=${STATE.digitalnzKey}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('DigitalNZ failed');
     const data = await res.json();
@@ -2383,8 +2761,9 @@ async function fetchDigitalNZ(keyword, limit, signal) {
 async function fetchBHL(keyword, limit, signal) {
   try {
 
+    // BHL uses a public/anonymous placeholder key — no secret
     const BHL_KEY = '00000000-0000-0000-0000-000000000000';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.biodiversitylibrary.org/api3?op=GetTitleSearchSimple&title=${encodeURIComponent(keyword)}&apikey=${BHL_KEY}&format=json`,
       { signal }
     );
@@ -2394,7 +2773,7 @@ async function fetchBHL(keyword, limit, signal) {
     if (!titles.length) return [];
     const itemID = titles[0].Items?.[0]?.ItemID;
     if (!itemID) return [];
-    const res2 = await fetch(
+    const res2 = await safeFetch(
       `https://www.biodiversitylibrary.org/api3?op=GetItemMetadata&id=${itemID}&pages=true&ocr=false&parts=false&apikey=${BHL_KEY}&format=json`,
       { signal }
     );
@@ -2427,7 +2806,7 @@ async function fetchBHL(keyword, limit, signal) {
 async function fetchCarnegie(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.collection.carnegieart.org/artworks?search[search]=${encodeURIComponent(keyword)}&per_page=${limit}`,
       { signal }
     );
@@ -2462,10 +2841,9 @@ async function fetchPrado(keyword, limit, signal) {
   if (cached) return cached;
   // Fall back to direct API (may fail due to CORS)
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.museodelprado.es/api/v1/artwork?language=en&keyword=${encodeURIComponent(keyword)}&limit=${limit}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Prado failed');
     const data = await res.json();
@@ -2496,15 +2874,16 @@ async function fetchParisMusees(keyword, limit, signal) {
   if (cached) return cached;
   // Fall back to direct API (may fail due to CORS)
   try {
-    const s = withTimeout(signal, 5000);
+    // Sanitize for GraphQL string interpolation — strip quotes, backslashes, newlines
+    const safeKw = keyword.replace(/["\\\n\r]/g, '');
     const body = JSON.stringify({
-      query: `{ nodeQuery(filter: {conditions: [{field: "title", value: "${keyword.replace(/"/g, '')}", operator: LIKE}]}, limit: ${limit}) { entities { ... on NodeOeuvre { title field_auteur field_datation field_visuels { entity { thumbnail { url } } } } } } }`,
+      query: `{ nodeQuery(filter: {conditions: [{field: "title", value: "${safeKw}", operator: LIKE}]}, limit: ${parseInt(limit, 10)}) { entities { ... on NodeOeuvre { title field_auteur field_datation field_visuels { entity { thumbnail { url } } } } } } }`,
     });
-    const res = await fetch('https://apicollections.parismusees.paris.fr/graphql', {
+    const res = await safeFetch('https://apicollections.parismusees.paris.fr/graphql', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
-      signal: s,
+      signal,
     });
     if (!res.ok) throw new Error('ParisMusees failed');
     const data = await res.json();
@@ -2537,7 +2916,7 @@ async function fetchParisMusees(keyword, limit, signal) {
 async function fetchYale(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collections.britishart.yale.edu/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
       { signal }
     );
@@ -2575,7 +2954,7 @@ async function fetchPicsum(keyword, limit, signal) {
   try {
 
     const randomPage = Math.floor(Math.random() * 30) + 1;
-    const res = await fetch(
+    const res = await safeFetch(
       `https://picsum.photos/v2/list?page=${randomPage}&limit=${limit}`,
       { signal }
     );
@@ -2605,10 +2984,9 @@ async function fetchPicsum(keyword, limit, signal) {
 
 async function fetchUSGS(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.sciencebase.gov/catalog/items?q=${encodeURIComponent(keyword)}&filter=tags%3Dimage&format=json&max=${limit}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('USGS failed');
     const data = await res.json();
@@ -2643,7 +3021,7 @@ async function fetchCooperHewitt(keyword, limit, signal) {
   try {
 
     const CH_TOKEN = '4d47366a4e7f1abe2bd9d882dc86e0b5';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collection.cooperhewitt.org/api/rest/?method=cooperhewitt.search.objects&query=${encodeURIComponent(keyword)}&has_images=1&per_page=${limit}&access_token=${CH_TOKEN}`,
       { signal }
     );
@@ -2680,7 +3058,7 @@ async function fetchCooperHewitt(keyword, limit, signal) {
 async function fetchTate(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.tate.org.uk/api/v1/artworks?q=${encodeURIComponent(keyword)}&page=1&pageSize=${limit}`,
       { signal }
     );
@@ -2712,7 +3090,7 @@ async function fetchTate(keyword, limit, signal) {
 async function fetchFinna(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.finna.fi/api/v1/search?lookfor=${encodeURIComponent(keyword)}&type=AllFields&filter[]=format:0%2FImage%2F&limit=${limit}&field[]=id&field[]=title&field[]=summary&field[]=images&field[]=year`,
       { signal }
     );
@@ -2747,10 +3125,9 @@ async function fetchSOCH(keyword, limit, signal) {
   if (cached) return cached;
   // Fall back to direct API (may fail due to CORS)
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.kulturarvsdata.se/ksamsok/api?method=search&hitsPerPage=${limit}&startRecord=1&query=itemName%3D${encodeURIComponent(keyword)}&recordSchema=json`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('SOCH failed');
     const data = await res.json();
@@ -2784,10 +3161,10 @@ async function fetchSOCH(keyword, limit, signal) {
 // C04 — Joconde (French national museum database)
 async function fetchJoconde(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 8000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?where=search(title%2C%22${encodeURIComponent(keyword)}%22)&limit=${limit}&select=ref,title,auteur,datation,domaine,lien`,
-      { signal: s }
+      { signal },
+      8000
     );
     if (!res.ok) throw new Error('Joconde failed');
     const data = await res.json();
@@ -2818,7 +3195,7 @@ async function fetchJoconde(keyword, limit, signal) {
 async function fetchMNW(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.mnw.art.pl/api/v1/objects?search=${encodeURIComponent(keyword)}&per_page=${limit}&has_image=true`,
       { signal }
     );
@@ -2850,7 +3227,7 @@ async function fetchMNW(keyword, limit, signal) {
 async function fetchTePapa(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collections.tepapa.govt.nz/search/${encodeURIComponent(keyword)}?filters=hasMedia:true&size=${limit}&from=0`,
       { signal }
     );
@@ -2883,7 +3260,7 @@ async function fetchDPLA(keyword, limit, signal) {
   if (!STATE.dplaKey) return [];
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource`,
       { signal }
     );
@@ -2915,7 +3292,7 @@ async function fetchDPLA(keyword, limit, signal) {
 async function fetchDPLAProvider(provider, keyword, limit, signal) {
   if (!STATE.dplaKey) return [];
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource&provider=${encodeURIComponent(provider)}`,
       { signal }
     );
@@ -2951,7 +3328,7 @@ async function fetchArtsy(keyword, limit, signal) {
 
     // Acquire or reuse xapp token
     if (!STATE.artsyToken) {
-      const tokenRes = await fetch('https://api.artsy.net/api/tokens/xapp_token', {
+      const tokenRes = await safeFetch('https://api.artsy.net/api/tokens/xapp_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ client_id: STATE.artsyId, client_secret: STATE.artsySecret }),
@@ -2961,7 +3338,7 @@ async function fetchArtsy(keyword, limit, signal) {
       const tokenData = await tokenRes.json();
       STATE.artsyToken = tokenData.token;
     }
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.artsy.net/api/artworks?q=${encodeURIComponent(keyword)}&size=${limit}`,
       { headers: { 'X-Xapp-Token': STATE.artsyToken }, signal }
     );
@@ -2994,7 +3371,7 @@ async function fetchArtsy(keyword, limit, signal) {
 async function fetchPAS(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://finds.org.uk/api/search.json?q=${encodeURIComponent(keyword)}&has_images=1&limit=${limit}`,
       { signal }
     );
@@ -3027,7 +3404,7 @@ async function fetchPAS(keyword, limit, signal) {
 async function fetchSMG(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collection.sciencemuseumgroup.org.uk/search/objects?q=${encodeURIComponent(keyword)}&has_image=1&page[number]=1&page[size]=${limit}`,
       { signal }
     );
@@ -3059,7 +3436,7 @@ async function fetchSMG(keyword, limit, signal) {
 async function fetchAuckland(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.aucklandmuseum.com/id/media/v2/mediaartifact/?q=${encodeURIComponent(keyword)}&size=${limit}`,
       { signal }
     );
@@ -3096,7 +3473,7 @@ async function fetchAuckland(keyword, limit, signal) {
 async function fetchPhotogrammar(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://photogrammar.org/api/search?query=${encodeURIComponent(keyword)}&limit=${limit}`,
       { signal }
     );
@@ -3129,7 +3506,7 @@ async function fetchPhotogrammar(keyword, limit, signal) {
 async function fetchWellcome(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.wellcomecollection.org/catalogue/v2/works?query=${encodeURIComponent(keyword)}&workType=k&items.locations.locationType=iiif-image&pageSize=${limit}`,
       { signal }
     );
@@ -3161,7 +3538,7 @@ async function fetchWellcome(keyword, limit, signal) {
 async function fetchMAAS(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collection.maas.museum/api/search?q=${encodeURIComponent(keyword)}&has_image=yes&limit=${limit}`,
       { signal }
     );
@@ -3193,7 +3570,7 @@ async function fetchMAAS(keyword, limit, signal) {
 async function fetchSMK(keyword, limit, signal) {
   try {
 
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.smk.dk/api/v1/art/search/?keys=${encodeURIComponent(keyword)}&has_image=true&offset=0&rows=${limit}`,
       { signal }
     );
@@ -3228,10 +3605,9 @@ async function fetchThyssen(keyword, limit, signal) {
   if (cached) return cached;
   // Fall back to direct API (may fail due to CORS)
   try {
-    const s = withTimeout(signal, 5000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.museothyssen.org/api/v1/coleccion/obras?search=${encodeURIComponent(keyword)}&page=1&per_page=${limit}`,
-      { signal: s }
+      { signal }
     );
     if (!res.ok) throw new Error('Thyssen failed');
     const data = await res.json();
@@ -3260,7 +3636,7 @@ async function fetchThyssen(keyword, limit, signal) {
 
 async function fetchWalters(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.thewalters.org/v1/objects.json?keyword=${encodeURIComponent(keyword)}&orderBy=relevance&page=1&pageSize=${limit}&apikey=`,
       { signal }
     );
@@ -3289,7 +3665,7 @@ async function fetchWalters(keyword, limit, signal) {
 
 async function fetchPrinceton(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://data.artmuseum.princeton.edu/search?query=${encodeURIComponent(keyword)}&size=${limit}&from=0`,
       { signal }
     );
@@ -3329,7 +3705,7 @@ async function fetchWikidata(keyword, limit, signal) {
   OPTIONAL { ?item wdt:P571 ?date. }
 } LIMIT ${limit}`.trim();
     const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       signal,
       headers: {
         'Accept': 'application/sparql-results+json',
@@ -3362,7 +3738,7 @@ async function fetchWikidata(keyword, limit, signal) {
 
 async function fetchNOAA(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.photolib.noaa.gov/api/search?q=${encodeURIComponent(keyword)}&format=json&rows=${limit}&start=0`,
       { signal }
     );
@@ -3396,7 +3772,7 @@ async function fetchHubble(keyword, limit, signal) {
       : Infinity;
 
     if (!STATE.hubbleCache.length || cacheAge > 6 * 60 * 60 * 1000) {
-      const res = await fetch(
+      const res = await safeFetch(
         'https://hubblesite.org/api/v3/external_feed?service=NEWS_IMAGES&page=all',
         { signal }
       );
@@ -3436,7 +3812,7 @@ async function fetchHubble(keyword, limit, signal) {
 
 async function fetchCornell(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://digital.library.cornell.edu/catalog.json?q=${encodeURIComponent(keyword)}&f[format][]=Image&per_page=${limit}&page=1`,
       { signal }
     );
@@ -3469,10 +3845,10 @@ async function fetchCornell(keyword, limit, signal) {
 
 async function fetchFolger(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 6000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collections.folger.edu/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&format=json`,
-      { signal: s }
+      { signal },
+      6000
     );
     if (!res.ok) throw new Error('Folger failed');
     const data = await res.json();
@@ -3498,10 +3874,10 @@ async function fetchFolger(keyword, limit, signal) {
 
 async function fetchONB(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 6000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.onb.ac.at/api/v1/search?q=${encodeURIComponent(keyword)}&imageOnly=true&rows=${limit}&start=0`,
-      { signal: s }
+      { signal },
+      6000
     );
     if (!res.ok) throw new Error('ONB failed');
     const data = await res.json();
@@ -3527,7 +3903,7 @@ async function fetchONB(keyword, limit, signal) {
 
 async function fetchNYPL(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.repo.nypl.org/api/v2/items/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&page=1`,
       { signal }
     );
@@ -3560,10 +3936,10 @@ async function fetchNYPL(keyword, limit, signal) {
 
 async function fetchMAK(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 6000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://sammlung.mak.at/api/v1/search?q=${encodeURIComponent(keyword)}&has_image=true&per_page=${limit}`,
-      { signal: s }
+      { signal },
+      6000
     );
     if (!res.ok) throw new Error('MAK failed');
     const data = await res.json();
@@ -3589,10 +3965,10 @@ async function fetchMAK(keyword, limit, signal) {
 
 async function fetchMNA(keyword, limit, signal) {
   try {
-    const s = withTimeout(signal, 6000);
-    const res = await fetch(
+    const res = await safeFetch(
       `https://mna.inah.gob.mx/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
-      { signal: s }
+      { signal },
+      6000
     );
     if (!res.ok) throw new Error('MNA failed');
     const data = await res.json();
@@ -3621,7 +3997,7 @@ async function fetchMNA(keyword, limit, signal) {
 
 async function fetchMia(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://search.artsmia.org/?q=${encodeURIComponent(keyword)}&size=${limit}`,
       { signal }
     );
@@ -3650,7 +4026,7 @@ async function fetchMia(keyword, limit, signal) {
 
 async function fetchLACMA(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://collections.lacma.org/api/search?q=${encodeURIComponent(keyword)}&f[]=has_image:true&f[]=public_domain:true&rows=${limit}&start=0`,
       { signal }
     );
@@ -3678,7 +4054,7 @@ async function fetchLACMA(keyword, limit, signal) {
 
 async function fetchMunch(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.munchmuseet.no/api/v1/works?q=${encodeURIComponent(keyword)}&limit=${limit}&hasImage=true`,
       { signal }
     );
@@ -3706,7 +4082,7 @@ async function fetchMunch(keyword, limit, signal) {
 
 async function fetchMauritshuis(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.mauritshuis.nl/api/collection/search?query=${encodeURIComponent(keyword)}&limit=${limit}&imageAvailable=true`,
       { signal }
     );
@@ -3735,7 +4111,7 @@ async function fetchMauritshuis(keyword, limit, signal) {
 async function fetchNationalmuseumSE(keyword, limit, signal) {
   // Swedish national museum via Wikimedia Commons incategory:Nationalmuseum
   try {
-    const searchRes = await fetch(
+    const searchRes = await safeFetch(
       `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}+incategory:Nationalmuseum&srnamespace=6&srlimit=${limit}&format=json&origin=*`,
       { signal }
     );
@@ -3743,7 +4119,7 @@ async function fetchNationalmuseumSE(keyword, limit, signal) {
     const searchData = await searchRes.json();
     const titles = (searchData.query?.search || []).map(r => r.title);
     if (!titles.length) return [];
-    const infoRes = await fetch(
+    const infoRes = await safeFetch(
       `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles.join('|'))}&prop=imageinfo&iiprop=url|extmetadata&format=json&origin=*`,
       { signal }
     );
@@ -3776,7 +4152,7 @@ async function fetchNationalmuseumSE(keyword, limit, signal) {
 
 async function fetchNaturalis(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.biodiversitydata.nl/v2/specimen/search/?_search=${encodeURIComponent(keyword)}&_hasImage=true&_size=${limit}`,
       { signal }
     );
@@ -3807,7 +4183,7 @@ async function fetchNaturalis(keyword, limit, signal) {
 async function fetchNMAAHC(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NMAAHC`,
       { signal }
     );
@@ -3840,7 +4216,7 @@ async function fetchNMAAHC(keyword, limit, signal) {
 async function fetchNASM(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NASM`,
       { signal }
     );
@@ -3873,7 +4249,7 @@ async function fetchNASM(keyword, limit, signal) {
 async function fetchNationalZoo(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NZP`,
       { signal }
     );
@@ -3906,7 +4282,7 @@ async function fetchNationalZoo(keyword, limit, signal) {
 async function fetchFreerSackler(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=FSG`,
       { signal }
     );
@@ -3944,7 +4320,7 @@ async function fetchWhitney(keyword, limit, signal) {
 
     if (!STATE.whitneyCache.length ||
         cacheAge > 24 * 60 * 60 * 1000) {
-      const res = await fetch(
+      const res = await safeFetch(
         'https://raw.githubusercontent.com/whitneymuseum/open-access/master/collection/artworks.csv',
         { signal }
       );
@@ -3955,9 +4331,18 @@ async function fetchWhitney(keyword, limit, signal) {
         .map(h => h.replace(/"/g, '').trim());
       STATE.whitneyCache = lines.slice(1)
         .map(line => {
-          const vals = line.split(',');
+          // Proper CSV parse — handle quoted fields containing commas
+          const vals = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') { inQ = !inQ; continue; }
+            if (c === ',' && !inQ) { vals.push(cur.trim()); cur = ''; continue; }
+            cur += c;
+          }
+          vals.push(cur.trim());
           return Object.fromEntries(
-            headers.map((h, i) => [h, (vals[i] || '').replace(/"/g, '').trim()])
+            headers.map((h, i) => [h, (vals[i] || '').trim()])
           );
         })
         .filter(a => a.imageURL && a.imageURL.startsWith('http'))
@@ -3992,7 +4377,7 @@ async function fetchWhitney(keyword, limit, signal) {
 
 async function fetchGBIFLiterature(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.gbif.org/v1/occurrence/search?q=${encodeURIComponent(keyword)}&mediaType=StillImage&basisOfRecord=LITERATURE&limit=${limit}`,
       { signal }
     );
@@ -4024,7 +4409,7 @@ async function fetchGBIFLiterature(keyword, limit, signal) {
 async function fetchIDigBio(keyword, limit, signal) {
   try {
     const rq = encodeURIComponent(JSON.stringify({ hasImage: true }));
-    const res = await fetch(
+    const res = await safeFetch(
       `https://search.idigbio.org/v2/search/media?rq=${rq}&q=${encodeURIComponent(keyword)}&limit=${limit}`,
       { signal }
     );
@@ -4058,7 +4443,7 @@ async function fetchIDigBio(keyword, limit, signal) {
 // ── Phase B: ALA ── Atlas of Living Australia images ─────────────────────
 async function fetchALA(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://biocache.ala.org.au/ws/occurrences/search?q=${encodeURIComponent(keyword)}&fq=multimedia:Image&pageSize=${limit}&fl=uuid,scientificName,vernacularName,stateProvince,images`,
       { signal }
     );
@@ -4098,7 +4483,7 @@ async function fetchALA(keyword, limit, signal) {
 // ── Phase D: NASA Images Library ─────────────────────────────────────────
 async function fetchNASAImages(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
       { signal }
     );
@@ -4153,7 +4538,7 @@ async function fetchNHMLondon(keyword, limit, signal) {
       `?resource_id=05ff2255-c38a-40c9-b657-4ccb55ab2feb` +
       `&q=${encodeURIComponent(keyword)}` +
       `&limit=${limit * 3}`;
-    const res = await fetch(url, { signal });
+    const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error(`NHM fetch failed: ${res.status}`);
     const data = await res.json();
     if (!data.success) throw new Error('NHM API returned success:false');
@@ -4220,7 +4605,7 @@ async function fetchScottishNational(keyword, limit, signal) {
 
 async function fetchArchiveMaps(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image+AND+subject:map&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`,
       { signal }
     );
@@ -4251,7 +4636,7 @@ async function fetchOpenLibrarySubjects(keyword, limit, signal) {
   if (keyword.length < 4) return [];
   try {
     const slug = keyword.toLowerCase().replace(/\s+/g, '_');
-    const res = await fetch(
+    const res = await safeFetch(
       `https://openlibrary.org/subjects/${encodeURIComponent(slug)}.json?limit=${limit}`,
       { signal }
     );
@@ -4280,7 +4665,7 @@ async function fetchOpenLibrarySubjects(keyword, limit, signal) {
 
 async function fetchAGO(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.ago.ca/api/collection/search?q=${encodeURIComponent(keyword)}&limit=${limit}&type=artwork`,
       { signal }
     );
@@ -4309,7 +4694,7 @@ async function fetchAGO(keyword, limit, signal) {
 
 async function fetchPEM(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.pem.org/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
       { signal }
     );
@@ -4338,7 +4723,7 @@ async function fetchPEM(keyword, limit, signal) {
 
 async function fetchNPG(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.npg.org.uk/api/search?query=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
       { signal }
     );
@@ -4367,7 +4752,7 @@ async function fetchNPG(keyword, limit, signal) {
 
 async function fetchLouvreAD(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://www.louvreabudhabi.ae/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
       { signal }
     );
@@ -4402,7 +4787,7 @@ async function fetchLouvreAD(keyword, limit, signal) {
 async function fetchUnsplash(keyword, limit, signal) {
   if (!STATE.unsplashKey) return [];
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=${Math.min(limit, 30)}&client_id=${STATE.unsplashKey}`,
       { signal }
     );
@@ -4435,7 +4820,7 @@ async function fetchUnsplash(keyword, limit, signal) {
 /* Bodleian Libraries (Oxford) — no key, best-effort CORS */
 async function fetchBodleian(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://digital.bodleian.ox.ac.uk/api/v1/search/?q=${encodeURIComponent(keyword)}&rows=${limit}&start=0&t=image`,
       { signal }
     );
@@ -4468,7 +4853,7 @@ async function fetchBodleian(keyword, limit, signal) {
 /* Bayerische Staatsbibliothek / BSB Munich — no key, best-effort CORS */
 async function fetchBSB(keyword, limit, signal) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://api.digitale-sammlungen.de/search/v1/json?q=${encodeURIComponent(keyword)}&size=${limit}&page=0`,
       { signal }
     );
@@ -4506,7 +4891,7 @@ async function fetchCUDL(keyword, limit, signal) {
   if (cached) return cached;
   // Fall back to direct API (may fail due to CORS)
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       `https://services.cudl.lib.cam.ac.uk/v1/search?query=${encodeURIComponent(keyword)}&start=1&end=${limit}`,
       { signal }
     );
@@ -4540,6 +4925,32 @@ async function fetchCUDL(keyword, limit, signal) {
   }
 }
 
+/* ── Archive.org collection adapter (no key needed) ── */
+async function fetchArchiveCollection(collection, keyword, limit, signal) {
+  try {
+    const url = `https://archive.org/advancedsearch.php?q=collection:(${encodeURIComponent(collection)})+AND+(${encodeURIComponent(keyword)})&fl=identifier,title,description&output=json&rows=${limit}&sort=downloads+desc`;
+    const res = await safeFetch(url, { signal });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.response?.docs || [])
+      .map(doc => ({
+        id:          `ia_${collection}_${doc.identifier}`,
+        url:         `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`,
+        thumb:       `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`,
+        title:       doc.title || 'Archive.org item',
+        description: doc.description ? String(Array.isArray(doc.description) ? doc.description[0] : doc.description).slice(0, 200) : '',
+        source:      'ia_' + collection,
+        sourceUrl:   `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
+        year:        null, tags: [], colors: [], aiTags: [],
+      }))
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    return [];
+  }
+}
+
 /* Generic IIIF Content Search adapter — used by manifest-loaded sources */
 async function fetchIIIFCollection(config, keyword, limit, signal) {
   try {
@@ -4557,7 +4968,7 @@ async function fetchIIIFCollection(config, keyword, limit, signal) {
     const extra = extraParams ? `&${extraParams}` : '';
     const limitParam = hasPerPage ? '' : `&limit=${limit}`;
     const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}${limitParam}${extra}`;
-    const res = await fetch(url, { signal });
+    const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
     const data = await res.json();
 
@@ -4637,7 +5048,7 @@ async function fetchIIIFSearch(config, keyword, limit, signal) {
   try {
     const qp = config.queryParam || 'q';
     const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}&limit=${limit}`;
-    const res = await fetch(url, { signal });
+    const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error(`IIIF Search ${config.id} failed: ${res.status}`);
     const data = await res.json();
 
@@ -4730,6 +5141,8 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
     signal = localAC.signal;
   } else {
     if (STATE.abortController) STATE.abortController.abort();
+    // Flush any pending health write before starting a new search
+    if (_healthWriteTimer) { clearTimeout(_healthWriteTimer); _flushSourceHealth(); }
     STATE.abortController = new AbortController();
     signal = STATE.abortController.signal;
   }
@@ -4742,7 +5155,9 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
   // Use realistic productive source count, not total registered count.
   // ~60 sources reliably return results on any query.
   // This ensures the slider value matches actual images shown.
-  const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+  // Dynamic registry can push active sources well beyond 155 → scale distribution
+  const dynamicActive = selectDynamicSources(keyword, 150).length;
+  const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
   const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const fetchBatch = perSource + 4;
 
@@ -4750,8 +5165,30 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
   const all = [];
   const exactQueryClass = classifyQuery(keyword);
 
+  // Reset all source miss counters so each search starts fresh
+  for (const key of Object.keys(STATE.sourceHealth)) {
+    STATE.sourceHealth[key].misses = 0;
+  }
+  updateSourcesActiveCounter();
+
+  // Track which sources had at least one successful call this search,
+  // so variant calls returning empty don't snowball misses.
+  const sourceHitThisSearch = new Set();
+
   const onSourceResult = sourceName => items => {
     if (signal.aborted) return;
+
+    // Record health using RAW count (before exact-mode filtering)
+    const rawCount = (items || []).length;
+    if (rawCount > 0) {
+      sourceHitThisSearch.add(sourceName);
+      recordSourceResult(sourceName, rawCount);
+    } else if (!sourceHitThisSearch.has(sourceName)) {
+      // Only record a miss if no variant call for this source has hit yet
+      recordSourceResult(sourceName, 0);
+    }
+    updateSourcesActiveCounter();
+
     // Layer 2: hard gate in exact mode — discard items with zero keyword presence
     if (STATE.searchMode === 'exact' && items && items.length) {
       const terms = keyword.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -4760,8 +5197,6 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
         return terms.some(t => hay.includes(t));
       });
     }
-    recordSourceResult(sourceName, (items || []).length);
-    updateSourcesActiveCounter();
     if (!items || !items.length) return;
     const fresh = items.filter(item => !seenIds.has(item.id));
     fresh.forEach(item => seenIds.add(item.id));
@@ -4934,6 +5369,16 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('fitzwilliam',             fetchFitzwilliam(keyword,            Math.max(3, perSource), signal)).then(onSourceResult('fitzwilliam')).catch(() => {}),
     callIfHealthy('national_gallery_london', fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal)).then(onSourceResult('national_gallery_london')).catch(() => {}),
     callIfHealthy('scottish_national',       fetchScottishNational(keyword,       Math.max(3, perSource), signal)).then(onSourceResult('scottish_national')).catch(() => {}),
+    // ── DYNAMIC REGISTRY — 200+ Wikimedia cats, 40+ Archive.org collections,
+    //    4000+ Europeana providers, 4000+ DPLA hubs (when keys set) ──────────
+    ...selectDynamicSources(keyword, 150).map(entry => {
+      const adapter = ADAPTERS[entry.adapter];
+      if (!adapter) return Promise.resolve();
+      return adapter(entry.config, keyword, Math.max(2, Math.ceil(perSource / 3)), signal)
+        .then(r => (r || []).map(i => ({ ...i, source: i.source || entry.id })))
+        .then(onSourceResult(entry.id))
+        .catch(() => {});
+    }),
   ]);
 
   if (!isSilent && !all.length) showEmptyState();
@@ -6042,7 +6487,9 @@ function buildFuseIndex() {
     STATE.fuseIndex = null;
     return;
   }
-  STATE.fuseIndex = new Fuse(STATE.results, {
+  // Cap at 2000 to keep the index fast on large result sets
+  const items = STATE.results.length > 2000 ? STATE.results.slice(0, 2000) : STATE.results;
+  STATE.fuseIndex = new Fuse(items, {
     keys: ['title', 'tags', 'source', 'description'],
     threshold: 0.35,
     ignoreLocation: true,
@@ -6346,8 +6793,12 @@ async function runSearch(query, forceRefresh = false) {
 
   STATE.loading = true;
   STATE.currentPage = 1;
+  STATE._searchGen++;
+  const gen = STATE._searchGen;
   STATE.results = [];          // immediately clear stale results (race-condition fix)
   STATE._failedImages = 0;     // reset failed image counter
+  STATE.fuseIndex = null;      // reset Fuse index for fresh search
+  clearTimeout(_fuseFilterTimer);
   document.getElementById('more-container').style.display = 'none';
   clearGrid();
   showLoading();
@@ -6417,6 +6868,8 @@ async function runSearch(query, forceRefresh = false) {
   // Fetch all sources progressively — starts immediately with raw query
   const all = await fetchAll(STATE.keywords, STATE.imageCount);
   _restore();
+  // Guard: if a newer search was triggered while awaiting, discard this batch
+  if (gen !== STATE._searchGen) return;
   STATE.results = all.slice(0, CONSTANTS.MAX_RESULTS);
   cacheSet(STATE.query, STATE.results, STATE.keywords);
 
@@ -6765,10 +7218,13 @@ function initFabricOverlay() {
 
     setupFabricTools(_fabricCanvas, '.sketch-tool', 'sketch-clear', 'sketch-export');
 
-    document.getElementById('sketch-close').addEventListener('click', () => {
+    const closeBtn = document.getElementById('sketch-close');
+    const _onClose = () => {
       destroyFabricOverlay();
       btnSketch.classList.remove('active');
-    });
+    };
+    closeBtn.replaceWith(closeBtn.cloneNode(true));
+    document.getElementById('sketch-close').addEventListener('click', _onClose);
 
     window.addEventListener('resize', positionFabricOverlay);
   });
@@ -6847,25 +7303,24 @@ const boardPositions = {};
 // Single shared drag/resize state — avoids per-card document listener accumulation
 const boardInteract = { drag: null, resize: null };
 (function installBoardListeners() {
-  document.addEventListener('mousemove', e => {
+  function onMove(cx, cy) {
     if (boardInteract.drag) {
       const { card, startX, startY, origLeft, origTop } = boardInteract.drag;
       const boardEl = document.getElementById('board-canvas');
       const bw = boardEl.offsetWidth, bh = boardEl.offsetHeight;
       const cw = card.offsetWidth,   ch = card.offsetHeight;
-      card.style.left = Math.min(bw - cw, Math.max(0, origLeft + (e.clientX - startX))) + 'px';
-      card.style.top  = Math.min(bh - ch, Math.max(0, origTop  + (e.clientY - startY))) + 'px';
+      card.style.left = Math.min(bw - cw, Math.max(0, origLeft + (cx - startX))) + 'px';
+      card.style.top  = Math.min(bh - ch, Math.max(0, origTop  + (cy - startY))) + 'px';
     }
     if (boardInteract.resize) {
       const { card, startX, startW } = boardInteract.resize;
-      card.style.width = Math.max(80, Math.min(600, startW + (e.clientX - startX))) + 'px';
+      card.style.width = Math.max(80, Math.min(600, startW + (cx - startX))) + 'px';
     }
-  });
-  document.addEventListener('mouseup', () => {
+  }
+  function onEnd() {
     if (boardInteract.drag) {
       const dc = boardInteract.drag.card;
       const di = boardCardMap.get(dc);
-      // Snap to grid if enabled
       if (_boardSnapEnabled) {
         dc.style.left = snapToGrid(parseInt(dc.style.left, 10) || 0) + 'px';
         dc.style.top  = snapToGrid(parseInt(dc.style.top,  10) || 0) + 'px';
@@ -6882,7 +7337,18 @@ const boardInteract = { drag: null, resize: null };
       boardInteract.drag = null;
     }
     boardInteract.resize = null;
-  });
+  }
+  document.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchmove', e => {
+    if (boardInteract.drag || boardInteract.resize) {
+      e.preventDefault();
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }
+  }, { passive: false });
+  document.addEventListener('touchend', onEnd);
+  document.addEventListener('touchcancel', onEnd);
 })();
 
 function initBoardView() {
@@ -6986,6 +7452,18 @@ function createBoardCard(item, x, y, container, w = 200) {
     card.style.zIndex = '100';
     e.preventDefault();
   });
+  card.addEventListener('touchstart', e => {
+    if (e.target === handle) return;
+    const t = e.touches[0];
+    boardInteract.drag = {
+      card,
+      startX:   t.clientX,
+      startY:   t.clientY,
+      origLeft: parseInt(card.style.left, 10),
+      origTop:  parseInt(card.style.top,  10),
+    };
+    card.style.zIndex = '100';
+  }, { passive: true });
 
   // Resize handle — bottom-right drag
   handle.addEventListener('mousedown', e => {
@@ -6993,6 +7471,11 @@ function createBoardCard(item, x, y, container, w = 200) {
     e.preventDefault();
     e.stopPropagation();
   });
+  handle.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    boardInteract.resize = { card, startX: t.clientX, startW: card.offsetWidth };
+    e.stopPropagation();
+  }, { passive: true });
 
   // Double-click — open concept panel for this card's item
   card.addEventListener('dblclick', e => {
@@ -7089,11 +7572,54 @@ async function captureGridSnapshot() {
   }
 }
 
+/* -- Ollama single-turn (OpenAI-compatible) -- */
+async function _callOllama(prompt, base64, mimeType) {
+  const base = (STATE.ollamaEndpoint || 'http://localhost:11434').replace(/\/$/, '');
+  const model = STATE.ollamaModel || 'llava';
+  const userContent = [];
+  if (base64) userContent.push({ type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } });
+  userContent.push({ type: 'text', text: prompt });
+  const res = await fetch(base + '/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, max_tokens: 600, messages: [{ role: 'user', content: userContent }] }),
+  });
+  if (!res.ok) throw new Error('Ollama ' + res.status);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+/* -- Ollama multi-turn (OpenAI-compatible) -- */
+async function _callOllamaChat(history, systemPrompt, base64, mimeType) {
+  const base = (STATE.ollamaEndpoint || 'http://localhost:11434').replace(/\/$/, '');
+  const model = STATE.ollamaModel || 'llava';
+  const messages = [{ role: 'system', content: systemPrompt }];
+  history.forEach((m, idx) => {
+    if (idx === 0 && base64) {
+      messages.push({ role: 'user', content: [
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64}` } },
+        { type: 'text', text: m.content },
+      ]});
+    } else {
+      messages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+    }
+  });
+  const res = await fetch(base + '/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, max_tokens: 600, messages }),
+  });
+  if (!res.ok) throw new Error('Ollama ' + res.status);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
 /* -- callAI: central dispatcher — routes to active provider -- */
 async function callAI(prompt, base64 = null, mimeType = 'image/jpeg') {
   const provider = STATE.aiProvider || 'gemini';
   if (provider === 'claude' && STATE.claudeKey)  return _callClaude(prompt, base64, mimeType);
   if (provider === 'openai'  && STATE.openaiKey) return _callOpenAI(prompt, base64, mimeType);
+  if (provider === 'ollama')                     return _callOllama(prompt, base64, mimeType);
   if (!STATE.geminiKey) throw new Error('no ai key — add a key in api keys panel');
   return _callGeminiSingle(prompt, base64, mimeType);
 }
@@ -7103,6 +7629,7 @@ async function callAIChat(history, systemPrompt, base64 = null, mimeType = 'imag
   const provider = STATE.aiProvider || 'gemini';
   if (provider === 'claude' && STATE.claudeKey)  return _callClaudeChat(history, systemPrompt, base64, mimeType);
   if (provider === 'openai'  && STATE.openaiKey) return _callOpenAIChat(history, systemPrompt, base64, mimeType);
+  if (provider === 'ollama')                     return _callOllamaChat(history, systemPrompt, base64, mimeType);
   if (!STATE.geminiKey) throw new Error('no ai key — add a key in api keys panel');
   return _callGeminiChat(history, systemPrompt, base64, mimeType);
 }
@@ -7388,20 +7915,35 @@ function syncBoardOverlay() {
   const overlay = document.getElementById('board-overlay');
   const header  = document.getElementById('board-overlay-header');
   let drag = null;
-  header.addEventListener('mousedown', e => {
-    if (e.target.tagName === 'BUTTON') return;
+  function startDrag(cx, cy) {
     const rect = overlay.getBoundingClientRect();
-    drag = { startX: e.clientX, startY: e.clientY, origLeft: rect.left, origTop: rect.top };
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
+    drag = { startX: cx, startY: cy, origLeft: rect.left, origTop: rect.top };
+  }
+  function moveDrag(cx, cy) {
     if (!drag) return;
     overlay.style.right  = 'auto';
     overlay.style.bottom = 'auto';
-    overlay.style.left   = Math.max(0, drag.origLeft + (e.clientX - drag.startX)) + 'px';
-    overlay.style.top    = Math.max(0, drag.origTop  + (e.clientY - drag.startY)) + 'px';
+    overlay.style.left   = Math.max(0, drag.origLeft + (cx - drag.startX)) + 'px';
+    overlay.style.top    = Math.max(0, drag.origTop  + (cy - drag.startY)) + 'px';
+  }
+  function endDrag() { drag = null; }
+  header.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    startDrag(e.clientX, e.clientY);
+    e.preventDefault();
   });
-  document.addEventListener('mouseup', () => { drag = null; });
+  header.addEventListener('touchstart', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    const t = e.touches[0];
+    startDrag(t.clientX, t.clientY);
+  }, { passive: true });
+  document.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+  document.addEventListener('touchmove', e => {
+    if (drag) { const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }
+  }, { passive: true });
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+  document.addEventListener('touchcancel', endDrag);
 })();
 
 document.getElementById('board-overlay-close').addEventListener('click', closeBoardOverlay);
@@ -8464,6 +9006,18 @@ const KEY_SOURCES = [
     aiProvider: true,
     hasEndpoint: true,
   },
+  {
+    id:        'ollama',
+    name:      'Ollama (local)',
+    desc:      'run models locally — no api key needed · use vision models (llava, llama3.2-vision) for best results',
+    imageCount: 0,
+    alwaysOn:  true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: 'https://ollama.com/download',
+    aiProvider: true,
+    isOllama:  true,
+  },
   // ── Batch 4 sources ────────────────────────────────────
   {
     id:        'walters',
@@ -8820,16 +9374,23 @@ function getSourceStats() {
   const db = Array.from(deduped.values());
   const noKey = db.filter(s => s.alwaysOn);
   const withKey = db.filter(s => !s.alwaysOn);
-  // Total sources in the fetch engine (ALL_SOURCES + manifest runtime sources)
+
+  // Dynamic registry (Wikimedia cats, Archive.org collections, Europeana/DPLA providers)
+  const dynNoKey  = DYNAMIC_REGISTRY.filter(s => !s.keyRequired);
+  const dynAll    = DYNAMIC_REGISTRY;
+  const dynNoKeyImages  = dynNoKey.reduce((a, s) => a + (s.imageCount || 50000), 0);
+  const dynAllImages    = dynAll.reduce((a, s) =>  a + (s.imageCount || 50000), 0);
+
+  // Total sources in the fetch engine (ALL_SOURCES + manifest + dynamic registry)
   const manifestActive = (STATE.manifestSources || []).length;
-  const totalFetchSources = ALL_SOURCES.length + manifestActive;
+  const totalFetchSources = ALL_SOURCES.length + manifestActive + DYNAMIC_REGISTRY.length;
   return {
-    totalSources:       db.length,
+    totalSources:       db.length + DYNAMIC_REGISTRY.length,
     totalFetchSources:  totalFetchSources,
     noKeySources:       noKey.length,
     keySources:         withKey.length,
-    totalImagesNoKey:   noKey.reduce((a, s) => a + (s.imageCount || 0), 0),
-    totalImagesWithKey: db.reduce((a, s) => a + (s.imageCount || 0), 0),
+    totalImagesNoKey:   noKey.reduce((a, s) => a + (s.imageCount || 0), 0) + dynNoKeyImages,
+    totalImagesWithKey: db.reduce((a, s) => a + (s.imageCount || 0), 0) + dynAllImages,
     allSources:         db,
   };
 }
@@ -8863,8 +9424,8 @@ function getSourceStats() {
     prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
     nextBtn.style.display    = step === TOTAL - 1 ? 'none' : '';
 
-    // animate stat counters when landing on step 3
-    if (step === 3) {
+    // animate stat counters when landing on step 4 (shifted +1 by hero slide)
+    if (step === 4) {
       document.querySelectorAll('#ob-stats-row [data-target]').forEach(el => {
         animateCount(el, Number(el.dataset.target));
       });
@@ -8874,15 +9435,25 @@ function getSourceStats() {
   function populateStats() {
     const s = getSourceStats();
 
-    // hero counter (step 0)
+    // Step 0 — hero statement slide
+    const heroSrcEl = document.getElementById('ob-hero-src-count');
+    const heroImgEl = document.getElementById('ob-hero-img-count');
+    if (heroSrcEl) heroSrcEl.textContent = s.totalFetchSources.toLocaleString();
+    if (heroImgEl) heroImgEl.textContent = formatCount(s.totalImagesNoKey);
+
+    // Step 1 — hero counter
     const heroEl = document.getElementById('ob-hero-count');
     animateCount(heroEl, s.totalImagesWithKey);
 
-    // source count in step 0 tagline
+    // source count in step 1 tagline
     const srcCountEl = document.getElementById('ob-source-count');
     if (srcCountEl) srcCountEl.textContent = s.totalSources;
 
-    // stats row (step 3)
+    // Persistent top info bar
+    const sibEl = document.getElementById('sib-text');
+    if (sibEl) sibEl.textContent = `${s.totalFetchSources.toLocaleString()} sources · ${formatCount(s.totalImagesNoKey)} images available — add api keys to unlock ${formatCount(s.totalImagesWithKey)}`;
+
+    // stats row (step 4)
     const statsRow = document.getElementById('ob-stats-row');
     const fetchCountEl = document.getElementById('ob-fetch-count');
     if (fetchCountEl) fetchCountEl.textContent = s.totalFetchSources;
@@ -8993,10 +9564,97 @@ function getSourceStats() {
     if (e.key === 'Escape')     close();
   });
 
+  // Touch swipe nav for onboarding
+  (function installOnboardingSwipe() {
+    let sx = 0, sy = 0;
+    const inner = document.querySelector('.ob-inner') || el;
+    inner.addEventListener('touchstart', e => {
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    inner.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - sx;
+      const dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        dx < 0 ? goTo(step + 1) : goTo(step - 1);
+      }
+    }, { passive: true });
+  })();
+
   // expose for init check
   window._showOnboarding = show;
   window._refreshOnboardingStats = populateStats;
 })();
+
+/* Persistent top info bar — updated on load & after dynamic discovery */
+function updateInfoBar() {
+  const sibEl = document.getElementById('sib-text');
+  if (!sibEl) return;
+  const s = getSourceStats();
+  sibEl.textContent = `${s.totalFetchSources.toLocaleString()} sources · ${formatCount(s.totalImagesNoKey)} images available`;
+}
+updateInfoBar();
+
+/* API status badge + dropdown on info bar */
+function updateApiStatus() {
+  const badge = document.getElementById('sib-api-badge');
+  const countEl = document.getElementById('sib-api-count');
+  const listEl = document.getElementById('sib-dd-list');
+  if (!badge || !listEl) return;
+
+  // Gather all key-required (non-AI) sources
+  const keyed = KEY_SOURCES.filter(s => !s.alwaysOn && !s.aiProvider && s.getKeyUrl);
+  const missing = keyed.filter(s => !STATE[s.stateKey]);
+  const connected = keyed.filter(s => !!STATE[s.stateKey]);
+  const allDone = missing.length === 0;
+
+  // Badge appearance
+  badge.classList.toggle('all-connected', allDone);
+  countEl.textContent = allDone ? '✓' : `${missing.length}`;
+
+  // Build dropdown rows
+  listEl.innerHTML = '';
+  // Missing first
+  missing.forEach(src => {
+    const row = document.createElement('div');
+    row.className = 'sib-dd-row';
+    row.innerHTML = `<span class="sib-dd-name">${src.name}</span>` +
+      `<span class="sib-dd-status missing">not set</span>` +
+      `<a class="sib-dd-link" href="${src.getKeyUrl}" target="_blank" rel="noopener noreferrer">get key ↗</a>`;
+    listEl.appendChild(row);
+  });
+  // Connected after
+  connected.forEach(src => {
+    const row = document.createElement('div');
+    row.className = 'sib-dd-row connected';
+    row.innerHTML = `<span class="sib-dd-name">${src.name}</span>` +
+      `<span class="sib-dd-status active">✓ active</span>` +
+      `<a class="sib-dd-link" href="${src.getKeyUrl}" target="_blank" rel="noopener noreferrer">manage ↗</a>`;
+    listEl.appendChild(row);
+  });
+
+  // If all connected show a congrats line
+  if (allDone && listEl.children.length) {
+    const note = document.createElement('div');
+    note.style.cssText = 'padding:8px 12px;font-size:9px;color:#4a9;letter-spacing:0.04em;';
+    note.textContent = 'all database keys connected — full access unlocked';
+    listEl.prepend(note);
+  }
+}
+
+// Toggle dropdown
+(function initApiDropdown() {
+  const badge = document.getElementById('sib-api-badge');
+  const dd = document.getElementById('sib-api-dropdown');
+  if (!badge || !dd) return;
+  badge.addEventListener('click', e => {
+    e.stopPropagation();
+    dd.classList.toggle('hidden');
+  });
+  document.addEventListener('click', e => {
+    if (!dd.contains(e.target) && e.target !== badge) dd.classList.add('hidden');
+  });
+})();
+updateApiStatus();
 
 /* Track DOM refs for badge/input per source */
 const keyRowRefs = {};
@@ -9006,6 +9664,7 @@ function updateKeysDot() {
     .filter(s => !s.alwaysOn)
     .some(s => STATE[s.stateKey]);
   document.getElementById('keys-dot').style.display = anySet ? 'inline-block' : 'none';
+  if (typeof updateApiStatus === 'function') updateApiStatus();
 }
 
 function setAIProvider(p) {
@@ -9022,34 +9681,55 @@ function buildKeyRows() {
   const container = document.getElementById('keys-rows-container');
   container.innerHTML = '';
 
-  let aiSectionInjected = false;
+  // ── AI PROVIDER section (always at top) ──
+  const aiSources = KEY_SOURCES.filter(s => s.aiProvider);
+  const dbSources = KEY_SOURCES.filter(s => !s.aiProvider);
 
-  KEY_SOURCES.forEach(src => {
-    // Inject AI section header + provider pills before first AI key row
-    if (src.aiProvider && !aiSectionInjected) {
-      aiSectionInjected = true;
-      const divider = document.createElement('div');
-      divider.className = 'divider';
-      divider.style.margin = '14px 0 8px';
-      container.appendChild(divider);
-      const secLabel = document.createElement('div');
-      secLabel.className = 'section-label';
-      secLabel.style.marginBottom = '6px';
-      secLabel.textContent = 'ai provider';
-      container.appendChild(secLabel);
-      const pills = document.createElement('div');
-      pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;';
-      ['gemini', 'claude', 'openai'].forEach(p => {
-        const pill = document.createElement('button');
-        pill.className = 'btn ai-provider-pill' + (STATE.aiProvider === p ? ' active' : '');
-        pill.dataset.provider = p;
-        pill.textContent = p;
-        pill.addEventListener('click', () => setAIProvider(p));
-        pills.appendChild(pill);
-      });
-      container.appendChild(pills);
-    }
+  const aiLabel = document.createElement('div');
+  aiLabel.className = 'section-label';
+  aiLabel.style.marginBottom = '4px';
+  aiLabel.textContent = 'ai vision provider';
+  container.appendChild(aiLabel);
 
+  const aiHint = document.createElement('div');
+  aiHint.className = 'keys-panel-subheader';
+  aiHint.style.cssText = 'margin:-2px 0 8px;font-size:9px;';
+  aiHint.textContent = 'for optimal results use vision-enabled models (gemini, gpt-4o, llava, claude sonnet)';
+  container.appendChild(aiHint);
+
+  const pills = document.createElement('div');
+  pills.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;';
+  ['gemini', 'claude', 'openai', 'ollama'].forEach(p => {
+    const pill = document.createElement('button');
+    pill.className = 'btn ai-provider-pill' + (STATE.aiProvider === p ? ' active' : '');
+    pill.dataset.provider = p;
+    pill.textContent = p;
+    pill.addEventListener('click', () => setAIProvider(p));
+    pills.appendChild(pill);
+  });
+  container.appendChild(pills);
+
+  // Render AI source rows
+  aiSources.forEach(src => buildSourceRow(container, src));
+
+  // ── DATABASE SOURCES section ──
+  const dbDivider = document.createElement('div');
+  dbDivider.className = 'divider';
+  dbDivider.style.margin = '14px 0 8px';
+  container.appendChild(dbDivider);
+  const dbLabel = document.createElement('div');
+  dbLabel.className = 'section-label';
+  dbLabel.style.marginBottom = '6px';
+  dbLabel.textContent = 'databases';
+  container.appendChild(dbLabel);
+
+  dbSources.forEach(src => buildSourceRow(container, src));
+
+  // re-apply view filter after rebuild
+  applySourceFilter();
+}
+
+function buildSourceRow(container, src) {
     const row = document.createElement('div');
     row.className = 'key-source-row';
     row.dataset.sourceId = src.id;
@@ -9065,8 +9745,13 @@ function buildKeyRows() {
 
     const isActive = src.alwaysOn || Boolean(src.stateKey && STATE[src.stateKey]);
     const badge = document.createElement('span');
-    badge.className = 'key-status-badge ' + (isActive ? 'badge-active' : 'badge-inactive') + (src.cors ? ' badge-cors' : '');
-    badge.textContent = isActive ? (src.cors ? '✓ active (cors)' : '✓ active') : 'not set';
+    const badgeActive = src.isOllama ? (STATE.aiProvider === 'ollama') : isActive;
+    badge.className = 'key-status-badge ' + (badgeActive ? 'badge-active' : 'badge-inactive') + (src.cors ? ' badge-cors' : '');
+    if (src.isOllama) {
+      badge.textContent = STATE.aiProvider === 'ollama' ? '\u2713 ' + (STATE.ollamaModel || 'llava') : 'click to configure';
+    } else {
+      badge.textContent = isActive ? (src.cors ? '\u2713 active (cors)' : '\u2713 active') : 'not set';
+    }
     if (src.cors) badge.title = 'May be blocked on some networks';
 
     // Source toggle button (left of name) — only for sources in ALL_SOURCES
@@ -9092,7 +9777,7 @@ function buildKeyRows() {
     if (src.getKeyUrl) {
       const link = document.createElement('a');
       link.className = 'key-get-link';
-      link.textContent = '↗ get key';
+      link.textContent = src.isOllama ? '\u2197 download' : '\u2197 get key';
       link.href = src.getKeyUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
@@ -9108,14 +9793,56 @@ function buildKeyRows() {
     row.appendChild(top);
     row.appendChild(desc);
 
-    // --- input row (key-required, or alwaysOn with optional upgrade key) ---
+    // --- input row (key-required, alwaysOn with optional upgrade key, or Ollama config) ---
     let inputRow = null;
     let inputEl = null;
-    if (!src.alwaysOn || src.optionalKey) {
+    if (!src.alwaysOn || src.optionalKey || src.isOllama) {
       inputRow = document.createElement('div');
       inputRow.className = 'key-source-input-row';
 
-      if (src.artsyDual) {
+      if (src.isOllama) {
+        // Ollama: endpoint + model name inputs (no API key needed)
+        const epInput = document.createElement('input');
+        epInput.type = 'text';
+        epInput.className = 'key-source-input';
+        epInput.placeholder = 'endpoint — default: http://localhost:11434';
+        epInput.autocomplete = 'off';
+        epInput.value = STATE.ollamaEndpoint !== 'http://localhost:11434' ? STATE.ollamaEndpoint : '';
+        epInput.style.marginBottom = '4px';
+
+        const modelInput = document.createElement('input');
+        modelInput.type = 'text';
+        modelInput.className = 'key-source-input';
+        modelInput.placeholder = 'model name — default: llava (vision-enabled)';
+        modelInput.autocomplete = 'off';
+        modelInput.value = STATE.ollamaModel !== 'llava' ? STATE.ollamaModel : '';
+
+        const saveOllama = () => {
+          const ep = epInput.value.trim() || 'http://localhost:11434';
+          const model = modelInput.value.trim() || 'llava';
+          STATE.ollamaEndpoint = ep;
+          STATE.ollamaModel = model;
+          localStorage.setItem('inspo_ollama_endpoint', ep);
+          localStorage.setItem('inspo_ollama_model', model);
+          setAIProvider('ollama');
+          badge.className = 'key-status-badge badge-active';
+          badge.textContent = '\u2713 ' + model;
+        };
+
+        epInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); saveOllama(); } });
+        modelInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.stopPropagation(); saveOllama(); } });
+
+        inputRow.appendChild(epInput);
+        inputRow.appendChild(modelInput);
+        inputEl = epInput;
+
+        // Click row → toggle config visibility
+        row.addEventListener('click', () => {
+          inputRow.classList.toggle('visible');
+          if (inputRow.classList.contains('visible')) epInput.focus();
+        });
+
+      } else if (src.artsyDual) {
         // Two-field input: client_id + client_secret
         const idInput = document.createElement('input');
         idInput.type = 'password';
@@ -9256,9 +9983,6 @@ function buildKeyRows() {
 
     keyRowRefs[src.id] = { badge, inputRow, inputEl };
     container.appendChild(row);
-  });
-  // re-apply view filter after rebuild
-  applySourceFilter();
 }
 
 /* Build rows on load */
@@ -9307,6 +10031,7 @@ if (viewFiltersEl) {
 document.getElementById('btn-export-keys').addEventListener('click', () => {
   const KEY_LIST = [
     'inspo_gemini_key', 'inspo_claude_key', 'inspo_openai_key', 'inspo_openai_endpoint',
+    'inspo_ollama_endpoint', 'inspo_ollama_model',
     'inspo_ai_provider', 'inspo_rijks_key', 'inspo_europeana_key',
     'inspo_harvard_key', 'inspo_smithsonian_key', 'inspo_pexels_key',
     'inspo_pixabay_key', 'inspo_trove_key', 'inspo_digitalnz_key',
@@ -9349,6 +10074,8 @@ document.getElementById('keys-import-input').addEventListener('change', e => {
       STATE.claudeKey      = localStorage.getItem('inspo_claude_key')      || null;
       STATE.openaiKey      = localStorage.getItem('inspo_openai_key')      || null;
       STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint') || '';
+      STATE.ollamaEndpoint = localStorage.getItem('inspo_ollama_endpoint') || 'http://localhost:11434';
+      STATE.ollamaModel    = localStorage.getItem('inspo_ollama_model')    || 'llava';
       STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')     || 'gemini';
       STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')   || null;
       STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')     || null;
@@ -10106,6 +10833,8 @@ document.getElementById('settings-import-input').addEventListener('change', e =>
       STATE.claudeKey      = localStorage.getItem('inspo_claude_key')      || null;
       STATE.openaiKey      = localStorage.getItem('inspo_openai_key')      || null;
       STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint') || '';
+      STATE.ollamaEndpoint = localStorage.getItem('inspo_ollama_endpoint') || 'http://localhost:11434';
+      STATE.ollamaModel    = localStorage.getItem('inspo_ollama_model')    || 'llava';
       STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')     || 'gemini';
       STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')   || null;
       STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')     || null;
@@ -10247,6 +10976,102 @@ async function loadSourceManifest() {
 
 loadSourceManifest();
 
+/* ============================================================
+   DYNAMIC SOURCE DISCOVERY — live provider enumeration
+   Runs at startup when API keys are available. Fetches the full
+   list of providers/hubs from aggregator APIs and adds them to
+   DYNAMIC_REGISTRY. No storage — purely in-memory.
+============================================================ */
+
+/* Europeana: discover all DATA_PROVIDER values via facet API */
+async function discoverEuropeanaProviders() {
+  if (!STATE.europeanaKey) return 0;
+  try {
+    const url = `https://api.europeana.eu/record/v2/search.json?wskey=${encodeURIComponent(STATE.europeanaKey)}&query=*&facet=DATA_PROVIDER&f.DATA_PROVIDER.facet.limit=10000&rows=0&profile=facets`;
+    const res = await fetch(url);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    const facet = (data.facets || []).find(f => f.name === 'DATA_PROVIDER');
+    if (!facet || !facet.fields) return 0;
+
+    const existingIds = new Set(Object.keys(EUROPEANA_PROVIDERS));
+    const existingDynamic = new Set(DYNAMIC_REGISTRY.map(s => s.id));
+    let added = 0;
+    for (const field of facet.fields) {
+      if (field.count < 50) continue;  // skip tiny providers for signal:noise
+      const id = 'euro_' + field.label.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+      if (existingIds.has(id) || existingDynamic.has(id)) continue;
+      DYNAMIC_REGISTRY.push({
+        id,
+        adapter: 'europeana_provider',
+        config:  { filterParam: 'DATA_PROVIDER', filterValue: field.label },
+        name:    field.label,
+        tags:    ['art', 'archives'],
+        keyRequired: 'europeanaKey',
+        imageCount: field.count,
+      });
+      added++;
+    }
+    return added;
+  } catch (e) {
+    console.debug('[insposearch] Europeana discovery failed:', e.message);
+    return 0;
+  }
+}
+
+/* DPLA: discover all provider.name values via facet API */
+async function discoverDPLAProviders() {
+  if (!STATE.dplaKey) return 0;
+  try {
+    const url = `https://api.dp.la/v2/items?api_key=${encodeURIComponent(STATE.dplaKey)}&facets=provider.name&page_size=0`;
+    const res = await fetch(url);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    const terms = data.facets?.['provider.name']?.terms || [];
+
+    const existingIds = new Set(Object.keys(DPLA_HUBS));
+    const existingDynamic = new Set(DYNAMIC_REGISTRY.map(s => s.id));
+    let added = 0;
+    for (const term of terms) {
+      if (term.count < 50) continue;
+      const id = 'dpla_' + term.term.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+      if (existingIds.has(id) || existingDynamic.has(id)) continue;
+      DYNAMIC_REGISTRY.push({
+        id,
+        adapter: 'dpla_hub',
+        config:  { provider: term.term },
+        name:    term.term,
+        tags:    ['archives', 'history'],
+        keyRequired: 'dplaKey',
+        imageCount: term.count,
+      });
+      added++;
+    }
+    return added;
+  } catch (e) {
+    console.debug('[insposearch] DPLA discovery failed:', e.message);
+    return 0;
+  }
+}
+
+/* Master discovery — runs once at startup, re-runs when keys change */
+async function discoverDynamicSources() {
+  const [euroCount, dplaCount] = await Promise.all([
+    discoverEuropeanaProviders(),
+    discoverDPLAProviders(),
+  ]);
+  const total = DYNAMIC_REGISTRY.length;
+  if (euroCount || dplaCount) {
+    console.log(`[insposearch] Discovery complete — ${euroCount} Europeana + ${dplaCount} DPLA providers. Total dynamic: ${total}`);
+  }
+  updateSourcesActiveCounter();
+  window._refreshOnboardingStats?.();
+  updateInfoBar();
+}
+
+// Run discovery after manifest loads (keys are loaded by then)
+discoverDynamicSources();
+
 console.log('[insposearch] Phase 10 — Settings Module ready.');
 
 // ── Mobile sidebar toggle ──────────────────────────────────
@@ -10267,6 +11092,16 @@ console.log('[insposearch] Phase 10 — Settings Module ready.');
 
   mobileBtn.addEventListener('click', openSidebar);
   backdrop.addEventListener('click', closeSidebar);
+
+  // Swipe-to-close sidebar on mobile
+  let swipeStartX = 0;
+  sidebar.addEventListener('touchstart', e => {
+    swipeStartX = e.touches[0].clientX;
+  }, { passive: true });
+  sidebar.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    if (dx < -60 && sidebar.classList.contains('mobile-open')) closeSidebar();
+  }, { passive: true });
 
   // Close sidebar when user triggers a search (taps search result area)
   document.getElementById('search-input')?.addEventListener('keydown', e => {
