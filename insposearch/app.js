@@ -72,7 +72,155 @@ const BADGE_META = {
   bsb:              ['bsb','bsb'],         cudl:             ['cudl','cambridge'],
   idigbio:          ['idigbio','idigbio'], ala:              ['ala','ala'],
   nasa_images:      ['nasa_images','nasa'],
+  musee_orsay:      ['musee_orsay','orsay'],     vangogh_museum:   ['vangogh_museum','van-gogh'],
+  khm:              ['khm','khm'],               belvedere:        ['belvedere','belvedere'],
+  staedel:          ['staedel','städel'],         rmfab:            ['rmfab','rmfab'],
+  guimet:           ['guimet','guimet'],          npm_taipei:       ['npm_taipei','taipei'],
+  galliera:         ['galliera','galliera'],       arts_decoratifs:  ['arts_decoratifs','arts-déco'],
+  centraal_museum:  ['centraal_museum','centraal'], textile_museum_tilburg: ['textile_museum_tilburg','textile-tilburg'],
+  wereldculturen:   ['wereldculturen','wereldcult'],dec_arts_prague:  ['dec_arts_prague','prague-deco'],
+  designmuseum_dk:   ['designmuseum_dk','design-dk'], boijmans:         ['boijmans','boijmans'],
+  museu_traje:      ['museu_traje','traje'],
+  kmska:            ['kmska','kmska'],           amsterdam_museum: ['amsterdam_museum','adam'],
+  ngi:              ['ngi','ngi'],               fries_museum:     ['fries_museum','fries'],
+  groeninge:        ['groeninge','groeninge'],   groninger:        ['groninger','groninger'],
+  moma_wd:          ['moma_wd','moma'],           rijksmuseum_twenthe: ['rijksmuseum_twenthe','twenthe'],
+  herzog_anton_ulrich: ['herzog_anton_ulrich','herzog'], galleria_palatina: ['galleria_palatina','palatina'],
+  lakenhal:         ['lakenhal','lakenhal'],      teylers:          ['teylers','teylers'],
+  alte_pinakothek:  ['alte_pinakothek','alte-pin'], quai_branly:     ['quai_branly','branly'],
 };
+
+// ── Phase H — 113 World Museum Collection Sources (data-driven config) ──
+const WD_PHASE_H = [
+  // UK (18)
+  { id:'nlw',               badge:'nlw',        name:'National Library of Wales',        cat:['museums','archives','art'],     region:'uk',      desc:'Artworks, photographs & manuscripts from Wales', count:18707 },
+  { id:'royal_collection',  badge:'royal',      name:'Royal Collection',                 cat:['museums','art'],                region:'uk',      desc:'Paintings, drawings & decorative arts from the British Crown', count:4984 },
+  { id:'npg_london',        badge:'npg-uk',     name:'National Portrait Gallery',        cat:['museums','art'],                region:'uk',      desc:'Portraits from the 16th century to present day', count:2508 },
+  { id:'rmuseum_greenwich', badge:'greenwich',  name:'Royal Museums Greenwich',          cat:['museums','art','historical'],   region:'uk',      desc:'Maritime art, navigation instruments & astronomy', count:2264 },
+  { id:'walker_gallery',    badge:'walker',     name:'Walker Art Gallery',               cat:['museums','art'],                region:'uk',      desc:'Fine art from medieval to contemporary in Liverpool', count:1511 },
+  { id:'glasgow_museums',   badge:'glasgow',    name:'Glasgow Museums',                  cat:['museums','art'],                region:'uk',      desc:'Art & cultural heritage across Glasgow collections', count:1387 },
+  { id:'birmingham_trust',  badge:'birm',       name:'Birmingham Museums Trust',         cat:['museums','art'],                region:'uk',      desc:'Pre-Raphaelites & European fine art in Birmingham', count:1293 },
+  { id:'ashmolean',         badge:'ashmolean',  name:'Ashmolean Museum',                 cat:['museums','art'],                region:'uk',      desc:'Art & archaeology — oldest public museum in UK', count:1257 },
+  { id:'sheffield_museums', badge:'sheffield',  name:'Sheffield Museums',                cat:['museums','art'],                region:'uk',      desc:'Art, metalwork & social history in Sheffield', count:1187 },
+  { id:'manchester_gallery',badge:'manchester', name:'Manchester Art Gallery',           cat:['museums','art'],                region:'uk',      desc:'Fine & decorative art from the 17th century onward', count:1069 },
+  { id:'british_library_wd',badge:'bl',         name:'British Library',                  cat:['museums','archives'],           region:'uk',      desc:'Illuminated manuscripts, maps & rare books', count:1064 },
+  { id:'bowes_museum',      badge:'bowes',      name:'Bowes Museum',                     cat:['museums','art'],                region:'uk',      desc:'European fine & decorative art in County Durham', count:1013 },
+  { id:'norfolk_museums',   badge:'norfolk',    name:'Norfolk Museums',                  cat:['museums','art'],                region:'uk',      desc:'Norwich School of painters & regional history', count:859 },
+  { id:'british_museum_wd', badge:'bm',         name:'British Museum',                   cat:['museums','art','historical'],   region:'uk',      desc:'World cultures — antiquities, prints & drawings', count:784 },
+  { id:'brighton_museum',   badge:'brighton',   name:'Brighton Museum',                  cat:['museums','art'],                region:'uk',      desc:'Fine art, fashion & world cultures in Brighton', count:735 },
+  { id:'bristol_museum',    badge:'bristol',    name:'Bristol City Museum',              cat:['museums','art'],                region:'uk',      desc:'Art, geology & archaeology in Bristol', count:720 },
+  { id:'york_gallery',      badge:'york',       name:'York Art Gallery',                 cat:['museums','art'],                region:'uk',      desc:'European paintings & studio pottery in York', count:699 },
+  { id:'dulwich_gallery',   badge:'dulwich',    name:'Dulwich Picture Gallery',          cat:['museums','art'],                region:'uk',      desc:'Old Masters in England\'s first purpose-built gallery', count:653 },
+  // Netherlands (14)
+  { id:'kb_nl',              badge:'kb-nl',     name:'KB National Library',              cat:['museums','archives'],           region:'europe',  desc:'Dutch heritage — prints, maps & manuscripts', count:2062 },
+  { id:'dordrechts_museum', badge:'dordrecht',  name:'Dordrechts Museum',               cat:['museums','art'],                region:'europe',  desc:'Dutch art from the Golden Age to modern — Ary Scheffer, Aelbert Cuyp', count:934 },
+  { id:'bonnefanten',       badge:'bonnef',     name:'Bonnefanten Museum',               cat:['museums','art'],                region:'europe',  desc:'Old Masters & contemporary art in Maastricht', count:609 },
+  { id:'museum_rotterdam',  badge:'rotterdam',  name:'Museum Rotterdam',                 cat:['museums','art','historical'],   region:'europe',  desc:'History, art & culture of Rotterdam', count:515 },
+  { id:'kroeller_mueller',  badge:'kroller',    name:'Kröller-Müller Museum',            cat:['museums','art'],                region:'europe',  desc:'Van Gogh, Mondrian & a world-renowned sculpture garden', count:443 },
+  { id:'cuypershuis',       badge:'cuypers',    name:'Cuypershuis',                      cat:['museums','art'],                region:'europe',  desc:'Works by Pierre Cuypers, architect of the Rijksmuseum', count:401 },
+  { id:'kunstmuseum_denhaag',badge:'denhaag',   name:'Kunstmuseum Den Haag',             cat:['museums','art'],                region:'europe',  desc:'Mondrian collection & decorative arts in The Hague', count:364 },
+  { id:'museum_gouda',      badge:'gouda',      name:'Museum Gouda',                     cat:['museums','art'],                region:'europe',  desc:'Gothic altarpieces, civic guard paintings & stained glass', count:354 },
+  { id:'mesdag_collection', badge:'mesdag',     name:'Mesdag Collection',                cat:['museums','art'],                region:'europe',  desc:'Barbizon school paintings & Mesdag Panorama', count:286 },
+  { id:'jewish_museum_adam',badge:'jm-adam',    name:'Jewish Museum Amsterdam',          cat:['museums','art','historical'],   region:'europe',  desc:'Jewish culture, art & history in Amsterdam', count:263 },
+  { id:'stedelijk_alkmaar', badge:'alkmaar',    name:'Stedelijk Museum Alkmaar',         cat:['museums','art'],                region:'europe',  desc:'Golden Age paintings from the Alkmaar region', count:255 },
+  { id:'museum_de_waag',    badge:'de-waag',    name:'Museum De Waag',                   cat:['museums','art'],                region:'europe',  desc:'Art & history in the medieval weigh house', count:253 },
+  { id:'catharijneconvent',  badge:'catharij',  name:'Museum Catharijneconvent',         cat:['museums','art'],                region:'europe',  desc:'Christian art & culture in Utrecht', count:219 },
+  { id:'maritime_rotterdam', badge:'maritime',  name:'Maritime Museum Rotterdam',        cat:['museums','historical'],         region:'europe',  desc:'Maritime history, ship models & navigation', count:216 },
+  // Belgium (11)
+  { id:'musea_brugge',      badge:'brugge',     name:'Musea Brugge',                     cat:['museums','art'],                region:'europe',  desc:'14 museums in Bruges — Flemish Primitives & city history', count:4145 },
+  { id:'kbr_brussels',      badge:'kbr',        name:'Royal Library of Belgium',         cat:['museums','archives'],           region:'europe',  desc:'Prints, maps & illuminated manuscripts in Brussels', count:1788 },
+  { id:'msk_ghent',         badge:'msk',        name:'MSK Ghent',                        cat:['museums','art'],                region:'europe',  desc:'Fine art from the Middle Ages to 20th century in Ghent', count:1569 },
+  { id:'plantin_moretus',   badge:'plantin',    name:'Museum Plantin-Moretus',           cat:['museums','art','archives'],     region:'europe',  desc:'UNESCO-listed Renaissance printing house in Antwerp', count:1323 },
+  { id:'muzee_ostende',     badge:'muzee',      name:'Mu.ZEE',                           cat:['museums','art'],                region:'europe',  desc:'Belgian art from James Ensor to Léon Spilliaert', count:681 },
+  { id:'rmah_brussels',     badge:'rmah',       name:'Royal Museums of Art & History',   cat:['museums','art','historical'],   region:'europe',  desc:'Antiquity, non-European civilizations & decorative arts', count:295 },
+  { id:'middelheim',        badge:'middel',     name:'Middelheim Museum',                cat:['museums','art'],                region:'europe',  desc:'Open-air sculpture park in Antwerp', count:231 },
+  { id:'mayer_van_den_bergh',badge:'mayer',     name:'Museum Mayer van den Bergh',       cat:['museums','art'],                region:'europe',  desc:'Bruegel\'s Dulle Griet & medieval art in Antwerp', count:218 },
+  { id:'rubenshuis',        badge:'rubens',     name:'Rubenshuis',                       cat:['museums','art'],                region:'europe',  desc:'Rubens\' home & studio with original works', count:142 },
+  { id:'mas_antwerp',       badge:'mas',        name:'Museum aan de Stroom',             cat:['museums','art','historical'],   region:'europe',  desc:'Port history, global cultures & city life in Antwerp', count:137 },
+  { id:'gallo_roman',       badge:'gallo-rom',  name:'Gallo-Roman Museum',               cat:['museums','historical'],         region:'europe',  desc:'Archaeological finds from Roman Belgium in Tongeren', count:137 },
+  // Germany (18)
+  { id:'bavarian_paintings',    badge:'bstgs',  name:'Bavarian State Painting Collections', cat:['museums','art'],             region:'europe',  desc:'9,600+ European paintings across 18 Bavarian galleries', count:9637 },
+  { id:'gemaeldegalerie_berlin',badge:'gem-ber', name:'Gemäldegalerie Berlin',           cat:['museums','art'],                region:'europe',  desc:'European painting from 13th–18th century at Kulturforum', count:2058 },
+  { id:'kunsthalle_karlsruhe', badge:'karlsruh', name:'Kunsthalle Karlsruhe',           cat:['museums','art'],                region:'europe',  desc:'Medieval to contemporary art in Baden-Württemberg', count:1342 },
+  { id:'germanisches_nm',     badge:'gnm',      name:'Germanisches Nationalmuseum',      cat:['museums','art','historical'],   region:'europe',  desc:'German art & culture from prehistory to present in Nuremberg', count:1049 },
+  { id:'skd_dresden',         badge:'skd',      name:'Kunstsammlungen Dresden',          cat:['museums','art'],                region:'europe',  desc:'Old Masters & New Masters galleries in Dresden', count:868 },
+  { id:'wallraf_richartz',    badge:'wallraf',  name:'Wallraf-Richartz Museum',          cat:['museums','art'],                region:'europe',  desc:'Medieval to early 20th-century art in Cologne', count:800 },
+  { id:'augustiner_freiburg', badge:'augustin', name:'Augustiner Museum',                cat:['museums','art'],                region:'europe',  desc:'Art from the Upper Rhine, medieval to Baroque in Freiburg', count:793 },
+  { id:'alte_nationalgalerie', badge:'alte-nat', name:'Alte Nationalgalerie',             cat:['museums','art'],                region:'europe',  desc:'19th-century painting & sculpture on Museum Island Berlin', count:702 },
+  { id:'hamburger_kunsthalle', badge:'hamburg', name:'Hamburger Kunsthalle',             cat:['museums','art'],                region:'europe',  desc:'Medieval to contemporary art across three connected buildings', count:478 },
+  { id:'lenbachhaus',          badge:'lenbach', name:'Lenbachhaus',                      cat:['museums','art'],                region:'europe',  desc:'Blue Rider group — Kandinsky, Marc, Klee in Munich', count:454 },
+  { id:'wagner_museum',        badge:'wagner',  name:'Martin von Wagner Museum',         cat:['museums','art'],                region:'europe',  desc:'Antiquities, paintings & prints in Würzburg', count:430 },
+  { id:'hessen_kassel',        badge:'kassel',  name:'Hessen Kassel Heritage',           cat:['museums','art'],                region:'europe',  desc:'Old Masters — Rembrandt, Rubens & Tischbein in Kassel', count:422 },
+  { id:'kunstbibliothek_berlin',badge:'kb-ber', name:'Kunstbibliothek Berlin',           cat:['museums','art','archives'],     region:'europe',  desc:'Design, photography & graphic arts at Kulturforum', count:338 },
+  { id:'schnutgen',             badge:'schnutg', name:'Schnütgen Museum',                cat:['museums','art'],                region:'europe',  desc:'Medieval art — sculpture, textiles, stained glass in Cologne', count:332 },
+  { id:'staatsgalerie_stuttgart',badge:'stuttg', name:'Staatsgalerie Stuttgart',         cat:['museums','art'],                region:'europe',  desc:'Old Masters to contemporary, Stirling-Wilford building', count:264 },
+  { id:'berlinische_galerie',   badge:'berl-gal',name:'Berlinische Galerie',             cat:['museums','art'],                region:'europe',  desc:'Modern art, photography & architecture made in Berlin', count:245 },
+  { id:'westphalian_museum',    badge:'westphal',name:'Westphalian State Museum',        cat:['museums','art'],                region:'europe',  desc:'Art & cultural history in Münster — medieval to modern', count:249 },
+  { id:'mdbk_leipzig',          badge:'mdbk',   name:'Museum der bildenden Künste',      cat:['museums','art'],                region:'europe',  desc:'German & European art from late medieval to contemporary in Leipzig', count:211 },
+  // France (12)
+  { id:'musee_st_raymond',    badge:'st-raym',  name:'Musée Saint-Raymond',              cat:['museums','art','historical'],   region:'europe',  desc:'Roman antiquities & sculpture in Toulouse', count:1741 },
+  { id:'musee_hist_france',   badge:'hist-fr',  name:'Museum of the History of France',  cat:['museums','historical'],         region:'europe',  desc:'Historical paintings at the Palace of Versailles', count:966 },
+  { id:'versailles_wd',       badge:'versail',  name:'Palace of Versailles',             cat:['museums','art','historical'],   region:'europe',  desc:'Royal portraits, Grand Gallery & garden sculptures', count:856 },
+  { id:'musee_conde',         badge:'condé',    name:'Condé Museum',                     cat:['museums','art'],                region:'europe',  desc:'Duc d\'Aumale collection in Château de Chantilly', count:827 },
+  { id:'musee_augustins',     badge:'augustns', name:'Musée des Augustins',              cat:['museums','art'],                region:'europe',  desc:'Romanesque & Gothic sculpture plus paintings in Toulouse', count:797 },
+  { id:'archives_nationales', badge:'arch-nat', name:'Archives nationales',              cat:['archives','historical'],        region:'europe',  desc:'French national archives — seals, maps & historical documents', count:750 },
+  { id:'mba_reims',           badge:'reims',    name:'Musée des Beaux-Arts de Reims',    cat:['museums','art'],                region:'europe',  desc:'Cranach, Delacroix, Corot & the Reims cathedral treasury', count:549 },
+  { id:'mnam_paris',          badge:'mnam',     name:'Musée National d\'Art Moderne',    cat:['museums','art'],                region:'europe',  desc:'Modern & contemporary art at Centre Pompidou', count:523 },
+  { id:'bnf_wd',              badge:'bnf',      name:'BnF',                              cat:['archives','art'],               region:'europe',  desc:'French national library — prints, photographs & manuscripts', count:499 },
+  { id:'mba_dijon',           badge:'dijon',    name:'Musée des Beaux-Arts de Dijon',    cat:['museums','art'],                region:'europe',  desc:'Burgundian tombs, Flemish painting & modern art in Dijon', count:476 },
+  { id:'mba_strasbourg',      badge:'strasbrg', name:'Musée des Beaux-Arts de Strasbourg', cat:['museums','art'],             region:'europe',  desc:'Italian, Spanish, Flemish & Dutch Old Masters in Strasbourg', count:468 },
+  { id:'musee_grenoble',      badge:'grenoble', name:'Museum of Grenoble',               cat:['museums','art'],                region:'europe',  desc:'European art from 13th century to contemporary in Grenoble', count:447 },
+  // Italy (13)
+  { id:'museo_egizio',        badge:'egizio',   name:'Museo Egizio',                     cat:['museums','art','historical'],   region:'europe',  desc:'World\'s largest collection of Egyptian antiquities outside Cairo', count:4870 },
+  { id:'uffizi_wd',           badge:'uffizi',   name:'Uffizi Gallery',                   cat:['museums','art'],                region:'europe',  desc:'Botticelli, Leonardo, Raphael & Titian in Florence', count:809 },
+  { id:'accademia_venice',    badge:'accad-ve', name:'Gallerie dell\'Accademia',         cat:['museums','art'],                region:'europe',  desc:'Venetian painting — Bellini, Giorgione, Titian, Veronese', count:384 },
+  { id:'capodimonte',         badge:'capodim',  name:'Museo di Capodimonte',             cat:['museums','art'],                region:'europe',  desc:'Farnese collection & Neapolitan art in Naples', count:253 },
+  { id:'naples_archaeology',  badge:'naples',   name:'Naples Archaeological Museum',     cat:['museums','historical'],         region:'europe',  desc:'Pompeii & Herculaneum finds, Farnese marbles & mosaics', count:242 },
+  { id:'brera',               badge:'brera',    name:'Pinacoteca di Brera',              cat:['museums','art'],                region:'europe',  desc:'Raphael, Mantegna, Caravaggio in Milan', count:220 },
+  { id:'capitoline_museums',  badge:'capitolin', name:'Capitoline Museums',              cat:['museums','art','historical'],   region:'europe',  desc:'Ancient Roman sculpture & Renaissance art on Capitoline Hill', count:188 },
+  { id:'castelvecchio',       badge:'castelv',  name:'Castelvecchio Museum',             cat:['museums','art'],                region:'europe',  desc:'Medieval & Renaissance art in Verona — Scarpa-designed galleries', count:177 },
+  { id:'ca_rezzonico',        badge:'rezzon',   name:'Ca\' Rezzonico',                   cat:['museums','art'],                region:'europe',  desc:'18th-century Venetian art in a Grand Canal palazzo', count:162 },
+  { id:'gallerie_italia',     badge:'gal-ita',  name:'Gallerie d\'Italia',               cat:['museums','art'],                region:'europe',  desc:'19th-century Italian art & Old Masters in Milan', count:153 },
+  { id:'galleria_borghese',   badge:'borghese', name:'Galleria Borghese',                cat:['museums','art'],                region:'europe',  desc:'Bernini sculptures, Caravaggio & Raphael in Rome', count:152 },
+  { id:'galleria_nazionale',  badge:'gal-naz',  name:'Galleria Nazionale',               cat:['museums','art'],                region:'europe',  desc:'Medieval to Baroque art in Palazzo Barberini, Rome', count:137 },
+  { id:'pinacoteca_bologna',  badge:'p-bologna', name:'Pinacoteca di Bologna',           cat:['museums','art'],                region:'europe',  desc:'Bolognese school — Carracci, Guido Reni, Raphael', count:123 },
+  // Spain (7)
+  { id:'mnac_barcelona',      badge:'mnac',     name:'MNAC Barcelona',                   cat:['museums','art'],                region:'europe',  desc:'Romanesque murals, Gothic art & Catalan modernism', count:941 },
+  { id:'mba_cordoba',         badge:'cordoba',  name:'Fine Arts Museum of Córdoba',      cat:['museums','art'],                region:'europe',  desc:'Spanish painting & sculpture from medieval to modern', count:311 },
+  { id:'victor_balaguer',     badge:'balaguer', name:'Víctor Balaguer Museum',           cat:['museums','art'],                region:'europe',  desc:'Art collection in Vilanova i la Geltrú, Catalonia', count:283 },
+  { id:'marca_spain',         badge:'man-es',   name:'National Archaeological Museum',   cat:['museums','historical'],         region:'europe',  desc:'Iberian, Roman & medieval archaeology in Madrid', count:182 },
+  { id:'mba_valencia',        badge:'valencia', name:'Fine Arts Museum of Valencia',     cat:['museums','art'],                region:'europe',  desc:'Valencian Gothic, Ribera, Sorolla & El Greco', count:157 },
+  { id:'academia_san_fernando',badge:'san-fern', name:'Royal Academy of San Fernando',   cat:['museums','art'],                region:'europe',  desc:'Goya, Zurbarán & Arcimboldo in Madrid', count:154 },
+  { id:'carmen_thyssen',       badge:'c-thyss',  name:'Carmen Thyssen Museum',           cat:['museums','art'],                region:'europe',  desc:'19th-century Spanish painting in Málaga', count:151 },
+  // Sweden (5)
+  { id:'performing_arts_se',   badge:'perf-se', name:'Swedish Performing Arts Museum',   cat:['museums','art','historical'],   region:'europe',  desc:'Theatre, dance, music & circus history in Stockholm', count:3888 },
+  { id:'teknikmuseet',         badge:'teknik',  name:'National Museum of Science & Technology', cat:['museums','science'],      region:'europe',  desc:'Swedish innovation, industry & technology', count:3882 },
+  { id:'portraits_se',         badge:'port-se', name:'National Portrait Gallery of Sweden', cat:['museums','art'],             region:'europe',  desc:'Swedish historical portraits from the 16th century to today', count:1600 },
+  { id:'hallwyl',              badge:'hallwyl', name:'Hallwyl Museum',                   cat:['museums','art'],                region:'europe',  desc:'Art Nouveau private palace & collection in Stockholm', count:627 },
+  { id:'gothenburg_art',       badge:'gbg-art', name:'Gothenburg Museum of Art',        cat:['museums','art'],                region:'europe',  desc:'Nordic art & French Impressionism in Gothenburg', count:456 },
+  // Denmark (6)
+  { id:'nhm_denmark',          badge:'nhm-dk',  name:'Natural History Museum of Denmark', cat:['museums','science','nature'], region:'europe',  desc:'Zoological, geological & palaeontological collections', count:539 },
+  { id:'nivaagaard',           badge:'nivaa',   name:'Nivaagaard Museum',                cat:['museums','art'],                region:'europe',  desc:'Danish Golden Age & Italian Renaissance paintings', count:240 },
+  { id:'skagens_museum',       badge:'skagen',  name:'Skagens Museum',                   cat:['museums','art'],                region:'europe',  desc:'Skagen painters — Krøyer, Ancher, Drachmann', count:217 },
+  { id:'hirschsprung',         badge:'hirsch',  name:'Hirschsprung Collection',          cat:['museums','art'],                region:'europe',  desc:'Danish Golden Age & Skagen painters in Copenhagen', count:131 },
+  { id:'ny_carlsberg',         badge:'glyptk',  name:'Ny Carlsberg Glyptotek',           cat:['museums','art'],                region:'europe',  desc:'Ancient & French Impressionist art in Copenhagen', count:125 },
+  { id:'frederiksborg',        badge:'fredbg',  name:'Frederiksborg Castle Museum',      cat:['museums','art','historical'],   region:'europe',  desc:'Danish national history portraits at Frederiksborg Castle', count:114 },
+  // Austria (3)
+  { id:'albertina',             badge:'albert',  name:'Albertina',                        cat:['museums','art'],                region:'europe',  desc:'Dürer\'s Hare, Monet, Picasso — prints & drawings in Vienna', count:315 },
+  { id:'liechtenstein_museum', badge:'liechtn', name:'Liechtenstein Museum',             cat:['museums','art'],                region:'europe',  desc:'Princely collections — Rubens, Van Dyck & decorative arts', count:183 },
+  { id:'leopold_museum',       badge:'leopold', name:'Leopold Museum',                   cat:['museums','art'],                region:'europe',  desc:'Egon Schiele, Gustav Klimt & Vienna Secession at MuseumsQuartier', count:101 },
+  // USA (3)
+  { id:'mfa_boston_wd',         badge:'mfa-bos', name:'Museum of Fine Arts Boston',      cat:['museums','art'],                region:'americas', desc:'Asian, Egyptian, American & European art', count:2895 },
+  { id:'mfa_houston',          badge:'mfa-hou', name:'Museum of Fine Arts Houston',     cat:['museums','art'],                region:'americas', desc:'European, American, Latin American & Asian art in Texas', count:714 },
+  { id:'famsf',                 badge:'famsf',   name:'Fine Arts Museums of San Francisco', cat:['museums','art'],             region:'americas', desc:'De Young & Legion of Honor — American & European art', count:450 },
+  // Other Europe (3)
+  { id:'hungarian_gallery',    badge:'hung',    name:'Hungarian National Gallery',       cat:['museums','art'],                region:'europe',  desc:'Hungarian art from medieval to contemporary in Buda Castle', count:528 },
+  { id:'finnish_gallery',      badge:'finn-gal', name:'Finnish National Gallery',       cat:['museums','art'],                region:'europe',  desc:'Finnish & international art across Ateneum, Kiasma & Sinebrychoff', count:2692 },
+  { id:'bilbao_fine_arts',     badge:'bilbao',  name:'Bilbao Fine Arts Museum',          cat:['museums','art'],                region:'europe',  desc:'Spanish, Basque & European art from the 12th century', count:126 },
+];
+
+// Auto-inject Phase H into BADGE_META
+WD_PHASE_H.forEach(s => { BADGE_META[s.id] = [s.id, s.badge]; });
 
 /* ============================================================
    POPUP DETECTION + IMMEDIATE THEME APPLY
@@ -323,8 +471,17 @@ const ALL_SOURCES = [
   'idigbio','ala',
   // Phase D — niche & specialized (1)
   'nasa_images',
-  // Phase E — CORS-blocked, cache-first (5)
+  // Phase E — CORS-blocked, cache-first (13)
   'nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national',
+  'musee_orsay','vangogh_museum','khm','belvedere','staedel','rmfab','guimet','npm_taipei',
+  // Phase F — Fashion & Textile CORS-blocked (9)
+  'galliera','arts_decoratifs','centraal_museum','textile_museum_tilburg','wereldculturen',
+  'dec_arts_prague','designmuseum_dk','boijmans','museu_traje',
+  // Phase G — Art, Sculpture & History CORS-blocked (14)
+  'kmska','amsterdam_museum','ngi','fries_museum','groeninge','groninger','moma_wd',
+  'rijksmuseum_twenthe','herzog_anton_ulrich','galleria_palatina','lakenhal','teylers','alte_pinakothek','quai_branly',
+  // Phase H — 113 World Museum Collection Sources
+  ...WD_PHASE_H.map(s => s.id),
 ];
 
 const SOURCE_GROUPS = {
@@ -525,7 +682,41 @@ const SOURCE_META = {
   fitzwilliam:             { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
   national_gallery_london: { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
   scottish_national:       { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
+  musee_orsay:             { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  vangogh_museum:          { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  khm:                     { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  belvedere:               { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  staedel:                 { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  rmfab:                   { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  guimet:                  { category: ['museums','art'],             region: 'europe',   access: 'no_key', corsBlocked: true },
+  npm_taipei:              { category: ['museums','art'],             region: 'asia',     access: 'no_key', corsBlocked: true },
+  galliera:                { category: ['museums','fashion'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  arts_decoratifs:          { category: ['museums','fashion','art'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  centraal_museum:          { category: ['museums','fashion','art'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  textile_museum_tilburg:   { category: ['museums','fashion'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  wereldculturen:           { category: ['museums','fashion'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  dec_arts_prague:          { category: ['museums','fashion','art'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  designmuseum_dk:          { category: ['museums','fashion'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  boijmans:                 { category: ['museums','fashion','art'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  museu_traje:              { category: ['museums','fashion'],          region: 'europe',   access: 'no_key', corsBlocked: true },
+  // Phase G — Art, Sculpture & History
+  kmska:                    { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  amsterdam_museum:         { category: ['museums','art','history'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  ngi:                      { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  fries_museum:             { category: ['museums','art','history'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  groeninge:                { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  groninger:                { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  moma_wd:                  { category: ['museums','art'],              region: 'north_america', access: 'no_key', corsBlocked: true },
+  rijksmuseum_twenthe:      { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  herzog_anton_ulrich:      { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  galleria_palatina:        { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  lakenhal:                 { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  teylers:                  { category: ['museums','art','science'],    region: 'europe',   access: 'no_key', corsBlocked: true },
+  alte_pinakothek:          { category: ['museums','art'],              region: 'europe',   access: 'no_key', corsBlocked: true },
+  quai_branly:              { category: ['museums','art','history'],    region: 'europe',   access: 'no_key', corsBlocked: true },
 };
+// Phase H — auto-inject SOURCE_META
+WD_PHASE_H.forEach(s => { SOURCE_META[s.id] = { category: s.cat, region: s.region, access: 'no_key', corsBlocked: true }; });
 
 /* ============================================================
    PHASE A — SUB-COLLECTION LOOKUP TABLES
@@ -974,8 +1165,20 @@ function selectDynamicSources(keyword, maxCount = 150) {
   SOURCE_GROUPS.archives.push('loc');
   // Phase E — CORS-blocked, cache-first
   SOURCE_GROUPS.museums.push('nhm_london','wallace_collection','fitzwilliam','national_gallery_london','scottish_national');
+  SOURCE_GROUPS.museums.push('musee_orsay','vangogh_museum','khm','belvedere','staedel','rmfab','guimet','npm_taipei');
+  // Phase F — Fashion & Textile
+  SOURCE_GROUPS.museums.push('galliera','arts_decoratifs','centraal_museum','textile_museum_tilburg','wereldculturen','dec_arts_prague','designmuseum_dk','boijmans','museu_traje');
+  SOURCE_GROUPS.fashion.push('galliera','arts_decoratifs','centraal_museum','textile_museum_tilburg','wereldculturen','dec_arts_prague','designmuseum_dk','boijmans','museu_traje');
+  SOURCE_GROUPS.artdesign.push('galliera','arts_decoratifs','centraal_museum','boijmans','dec_arts_prague','designmuseum_dk');
+  // Phase G — Art, Sculpture & History
+  SOURCE_GROUPS.museums.push('kmska','amsterdam_museum','ngi','fries_museum','groeninge','groninger','moma_wd','rijksmuseum_twenthe','herzog_anton_ulrich','galleria_palatina','lakenhal','teylers','alte_pinakothek','quai_branly');
+  SOURCE_GROUPS.artdesign.push('kmska','groeninge','groninger','moma_wd','rijksmuseum_twenthe','herzog_anton_ulrich','galleria_palatina','lakenhal','teylers','alte_pinakothek','ngi','amsterdam_museum','fries_museum','quai_branly');
   SOURCE_GROUPS.nature.push('nhm_london');
   SOURCE_GROUPS.science.push('nhm_london');
+  // Phase H — 113 World Museum sources
+  WD_PHASE_H.forEach(s => {
+    s.cat.forEach(c => { if (SOURCE_GROUPS[c]) SOURCE_GROUPS[c].push(s.id); });
+  });
 })();
 
 /* ============================================================
@@ -4603,6 +4806,208 @@ async function fetchScottishNational(keyword, limit, signal) {
   return [];
 }
 
+// Musée d'Orsay (Paris) — Impressionist & Post-Impressionist masterworks
+async function fetchMuseeOrsay(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('musee_orsay', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'musee_orsay' }));
+  return [];
+}
+
+// Van Gogh Museum (Amsterdam)
+async function fetchVanGoghMuseum(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('vangogh_museum', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'vangogh_museum' }));
+  return [];
+}
+
+// Kunsthistorisches Museum Vienna
+async function fetchKHM(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('khm', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'khm' }));
+  return [];
+}
+
+// Belvedere Museum Vienna
+async function fetchBelvedere(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('belvedere', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'belvedere' }));
+  return [];
+}
+
+// Städel Museum Frankfurt
+async function fetchStaedel(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('staedel', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'staedel' }));
+  return [];
+}
+
+// Royal Museums of Fine Arts of Belgium (Brussels)
+async function fetchRMFAB(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('rmfab', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'rmfab' }));
+  return [];
+}
+
+// Musée Guimet Paris (Asian art)
+async function fetchGuimet(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('guimet', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'guimet' }));
+  return [];
+}
+
+// National Palace Museum Taipei
+async function fetchNPMTaipei(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('npm_taipei', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'npm_taipei' }));
+  return [];
+}
+
+// ── Fashion & Textile Sources (Phase F) ─────────────────────────────────
+
+// Musée Galliera (Palais Galliera) — Paris couture museum
+async function fetchGalliera(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('galliera', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'galliera' }));
+  return [];
+}
+
+// Musée des Arts Décoratifs — Paris fashion, design, decorative arts
+async function fetchArtsDecoratifs(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('arts_decoratifs', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'arts_decoratifs' }));
+  return [];
+}
+
+// Centraal Museum Utrecht — Dutch costume, fashion, art
+async function fetchCentraalMuseum(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('centraal_museum', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'centraal_museum' }));
+  return [];
+}
+
+// Textile Museum Tilburg — Dutch textile art & fashion
+async function fetchTextileMuseum(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('textile_museum_tilburg', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'textile_museum_tilburg' }));
+  return [];
+}
+
+// Nationaal Museum van Wereldculturen — world cultures (textiles, costumes)
+async function fetchWereldculturen(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('wereldculturen', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'wereldculturen' }));
+  return [];
+}
+
+// Museum of Decorative Arts Prague — applied art, textiles, glass, fashion
+async function fetchDecArtsPrague(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('dec_arts_prague', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'dec_arts_prague' }));
+  return [];
+}
+
+// Designmuseum Danmark — Danish design, fashion, textiles
+async function fetchDesignmuseumDK(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('designmuseum_dk', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'designmuseum_dk' }));
+  return [];
+}
+
+// Museum Boijmans Van Beuningen — Rotterdam; fashion, applied art
+async function fetchBoijmans(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('boijmans', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'boijmans' }));
+  return [];
+}
+
+// Museu Nacional do Traje — Lisbon costume museum
+async function fetchMuseuTraje(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('museu_traje', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'museu_traje' }));
+  return [];
+}
+
+// ── Phase G — Art, Sculpture & History CORS-blocked (14) ──────────────
+async function fetchKMSKA(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('kmska', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'kmska' }));
+  return [];
+}
+async function fetchAmsterdamMuseum(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('amsterdam_museum', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'amsterdam_museum' }));
+  return [];
+}
+async function fetchNGI(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('ngi', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'ngi' }));
+  return [];
+}
+async function fetchFriesMuseum(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('fries_museum', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'fries_museum' }));
+  return [];
+}
+async function fetchGroeninge(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('groeninge', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'groeninge' }));
+  return [];
+}
+async function fetchGroninger(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('groninger', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'groninger' }));
+  return [];
+}
+async function fetchMoMAWD(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('moma_wd', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'moma_wd' }));
+  return [];
+}
+async function fetchRijksmuseumTwenthe(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('rijksmuseum_twenthe', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'rijksmuseum_twenthe' }));
+  return [];
+}
+async function fetchHerzogAntonUlrich(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('herzog_anton_ulrich', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'herzog_anton_ulrich' }));
+  return [];
+}
+async function fetchGalleriaPalatina(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('galleria_palatina', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'galleria_palatina' }));
+  return [];
+}
+async function fetchLakenhal(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('lakenhal', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'lakenhal' }));
+  return [];
+}
+async function fetchTeylers(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('teylers', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'teylers' }));
+  return [];
+}
+async function fetchAltePinakothek(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('alte_pinakothek', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'alte_pinakothek' }));
+  return [];
+}
+async function fetchQuaiBranly(keyword, limit, signal) {
+  const cached = await fetchFromDataCache('quai_branly', keyword);
+  if (cached) return cached.map(item => ({ ...item, source: 'quai_branly' }));
+  return [];
+}
+// Phase H — 113 World Museum fetch functions (cache-first)
+const WD_PHASE_H_FETCHERS = {};
+WD_PHASE_H.forEach(s => {
+  WD_PHASE_H_FETCHERS[s.id] = async function(keyword, limit, signal) {
+    const cached = await fetchFromDataCache(s.id, keyword);
+    if (cached) return cached.map(item => ({ ...item, source: s.id }));
+    return [];
+  };
+});
+
 async function fetchArchiveMaps(keyword, limit, signal) {
   try {
     const res = await safeFetch(
@@ -5369,6 +5774,41 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('fitzwilliam',             fetchFitzwilliam(keyword,            Math.max(3, perSource), signal)).then(onSourceResult('fitzwilliam')).catch(() => {}),
     callIfHealthy('national_gallery_london', fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal)).then(onSourceResult('national_gallery_london')).catch(() => {}),
     callIfHealthy('scottish_national',       fetchScottishNational(keyword,       Math.max(3, perSource), signal)).then(onSourceResult('scottish_national')).catch(() => {}),
+    callIfHealthy('musee_orsay',             fetchMuseeOrsay(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('musee_orsay')).catch(() => {}),
+    callIfHealthy('vangogh_museum',          fetchVanGoghMuseum(keyword,          Math.max(3, perSource), signal)).then(onSourceResult('vangogh_museum')).catch(() => {}),
+    callIfHealthy('khm',                     fetchKHM(keyword,                    Math.max(3, perSource), signal)).then(onSourceResult('khm')).catch(() => {}),
+    callIfHealthy('belvedere',               fetchBelvedere(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('belvedere')).catch(() => {}),
+    callIfHealthy('staedel',                 fetchStaedel(keyword,                Math.max(3, perSource), signal)).then(onSourceResult('staedel')).catch(() => {}),
+    callIfHealthy('rmfab',                   fetchRMFAB(keyword,                  Math.max(3, perSource), signal)).then(onSourceResult('rmfab')).catch(() => {}),
+    callIfHealthy('guimet',                  fetchGuimet(keyword,                 Math.max(3, perSource), signal)).then(onSourceResult('guimet')).catch(() => {}),
+    callIfHealthy('npm_taipei',              fetchNPMTaipei(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('npm_taipei')).catch(() => {}),
+    // Phase F — Fashion & Textile CORS-blocked sources
+    callIfHealthy('galliera',                fetchGalliera(keyword,               Math.max(3, perSource), signal)).then(onSourceResult('galliera')).catch(() => {}),
+    callIfHealthy('arts_decoratifs',         fetchArtsDecoratifs(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('arts_decoratifs')).catch(() => {}),
+    callIfHealthy('centraal_museum',         fetchCentraalMuseum(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('centraal_museum')).catch(() => {}),
+    callIfHealthy('textile_museum_tilburg',  fetchTextileMuseum(keyword,          Math.max(3, perSource), signal)).then(onSourceResult('textile_museum_tilburg')).catch(() => {}),
+    callIfHealthy('wereldculturen',          fetchWereldculturen(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('wereldculturen')).catch(() => {}),
+    callIfHealthy('dec_arts_prague',         fetchDecArtsPrague(keyword,          Math.max(3, perSource), signal)).then(onSourceResult('dec_arts_prague')).catch(() => {}),
+    callIfHealthy('designmuseum_dk',         fetchDesignmuseumDK(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('designmuseum_dk')).catch(() => {}),
+    callIfHealthy('boijmans',                fetchBoijmans(keyword,               Math.max(3, perSource), signal)).then(onSourceResult('boijmans')).catch(() => {}),
+    callIfHealthy('museu_traje',             fetchMuseuTraje(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('museu_traje')).catch(() => {}),
+    // Phase G — Art, Sculpture & History CORS-blocked (14)
+    callIfHealthy('kmska',                   fetchKMSKA(keyword,                  Math.max(3, perSource), signal)).then(onSourceResult('kmska')).catch(() => {}),
+    callIfHealthy('amsterdam_museum',        fetchAmsterdamMuseum(keyword,        Math.max(3, perSource), signal)).then(onSourceResult('amsterdam_museum')).catch(() => {}),
+    callIfHealthy('ngi',                     fetchNGI(keyword,                    Math.max(3, perSource), signal)).then(onSourceResult('ngi')).catch(() => {}),
+    callIfHealthy('fries_museum',            fetchFriesMuseum(keyword,            Math.max(3, perSource), signal)).then(onSourceResult('fries_museum')).catch(() => {}),
+    callIfHealthy('groeninge',               fetchGroeninge(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('groeninge')).catch(() => {}),
+    callIfHealthy('groninger',               fetchGroninger(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('groninger')).catch(() => {}),
+    callIfHealthy('moma_wd',                 fetchMoMAWD(keyword,                 Math.max(3, perSource), signal)).then(onSourceResult('moma_wd')).catch(() => {}),
+    callIfHealthy('rijksmuseum_twenthe',     fetchRijksmuseumTwenthe(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('rijksmuseum_twenthe')).catch(() => {}),
+    callIfHealthy('herzog_anton_ulrich',     fetchHerzogAntonUlrich(keyword,      Math.max(3, perSource), signal)).then(onSourceResult('herzog_anton_ulrich')).catch(() => {}),
+    callIfHealthy('galleria_palatina',       fetchGalleriaPalatina(keyword,       Math.max(3, perSource), signal)).then(onSourceResult('galleria_palatina')).catch(() => {}),
+    callIfHealthy('lakenhal',                fetchLakenhal(keyword,               Math.max(3, perSource), signal)).then(onSourceResult('lakenhal')).catch(() => {}),
+    callIfHealthy('teylers',                 fetchTeylers(keyword,                Math.max(3, perSource), signal)).then(onSourceResult('teylers')).catch(() => {}),
+    callIfHealthy('alte_pinakothek',         fetchAltePinakothek(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('alte_pinakothek')).catch(() => {}),
+    callIfHealthy('quai_branly',             fetchQuaiBranly(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('quai_branly')).catch(() => {}),
+    // Phase H — 113 World Museum sources
+    ...WD_PHASE_H.map(s => callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal)).then(onSourceResult(s.id)).catch(() => {})),
     // ── DYNAMIC REGISTRY — 200+ Wikimedia cats, 40+ Archive.org collections,
     //    4000+ Europeana providers, 4000+ DPLA hubs (when keys set) ──────────
     ...selectDynamicSources(keyword, 150).map(entry => {
@@ -9355,6 +9795,211 @@ const KEY_SOURCES = [
     storageKey: null,
     getKeyUrl: null,
   },
+  {
+    id:        'musee_orsay',
+    name:      'Musée d\'Orsay',
+    desc:      'Impressionist & Post-Impressionist masterworks — Paris',
+    imageCount: 20000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'vangogh_museum',
+    name:      'Van Gogh Museum',
+    desc:      'World’s largest collection of Van Gogh works — Amsterdam',
+    imageCount: 5000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'khm',
+    name:      'Kunsthistorisches Museum',
+    desc:      'Habsburg Imperial collections — fine art, antiquities — Vienna',
+    imageCount: 100000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'belvedere',
+    name:      'Belvedere Vienna',
+    desc:      'Austrian art from Baroque to the 20th century — Vienna',
+    imageCount: 10000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'staedel',
+    name:      'Städel Museum',
+    desc:      '700 years of European art — Frankfurt’s premier art museum',
+    imageCount: 15000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'rmfab',
+    name:      'Royal Museums of Fine Arts Belgium',
+    desc:      'Flemish Masters, Ensor, Magritte — Brussels',
+    imageCount: 15000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'guimet',
+    name:      'Musée Guimet',
+    desc:      'Asian arts from Afghanistan to Japan — Paris',
+    imageCount: 10000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'npm_taipei',
+    name:      'National Palace Museum',
+    desc:      'Chinese imperial collections — jade, porcelain, calligraphy — Taipei',
+    imageCount: 50000,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  // ── Phase F — Fashion & Textile sources ──
+  {
+    id:        'galliera',
+    name:      'Musée Galliera',
+    desc:      'Paris couture & fashion museum — haute couture, accessories',
+    imageCount: 558,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'arts_decoratifs',
+    name:      'Musée des Arts Décoratifs',
+    desc:      'Paris — fashion, jewellery, design, decorative arts',
+    imageCount: 184,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'centraal_museum',
+    name:      'Centraal Museum',
+    desc:      'Utrecht — Dutch fashion, costumes, applied arts',
+    imageCount: 2180,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'textile_museum_tilburg',
+    name:      'Textile Museum Tilburg',
+    desc:      'Dutch textile art, weaving, fashion fabrics',
+    imageCount: 1337,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'wereldculturen',
+    name:      'Museum van Wereldculturen',
+    desc:      'Dutch national world cultures — textiles, costumes, ethnographic dress',
+    imageCount: 1143,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'dec_arts_prague',
+    name:      'Museum of Decorative Arts Prague',
+    desc:      'Czech decorative arts — textiles, fashion, glass, furniture',
+    imageCount: 45966,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'designmuseum_dk',
+    name:      'Designmuseum Danmark',
+    desc:      'Copenhagen — Danish & international design, fashion, textiles',
+    imageCount: 649,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'boijmans',
+    name:      'Museum Boijmans Van Beuningen',
+    desc:      'Rotterdam — applied art, fashion, design, painting',
+    imageCount: 375,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  {
+    id:        'museu_traje',
+    name:      'Museu Nacional do Traje',
+    desc:      'Lisbon costume museum — Portuguese fashion & dress history',
+    imageCount: 161,
+    alwaysOn:  true,
+    cors:      true,
+    stateKey:  null,
+    storageKey: null,
+    getKeyUrl: null,
+  },
+  // Phase G — Art, Sculpture & History CORS-blocked (14)
+  { id:'kmska',               name:'KMSKA (Royal Museum of Fine Arts Antwerp)', desc:'Flemish & European art — Rubens, Van Eyck, Ensor', imageCount:2860, alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'amsterdam_museum',    name:'Amsterdam Museum',                          desc:'History & art of Amsterdam from the Middle Ages', imageCount:2315, alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'ngi',                 name:'National Gallery of Ireland',               desc:'European & Irish art — paintings, sculpture, works on paper', imageCount:1845, alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'fries_museum',        name:'Fries Museum',                              desc:'Art & history of Friesland, Mata Hari collection', imageCount:1155, alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'groeninge',           name:'Groeningemuseum',                           desc:'Flemish Primitives to modern Belgian art in Bruges', imageCount:947,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'groninger',           name:'Groninger Museum',                          desc:'Art, design & regional history in Groningen', imageCount:858,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'moma_wd',             name:'Museum of Modern Art (MoMA)',               desc:'Modern & contemporary art — Wikidata bridge', imageCount:659,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'rijksmuseum_twenthe', name:'Rijksmuseum Twenthe',                       desc:'European art from medieval to contemporary in Enschede', imageCount:568,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'herzog_anton_ulrich', name:'Herzog Anton Ulrich Museum',                desc:'Old Masters, medieval art & sculpture in Braunschweig', imageCount:261,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'galleria_palatina',   name:'Galleria Palatina',                         desc:'Renaissance masterpieces in Palazzo Pitti, Florence', imageCount:220,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'lakenhal',            name:'Museum De Lakenhal',                        desc:'Art & history of Leiden — Rembrandt\'s birthplace', imageCount:178,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'teylers',             name:'Teylers Museum',                            desc:'Oldest museum in the Netherlands — art, science, fossils', imageCount:161,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'alte_pinakothek',     name:'Alte Pinakothek',                           desc:'European painting from 14th–18th century in Munich', imageCount:160,  alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  { id:'quai_branly',         name:'Musée du quai Branly',                      desc:'Indigenous & non-Western art from Africa, Asia, Oceania, Americas', imageCount:154, alwaysOn:true, cors:true, stateKey:null, storageKey:null, getKeyUrl:null },
+  // Phase H — 113 World Museum Collection Sources
+  ...WD_PHASE_H.map(s => ({ id: s.id, name: s.name, desc: s.desc, imageCount: s.count, alwaysOn: true, cors: true, stateKey: null, storageKey: null, getKeyUrl: null })),
 ];
 
 /* ── Source stats helper (self-updating from KEY_SOURCES) ── */
