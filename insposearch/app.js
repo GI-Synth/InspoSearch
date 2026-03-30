@@ -49,6 +49,7 @@ const BADGE_META = {
   finna:            ['finna','finna'],     soch:             ['soch','sweden'],
   joconde:          ['joconde','orsay'],   mnw:              ['mnw','warsaw'],
   tepapa:           ['tepapa','tepapa'],   dpla:             ['dpla','dpla'],
+  ddb:              ['ddb','ddb'],
   artsy:            ['artsy','artsy'],     pas:              ['pas','finds'],
   smg:              ['smg','science'],     auckland:         ['auckland','auckland'],
   photogrammar:     ['photogrammar','fsa'], wellcome:        ['wellcome','wellcome'],
@@ -262,6 +263,7 @@ const STATE = {
   troveKey:            null,    // string | null (localStorage)
   digitalnzKey:        null,    // string | null (localStorage)
   dplaKey:             null,    // string | null (localStorage)
+  ddbKey:              null,    // string | null (localStorage)
   artsyId:             null,    // string | null (localStorage)
   artsySecret:         null,    // string | null (localStorage)
   artsyToken:          null,    // runtime only — not persisted
@@ -377,6 +379,7 @@ const SOURCE_DOMAINS = {
   usgs: 'usgs.gov',
   tate: 'tate.org.uk',
   dpla: 'dp.la',
+  ddb: 'deutsche-digitale-bibliothek.de',
   artsy: 'artsy.net',
   nypl: 'digitalcollections.nypl.org',
   louvre: 'louvre.fr',
@@ -423,6 +426,7 @@ STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')      || null;
 STATE.troveKey       = localStorage.getItem('inspo_trove_key')        || null;
 STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')    || null;
 STATE.dplaKey        = localStorage.getItem('inspo_dpla_key')         || null;
+STATE.ddbKey         = localStorage.getItem('inspo_ddb_key')          || null;
 STATE.artsyId        = localStorage.getItem('inspo_artsy_id')         || null;
 STATE.artsySecret    = localStorage.getItem('inspo_artsy_secret')     || null;
 STATE.unsplashKey    = localStorage.getItem('inspo_unsplash_key')     || null;
@@ -482,6 +486,8 @@ const ALL_SOURCES = [
   'rijksmuseum_twenthe','herzog_anton_ulrich','galleria_palatina','lakenhal','teylers','alte_pinakothek','quai_branly',
   // Phase H — 113 World Museum Collection Sources
   ...WD_PHASE_H.map(s => s.id),
+  // DDB — Deutsche Digitale Bibliothek (key-gated)
+  'ddb',
 ];
 
 const SOURCE_GROUPS = {
@@ -501,7 +507,7 @@ const SOURCE_GROUPS = {
                'nasa','usgs','naturalis','nationalzoo','gbiflit'],
   historical:  ['archive','chronicling','gallica','loc','trove','digitalnz',
                'wdl','bhl','folger','onb','nypl','soch','nordic',
-               'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb'],
+               'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb','ddb'],
   artdesign:   ['wikiart','wikidata','openverse','cooperhewitt','tate','va',
                'artsy','dpla','europeana','getty','nga','carnegie','maas',
                'smk','thyssen','wellcome','rijksmuseum','parismusees',
@@ -514,7 +520,7 @@ const SOURCE_GROUPS = {
   botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
   archives:    ['archive','loc','gallica','chronicling','openverse','bhl',
                'trove','digitalnz','nypl','folger','onb','soch','finna',
-               'wdl','photogrammar','wikidata','bodleian','cudl','bsb'],
+               'wdl','photogrammar','wikidata','bodleian','cudl','bsb','ddb'],
 };
 
 /* ── Source metadata for filtering (Phase 2) ── */
@@ -563,6 +569,7 @@ const SOURCE_META = {
   mnw:              { category: ['museums','art'],                  region: 'europe',   access: 'no_key' },
   tepapa:           { category: ['museums','art'],                  region: 'oceania',  access: 'no_key' },
   dpla:             { category: ['archives','art','historical'],    region: 'americas', access: 'free_key' },
+  ddb:              { category: ['archives','art','historical','museums'], region: 'europe', access: 'free_key' },
   artsy:            { category: ['art'],                            region: 'global',   access: 'paid_key' },
   pas:              { category: ['archives','historical'],          region: 'uk',       access: 'no_key' },
   smg:              { category: ['museums','science'],              region: 'uk',       access: 'no_key' },
@@ -2869,8 +2876,9 @@ async function fetchOpenverse(keyword, limit, signal, page = 1) {
     );
     if (!res.ok) throw new Error('Openverse failed');
     const data = await res.json();
+    const GROUP_TITLE_RE = /^group\s+of\s+(images?|files?|photos?|pictures?)/i;
     return (data.results || [])
-      .filter(item => item.url)
+      .filter(item => item.url && !GROUP_TITLE_RE.test((item.title || '').trim()))
       .map(item => ({
         id:          `openverse_${item.id}`,
         url:         item.url,
@@ -3520,6 +3528,39 @@ async function fetchDPLAProvider(provider, keyword, limit, signal) {
   } catch (e) {
     if (e.name === 'AbortError') return [];
     console.warn('DPLA provider fetch failed:', e.message);
+    return [];
+  }
+}
+
+/* ── DDB — Deutsche Digitale Bibliothek (key-gated) ──────── */
+async function fetchDDB(keyword, limit, signal) {
+  if (!STATE.ddbKey) return [];
+  try {
+    const url = `https://api.deutsche-digitale-bibliothek.de/search?query=${encodeURIComponent(keyword)}&rows=${limit}&type_fct=mediatype_002&oauth_consumer_key=${encodeURIComponent(STATE.ddbKey)}`;
+    const res = await safeFetch(url, { signal });
+    if (!res.ok) throw new Error('DDB failed');
+    const data = await res.json();
+    const docs = data.results?.[0]?.docs || data.results || [];
+    return (Array.isArray(docs) ? docs : [])
+      .filter(item => item.preview || item.thumbnail)
+      .map(item => ({
+        id:          'ddb_' + item.id,
+        url:         item.preview?.image || item.preview?.thumbnail || item.thumbnail || item.preview || '',
+        thumb:       item.preview?.thumbnail || item.preview?.image || item.thumbnail || item.preview || '',
+        title:       item.title || item.label || 'DDB Item',
+        description: item.subtitle || '',
+        source:      'ddb',
+        sourceUrl:   `https://www.deutsche-digitale-bibliothek.de/item/${item.id}`,
+        year:        null,
+        tags:        [],
+        colors: [], aiTags: [],
+      }))
+      .filter(i => i.url)
+      .filter(isLikelyReal)
+      .slice(0, limit);
+  } catch (e) {
+    if (e.name === 'AbortError') return [];
+    console.warn('DDB failed:', e.message);
     return [];
   }
 }
@@ -5664,6 +5705,7 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('mnw',          fetchMNW(keyword,                             fetchBatch, signal)).then(onSourceResult('mnw')).catch(() => {}),
     callIfHealthy('tepapa',       fetchTePapa(keyword,                          fetchBatch, signal)).then(onSourceResult('tepapa')).catch(() => {}),
     callIfHealthy('dpla',         fetchDPLA(keyword,                            fetchBatch, signal)).then(onSourceResult('dpla')).catch(() => {}),
+    callIfHealthy('ddb',          fetchDDB(keyword,                             fetchBatch, signal)).then(onSourceResult('ddb')).catch(() => {}),
     callIfHealthy('artsy',        fetchArtsy(keyword,                           fetchBatch, signal)).then(onSourceResult('artsy')).catch(() => {}),
     callIfHealthy('pas',          fetchPAS(keyword,                             fetchBatch, signal)).then(onSourceResult('pas')).catch(() => {}),
     callIfHealthy('smg',          fetchSMG(keyword,                             fetchBatch, signal)).then(onSourceResult('smg')).catch(() => {}),
@@ -7170,6 +7212,7 @@ async function fetchMoreResults() {
     callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal)),
     callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal)),
     callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal)),
+    callIfHealthy('ddb',         fetchDDB(kw, perSource, signal)),
     callIfHealthy('gallica',     fetchGallica(kw, perSource, signal)),
     callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal)),
     callIfHealthy('trove',       fetchTrove(kw, perSource, signal)),
@@ -7350,6 +7393,41 @@ async function runSearch(query, forceRefresh = false) {
 /* ============================================================
    16. EVENT LISTENERS
 ============================================================ */
+
+// Logo — click to reset search
+document.querySelector('.logo').addEventListener('click', () => {
+  // Abort any in-flight requests
+  if (STATE.abortController) { try { STATE.abortController.abort(); } catch (_) {} STATE.abortController = null; }
+  for (const ac of _secondaryControllers) { try { ac.abort(); } catch (_) {} }
+  _secondaryControllers.clear();
+
+  // Clear state
+  STATE.query = '';
+  STATE.keywords = [];
+  STATE.results = [];
+  STATE.selected = [];
+  STATE.loading = false;
+  STATE.currentPage = 1;
+  STATE.fuseIndex = null;
+  STATE.crossRefMode = null;
+  STATE.crossRefTerms = [];
+  STATE.referenceImages = [];
+
+  // Clear UI
+  document.getElementById('search-input').value = '';
+  clearGrid();
+  hideLoading();
+  renderKeywordPills([]);
+  document.getElementById('local-filter-section').style.display = 'none';
+  document.getElementById('local-filter').value = '';
+  document.getElementById('more-container').style.display = 'none';
+  hideReferenceStrip();
+  hideConceptPills();
+  hideFloatingBar();
+
+  // Focus search input
+  document.getElementById('search-input').focus();
+});
 
 // Search — Enter key
 document.getElementById('search-input').addEventListener('keydown', e => {
@@ -9402,6 +9480,16 @@ const KEY_SOURCES = [
     getKeyUrl: 'https://dp.la/info/developers',
   },
   {
+    id:        'ddb',
+    name:      'German Digital Library (DDB)',
+    desc:      '44M cultural objects from German institutions',
+    imageCount: 44000000,
+    alwaysOn:  false,
+    stateKey:  'ddbKey',
+    storageKey: 'inspo_ddb_key',
+    getKeyUrl: 'https://www.deutsche-digitale-bibliothek.de/user/apikey',
+  },
+  {
     id:        'artsy',
     name:      'Artsy',
     desc:      'Contemporary art marketplace — needs client_id + client_secret',
@@ -10680,7 +10768,7 @@ document.getElementById('btn-export-keys').addEventListener('click', () => {
     'inspo_ai_provider', 'inspo_rijks_key', 'inspo_europeana_key',
     'inspo_harvard_key', 'inspo_smithsonian_key', 'inspo_pexels_key',
     'inspo_pixabay_key', 'inspo_trove_key', 'inspo_digitalnz_key',
-    'inspo_dpla_key', 'inspo_artsy_id', 'inspo_artsy_secret',
+    'inspo_dpla_key', 'inspo_ddb_key', 'inspo_artsy_id', 'inspo_artsy_secret',
     'inspo_unsplash_key',
   ];
   const keys = {};
@@ -10729,6 +10817,7 @@ document.getElementById('keys-import-input').addEventListener('change', e => {
       STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
       STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
       STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
+      STATE.ddbKey          = localStorage.getItem('inspo_ddb_key')          || null;
       // Refresh panel badges
       buildKeyRows();
       updateKeysDot();
@@ -11488,6 +11577,7 @@ document.getElementById('settings-import-input').addEventListener('change', e =>
       STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
       STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
       STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
+      STATE.ddbKey          = localStorage.getItem('inspo_ddb_key')          || null;
       buildKeyRows();
       updateKeysDot();
       const theme = localStorage.getItem('inspo_theme');
