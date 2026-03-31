@@ -337,12 +337,11 @@ function classifyQuery(q) {
   return { isNature, isSpace };
 }
 
-/* Returns true when sourceId should be skipped in exact mode for this query */
+/* Returns true when sourceId should be skipped for this query (all modes).
+   Saves bandwidth by not querying nature-only or space-only sources when
+   the query clearly doesn't match those domains. */
 function skipInExactMode(sourceId, queryClass) {
-  if (STATE.searchMode !== 'exact') return false;
-  // Non-nature query → skip nature-only sources
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
-  // Non-space query → skip space-only sources
   if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
   return false;
 }
@@ -6291,7 +6290,15 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
     }),
   ]);
 
-  if (!isSilent && !all.length) showEmptyState();
+  if (!isSilent && !all.length) {
+    // Distinguish between "no results" and "all sources failed"
+    const failedCount = _fetchSemaphore._totalFailed || 0;
+    if (failedCount > 10 && !navigator.onLine) {
+      showOfflineState();
+    } else {
+      showEmptyState();
+    }
+  }
   return all;
 }
 
@@ -6359,6 +6366,23 @@ function showEmptyState() {
       </div>`;
   }
 }
+
+function showOfflineState() {
+  const grid = document.getElementById('image-grid');
+  grid.innerHTML = `
+    <div class="empty-state" style="grid-column:1/-1;min-height:calc(100vh - 4px);">
+      <p>you appear to be offline</p>
+      <span>check your connection and try again</span>
+    </div>`;
+}
+
+// Global unhandled rejection handler — catch silent failures
+window.addEventListener('unhandledrejection', (e) => {
+  // Suppress abort errors (expected when searches are cancelled)
+  if (e.reason?.name === 'AbortError') { e.preventDefault(); return; }
+  console.warn('[InspoSearch] Unhandled rejection:', e.reason?.message || e.reason);
+  e.preventDefault();
+});
 
 const _gridItemMap = new Map();
 
@@ -7466,7 +7490,11 @@ function renderKeywordPills(keywords) {
   keywords.forEach(kw => {
     const pill = document.createElement('button');
     pill.className = 'tag';
-    pill.innerHTML = `${kw} <span style="color:var(--ink-3);font-size:9px;">×</span>`;
+    pill.textContent = kw + ' ';
+    const xSpan = document.createElement('span');
+    xSpan.style.cssText = 'color:var(--ink-3);font-size:9px;';
+    xSpan.textContent = '×';
+    pill.appendChild(xSpan);
     pill.addEventListener('click', () => {
       STATE.keywords = STATE.keywords.filter(k => k !== kw);
       renderKeywordPills(STATE.keywords);
@@ -7894,9 +7922,16 @@ function renderSearchHistory(filter) {
     !filter || h.toLowerCase().includes(filter.toLowerCase())
   );
   if (!hist.length) { el.hidden = true; return; }
-  el.innerHTML = hist.map((h, i) =>
-    `<button class="search-history-item" role="option" aria-selected="false" data-i="${i}">${h}</button>`
-  ).join('');
+  el.innerHTML = '';
+  hist.forEach((h, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'search-history-item';
+    btn.setAttribute('role', 'option');
+    btn.setAttribute('aria-selected', 'false');
+    btn.dataset.i = i;
+    btn.textContent = h;
+    el.appendChild(btn);
+  });
   el.hidden = false;
 }
 
@@ -11541,7 +11576,10 @@ function renderAiSection(tags, errorMsg) {
 
   if (errorMsg) {
     section.style.display = 'block';
-    container.innerHTML = `<span style="font-family:var(--font-ui);font-size:10px;color:var(--ink-3);">${errorMsg}</span>`;
+    const errSpan = document.createElement('span');
+    errSpan.style.cssText = 'font-family:var(--font-ui);font-size:10px;color:var(--ink-3);';
+    errSpan.textContent = errorMsg;
+    container.appendChild(errSpan);
     return;
   }
 
