@@ -3193,6 +3193,11 @@ h1.logo, h2.section-label {
   background: rgba(0,0,0,0.55); display: flex;
   align-items: center; justify-content: center;
   animation: fadeIn 0.2s ease;
+  overflow: visible !important;
+}
+
+body.adv-modal-open {
+  overflow: hidden !important;
 }
 .adv-panel {
   background: var(--bg); border: 1px solid var(--line);
