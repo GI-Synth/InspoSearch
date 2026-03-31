@@ -2,7 +2,7 @@
   "name": "InspoSearch",
   "short_name": "InspoSearch",
   "description": "Search 3.2 billion images across 521 museums, archives & databases — one search, one interface.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -30,7 +30,7 @@
     }
   ],
   "share_target": {
-    "action": "./index.html",
+    "action": "./",
     "method": "GET",
     "params": {
       "text": "q",
@@ -42,7 +42,7 @@
     {
       "name": "New Search",
       "short_name": "Search",
-      "url": "./index.html",
+      "url": "./",
       "description": "Start a new image search"
     }
   ]
