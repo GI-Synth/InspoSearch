@@ -447,6 +447,9 @@ html, body {
   flex-wrap: wrap;
   gap: 4px;
   min-height: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  padding-bottom: 4px;
 }
 
 #cache-indicator {
@@ -872,6 +875,10 @@ html, body {
 @keyframes pulse {
   0%, 100% { opacity: 0.3; }
   50%       { opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ============================================================
@@ -1656,9 +1663,12 @@ html, body {
   padding: 10px 16px;
   width: fit-content;
   max-width: 600px;
+  overflow-x: auto;
+  scrollbar-width: none;
   z-index: 50;
   font-family: var(--font-ui);
 }
+#floating-bar::-webkit-scrollbar { display: none; }
 
 #floating-bar.visible {
   transform: translateX(-50%) translateY(0);

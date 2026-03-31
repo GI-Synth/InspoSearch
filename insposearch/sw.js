@@ -1,10 +1,11 @@
 /* InspoSearch Service Worker — static asset cache + stale-while-revalidate */
 /* Cache version — update on each deploy (build script or manual) */
-const CACHE_VERSION = '20260331e';
+const CACHE_VERSION = '20260331f';
 const CACHE_NAME = 'inspo-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './institutions.html',
   './style.css',
   './app.js',
   './sources.manifest.json',
@@ -35,17 +36,20 @@ self.addEventListener('fetch', event => {
 
   // Navigation requests (PWA launch, page reload) — serve cached shell, update in background
   if (event.request.mode === 'navigate') {
+    const pathname = url.pathname;
+    const isRoot = pathname === '/' || pathname.endsWith('/index.html');
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
-        // Try multiple cache keys — the PWA may relaunch with / or /index.html
-        const cached = await cache.match(event.request)
-                    || await cache.match('./')
-                    || await cache.match('./index.html');
+        // Try exact match first; only fall back to index.html for root navigations
+        let cached = await cache.match(event.request);
+        if (!cached && isRoot) {
+          cached = await cache.match('./') || await cache.match('./index.html');
+        }
 
         const fetchPromise = fetch(event.request).then(response => {
           if (response.ok) {
             cache.put(event.request, response.clone());
-            cache.put('./', response.clone());
+            if (isRoot) cache.put('./', response.clone());
           }
           return response;
         }).catch(() => cached);
