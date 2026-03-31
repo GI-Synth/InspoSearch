@@ -1944,18 +1944,30 @@ function scoreItemRelevance(item, query) {
   const text = `${title} ${desc} ${tags}`;
 
   let score = 0;
-  if (title.includes(q)) score += 9;
-  if (desc.includes(q)) score += 4;
-  if (text.includes(q)) score += 5;
 
+  // Exact full-phrase matches — highest value
+  if (title.includes(q)) score += 12;
+  if (desc.includes(q)) score += 6;
+  if (tags.includes(q)) score += 5;
+
+  // Word-boundary matches (whole words, not substrings)
   let termMatches = 0;
+  let titleTerms = 0;
   terms.forEach(t => {
-    if (title.includes(t)) { score += 3; termMatches++; }
-    else if (desc.includes(t)) { score += 2; termMatches++; }
-    else if (tags.includes(t)) { score += 2; termMatches++; }
+    const wordRe = new RegExp('\\b' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+    if (wordRe.test(title))     { score += 4; termMatches++; titleTerms++; }
+    else if (wordRe.test(desc)) { score += 2; termMatches++; }
+    else if (wordRe.test(tags)) { score += 2; termMatches++; }
+    // Partial/substring matches (lower value)
+    else if (title.includes(t)) { score += 1; termMatches++; }
+    else if (text.includes(t))  { score += 0.5; termMatches++; }
   });
 
-  if (terms.length > 1 && termMatches === terms.length) score += 4;
+  // Bonus: all terms present
+  if (terms.length > 1 && termMatches === terms.length) score += 6;
+  // Bonus: all terms in title specifically
+  if (terms.length > 1 && titleTerms === terms.length) score += 4;
+
   return score;
 }
 
@@ -1966,11 +1978,11 @@ function getDisplayResults(items, query) {
   if (STATE.searchMode === 'exact') {
     const terms = (query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
     const ranked = base
-      // Layer 2 gate: at least one query term must appear in the item's text
+      // Strict gate: ALL query terms must appear in the item's text
       .filter(item => {
         if (!terms.length) return true;
         const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.some(t => hay.includes(t));
+        return terms.every(t => hay.includes(t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
       .filter(x => x.score > 0)
@@ -7868,12 +7880,11 @@ async function runSearch(query, forceRefresh = false) {
   // ── Exact-mode post-processing ──────────────────────────────────────
   if (STATE.searchMode === 'exact') {
     const lq = STATE.query.toLowerCase();
-    // 3. Discard results from rogue sources that don't contain the exact query
-    //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
-    const ROGUE_SOURCES = new Set(['wikimedia', 'flickr']);
+    const terms = lq.trim().split(/\s+/).filter(Boolean);
+    // 1. Filter ALL sources: require at least one query term in title/desc/tags
     STATE.results = STATE.results.filter(r => {
-      if (!ROGUE_SOURCES.has(r.source)) return true;
-      return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
+      const hay = `${r.title || ''} ${r.description || ''} ${(r.tags || []).join(' ')}`.toLowerCase();
+      return terms.some(t => hay.includes(t));
     });
     // 2. Promote results whose title/description contain the exact query phrase
     STATE.results = [
@@ -8075,6 +8086,12 @@ document.getElementById('search-input').addEventListener('keydown', e => {
     }
     if (q) runSearch(q);
   }
+});
+
+// Search go button
+document.getElementById('btn-go-search').addEventListener('click', () => {
+  const q = document.getElementById('search-input').value.trim();
+  if (q) runSearch(q);
 });
 
 document.getElementById('btn-search-mode').addEventListener('click', () => {

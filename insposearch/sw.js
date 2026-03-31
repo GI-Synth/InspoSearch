@@ -1,6 +1,6 @@
 /* InspoSearch Service Worker — static asset cache + stale-while-revalidate */
 /* Cache version — update on each deploy (build script or manual) */
-const CACHE_VERSION = '20260331b';
+const CACHE_VERSION = '20260331d';
 const CACHE_NAME = 'inspo-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
@@ -33,6 +33,29 @@ self.addEventListener('fetch', event => {
   // Only cache same-origin static resources and GET requests
   if (event.request.method !== 'GET') return;
 
+  // Navigation requests (PWA launch, page reload) — serve cached shell, update in background
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async cache => {
+        // Try multiple cache keys — the PWA may relaunch with / or /index.html
+        const cached = await cache.match(event.request)
+                    || await cache.match('./')
+                    || await cache.match('./index.html');
+
+        const fetchPromise = fetch(event.request).then(response => {
+          if (response.ok) {
+            cache.put(event.request, response.clone());
+            cache.put('./', response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
   // For API calls (external), use network-first strategy
   if (url.origin !== location.origin) {
     event.respondWith(
@@ -56,7 +79,7 @@ self.addEventListener('fetch', event => {
         const fetchPromise = fetch(event.request).then(response => {
           if (response.ok) cache.put(event.request, response.clone());
           return response;
-        });
+        }).catch(() => cached);
         return cached || fetchPromise;
       })
     )
