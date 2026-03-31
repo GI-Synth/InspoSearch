@@ -34,7 +34,7 @@
     "author": { "@type": "Organization", "name": "GI-Synth", "url": "https://github.com/GI-Synth" }
   }
   </script>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; img-src * data: blob:; connect-src *; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' blob: data:; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data: blob:; connect-src *; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,8 +64,8 @@
       <div class="sidebar-top">
         <h1 class="logo">insposearch</h1>
         <div style="display:flex;align-items:center;gap:8px;">
-          <button class="settings-gear-btn" id="btn-settings" title="settings">⚙</button>
-          <button class="theme-toggle" id="theme-toggle">dark</button>
+          <button class="settings-gear-btn" id="btn-settings" title="settings" aria-label="open settings">⚙</button>
+          <button class="theme-toggle" id="theme-toggle" aria-label="toggle dark/light theme">dark</button>
         </div>
       </div>
 
@@ -85,8 +85,8 @@
             spellcheck="false"
             aria-label="search images"
           >
-          <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)">explore</button>
-          <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search">advanced</button>
+          <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)" aria-label="search mode: explore">explore</button>
+          <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search" aria-label="open advanced search">advanced</button>
         </div>
         <div id="search-history-dropdown" class="search-history-dropdown" hidden role="listbox" aria-label="search history"></div>
         <div id="loading-indicator" class="loading-indicator" role="status" aria-live="polite"></div>
@@ -141,6 +141,7 @@
             min="6"
             max="150"
             value="24"
+            aria-label="number of images to load"
           >
         </div>
       </div>
@@ -163,21 +164,21 @@
       <!-- View toggle -->
       <div class="sidebar-section">
         <span class="section-label">view</span>
-        <div class="btn-group">
-          <button class="btn active" id="btn-grid">grid</button>
-          <button class="btn" id="btn-board">board</button>
-          <button class="btn" id="btn-3d">3d</button>
+        <div class="btn-group" role="radiogroup" aria-label="view mode">
+          <button class="btn active" id="btn-grid" role="radio" aria-checked="true" aria-label="grid view">grid</button>
+          <button class="btn" id="btn-board" role="radio" aria-checked="false" aria-label="moodboard view">board</button>
+          <button class="btn" id="btn-3d" role="radio" aria-checked="false" aria-label="3D gallery view">3d</button>
         </div>
       </div>
 
       <!-- Aspect ratio filter (hidden until results loaded) -->
       <div class="sidebar-section" id="aspect-filter-section" style="display:none;">
         <span class="section-label">orientation</span>
-        <div class="aspect-btn-group">
-          <button class="aspect-btn active" data-aspect="all">all</button>
-          <button class="aspect-btn" data-aspect="landscape">landscape</button>
-          <button class="aspect-btn" data-aspect="portrait">portrait</button>
-          <button class="aspect-btn" data-aspect="square">square</button>
+        <div class="aspect-btn-group" role="radiogroup" aria-label="orientation filter">
+          <button class="aspect-btn active" data-aspect="all" role="radio" aria-checked="true">all</button>
+          <button class="aspect-btn" data-aspect="landscape" role="radio" aria-checked="false">landscape</button>
+          <button class="aspect-btn" data-aspect="portrait" role="radio" aria-checked="false">portrait</button>
+          <button class="aspect-btn" data-aspect="square" role="radio" aria-checked="false">square</button>
         </div>
       </div>
 
@@ -242,7 +243,7 @@
       <a href="institutions.html" id="btn-institutions" class="btn btn-sidebar-link" style="display:block;text-align:center;font-size:9px;letter-spacing:0.08em;margin:4px 0;">institutions</a>
 
       <!-- Help / onboarding button -->
-      <button class="btn-help" id="btn-help" title="how to use insposearch">?</button>
+      <button class="btn-help" id="btn-help" title="how to use insposearch" aria-label="help and keyboard shortcuts">?</button>
 
       <!-- API keys toggle button (pinned to bottom) -->
       <button class="btn btn-keys" id="btn-keys">
@@ -337,7 +338,7 @@
       </div>
 
       <!-- Grid view — default -->
-      <div id="image-grid">
+      <div id="image-grid" role="grid" aria-label="search results">
         <div class="empty-state" id="empty-state" style="grid-column: 1 / -1; min-height: calc(100dvh - 4px); display:none;">
           <p>begin with an image, a word, a feeling</p>
           <span>try: texture / light / form / shadow</span>
@@ -373,13 +374,13 @@
           background: var(--line-strong);
         "></div>
 
-        <button id="connect-btn" class="btn" style="
+        <button id="connect-btn" class="btn" aria-label="connect selected images" style="
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
         ">connect</button>
 
-        <button id="interpret-btn" class="btn" style="
+        <button id="interpret-btn" class="btn" aria-label="interpret selection with AI" style="
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
@@ -391,19 +392,19 @@
           <span style="color: var(--accent)">&#10022;</span>
         </button>
 
-        <button id="bar-slideshow-btn" class="btn" style="
+        <button id="bar-slideshow-btn" class="btn" aria-label="start slideshow" style="
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
         ">slideshow</button>
 
-        <button id="bar-cite-btn" class="btn" style="
+        <button id="bar-cite-btn" class="btn" aria-label="cite selected images" style="
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
         ">cite</button>
 
-        <button id="bar-compare-btn" class="btn" style="
+        <button id="bar-compare-btn" class="btn" aria-label="compare selected images" style="
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
