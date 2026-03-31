@@ -1882,7 +1882,6 @@ html, body {
   position: relative;
 }
 
-/* API badge button */
 #sib-api-badge {
   display: inline-flex;
   align-items: center;
@@ -1900,6 +1899,28 @@ html, body {
   transition: all 0.2s ease;
   color: #c47a20;
   border-color: rgba(196,122,32,0.33);
+}
+
+/* View Docs button in source info bar */
+.docs-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 2px 10px;
+  font-size: 9px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  background: var(--accent);
+  color: #0E0E0D;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  transition: background 0.2s, color 0.2s;
+}
+.docs-bar-btn:hover {
+  background: #e6cfa2;
+  color: #0E0E0D;
 }
 #sib-api-badge:hover { opacity: 0.7; }
 #sib-api-badge.all-connected {
