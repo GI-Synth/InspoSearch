@@ -9,8 +9,10 @@ InspoSearch is free, open source, and community-driven. The best way to contribu
 ### 1. Fork and clone
 
 ```bash
-git clone https://github.com/YOUR-FORK/insposearch.git
+git clone https://github.com/YOUR-FORK/InspoSearch.git
 ```
+
+> Upstream: `https://github.com/GI-Synth/InspoSearch`
 
 ### 2. Copy the template
 
@@ -40,7 +42,7 @@ The most important fields:
 
 ### 4. Test it
 
-Open `insposearch/index.html` in your browser, try at least 3 different search terms, and confirm images load. Check the browser console for errors.
+Open `insposearch/index.html` in your browser (or visit [insposearch.pages.dev](https://insposearch.pages.dev) to compare against production), try at least 3 different search terms, and confirm images load. Check the browser console for errors.
 
 The source should:
 - Return at least a few results for common search terms
@@ -136,6 +138,10 @@ The CI will validate your JSON automatically. If it fails, the error message wil
 |---|---|
 | `simple_rest` | JSON REST API with configurable field mapping |
 | `iiif_search` | IIIF Content Search API (v1 or v2) |
+| `met_iiif` | Metropolitan Museum IIIF-style API |
+| `wellcome_iiif` | Wellcome Collection IIIF API |
+| `sketchfab` | Sketchfab API (3D models + thumbnails) |
+| `museum_digital` | museum-digital (md/regional node) style |
 | `bodleian` | Bodleian Libraries portal style |
 | `bsb` | Bayerische Staatsbibliothek style |
 | `cudl` | Cambridge Digital Library style |
@@ -144,8 +150,9 @@ The CI will validate your JSON automatically. If it fails, the error message wil
 
 - `"corsMode": "direct"` — the API allows cross-origin requests (preferred)
 - `"corsMode": "proxy"` — requires a CORS proxy (note this in your PR)
+- `"corsMode": "cached"` — data is pre-fetched by the nightly CI job and bundled into `insposearch/data/`
 
-If a source blocks direct browser requests, it can't be added without a proxy. Check by opening the API URL in your browser DevTools network tab.
+If a source blocks direct browser requests, it can't be added without a proxy or the cached data pipeline. Check by opening the API URL in your browser DevTools network tab.
 
 ### Key-required sources
 
@@ -185,18 +192,28 @@ Sources that violate these rules will not be merged.
 
 ## Code style
 
-InspoSearch is intentionally simple. All code lives in one file (`insposearch/index.html`) — no build step, no bundler, no node_modules.
+InspoSearch is intentionally simple. No build step, no bundler, no node_modules.
+
+The app is split into three files:
+- `insposearch/index.html` — markup
+- `insposearch/style.css` — all styles
+- `insposearch/app.js` — all application logic
 
 If you're editing the app code:
 
-- Keep the single-file structure
-- Match the existing code style (no semicolons preference lost in the pattern — just match what's around it)
-- No dependencies except the two CDN libraries already loaded (Three.js, html2canvas)
+- Match the existing code style (semicolons, spacing — just match what's around it)
+- CDN libraries already in use: Three.js, html2canvas, Fabric.js, OpenSeadragon, Fuse.js
+- No additional external dependencies without discussion
 - No TypeScript, no frameworks
 - Test in both light and dark mode
+- Test on mobile viewport (Chrome DevTools responsive mode)
 
 ---
 
 ## License
 
-InspoSearch is released under the [MIT License](LICENSE). By contributing, you agree your contribution is released under the same terms.
+InspoSearch is released under the [AGPL-3.0 License](LICENSE). By contributing, you agree your contribution is released under the same terms.
+
+---
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating. For security issues, see [SECURITY.md](SECURITY.md).

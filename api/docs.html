@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InspoSearch API</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Mono', 'Menlo', monospace;
+      background: #0E0E0D; color: #E8E6E1;
+      padding: 40px 24px; max-width: 720px; margin: 0 auto;
+      line-height: 1.7; font-size: 13px;
+    }
+    h1 { font-family: 'Cormorant Garamond', serif; font-weight: 300;
+         font-style: italic; font-size: 32px; color: #C8B89A; margin-bottom: 8px; }
+    h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+         color: #C8B89A; margin: 32px 0 12px; }
+    p { color: #8A8880; margin-bottom: 12px; }
+    code { background: #1A1A18; padding: 2px 6px; font-size: 12px; color: #E8E6E1; }
+    pre { background: #1A1A18; padding: 16px; overflow-x: auto; margin: 8px 0 20px;
+          font-size: 11px; line-height: 1.5; border: 1px solid rgba(255,255,255,0.06); }
+    .endpoint { color: #C8B89A; }
+    .param { color: #6B9F6B; }
+    a { color: #C8B89A; text-decoration: underline; text-underline-offset: 2px; }
+    .badge { display: inline-block; padding: 2px 8px; font-size: 9px;
+             letter-spacing: 0.08em; border: 1px solid rgba(200,184,154,0.3);
+             color: #C8B89A; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <h1>InspoSearch API</h1>
+  <p>Free, public REST API for cultural heritage image search.</p>
+  <p><span class="badge">v1.0</span> <span class="badge">REST</span> <span class="badge">JSON</span></p>
+
+  <h2>Base URL</h2>
+  <pre>https://insposearch-api.&lt;your-subdomain&gt;.workers.dev</pre>
+
+  <h2>Endpoints</h2>
+
+  <h3 style="margin:16px 0 6px;font-size:12px;color:#E8E6E1;">
+    <code class="endpoint">GET /search</code>
+  </h3>
+  <p>Search across cultural heritage sources.</p>
+  <pre>GET /search?<span class="param">q</span>=landscape&<span class="param">limit</span>=12</pre>
+  <p>Parameters:</p>
+  <pre>q      (required)  Search query
+limit  (optional)  1-100, default 24</pre>
+
+  <h3 style="margin:16px 0 6px;font-size:12px;color:#E8E6E1;">
+    <code class="endpoint">GET /sources</code>
+  </h3>
+  <p>List all available sources with metadata.</p>
+
+  <h3 style="margin:16px 0 6px;font-size:12px;color:#E8E6E1;">
+    <code class="endpoint">GET /random</code>
+  </h3>
+  <p>Get random items from a random category.</p>
+  <pre>GET /random?<span class="param">count</span>=6</pre>
+
+  <h3 style="margin:16px 0 6px;font-size:12px;color:#E8E6E1;">
+    <code class="endpoint">GET /health</code>
+  </h3>
+  <p>Health check. Returns <code>{ "status": "ok" }</code>.</p>
+
+  <h2>Rate Limits</h2>
+  <p>60 requests per minute per IP address.</p>
+
+  <h2>Response Format</h2>
+  <pre>{
+  "query": "landscape",
+  "count": 24,
+  "results": [
+    {
+      "id": "artic_12345",
+      "title": "A Sunday on La Grande Jatte",
+      "artist": "Georges Seurat",
+      "date": "1884-1886",
+      "thumbnail": "https://...",
+      "source": "Art Institute of Chicago",
+      "sourceUrl": "https://..."
+    }
+  ]
+}</pre>
+
+  <h2>CORS</h2>
+  <p>Cross-origin requests are allowed from <code>insposearch.pages.dev</code>.</p>
+
+  <p style="margin-top:40px;color:#4A4A46;">
+    <a href="https://insposearch.pages.dev">← back to insposearch</a>
+  </p>
+</body>
+</html>

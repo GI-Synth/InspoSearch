@@ -1,93 +1,152 @@
 # InspoSearch
 
-**A multi-source visual research engine for designers, researchers, artists, and educators.**
+**The world's open cultural image search — 500+ sources, 3B+ images, one search.**
 
-Free forever. No accounts. No signups. No paywalls.
+[![Live](https://img.shields.io/badge/live-insposearch.pages.dev-000?style=flat&logo=cloudflare)](https://insposearch.pages.dev)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
+[![Sources](https://img.shields.io/badge/sources-500%2B-brightgreen?style=flat)](SOURCES.md)
+[![Images](https://img.shields.io/badge/images-3B%2B-brightgreen?style=flat)](SOURCES.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](CONTRIBUTING.md)
+[![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-purple?style=flat)](CODE_OF_CONDUCT.md)
 
-→ [Open InspoSearch](insposearch/index.html)
+Free forever. No accounts. No signups. No paywalls. No server.
 
----
-
-![InspoSearch screenshot — dark grid of research images from world museums and archives](docs/screenshot.png)
-*screenshot coming soon — open `insposearch/index.html` and search for anything*
+→ **[Open InspoSearch](https://insposearch.pages.dev)**
 
 ---
 
 ## What it is
 
-InspoSearch is not an image search engine. It is a multi-source visual research engine — a creative thinking tool that aggregates the open cultural web and makes it explorable, connectable, and inspiring.
+InspoSearch is not an image search engine. It is a **multi-source visual research engine** — a creative and scholarly tool that aggregates the open cultural web and makes it explorable, connectable, and inspiring.
 
-Search once and get results from the Met, the V&A, NASA, iNaturalist, the Library of Congress, Gallica, museum-digital, DigitalCommonwealth, and 80+ more — all at once, in a single dark grid. The sources are chosen for depth and diversity, not traffic. You will find things here you would never find on Google Images.
+Search once and get results from the Met, Rijksmuseum, V&A, NASA, iNaturalist, Library of Congress, Gallica, museum-digital, DigitalCommonwealth, and 480+ more — **all at once**, in a unified dark grid. Sources are chosen for depth and diversity, not traffic. You will find things here that do not exist on Google Images.
 
 The magic works without AI. AI amplifies it when you want to go deeper.
 
-## How to use it
+---
 
-1. Download or clone this repository
-2. Open `insposearch/index.html` in your browser
-3. Search for anything
+## Quick start
 
-No install. No build step. No server. It opens by double-click.
+```bash
+# Option 1: Open directly (no install)
+# Just open insposearch/index.html in any browser
+
+# Option 2: Serve locally
+npm start       # → http://localhost:3000
+```
+
+No build step. No dependencies. No server. Opens by double-click.
+
+---
 
 ## Features
 
-- **80+ sources** — world museums, nature archives, historical photography, cultural heritage institutions
-- **Exact / Explore modes** — broad serendipitous search or tight keyword matching
-- **Board view** — drag images onto a canvas, arrange and annotate
-- **Color extraction** — palette pulled from every image
-- **AI research assistant** — multi-provider (Gemini, Claude, OpenAI) — opt-in, never required
-- **Source filtering** — filter by category, region, key requirement, or custom preset
-- **Pop-out board** — open the board in a separate window for dual-screen workflows
-- **Export** — save your board as a PNG, export your API keys as JSON
-- **Dark mode**
+| Feature | Description |
+|---|---|
+| **500+ sources** | World museums, archives, nature databases, libraries, photography |
+| **3B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Wikimedia · LOC · 490+ more |
+| **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
+| **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
+| **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |
+| **Color extraction** | Dominant palette pulled from every image |
+| **3D constellation view** | Three.js spatial layout of results |
+| **AI research assistant** | Gemini · Claude · OpenAI · Ollama — opt-in, never required |
+| **Source filtering** | Filter by category · region · key requirement · custom preset |
+| **Cross-reference mode** | Find conceptual connections across selected images (Interpret ✦) |
+| **Pop-out board** | Dual-screen workflow — board opens in a separate window |
+| **Export** | Board → PNG · citation text · API key JSON |
+| **Dark mode** | Auto-detect + manual override |
+| **Offline-ready** | Recent searches cached in localStorage |
+| **Keyboard navigation** | Full keyboard support + screen-reader accessible |
+
+---
 
 ## AI features (optional)
 
-InspoSearch works fully without AI. Add an API key to unlock:
+InspoSearch works fully without AI. Add a key to unlock:
 
-- **Analyse with AI** — deep visual analysis of any image
-- **Interpret ✦** — find hidden conceptual connections across selected images  
-- **Research assistant** — chat panel that sees your current grid and suggests new search directions
+- **Vision analysis** — deep AI reading of any image
+- **Interpret ✦** — find hidden conceptual threads across selected images
+- **Research assistant** — chat panel that sees your current grid
 
-Supported providers: **Google Gemini** (free tier, no key needed to start) · **Anthropic Claude** · **OpenAI GPT-4o** · Any OpenAI-compatible endpoint
+| Provider | Cost | Notes |
+|---|---|---|
+| Google Gemini | Free tier (1,500/day) | Best default choice |
+| Anthropic Claude | Bring your key | Vision-enabled |
+| OpenAI GPT-4o | Bring your key | Vision-enabled |
+| Ollama | Free, local | Run models privately |
 
-Keys are stored locally in your browser. Never sent anywhere except their respective APIs.
+Keys are stored in your browser's `localStorage` only — never sent to InspoSearch servers (there are none).
+
+---
+
+## Source categories
+
+| Category | Count | Examples |
+|---|---|---|
+| 🏛️ Museums | 212 | Met · Rijksmuseum · V&A · Louvre · Prado · 200+ more |
+| 📷 Photography | 22 | Flickr Commons · Openverse · Unsplash · FSA/OWI |
+| 🌿 Nature | 20 | iNaturalist · GBIF · EOL · BHL · Naturalis |
+| 📜 Historical | 75 | LOC · Chronicling America · Gallica · Trove |
+| 🎨 Art & Design | 58 | WikiArt · Cooper Hewitt · Artsy · museum-digital |
+| 🗺️ Maps | 8 | David Rumsey · Old Maps Online |
+| 👗 Fashion | 15 | Europeana Fashion · Galliera · Centraal Museum |
+| 🔭 Science | 12 | NASA · USGS · NOAA · Hubble |
+
+---
 
 ## Adding a source
 
-InspoSearch uses a community-contributable source manifest format. Adding a new source is a single JSON file.
+InspoSearch uses a **community-contributable source manifest** format. Adding a new source is one JSON file and one PR.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide — it takes about 5 minutes.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** — the full guide takes about 5 minutes.
 
-New sources live in [insposearch/sources/](insposearch/sources/). The manifest merges automatically when your PR is approved.
+Sources live in [`insposearch/sources/`](insposearch/sources/). CI validates every PR automatically.
+
+To request a source without writing code: [open a source request issue](https://github.com/GI-Synth/InspoSearch/issues/new?template=source-request.md).
+
+---
 
 ## Project structure
 
 ```
 insposearch/
-  index.html              — the entire app (HTML + CSS + JS, single file)
+  index.html              — full app entry point
+  app.js                  — all application logic (~11k lines)
+  style.css               — all styles (~2.4k lines)
   sources/                — community source manifests (JSON)
-  sources.manifest.json   — merged manifest (generated)
+  sources.manifest.json   — merged source registry
+  data/                   — pre-fetched data for CORS-blocked sources
 
 scripts/
-  validate-sources.js     — CI validation script for source manifests
+  validate-sources.js     — validates source manifests (CI + local)
+  fetch-cors-blocked.js   — nightly fetch for CORS-blocked APIs
 
 .github/
   workflows/
-    validate-sources.yml  — GitHub Actions: validate PRs adding sources
-  ISSUE_TEMPLATE/
-    source-request.md     — template for requesting new sources
-    bug-report.md         — bug report template
+    validate-sources.yml  — validates source PRs
+    nightly-fetch.yml     — refreshes cached data nightly
+  ISSUE_TEMPLATE/         — bug / feature / source request templates
+  PULL_REQUEST_TEMPLATE.md
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-[MIT](LICENSE)
 
 ---
 
-*Built by Malakai. Open source. Free forever.*
+## Contributing
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to add sources, fix bugs, improve the app
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — community standards
+- **[SECURITY.md](SECURITY.md)** — how to report vulnerabilities
+- **[CHANGELOG.md](CHANGELOG.md)** — version history
+- **[ROADMAP.md](ROADMAP.md)** — what's next
+
+---
+
+## License
+
+[AGPL-3.0](LICENSE) — free to use and modify; derivatives must remain open source.
+
+---
+
+*InspoSearch — the world's visual heritage, searchable.*
+

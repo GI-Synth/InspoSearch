@@ -17,7 +17,7 @@ const CONSTANTS = {
   RETRY_DELAY:        2000,
   MAX_RESULTS:        2000,
   MAX_CHAT_HISTORY:     20,
-  HEALTH_MISS_LIMIT:     3,   // consecutive misses before disabling a source
+  HEALTH_MISS_LIMIT:     5,   // consecutive misses before disabling a source
   FETCH_TIMEOUT:      5000,   // default safeFetch timeout (ms)
   COUNTER_DEBOUNCE:    300,   // updateSourcesActiveCounter debounce (ms)
 };
@@ -308,6 +308,8 @@ const NATURE_QUERY_TERMS = [
   'cicada','barnacle','echinoderm','nudibranch','mycelium','lichen',
   'wildflower','blossom','seedpod','herbarium','bird','fish','whale',
   'shark','snake','lizard','frog','toad','newt','salamander','worm',
+  'plankton','diatom','protozoa','caterpillar','wasp','bee','hornet','ant',
+  'snail','slug','jellyfish','starfish','urchin','sponge','clam','mussel',
 ];
 // Queries that signal space/astronomical intent → skip nature sources
 const SPACE_QUERY_TERMS = [
@@ -315,6 +317,8 @@ const SPACE_QUERY_TERMS = [
   'meteor','orbit','telescope','aurora','cosmos','pulsar','black hole',
   'solar flare','spacecraft','satellite','mars','jupiter','saturn','venus',
   'milky way','constellation','hubble','voyager','iss','astronaut','lunar',
+  'mercury','neptune','uranus','pluto','kepler','cassini','gemini mission',
+  'apollo mission','space station','rocket','crater','magnetosphere',
 ];
 // Source IDs that are domain-locked to nature biology
 const NATURE_ONLY_SOURCES = new Set([
@@ -409,6 +413,280 @@ const SEED_MAP = {
   abstract:     ['form', 'gesture', 'mark', 'field', 'tension'],
   vintage:      ['patina', 'grain', 'fade', 'archive', 'memory'],
 };
+
+/* ── Synonym Expansion V2 — art movements, species, historical periods ── */
+const MOVEMENT_SYNONYMS = {
+  impressionism:  ['monet','renoir','sisley','pissarro','degas','cézanne','manet','berthe morisot','plein air','en plein air'],
+  'post-impressionism': ['van gogh','gauguin','cézanne','seurat','pointillism','toulouse-lautrec','signac'],
+  expressionism:  ['munch','kirchner','nolde','kandinsky','marc','die brücke','der blaue reiter'],
+  surrealism:     ['dalí','magritte','ernst','miró','tanguy','breton','automatism','dream imagery'],
+  cubism:         ['picasso','braque','léger','gris','cubist','fragmentation','multiple perspectives'],
+  fauvism:        ['matisse','derain','vlaminck','dufy','bold color','wild beasts'],
+  futurism:       ['boccioni','balla','severini','marinetti','speed','dynamism','modern life'],
+  dadaism:        ['duchamp','tzara','arp','schwitters','readymade','anti-art','collage'],
+  minimalism:     ['judd','flavin','andre','lewitt','stella','serial forms','primary structures'],
+  'pop art':      ['warhol','lichtenstein','oldenburg','rosenquist','hamilton','mass media','consumer culture'],
+  'art nouveau':  ['mucha','klimt','gaudí','tiffany','guimard','organic line','jugendstil','stile liberty'],
+  'art deco':     ['cassandre','erté','tamara de lempicka','chrysler building','geometric luxury','1920s'],
+  baroque:        ['caravaggio','bernini','rubens','rembrandt','velázquez','chiaroscuro','dramatic light'],
+  romanticism:    ['delacroix','turner','friedrich','constable','goya','sublime','emotion','heroic landscape'],
+  realism:        ['courbet','millet','homer','eakins','daumier','working class','social observation'],
+  symbolism:      ['moreau','redon','puvis de chavannes','khnopff','esoteric','dream','mystical'],
+  'pre-raphaelite': ['rossetti','millais','hunt','burne-jones','waterhouse','medieval revivalism','detailed nature'],
+  neoclassicism:  ['david','ingres','canova','thorvaldsen','greek ideal','roman virtue','grand manner'],
+  mannerism:      ['pontormo','parmigianino','bronzino','elongated figures','artifice','virtuosity'],
+  constructivism: ['tatlin','rodchenko','lissitzky','popova','geometric','revolutionary art','productivism'],
+  'abstract expressionism': ['pollock','de kooning','rothko','kline','newman','action painting','color field'],
+};
+
+const SPECIES_SYNONYMS = {
+  owl:        ['strigiformes','bubo','tyto','athene noctua','strix'],
+  eagle:      ['aquila','haliaeetus','accipitridae','raptor'],
+  hawk:       ['accipiter','buteo','raptor','falconiformes'],
+  falcon:     ['falco','peregrine','kestrel','falconidae'],
+  heron:      ['ardea','ardeidae','egret','great blue heron'],
+  crane:      ['grus','gruidae','sandhill crane','whooping crane'],
+  parrot:     ['psittacidae','ara','macaw','cockatoo','budgerigar'],
+  hummingbird:['trochilidae','archilochus','calypte','iridescent'],
+  whale:      ['cetacea','balaenoptera','megaptera','humpback','blue whale'],
+  dolphin:    ['delphinidae','tursiops','bottlenose','porpoise'],
+  wolf:       ['canis lupus','canidae','grey wolf','timber wolf'],
+  bear:       ['ursidae','ursus','grizzly','brown bear','polar bear'],
+  deer:       ['cervidae','cervus','odocoileus','white-tailed','elk','stag'],
+  fox:        ['vulpes','red fox','arctic fox','fennec'],
+  lion:       ['panthera leo','felidae','big cat','african lion'],
+  tiger:      ['panthera tigris','bengal tiger','siberian tiger','felidae'],
+  elephant:   ['elephantidae','loxodonta','elephas maximus','proboscidea'],
+  orchid:     ['orchidaceae','phalaenopsis','cattleya','dendrobium','oncidium'],
+  rose:       ['rosa','rosaceae','hybrid tea','floribunda','damask rose'],
+  lily:       ['lilium','liliaceae','day lily','tiger lily','madonna lily'],
+  fern:       ['polypodiopsida','pteridium','asplenium','dryopteris'],
+  mushroom:   ['agaricales','amanita','boletus','fungi','mycology'],
+  butterfly:  ['lepidoptera','papilionidae','nymphalidae','monarch','swallowtail'],
+  beetle:     ['coleoptera','scarabaeidae','cerambycidae','weevil','ladybug'],
+  dragonfly:  ['odonata','anisoptera','libellulidae','damselfly'],
+  coral:      ['anthozoa','scleractinia','reef coral','brain coral','staghorn'],
+  shark:      ['selachimorpha','carcharodon','great white','hammerhead','requiem'],
+  turtle:     ['testudines','cheloniidae','sea turtle','tortoise','terrapin'],
+  frog:       ['anura','ranidae','tree frog','dendrobatidae','amphibian'],
+  snake:      ['serpentes','colubridae','python','viper','cobra'],
+};
+
+const PERIOD_ALIASES = {
+  'belle époque':     ['1871-1914','gilded age','art nouveau era','pre-war paris','la belle époque'],
+  'gilded age':       ['1870-1900','belle époque','industrial wealth','american opulence'],
+  'jazz age':         ['1920s','roaring twenties','art deco','harlem renaissance','flapper'],
+  'middle ages':      ['medieval','5th-15th century','feudalism','gothic','romanesque','illuminated manuscript'],
+  'antiquity':        ['ancient','classical','greco-roman','hellenistic','roman empire'],
+  'ancient egypt':    ['pharaoh','hieroglyphics','nile','pyramid','tomb painting','papyrus'],
+  'ancient greece':   ['hellenistic','attic','red-figure','black-figure','parthenon','amphora'],
+  'ancient rome':     ['roman empire','pompeii','fresco','mosaic','colosseum','forum'],
+  'edo period':       ['tokugawa','17th-19th century','ukiyo-e','woodblock','kabuki','japanese art'],
+  'meiji era':        ['meiji restoration','1868-1912','japanese modernisation','shin-hanga'],
+  'ming dynasty':     ['1368-1644','chinese porcelain','blue and white','forbidden city','scroll painting'],
+  'qing dynasty':     ['1644-1912','manchu','famille rose','imperial china','canton enamel'],
+  'mughal':           ['mughal empire','1526-1857','miniature painting','mughal architecture','taj mahal'],
+  'byzantine':        ['eastern roman','icon','mosaic','hagia sophia','gold ground','orthodox art'],
+  'viking age':       ['norse','8th-11th century','rune','longship','scandinavian','berserker'],
+  'industrial revolution': ['18th century','19th century','factory','steam','victorian','mechanisation'],
+  'space age':        ['1960s','nasa','atomic age','midcentury modern','futuristic','space race'],
+  'cold war':         ['1947-1991','iron curtain','nuclear age','propaganda','space race'],
+  'harlem renaissance': ['1920s','1930s','african american art','jazz','langston hughes','aaron douglas'],
+};
+
+/* ============================================================
+   3b. MULTILINGUAL ART VOCABULARY MAP
+   English art terms → French / German / Dutch / Spanish
+   Used to expand queries for multilingual sources (Gallica,
+   Rijksmuseum, Prado, museum-digital, DDB, etc.)
+============================================================ */
+const MULTILINGUAL_ART_MAP = {
+  landscape:    ['paysage','landschaft','landschap','paisaje'],
+  portrait:     ['portrait','porträt','portret','retrato'],
+  'still life': ['nature morte','stillleben','stilleven','bodegón'],
+  flower:       ['fleur','blume','bloem','flor'],
+  flowers:      ['fleurs','blumen','bloemen','flores'],
+  dog:          ['chien','hund','hond','perro'],
+  cat:          ['chat','katze','kat','gato'],
+  horse:        ['cheval','pferd','paard','caballo'],
+  bird:         ['oiseau','vogel','vogel','pájaro'],
+  fish:         ['poisson','fisch','vis','pez'],
+  forest:       ['forêt','wald','woud','bosque'],
+  sea:          ['mer','meer','zee','mar'],
+  ocean:        ['océan','ozean','oceaan','océano'],
+  mountain:     ['montagne','berg','berg','montaña'],
+  river:        ['rivière','fluss','rivier','río'],
+  city:         ['ville','stadt','stad','ciudad'],
+  market:       ['marché','markt','markt','mercado'],
+  church:       ['église','kirche','kerk','iglesia'],
+  castle:       ['château','schloss','kasteel','castillo'],
+  woman:        ['femme','frau','vrouw','mujer'],
+  man:          ['homme','mann','man','hombre'],
+  child:        ['enfant','kind','kind','niño'],
+  soldier:      ['soldat','soldat','soldaat','soldado'],
+  angel:        ['ange','engel','engel','ángel'],
+  light:        ['lumière','licht','licht','luz'],
+  shadow:       ['ombre','schatten','schaduw','sombra'],
+  gold:         ['or','gold','goud','oro'],
+  red:          ['rouge','rot','rood','rojo'],
+  blue:         ['bleu','blau','blauw','azul'],
+  green:        ['vert','grün','groen','verde'],
+  black:        ['noir','schwarz','zwart','negro'],
+  white:        ['blanc','weiß','wit','blanco'],
+  textile:      ['textile','textil','textiel','textil'],
+  fabric:       ['tissu','stoff','stof','tela'],
+  lace:         ['dentelle','spitze','kant','encaje'],
+  dress:        ['robe','kleid','jurk','vestido'],
+  hat:          ['chapeau','hut','hoed','sombrero'],
+  tree:         ['arbre','baum','boom','árbol'],
+  sun:          ['soleil','sonne','zon','sol'],
+  moon:         ['lune','mond','maan','luna'],
+  sky:          ['ciel','himmel','hemel','cielo'],
+  cloud:        ['nuage','wolke','wolk','nube'],
+  fire:         ['feu','feuer','vuur','fuego'],
+  water:        ['eau','wasser','water','agua'],
+  stone:        ['pierre','stein','steen','piedra'],
+  ceramic:      ['céramique','keramik','keramiek','cerámica'],
+  manuscript:   ['manuscrit','manuskript','manuscript','manuscrito'],
+  map:          ['carte','karte','kaart','mapa'],
+  book:         ['livre','buch','boek','libro'],
+  print:        ['estampe','druck','prent','grabado'],
+  engraving:    ['gravure','gravur','gravure','grabado'],
+  drawing:      ['dessin','zeichnung','tekening','dibujo'],
+  painting:     ['peinture','gemälde','schilderij','pintura'],
+  sculpture:    ['sculpture','skulptur','sculptuur','escultura'],
+  photograph:   ['photographie','fotografie','fotografie','fotografía'],
+  architecture: ['architecture','architektur','architectuur','arquitectura'],
+  ornament:     ['ornement','ornament','ornament','ornamento'],
+  fruit:        ['fruit','frucht','fruit','fruta'],
+  rose:         ['rose','rose','roos','rosa'],
+  lily:         ['lys','lilie','lelie','lirio'],
+  tulip:        ['tulipe','tulpe','tulp','tulipán'],
+  butterfly:    ['papillon','schmetterling','vlinder','mariposa'],
+  shell:        ['coquille','muschel','schelp','concha'],
+  vase:         ['vase','vase','vaas','jarrón'],
+  garden:       ['jardin','garten','tuin','jardín'],
+  village:      ['village','dorf','dorp','pueblo'],
+  street:       ['rue','straße','straat','calle'],
+  bridge:       ['pont','brücke','brug','puente'],
+  ship:         ['navire','schiff','schip','barco'],
+  battle:       ['bataille','schlacht','slag','batalla'],
+  death:        ['mort','tod','dood','muerte'],
+  love:         ['amour','liebe','liefde','amor'],
+  music:        ['musique','musik','muziek','música'],
+  dance:        ['danse','tanz','dans','danza'],
+  hunt:         ['chasse','jagd','jacht','caza'],
+  mythology:    ['mythologie','mythologie','mythologie','mitología'],
+  allegory:     ['allégorie','allegorie','allegorie','alegoría'],
+};
+
+/* ============================================================
+   3c. QUERY CLASSIFICATION V2
+   Detects era, medium, art movement, artist-name pattern,
+   and species names. Used to enrich keyword expansion and
+   boost relevant source scoring.
+============================================================ */
+const _ERA_REGEX = /\b(\d{4}s|\d{3}0s|\d{1,2}(st|nd|rd|th)\s+century|medieval|ancient|classical|byzantine|romanesque|gothic|renaissance|baroque|enlightenment|victorian|edwardian|modernist|contemporary)\b/i;
+
+const _MEDIUM_TERMS = {
+  Oil:        ['oil painting','oil on canvas','oil on panel','oil on board'],
+  Watercolor: ['watercolor','watercolour','gouache','tempera','opaque watercolor'],
+  Print:      ['etching','engraving','lithograph','woodcut','mezzotint','aquatint','linocut','screenprint','woodblock','silkscreen'],
+  Photograph: ['photograph','daguerreotype','albumen print','silver gelatin','autochromes','calotype','cyanotype','tintype'],
+  Sculpture:  ['sculpture','bronze','marble','terracotta','relief','alabaster','ivory carving'],
+  Textile:    ['tapestry','embroidery','weaving','lace','quilt','needlework','woven','brocade'],
+  Ceramic:    ['pottery','porcelain','ceramic','faience','majolica','earthenware','stoneware','delftware'],
+  Drawing:    ['drawing','sketch','chalk','charcoal','pen and ink','pencil drawing','pastel'],
+  Manuscript: ['illuminated manuscript','manuscript','parchment','vellum','codex','book of hours'],
+};
+
+const _MOVEMENT_SEEDS = {
+  impressionism: ['plein air','19th century','paris salon','post-impressionism'],
+  baroque:       ['17th century','chiaroscuro','tenebrism','counter-reformation'],
+  renaissance:   ['humanism','15th century','16th century','disegno','perspectiva'],
+  romanticism:   ['sublime','19th century','nationalism','emotion','landscape painting'],
+  modernism:     ['avant-garde','20th century','abstraction','formalism'],
+  'art nouveau': ['jugendstil','stile liberty','decorative arts','1900','organic forms'],
+  'art deco':    ['1920s','1930s','geometric','streamlined','jazz age'],
+  ukiyo:         ['ukiyo-e','edo period','woodblock print','japanese art','meiji'],
+  surrealism:    ['automatism','dream','unconscious','1920s','dada'],
+  cubism:        ['1910s','multiple perspectives','fragmentation','geometric abstraction'],
+};
+
+// Known art movements for movement detection
+const _MOVEMENT_TERMS = Object.keys(_MOVEMENT_SEEDS).concat([
+  'expressionism','fauvism','realism','symbolism','pointillism','futurism',
+  'constructivism','dadaism','minimalism','conceptual art','pop art',
+  'mannerism','neoclassicism','pre-raphaelite','abstract expressionism',
+  'fluxus','mail art','outsider art','folk art','naive art',
+]);
+
+// Scientific species name pattern: "Genus species" — 2 latinate words
+const _SPECIES_PATTERN = /^[A-Z][a-z]{2,}\s[a-z]{3,}$/;
+
+function classifyQueryV2(q) {
+  if (!q) return {};
+  const lq = q.toLowerCase().trim();
+  const original = q.trim();
+
+  // Era
+  const eraMatch = _ERA_REGEX.exec(lq);
+  const era = eraMatch ? eraMatch[0].toLowerCase() : null;
+
+  // Medium
+  let medium = null;
+  outer: for (const [type, variants] of Object.entries(_MEDIUM_TERMS)) {
+    for (const v of variants) {
+      if (lq.includes(v)) { medium = type; break outer; }
+    }
+    if (lq.includes(type.toLowerCase())) { medium = type; break; }
+  }
+
+  // Movement
+  let movement = null;
+  for (const mv of _MOVEMENT_TERMS) {
+    if (lq.includes(mv)) { movement = mv; break; }
+  }
+
+  // Movement seeds (extra keywords to add to expansion)
+  const movementSeeds = movement ? (_MOVEMENT_SEEDS[movement] || []) : [];
+
+  // Artist-name pattern: 2–3 title-case words, no nature/common terms
+  const words = original.split(/\s+/);
+  const isTitleCase = w => /^[A-Z][a-z]{1,}$/.test(w);
+  const isArtist = words.length >= 2 && words.length <= 4 &&
+    words.every(isTitleCase) &&
+    !NATURE_QUERY_TERMS.some(t => lq === t || lq.startsWith(t + ' ')) &&
+    !['The ','A ','An '].some(p => original.startsWith(p));
+
+  // Species: scientific binomial or common species keywords
+  const isSpecies = _SPECIES_PATTERN.test(original) ||
+    ['bird','mammal','reptile','amphibian','insect','beetle','butterfly',
+     'moth','orchid','fern','lichen','fungus','spider'].some(k => lq === k);
+
+  return { era, medium, movement, movementSeeds, isArtist, isSpecies };
+}
+
+/* ============================================================
+   3d. NEGATIVE SEARCH SYNTAX
+   Splits "marble NOT statue NOT greek" into:
+     { positive: "marble", negatives: ["statue", "greek"] }
+============================================================ */
+function parseNegativeTerms(query) {
+  if (!query || !query.includes(' NOT ')) return { positive: query, negatives: [] };
+  const parts = query.split(/\sNOT\s/i);
+  const positive = (parts[0] || '').trim();
+  const negatives = parts.slice(1).map(p => p.trim().toLowerCase()).filter(Boolean);
+  return { positive, negatives };
+}
+
+function filterNegativeTerms(items, negatives) {
+  if (!negatives.length) return items;
+  return items.filter(item => {
+    const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+    return !negatives.some(neg => hay.includes(neg));
+  });
+}
 
 /* Load API keys from localStorage if present */
 STATE.geminiKey      = localStorage.getItem(CONSTANTS.GEMINI_KEY_STORAGE) || null;
@@ -1116,6 +1394,7 @@ const ARCHIVE_COLLECTIONS = [
 /* ── Smart source selector — picks relevant subset per query ── */
 function selectDynamicSources(keyword, maxCount = 150) {
   const qc = classifyQueryExtended(keyword);
+  const qcv2 = classifyQueryV2(keyword);
   const hasAnyIntent = qc.isNature || qc.isSpace || qc.isArt || qc.isHistory ||
                        qc.isArch || qc.isDesign || qc.isPhoto || qc.isScience;
 
@@ -1129,6 +1408,13 @@ function selectDynamicSources(keyword, maxCount = 150) {
   if (qc.isDesign)  intentTags.push('design');
   if (qc.isPhoto)   intentTags.push('photo');
   if (qc.isScience) intentTags.push('science');
+
+  // v2 intent tags — push from movement/medium classification
+  if (qcv2.movement) intentTags.push('art');
+  if (qcv2.medium === 'Photograph') intentTags.push('photo');
+  if (qcv2.medium === 'Textile') intentTags.push('design');
+  if (qcv2.medium === 'Ceramic') intentTags.push('design');
+  if (qcv2.isSpecies) intentTags.push('nature');
 
   const scored = DYNAMIC_REGISTRY
     .filter(s => {
@@ -1146,6 +1432,10 @@ function selectDynamicSources(keyword, maxCount = 150) {
         // Slightly penalize sources with zero overlap on a focused query
         if (overlap === 0 && intentTags.length >= 2) score -= 1;
       }
+      // v2 boosts: artist queries → prioritise large museum collections
+      if (qcv2.isArtist && s.tags && s.tags.includes('art')) score += 3;
+      // era queries → prioritise historical sources
+      if (qcv2.era && s.tags && s.tags.includes('history')) score += 2;
       // Prefer sources with known large collections
       if (s.imageCount && s.imageCount > 10000) score += 1;
       // Add small random jitter to diversify between searches
@@ -1208,9 +1498,14 @@ function recordSourceResult(sourceName, resultCount) {
   const h = STATE.sourceHealth;
   if (!h[sourceName]) h[sourceName] = { hits: 0, misses: 0, lastSeen: 0 };
   if (resultCount > 0) {
+    const wasPaused = h[sourceName].misses >= CONSTANTS.HEALTH_MISS_LIMIT;
     h[sourceName].hits++;
     h[sourceName].misses  = 0;
     h[sourceName].lastSeen = Date.now();
+    h[sourceName]._notified = false;
+    if (wasPaused && typeof showToast === 'function') {
+      showToast(`source "${sourceName}" recovered`, 2000);
+    }
   } else {
     h[sourceName].misses++;
   }
@@ -1220,7 +1515,13 @@ function recordSourceResult(sourceName, resultCount) {
 function isSourceHealthy(sourceName) {
   const h = STATE.sourceHealth[sourceName];
   if (!h) return true;           // never tried — always allow
-  if (h.misses >= CONSTANTS.HEALTH_MISS_LIMIT) return false;
+  if (h.misses >= CONSTANTS.HEALTH_MISS_LIMIT) {
+    if (!h._notified) {
+      h._notified = true;
+      if (typeof showToast === 'function') showToast(`source "${sourceName}" paused — no results after ${CONSTANTS.HEALTH_MISS_LIMIT} tries`, 3000);
+    }
+    return false;
+  }
   return true;
 }
 
@@ -1262,14 +1563,50 @@ function loadGeminiCounter() {
   } catch(e) {}
 }
 
+// ── Per-minute rate limit for Gemini (60 requests/min) ──
+const _geminiMinuteLog = [];
+const GEMINI_PER_MINUTE_LIMIT = 55;
+
+// ── Per-minute rate limits for all AI providers ──
+const _aiMinuteLogs = { gemini: _geminiMinuteLog, claude: [], openai: [] };
+const _AI_PER_MINUTE_LIMITS = { gemini: 55, claude: 50, openai: 50 };
+
 function incrementGeminiCounter() {
   try {
     STATE.geminiDailyCount++;
+    const now = Date.now();
+    _geminiMinuteLog.push(now);
+    // Prune old entries to cap memory (keep only last 60s)
+    const cutoff = now - 60000;
+    while (_geminiMinuteLog.length > 0 && _geminiMinuteLog[0] < cutoff) _geminiMinuteLog.shift();
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem('inspo_gemini_count',
       JSON.stringify({ count: STATE.geminiDailyCount, date: today }));
     updateGeminiCounterUI();
   } catch(e) {}
+}
+
+function isGeminiRateLimited() {
+  const oneMinuteAgo = Date.now() - 60000;
+  while (_geminiMinuteLog.length && _geminiMinuteLog[0] < oneMinuteAgo) _geminiMinuteLog.shift();
+  return _geminiMinuteLog.length >= GEMINI_PER_MINUTE_LIMIT;
+}
+
+function isAIProviderRateLimited(provider) {
+  const log = _aiMinuteLogs[provider];
+  if (!log) return false;
+  const limit = _AI_PER_MINUTE_LIMITS[provider] || 50;
+  const oneMinuteAgo = Date.now() - 60000;
+  while (log.length && log[0] < oneMinuteAgo) log.shift();
+  return log.length >= limit;
+}
+
+function trackAIProviderCall(provider) {
+  const log = _aiMinuteLogs[provider];
+  if (!log) return;
+  log.push(Date.now());
+  const cutoff = Date.now() - 60000;
+  while (log.length > 0 && log[0] < cutoff) log.shift();
 }
 
 function updateGeminiCounterUI() {
@@ -1311,7 +1648,24 @@ function getAITagsCache(itemId) {
 
 function setAITagsCache(itemId, tags) {
   try {
-    localStorage.setItem('inspo_aitags_' + itemId,
+    // LRU eviction: cap at 200 entries
+    const AI_CACHE_MAX = 200;
+    const prefix = 'inspo_aitags_';
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) keys.push(key);
+    }
+    if (keys.length >= AI_CACHE_MAX) {
+      // Evict oldest entries
+      const entries = keys.map(k => {
+        try { return { k, ts: JSON.parse(localStorage.getItem(k))?.timestamp || 0 }; }
+        catch { return { k, ts: 0 }; }
+      }).sort((a, b) => a.ts - b.ts);
+      const toRemove = entries.slice(0, keys.length - AI_CACHE_MAX + 10);
+      toRemove.forEach(e => localStorage.removeItem(e.k));
+    }
+    localStorage.setItem(prefix + itemId,
       JSON.stringify({ tags, timestamp: Date.now() }));
   } catch(e) {}
 }
@@ -1421,6 +1775,23 @@ function debounce(fn, ms) {
   };
 }
 
+/** Run an array of promise-returning functions with max concurrency. */
+function promisePool(tasks, concurrency = 20) {
+  const results = [];
+  let idx = 0;
+  function next() {
+    if (idx >= tasks.length) return Promise.resolve();
+    const i = idx++;
+    const task = tasks[i];
+    return (typeof task === 'function' ? task() : task)
+      .then(r => { results[i] = { status: 'fulfilled', value: r }; })
+      .catch(e => { results[i] = { status: 'rejected', reason: e }; })
+      .then(() => next());
+  }
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => next());
+  return Promise.all(workers).then(() => results);
+}
+
 function withTimeout(signal, ms = 3000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
@@ -1436,18 +1807,45 @@ function withTimeout(signal, ms = 3000) {
   return controller.signal;
 }
 
-// ── safeFetch — drop-in fetch replacement with timeout + 429 retry ──
-async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
-  const origSignal = opts.signal;
-  const s = origSignal ? withTimeout(origSignal, timeoutMs) : AbortSignal.timeout(timeoutMs);
-  const fetchOpts = { ...opts, signal: s };
-  let res = await fetch(url, fetchOpts);
-  if (res.status === 429) {
-    await sleep(CONSTANTS.RETRY_DELAY);
-    if (origSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
-    res = await fetch(url, fetchOpts);
+// ── Fetch concurrency limiter — max 25 in-flight network requests ──
+const _fetchSemaphore = { running: 0, queue: [], limit: 25 };
+function _acquireFetchSlot() {
+  return new Promise(resolve => {
+    if (_fetchSemaphore.running < _fetchSemaphore.limit) {
+      _fetchSemaphore.running++;
+      resolve();
+    } else {
+      _fetchSemaphore.queue.push(resolve);
+    }
+  });
+}
+function _releaseFetchSlot() {
+  _fetchSemaphore.running--;
+  if (_fetchSemaphore.queue.length) {
+    _fetchSemaphore.running++;
+    _fetchSemaphore.queue.shift()();
   }
-  return res;
+}
+
+// ── safeFetch — drop-in fetch replacement with timeout + 429 retry + concurrency limit ──
+async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
+  await _acquireFetchSlot();
+  try {
+    const origSignal = opts.signal;
+    const s = origSignal ? withTimeout(origSignal, timeoutMs) : AbortSignal.timeout(timeoutMs);
+    const fetchOpts = { ...opts, signal: s };
+    let res = await fetch(url, fetchOpts);
+    // Exponential backoff on 429: retry up to 2 times (2s → 4s)
+    for (let attempt = 0; res.status === 429 && attempt < 2; attempt++) {
+      const delay = CONSTANTS.RETRY_DELAY * Math.pow(2, attempt);
+      await sleep(delay);
+      if (origSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      res = await fetch(url, fetchOpts);
+    }
+    return res;
+  } finally {
+    _releaseFetchSlot();
+  }
 }
 
 // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
@@ -1582,7 +1980,15 @@ function getDisplayResults(items, query) {
     return ranked.slice(0, STATE.imageCount);
   }
 
-  return shuffle(base).slice(0, STATE.imageCount);
+  // Fair round-robin: group by source, then interleave, then shuffle within rows
+  const buckets = {};
+  for (const item of base) {
+    const s = item.source || 'unknown';
+    (buckets[s] || (buckets[s] = [])).push(item);
+  }
+  // Shuffle within each bucket for variety
+  const arrays = Object.values(buckets).map(arr => shuffle(arr));
+  return interleave(arrays).slice(0, STATE.imageCount);
 }
 
 function showQuietTip(targetId, text, tipKey) {
@@ -1657,7 +2063,8 @@ const CACHE_TTL       = 24 * 60 * 60 * 1000;
 const CACHE_MAX_BYTES = 4 * 1024 * 1024;
 
 function cacheKey(keyword) {
-  return CACHE_PREFIX + keyword.toLowerCase().trim();
+  const mode = STATE.searchMode === 'exact' ? 'exact_' : '';
+  return CACHE_PREFIX + mode + keyword.toLowerCase().trim();
 }
 
 function cacheGet(keyword) {
@@ -1735,18 +2142,34 @@ function formatCacheAge(ms) {
 async function expandKeywords(keyword) {
   if (!STATE.keywordExpansion) return [keyword];
   try {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 3000);
     const [trg, ml] = await Promise.allSettled([
-      fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`)
+      fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`, { signal: ac.signal })
         .then(r => r.json()),
-      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`)
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`, { signal: ac.signal })
         .then(r => r.json()),
     ]);
+    clearTimeout(timer);
     const words = [
       ...(trg.status === 'fulfilled' ? trg.value : []),
       ...(ml.status  === 'fulfilled' ? ml.value  : []),
     ].map(w => w.word);
     const seeds = SEED_MAP[keyword.toLowerCase()] || [];
-    return [...new Set([keyword, ...seeds, ...words])].slice(0, 12);
+
+    // Multilingual translations for known art vocabulary (helps multilingual sources)
+    const translations = (MULTILINGUAL_ART_MAP[keyword.toLowerCase()] || []).slice(0, 3);
+
+    // Query classification v2 — add movement/era seeds
+    const v2 = classifyQueryV2(keyword);
+    const v2seeds = [...(v2.movementSeeds || [])].slice(0, 4);
+
+    // Synonym expansion v2: art movements, species, historical periods
+    const movSyns = (MOVEMENT_SYNONYMS[keyword.toLowerCase()] || []).slice(0, 4);
+    const specSyns = (SPECIES_SYNONYMS[keyword.toLowerCase()] || []).slice(0, 3);
+    const periodSyns = (PERIOD_ALIASES[keyword.toLowerCase()] || []).slice(0, 3);
+
+    return [...new Set([keyword, ...seeds, ...v2seeds, ...translations, ...movSyns, ...specSyns, ...periodSyns, ...words])].slice(0, 20);
   } catch (err) {
     console.warn('expandKeywords failed:', err.message);
     return [keyword];
@@ -1950,7 +2373,7 @@ async function fetchMet(keyword, limit, signal, offset = 0) {
 }
 
 async function fetchArchive(keyword, limit, signal) {
-  // Note: run via localhost or Netlify to avoid file:// CORS warnings
+  // Note: run via localhost or Cloudflare Pages to avoid file:// CORS warnings
   try {
     const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`;
     const res = await safeFetch(url, { signal });
@@ -5611,9 +6034,14 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
   const all = [];
   const exactQueryClass = classifyQuery(keyword);
 
-  // Reset all source miss counters so each search starts fresh
+  // Decay source miss counters — halve instead of resetting so persistently
+  // failing sources don't get unlimited free passes each search
   for (const key of Object.keys(STATE.sourceHealth)) {
-    STATE.sourceHealth[key].misses = 0;
+    const h = STATE.sourceHealth[key];
+    h.misses = Math.floor(h.misses / 2);
+    if (h.misses < CONSTANTS.HEALTH_MISS_LIMIT && h._notified) {
+      h._notified = false;  // allow re-notification if it fails again
+    }
   }
   updateSourcesActiveCounter();
 
@@ -5898,20 +6326,28 @@ const renderedIds = new Set();
 function clearGrid() {
   document.getElementById('image-grid').innerHTML = '';
   renderedIds.clear();
+  _gridItemMap.clear();
 }
 
 /* -- IntersectionObserver for lazy image loading -- */
-const _lazyObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    const img = entry.target;
-    if (img.dataset.src) {
-      img.src = img.dataset.src;
-      delete img.dataset.src;
-    }
-    _lazyObserver.unobserve(img);
-  });
-}, { rootMargin: '200px' });
+let _lazyObserver = _createLazyObserver();
+function _createLazyObserver() {
+  return new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        delete img.dataset.src;
+      }
+      _lazyObserver.unobserve(img);
+    });
+  }, { rootMargin: '200px' });
+}
+function _resetLazyObserver() {
+  _lazyObserver.disconnect();
+  _lazyObserver = _createLazyObserver();
+}
 
 function showEmptyState() {
   const grid = document.getElementById('image-grid');
@@ -5965,6 +6401,9 @@ function renderGrid(items) {
       }
       img.classList.add('loaded');
       if (STATE.sketchMode) applySketchToCard(card, img);
+      // Track aspect ratio for aspect filter
+      const ratio = img.naturalWidth / img.naturalHeight;
+      item._aspect = ratio > 1.15 ? 'landscape' : ratio < 0.85 ? 'portrait' : 'square';
     };
     img.onerror = () => { STATE._failedImages = (STATE._failedImages || 0) + 1; card.remove(); };
     _lazyObserver.observe(img);
@@ -5984,6 +6423,13 @@ function renderGrid(items) {
     zoomBtn.innerHTML = '⤢';
     zoomBtn.title = 'Deep zoom';
     card.appendChild(zoomBtn);
+
+    // Similar button
+    const simBtn = document.createElement('button');
+    simBtn.className = 'sim-btn';
+    simBtn.innerHTML = '≈';
+    simBtn.title = 'More like this';
+    card.appendChild(simBtn);
 
     card.draggable = true;
 
@@ -6219,7 +6665,7 @@ function getColorName(rgbStr) {
   return rgbStr;
 }
 
-/* -- Render colour dots (replaces old renderSwatches) -- */
+/* -- Render colour palette (dot + name + hex, vertical list) -- */
 function renderColorDots(colors) {
   const container = document.getElementById('swatches');
   container.innerHTML = '';
@@ -6227,31 +6673,34 @@ function renderColorDots(colors) {
     const hex = window.tinycolor ? tinycolor(color).toHexString() : color;
     const name = getColorName(color);
 
+    const row = document.createElement('div');
+    row.className = 'color-row';
+
     const dot = document.createElement('div');
     dot.className = 'color-dot';
     dot.style.background = color;
 
-    // Tooltip with name + hex stacked
-    const tooltip = document.createElement('div');
-    tooltip.className = 'color-dot-tooltip';
-    tooltip.innerHTML = '<span class="dot-name">' + name + '</span><span class="dot-hex">' + hex + '</span>';
-    dot.appendChild(tooltip);
+    const label = document.createElement('div');
+    label.className = 'color-label';
+    label.innerHTML = '<span class="color-name">' + name + '</span><span class="color-hex">' + hex + '</span>';
 
-    // Copied badge
+    // Copied feedback
     const badge = document.createElement('span');
     badge.className = 'dot-copied-badge';
-    badge.textContent = '\u2713';
-    dot.appendChild(badge);
+    badge.textContent = 'copied';
+    row.appendChild(dot);
+    row.appendChild(label);
+    row.appendChild(badge);
 
-    // Click: copy hex to clipboard
-    dot.addEventListener('click', () => {
+    // Click row: copy hex to clipboard
+    row.addEventListener('click', () => {
       navigator.clipboard.writeText(hex).then(() => {
-        dot.classList.add('copied');
-        setTimeout(() => dot.classList.remove('copied'), 500);
+        row.classList.add('copied');
+        setTimeout(() => row.classList.remove('copied'), 600);
       });
     });
 
-    container.appendChild(dot);
+    container.appendChild(row);
   });
 }
 
@@ -6427,7 +6876,10 @@ function toggleSelection(item) {
         // Re-render swatches if this item is still selected
         if (STATE.selected.includes(item)) {
           const allColors = [...new Set(STATE.selected.flatMap(i => i.colors || []))];
-          if (allColors.length) renderSwatches(allColors.slice(0, 10));
+          if (allColors.length) {
+            document.getElementById('panel-colors').style.display = '';
+            renderSwatches(allColors.slice(0, 10));
+          }
         }
       });
     }
@@ -7246,6 +7698,8 @@ function updateLoadMoreLabel() {
 
 async function runSearch(query, forceRefresh = false) {
   if (!query.trim()) return;
+  saveSearchHistory(query.trim());
+  hideSearchHistory();
   // Abort any in-flight secondary fetches (refreshSource, fetchMoreResults)
   for (const ac of _secondaryControllers) { try { ac.abort(); } catch (_) {} }
   _secondaryControllers.clear();
@@ -7260,6 +7714,11 @@ async function runSearch(query, forceRefresh = false) {
   }
   STATE.imageCount = parseInt(document.getElementById('count-slider').value) || 24;
   STATE.query = query.trim();
+
+  // Parse negative terms: "marble NOT statue" → positive="marble", negatives=["statue"]
+  const { positive: _posQuery, negatives: _negTerms } = parseNegativeTerms(STATE.query);
+  // Use positive portion only for API calls; negatives filter results post-fetch
+  const effectiveQuery = _posQuery || STATE.query;
 
   // Reset cross-ref mode on new text search
   if (STATE.crossRefMode) {
@@ -7284,19 +7743,20 @@ async function runSearch(query, forceRefresh = false) {
   clearTimeout(_fuseFilterTimer);
   document.getElementById('more-container').style.display = 'none';
   clearGrid();
+  _resetLazyObserver();
   showLoading();
 
   // Start fetchAll immediately with the raw query — no wait for Datamuse
   // In exact mode always use the bare query, never prefetched expansions
-  STATE.keywords = (STATE.searchMode !== 'exact' && STATE.prefetchedQuery === STATE.query && STATE.prefetchedKeywords.length)
+  STATE.keywords = (STATE.searchMode !== 'exact' && STATE.prefetchedQuery === effectiveQuery && STATE.prefetchedKeywords.length)
     ? STATE.prefetchedKeywords
-    : [STATE.query];
+    : [effectiveQuery];
   renderKeywordPills(STATE.keywords);
 
   // Expand keywords in background; update pills when Datamuse returns
-  // Skipped entirely in exact mode — keywords must stay as [STATE.query]
+  // Skipped entirely in exact mode — keywords must stay as [effectiveQuery]
   if (STATE.searchMode !== 'exact' && STATE.keywords.length <= 1) {
-    expandKeywords(STATE.query).then(kws => {
+    expandKeywords(effectiveQuery).then(kws => {
       STATE.keywords = kws;
       renderKeywordPills(kws);
     }).catch(() => {});
@@ -7374,10 +7834,18 @@ async function runSearch(query, forceRefresh = false) {
   }
   // ────────────────────────────────────────────────────────────────────
 
+  // Apply negative-term post-filter
+  if (_negTerms.length) {
+    STATE.results = filterNegativeTerms(STATE.results, _negTerms);
+  }
+
   clearGrid();
-  const visible = getDisplayResults(STATE.results, STATE.query);
+  const visible = getDisplayResults(STATE.results, effectiveQuery);
   if (visible.length) renderGrid(visible);
-  else showEmptyState();
+  else {
+    showEmptyState();
+    trySpellingSuggestion(effectiveQuery);
+  }
 
   STATE.loading = false;
   hideLoading();
@@ -7388,11 +7856,121 @@ async function runSearch(query, forceRefresh = false) {
   loadFuse(() => buildFuseIndex());
   // Check for failed images after a delay (images load lazily)
   setTimeout(checkFailedImages, 3000);
+  // Show date-filter, aspect-filter, and color-filter sections when results exist
+  document.getElementById('date-filter-section').style.display = '';
+  document.getElementById('aspect-filter-section').style.display = '';
+  document.getElementById('color-filter-section').style.display = '';
 }
 
 /* ============================================================
    16. EVENT LISTENERS
 ============================================================ */
+
+/* ─── SEARCH HISTORY ────────────────────────────────────────
+   Persists last 10 distinct queries in localStorage.
+   Shows below the search input on focus / while typing.
+────────────────────────────────────────────────────────────── */
+const _HISTORY_KEY = 'inspo_search_history';
+const _HISTORY_MAX = 10;
+
+function saveSearchHistory(q) {
+  if (!q || q.length < 2) return;
+  let hist = loadSearchHistory();
+  hist = [q, ...hist.filter(h => h !== q)].slice(0, _HISTORY_MAX);
+  try { localStorage.setItem(_HISTORY_KEY, JSON.stringify(hist)); } catch (_) {}
+}
+
+function loadSearchHistory() {
+  try {
+    const raw = localStorage.getItem(_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) { return []; }
+}
+
+function renderSearchHistory(filter) {
+  const el = document.getElementById('search-history-dropdown');
+  if (!el) return;
+  const hist = loadSearchHistory().filter(h =>
+    !filter || h.toLowerCase().includes(filter.toLowerCase())
+  );
+  if (!hist.length) { el.hidden = true; return; }
+  el.innerHTML = hist.map((h, i) =>
+    `<button class="search-history-item" role="option" aria-selected="false" data-i="${i}">${h}</button>`
+  ).join('');
+  el.hidden = false;
+}
+
+function hideSearchHistory() {
+  const el = document.getElementById('search-history-dropdown');
+  if (el) el.hidden = true;
+}
+
+/* ─── "DID YOU MEAN?" SPELLING SUGGESTION ───────────────────
+   After zero-results empty state, queries Datamuse for
+   a spelling suggestion and appends it to the empty state.
+────────────────────────────────────────────────────────────── */
+async function trySpellingSuggestion(query) {
+  // Only useful for single-word or short queries
+  if (!query || query.trim().length < 3) return;
+  try {
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 3000);
+    const res = await fetch(
+      `https://api.datamuse.com/words?sp=${encodeURIComponent(query.trim())}&max=1`,
+      { signal: ac.signal }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return;
+    const suggestion = data[0]?.word;
+    if (!suggestion || suggestion === query.trim().toLowerCase()) return;
+    const emptyState = document.querySelector('.empty-state');
+    if (!emptyState) return;
+    const hint = document.createElement('div');
+    hint.className = 'empty-state-suggestion';
+    const btn = document.createElement('button');
+    btn.className = 'empty-suggestion-btn';
+    btn.textContent = suggestion;
+    btn.addEventListener('click', () => {
+      document.getElementById('search-input').value = suggestion;
+      runSearch(suggestion);
+    });
+    hint.append('did you mean: ', btn, '?');
+    emptyState.appendChild(hint);
+  } catch (_) {}
+}
+
+// ─── Search history event wiring ───────────────────────────
+const _searchInputEl = document.getElementById('search-input');
+
+_searchInputEl.addEventListener('focus', () => {
+  renderSearchHistory(_searchInputEl.value.trim());
+});
+
+_searchInputEl.addEventListener('input', () => {
+  renderSearchHistory(_searchInputEl.value.trim());
+});
+
+// Dismiss on Escape
+_searchInputEl.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideSearchHistory();
+});
+
+// Click a history item
+document.getElementById('search-history-dropdown').addEventListener('mousedown', e => {
+  // mousedown fires before blur, so we can grab the value before input loses focus
+  const btn = e.target.closest('.search-history-item');
+  if (!btn) return;
+  e.preventDefault(); // prevent blur
+  const q = btn.textContent.trim();
+  _searchInputEl.value = q;
+  hideSearchHistory();
+  runSearch(q);
+});
+
+// Dismiss when clicking outside the sidebar section
+document.addEventListener('click', e => {
+  if (!e.target.closest('.sidebar-section')) hideSearchHistory();
+});
 
 // Logo — click to reset search
 document.querySelector('.logo').addEventListener('click', () => {
@@ -8135,6 +8713,8 @@ async function _callOllamaChat(history, systemPrompt, base64, mimeType) {
 /* -- callAI: central dispatcher — routes to active provider -- */
 async function callAI(prompt, base64 = null, mimeType = 'image/jpeg') {
   const provider = STATE.aiProvider || 'gemini';
+  if (isAIProviderRateLimited(provider)) throw new Error(`${provider} rate limited — try again in a minute`);
+  trackAIProviderCall(provider);
   if (provider === 'claude' && STATE.claudeKey)  return _callClaude(prompt, base64, mimeType);
   if (provider === 'openai'  && STATE.openaiKey) return _callOpenAI(prompt, base64, mimeType);
   if (provider === 'ollama')                     return _callOllama(prompt, base64, mimeType);
@@ -8145,6 +8725,8 @@ async function callAI(prompt, base64 = null, mimeType = 'image/jpeg') {
 /* -- callAIChat: multi-turn conversation dispatcher -- */
 async function callAIChat(history, systemPrompt, base64 = null, mimeType = 'image/jpeg') {
   const provider = STATE.aiProvider || 'gemini';
+  if (isAIProviderRateLimited(provider)) throw new Error(`${provider} rate limited — try again in a minute`);
+  trackAIProviderCall(provider);
   if (provider === 'claude' && STATE.claudeKey)  return _callClaudeChat(history, systemPrompt, base64, mimeType);
   if (provider === 'openai'  && STATE.openaiKey) return _callOpenAIChat(history, systemPrompt, base64, mimeType);
   if (provider === 'ollama')                     return _callOllamaChat(history, systemPrompt, base64, mimeType);
@@ -10157,8 +10739,8 @@ function getSourceStats() {
     prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
     nextBtn.style.display    = step === TOTAL - 1 ? 'none' : '';
 
-    // animate stat counters when landing on step 4 (shifted +1 by hero slide)
-    if (step === 4) {
+    // animate stat counters when landing on step 3 (databases slide)
+    if (step === 3) {
       document.querySelectorAll('#ob-stats-row [data-target]').forEach(el => {
         animateCount(el, Number(el.dataset.target));
       });
@@ -10173,14 +10755,6 @@ function getSourceStats() {
     const heroImgEl = document.getElementById('ob-hero-img-count');
     if (heroSrcEl) heroSrcEl.textContent = s.totalFetchSources.toLocaleString();
     if (heroImgEl) heroImgEl.textContent = formatCount(s.totalImagesNoKey);
-
-    // Step 1 — hero counter
-    const heroEl = document.getElementById('ob-hero-count');
-    animateCount(heroEl, s.totalImagesWithKey);
-
-    // source count in step 1 tagline
-    const srcCountEl = document.getElementById('ob-source-count');
-    if (srcCountEl) srcCountEl.textContent = s.totalSources;
 
     // Persistent top info bar
     const sibEl = document.getElementById('sib-text');
@@ -10289,6 +10863,11 @@ function getSourceStats() {
   skipBtn.addEventListener('click', close);
   startBtn.addEventListener('click', close);
   helpBtn.addEventListener('click', () => show());
+
+  // Click outside .ob-inner closes onboarding
+  el.addEventListener('click', e => {
+    if (e.target === el) close();
+  });
 
   // keyboard nav
   el.addEventListener('keydown', e => {
@@ -10904,6 +11483,12 @@ async function analyzeWithGemini(item) {
   // Gemini daily limit check
   if ((STATE.aiProvider || 'gemini') === 'gemini' && STATE.geminiDailyCount >= 1500) {
     renderAiSection(null, 'daily limit reached — resets at midnight');
+    return [];
+  }
+
+  // Per-minute rate limit check
+  if ((STATE.aiProvider || 'gemini') === 'gemini' && isGeminiRateLimited()) {
+    renderAiSection(null, 'rate limited — too many requests, wait a moment');
     return [];
   }
 
@@ -11842,4 +12427,2365 @@ console.log('[insposearch] Phase 10 — Settings Module ready.');
   document.getElementById('search-input')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') closeSidebar();
   });
+})();
+
+/* ============================================================
+   DATE RANGE FILTER
+   Shows after results load; filters visible results by year.
+============================================================ */
+(function initDateFilter() {
+  const applyBtn = document.getElementById('date-filter-apply');
+  const clearBtn = document.getElementById('date-filter-clear');
+  const fromInput = document.getElementById('date-from');
+  const toInput = document.getElementById('date-to');
+  if (!applyBtn) return;
+
+  function extractYear(item) {
+    // Try year field first, then scan title/description for 4-digit year
+    if (item.year) {
+      const n = parseInt(item.year, 10);
+      if (n > 0 && n <= 2100) return n;
+    }
+    const text = `${item.title || ''} ${item.description || ''} ${item.date || ''}`;
+    const m = text.match(/\b(1[0-9]{3}|20[0-2][0-9])\b/);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  function applyDateFilter() {
+    const from = parseInt(fromInput.value, 10) || 0;
+    const to = parseInt(toInput.value, 10) || 9999;
+    if (from === 0 && to === 9999) return;
+    STATE._dateFilter = { from, to };
+    refilterResults();
+  }
+
+  applyBtn.addEventListener('click', applyDateFilter);
+  fromInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyDateFilter(); });
+  toInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyDateFilter(); });
+
+  clearBtn.addEventListener('click', () => {
+    fromInput.value = '';
+    toInput.value = '';
+    STATE._dateFilter = null;
+    refilterResults();
+  });
+
+  // Refilter: apply date + aspect filters on existing results
+  window._extractYear = extractYear; // expose for other filters
+})();
+
+function refilterResults() {
+  if (!STATE.results.length) return;
+  let items = [...STATE.results];
+
+  // Date filter
+  if (STATE._dateFilter) {
+    const { from, to } = STATE._dateFilter;
+    items = items.filter(item => {
+      const y = window._extractYear(item);
+      if (y === null) return true; // keep items without a date
+      return y >= from && y <= to;
+    });
+  }
+
+  // Aspect ratio filter
+  if (STATE._aspectFilter && STATE._aspectFilter !== 'all') {
+    // Aspect ratio is checked at render time via naturalWidth/naturalHeight
+    // We store it in item._aspect after first load (see renderGrid img.onload patch below)
+    const af = STATE._aspectFilter;
+    items = items.filter(item => {
+      if (!item._aspect) return true; // keep if unknown
+      return item._aspect === af;
+    });
+  }
+
+  clearGrid();
+  const visible = getDisplayResults(items, STATE.query);
+  if (visible.length) renderGrid(visible);
+  else showEmptyState();
+}
+
+/* ============================================================
+   ASPECT RATIO FILTER
+============================================================ */
+(function initAspectFilter() {
+  const section = document.getElementById('aspect-filter-section');
+  if (!section) return;
+  const buttons = section.querySelectorAll('.aspect-btn');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE._aspectFilter = btn.dataset.aspect;
+      refilterResults();
+    });
+  });
+})();
+
+/* ============================================================
+   RELEVANCE SCORING V2
+   Enhanced scoring with source authority, completeness, and
+   image quality signals.
+============================================================ */
+const SOURCE_AUTHORITY = {
+  met: 10, rijksmuseum: 10, va: 9, chicago: 9, nga: 9, louvre: 9,
+  cleveland: 8, harvard: 8, yale: 8, tate: 8, prado: 8, mia: 8,
+  lacma: 8, smithsonian: 8, europeana: 7, loc: 7, gallica: 7,
+  wikimedia: 6, nasa: 7, inaturalist: 7, gbif: 6, flickr: 5,
+  openverse: 5, unsplash: 5, pixabay: 4, pexels: 4,
+};
+
+(function upgradeScoreItemRelevance() {
+  // Wrap the existing scoreItemRelevance to add v2 signals
+  const _origScore = scoreItemRelevance;
+  scoreItemRelevance = function(item, query) {
+    let score = _origScore(item, query);
+    // Source authority bonus
+    const auth = SOURCE_AUTHORITY[item.source] || 0;
+    score += auth * 0.3;
+    // Completeness bonus: has title + description + tags
+    if (item.title && item.description) score += 2;
+    if (item.tags && item.tags.length >= 2) score += 1;
+    // High-res bonus: has a distinct url (not just thumb)
+    if (item.url && item.url !== item.thumb) score += 1;
+    return score;
+  };
+})();
+
+/* ============================================================
+   TITLE-BASED DEDUPLICATION
+   Removes near-duplicate results from different sources that
+   share the same image (matched by title similarity).
+============================================================ */
+function deduplicateResults(items) {
+  if (!items || items.length < 2) return items;
+  const seen = new Map(); // normalised title → item
+  const out = [];
+  for (const item of items) {
+    const norm = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
+    if (!norm || norm.length < 5) { out.push(item); continue; }
+    if (seen.has(norm)) {
+      // Keep the one from the higher-authority source
+      const existing = seen.get(norm);
+      const authNew = SOURCE_AUTHORITY[item.source] || 0;
+      const authOld = SOURCE_AUTHORITY[existing.source] || 0;
+      if (authNew > authOld) {
+        // Replace
+        const idx = out.indexOf(existing);
+        if (idx >= 0) out[idx] = item;
+        seen.set(norm, item);
+      }
+      // else skip the new one
+    } else {
+      seen.set(norm, item);
+      out.push(item);
+    }
+  }
+  return out;
+}
+
+// Patch getDisplayResults to run dedup
+(function patchDedup() {
+  const _origGetDisplay = getDisplayResults;
+  getDisplayResults = function(items, query) {
+    return _origGetDisplay(deduplicateResults(items), query);
+  };
+})();
+
+/* ============================================================
+   SAVED SEARCHES
+   Stores bookmarked searches separately from history.
+   Clicking a saved search re-runs it.
+============================================================ */
+const _SAVED_KEY = 'inspo_saved_searches';
+const _SAVED_MAX = 50;
+
+function loadSavedSearches() {
+  try { return JSON.parse(localStorage.getItem(_SAVED_KEY)) || []; } catch { return []; }
+}
+
+function saveSavedSearch(q) {
+  if (!q || q.length < 2) return;
+  let saved = loadSavedSearches();
+  if (saved.includes(q)) return; // already saved
+  saved = [q, ...saved].slice(0, _SAVED_MAX);
+  try { localStorage.setItem(_SAVED_KEY, JSON.stringify(saved)); } catch {}
+}
+
+function removeSavedSearch(q) {
+  let saved = loadSavedSearches();
+  saved = saved.filter(s => s !== q);
+  try { localStorage.setItem(_SAVED_KEY, JSON.stringify(saved)); } catch {}
+}
+
+// Add a "save search" button to the search row after a search completes
+(function initSavedSearches() {
+  const row = document.querySelector('.search-row');
+  if (!row) return;
+
+  const saveBtn = document.createElement('button');
+  saveBtn.id = 'btn-save-search';
+  saveBtn.className = 'search-mode-toggle';
+  saveBtn.title = 'save this search';
+  saveBtn.textContent = '★';
+  saveBtn.style.display = 'none';
+  saveBtn.style.fontSize = '14px';
+  saveBtn.style.padding = '4px 8px';
+  row.appendChild(saveBtn);
+
+  saveBtn.addEventListener('click', () => {
+    if (STATE.query) {
+      const saved = loadSavedSearches();
+      if (saved.includes(STATE.query)) {
+        removeSavedSearch(STATE.query);
+        saveBtn.style.color = '';
+        saveBtn.title = 'save this search';
+      } else {
+        saveSavedSearch(STATE.query);
+        saveBtn.style.color = 'var(--accent)';
+        saveBtn.title = 'unsave this search';
+      }
+    }
+  });
+
+  // Show + style when a search finishes
+  const _origRunSearch = runSearch;
+  const _ors2 = async function(query, forceRefresh) {
+    await _origRunSearch(query, forceRefresh);
+    saveBtn.style.display = '';
+    const saved = loadSavedSearches();
+    if (saved.includes(STATE.query)) {
+      saveBtn.style.color = 'var(--accent)';
+      saveBtn.title = 'unsave this search';
+    } else {
+      saveBtn.style.color = '';
+      saveBtn.title = 'save this search';
+    }
+  };
+  // Replace global runSearch — must be done carefully
+  window.runSearch = _ors2;
+  // Also re-assign the module-level ref for internal calls
+  runSearch = _ors2;
+
+  // Append saved searches to history dropdown
+  const _origRenderHistory = renderSearchHistory;
+  renderSearchHistory = function(filter) {
+    _origRenderHistory(filter);
+    const el = document.getElementById('search-history-dropdown');
+    if (!el) return;
+    const saved = loadSavedSearches().filter(s =>
+      !filter || s.toLowerCase().includes(filter.toLowerCase())
+    );
+    if (!saved.length) return;
+    if (el.hidden && !saved.length) return;
+    // Append saved section
+    const divider = document.createElement('div');
+    divider.style.cssText = 'border-top:1px solid var(--line-strong);font-family:var(--font-ui);font-size:8px;color:var(--ink-3);padding:4px 8px;letter-spacing:0.1em;text-transform:uppercase;';
+    divider.textContent = 'saved';
+    el.appendChild(divider);
+    saved.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'search-history-item';
+      btn.textContent = '★ ' + s;
+      btn.style.color = 'var(--accent)';
+      btn.setAttribute('role', 'option');
+      el.appendChild(btn);
+    });
+    el.hidden = false;
+  };
+})();
+
+/* ============================================================
+   LIGHTBOX SLIDESHOW
+   Full-screen auto-advance viewer for selected images.
+   Triggered from the floating bar "slideshow" button.
+============================================================ */
+function openLightbox(items, startIndex) {
+  if (!items || !items.length) return;
+  let idx = startIndex || 0;
+  let autoTimer = null;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = `
+    <button class="lightbox-close" aria-label="close">&times;</button>
+    <button class="lightbox-nav prev" aria-label="previous">&#8249;</button>
+    <img class="lightbox-img" alt="">
+    <div class="lightbox-caption"></div>
+    <button class="lightbox-nav next" aria-label="next">&#8250;</button>
+    <div class="lightbox-counter"></div>
+  `;
+  document.body.appendChild(overlay);
+
+  const img = overlay.querySelector('.lightbox-img');
+  const caption = overlay.querySelector('.lightbox-caption');
+  const counter = overlay.querySelector('.lightbox-counter');
+
+  function show(i) {
+    idx = ((i % items.length) + items.length) % items.length;
+    const item = items[idx];
+    img.src = item.url || item.thumb;
+    img.alt = item.title || '';
+    caption.textContent = `${item.title || 'untitled'} — ${item.source || ''}`;
+    counter.textContent = `${idx + 1} / ${items.length}`;
+  }
+
+  function next() { show(idx + 1); }
+  function prev() { show(idx - 1); }
+
+  function close() {
+    clearInterval(autoTimer);
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') prev();
+  }
+
+  document.addEventListener('keydown', onKey);
+  overlay.querySelector('.lightbox-close').addEventListener('click', close);
+  overlay.querySelector('.lightbox-nav.prev').addEventListener('click', prev);
+  overlay.querySelector('.lightbox-nav.next').addEventListener('click', next);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  show(idx);
+
+  // Auto-advance every 5 seconds
+  autoTimer = setInterval(next, 5000);
+}
+
+// Connect the floating bar slideshow button
+document.getElementById('bar-slideshow-btn')?.addEventListener('click', () => {
+  if (STATE.selected.length) openLightbox(STATE.selected, 0);
+});
+
+/* ============================================================
+   CITATION EXPORT
+   Generates MLA/APA citation text for selected images.
+============================================================ */
+function generateCitation(item, style) {
+  const title = item.title || 'Untitled';
+  const source = item.source || 'Unknown source';
+  const url = item.sourceUrl || item.url || '';
+  const year = item.year || 'n.d.';
+  const accessed = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  if (style === 'apa') {
+    return `${title}. (${year}). ${source}. Retrieved ${accessed}, from ${url}`;
+  }
+  // Default: MLA
+  return `"${title}." ${source}, ${year}. Web. ${accessed}. <${url}>.`;
+}
+
+function copyCitations(items, style) {
+  const text = items.map(item => generateCitation(item, style)).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    // Brief visual confirmation
+    const btn = document.getElementById('bar-cite-btn');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'copied!';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    }
+  }).catch(() => {});
+}
+
+// Connect cite button — shows a mini popup to pick format
+document.getElementById('bar-cite-btn')?.addEventListener('click', () => {
+  if (!STATE.selected.length) return;
+  // Toggle a tiny dropdown
+  let dd = document.getElementById('cite-format-dropdown');
+  if (dd) { dd.remove(); return; }
+  dd = document.createElement('div');
+  dd.id = 'cite-format-dropdown';
+  dd.style.cssText = 'position:absolute;bottom:50px;right:10px;background:var(--bg-panel);border:1px solid var(--line-strong);z-index:100;display:flex;gap:4px;padding:6px;';
+  dd.innerHTML = '<button class="btn" data-fmt="mla" style="font-size:9px;padding:4px 10px;">MLA</button><button class="btn" data-fmt="apa" style="font-size:9px;padding:4px 10px;">APA</button>';
+  document.getElementById('floating-bar').appendChild(dd);
+  dd.addEventListener('click', e => {
+    const fmt = e.target.dataset.fmt;
+    if (fmt) { copyCitations(STATE.selected, fmt); dd.remove(); }
+  });
+  setTimeout(() => { document.addEventListener('click', function rm() { dd?.remove(); document.removeEventListener('click', rm); }); }, 100);
+});
+
+/* ============================================================
+   PREFETCH ON HOVER
+   When user hovers a grid card, start loading the full-res
+   image in the background so detail panel opens instantly.
+============================================================ */
+(function initPrefetchOnHover() {
+  const grid = document.getElementById('image-grid');
+  if (!grid) return;
+  let prefetchTimeout = null;
+
+  grid.addEventListener('mouseover', e => {
+    const card = e.target.closest('.image-card');
+    if (!card) return;
+    clearTimeout(prefetchTimeout);
+    prefetchTimeout = setTimeout(() => {
+      const id = card.dataset.id;
+      const item = _gridItemMap.get(id);
+      if (item && item.url && item.url !== item.thumb) {
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = item.url;
+        link.as = 'image';
+        // Avoid duplicate prefetches
+        if (!document.querySelector(`link[href="${CSS.escape(item.url)}"]`)) {
+          document.head.appendChild(link);
+        }
+      }
+    }, 200);
+  });
+
+  grid.addEventListener('mouseout', () => {
+    clearTimeout(prefetchTimeout);
+  });
+})();
+
+/* ============================================================
+   NAMED BOARDS
+   Save/load multiple boards with names.
+   Stored in localStorage as inspo_boards = { name: boardData }.
+============================================================ */
+const _BOARDS_KEY = 'inspo_named_boards';
+
+function loadNamedBoards() {
+  try { return JSON.parse(localStorage.getItem(_BOARDS_KEY)) || {}; } catch { return {}; }
+}
+
+function saveNamedBoard(name) {
+  if (!name) return;
+  const boards = loadNamedBoards();
+  boards[name] = {
+    items: STATE.selected.map(s => ({
+      id: s.id, thumb: s.thumb, title: s.title, source: s.source,
+      tags: s.tags || [], sourceUrl: s.sourceUrl || '',
+      year: s.year || '', colors: s.colors || [],
+    })),
+    positions: { ...boardPositions },
+    savedAt: Date.now(),
+  };
+  try { localStorage.setItem(_BOARDS_KEY, JSON.stringify(boards)); } catch {}
+}
+
+function loadNamedBoard(name) {
+  const boards = loadNamedBoards();
+  const board = boards[name];
+  if (!board) return;
+  STATE.selected = board.items || [];
+  if (board.positions) Object.assign(boardPositions, board.positions);
+  STATE.selected.forEach(item => {
+    document.getElementById('card-' + item.id)?.classList.add('selected');
+  });
+  if (typeof updateFloatingBar === 'function') updateFloatingBar();
+  if (typeof syncBoardOverlay === 'function') syncBoardOverlay();
+  if (typeof persistBoardState === 'function') persistBoardState();
+}
+
+function deleteNamedBoard(name) {
+  const boards = loadNamedBoards();
+  delete boards[name];
+  try { localStorage.setItem(_BOARDS_KEY, JSON.stringify(boards)); } catch {}
+}
+
+// Add board save/load UI to the board overlay header
+(function initNamedBoards() {
+  const header = document.getElementById('board-overlay-header');
+  if (!header) return;
+
+  const boardMenuBtn = document.createElement('button');
+  boardMenuBtn.className = 'btn';
+  boardMenuBtn.style.cssText = 'padding:2px 8px;font-size:9px;letter-spacing:0.06em;';
+  boardMenuBtn.textContent = 'boards';
+  boardMenuBtn.title = 'Save/load named boards';
+  header.insertBefore(boardMenuBtn, header.querySelector('#btn-board-popout'));
+
+  boardMenuBtn.addEventListener('click', () => {
+    let dd = document.getElementById('named-boards-dropdown');
+    if (dd) { dd.remove(); return; }
+    dd = document.createElement('div');
+    dd.id = 'named-boards-dropdown';
+    dd.style.cssText = 'position:absolute;top:36px;left:8px;background:var(--bg-panel);border:1px solid var(--line-strong);z-index:100;min-width:200px;max-height:300px;overflow-y:auto;';
+
+    // Save current board
+    const saveRow = document.createElement('div');
+    saveRow.style.cssText = 'display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'board name...';
+    nameInput.style.cssText = 'flex:1;font-family:var(--font-ui);font-size:10px;background:transparent;border:1px solid var(--line-strong);color:var(--ink);padding:3px 6px;outline:none;';
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn';
+    saveBtn.style.cssText = 'padding:3px 8px;font-size:9px;';
+    saveBtn.textContent = 'save';
+    saveBtn.addEventListener('click', () => {
+      const n = nameInput.value.trim();
+      if (n) { saveNamedBoard(n); dd.remove(); }
+    });
+    nameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { saveBtn.click(); }
+    });
+    saveRow.append(nameInput, saveBtn);
+    dd.appendChild(saveRow);
+
+    // List existing boards
+    const boards = loadNamedBoards();
+    const names = Object.keys(boards).sort((a,b) => (boards[b].savedAt||0) - (boards[a].savedAt||0));
+    if (names.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:8px;font-family:var(--font-ui);font-size:10px;color:var(--ink-3);';
+      empty.textContent = 'no saved boards yet';
+      dd.appendChild(empty);
+    }
+    names.forEach(name => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--line);';
+      const label = document.createElement('button');
+      label.style.cssText = 'background:none;border:none;color:var(--ink);font-family:var(--font-ui);font-size:10px;cursor:pointer;text-align:left;flex:1;padding:0;';
+      label.textContent = `${name} (${boards[name].items?.length || 0})`;
+      label.addEventListener('click', () => { loadNamedBoard(name); dd.remove(); });
+      const del = document.createElement('button');
+      del.style.cssText = 'background:none;border:none;color:var(--ink-3);font-size:12px;cursor:pointer;padding:0 4px;';
+      del.textContent = '×';
+      del.title = 'delete board';
+      del.addEventListener('click', () => { deleteNamedBoard(name); dd.remove(); });
+      row.append(label, del);
+      dd.appendChild(row);
+    });
+
+    header.style.position = 'relative';
+    header.appendChild(dd);
+    setTimeout(() => {
+      document.addEventListener('click', function rm(ev) {
+        if (!dd.contains(ev.target) && ev.target !== boardMenuBtn) { dd.remove(); document.removeEventListener('click', rm); }
+      });
+    }, 100);
+  });
+})();
+
+/* ============================================================
+   SERVICE WORKER REGISTRATION
+   Caches static assets + recent API responses for offline use.
+============================================================ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+/* ============================================================
+   COLOR SEARCH FILTER
+   Filters results by dominant color. Works by sampling the
+   thumbnail at render-time, caching a dominant hue bucket on
+   each item, then post-filtering.
+============================================================ */
+const COLOR_HUES = {
+  red:    { h: [0, 15], h2: [345, 360] },
+  orange: { h: [15, 45] },
+  yellow: { h: [45, 70] },
+  green:  { h: [70, 170] },
+  blue:   { h: [170, 260] },
+  purple: { h: [260, 310] },
+  pink:   { h: [310, 345] },
+};
+
+function classifyDominantColor(r, g, b) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+
+  // Achromatic check
+  if (d < 25) {
+    if (l < 50) return 'black';
+    if (l > 200) return 'white';
+    return null; // grey, no strong color
+  }
+
+  // Saturation check - if low, it's brownish/gold
+  const s = d / (255 - Math.abs(2 * l - 255));
+  if (s < 0.2) {
+    if (r > g && r > b && l > 80 && l < 180) return 'brown';
+    return null;
+  }
+
+  // Gold detection
+  if (r > 180 && g > 140 && g < 200 && b < 100 && s > 0.3) return 'gold';
+
+  // Brown detection
+  if (r > 100 && r > g * 1.1 && g > b * 1.3 && l < 140 && s < 0.5) return 'brown';
+
+  // Hue calculation
+  let h;
+  if (max === r)      h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else                h = (r - g) / d + 4;
+  h = ((h * 60) + 360) % 360;
+
+  for (const [name, ranges] of Object.entries(COLOR_HUES)) {
+    if (h >= ranges.h[0] && h < ranges.h[1]) return name;
+    if (ranges.h2 && h >= ranges.h2[0] && h < ranges.h2[1]) return name;
+  }
+  return null;
+}
+
+function sampleImageColor(img) {
+  try {
+    const canvas = document.createElement('canvas');
+    const sz = 16;
+    canvas.width = sz; canvas.height = sz;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, sz, sz);
+    const data = ctx.getImageData(0, 0, sz, sz).data;
+    let rT = 0, gT = 0, bT = 0, count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      rT += data[i]; gT += data[i+1]; bT += data[i+2]; count++;
+    }
+    return classifyDominantColor(rT/count, gT/count, bT/count);
+  } catch { return null; }
+}
+
+function sampleImageRGB(img) {
+  try {
+    var canvas = document.createElement('canvas');
+    var sz = 16;
+    canvas.width = sz; canvas.height = sz;
+    var ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, sz, sz);
+    var data = ctx.getImageData(0, 0, sz, sz).data;
+    var rT = 0, gT = 0, bT = 0, count = 0;
+    for (var i = 0; i < data.length; i += 4) {
+      rT += data[i]; gT += data[i+1]; bT += data[i+2]; count++;
+    }
+    return [Math.round(rT/count), Math.round(gT/count), Math.round(bT/count)];
+  } catch { return null; }
+}
+
+(function initColorFilter() {
+  const section = document.getElementById('color-filter-section');
+  if (!section) return;
+  const buttons = section.querySelectorAll('.color-swatch-btn');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE._colorFilter = btn.dataset.color;
+      refilterResults();
+    });
+  });
+
+  // Patch refilterResults to include color
+  const _origRefilter = refilterResults;
+  refilterResults = function() {
+    if (!STATE.results.length) return;
+    let items = [...STATE.results];
+
+    // Date filter
+    if (STATE._dateFilter) {
+      const { from, to } = STATE._dateFilter;
+      items = items.filter(item => {
+        const y = window._extractYear(item);
+        if (y === null) return true;
+        return y >= from && y <= to;
+      });
+    }
+
+    // Aspect ratio filter
+    if (STATE._aspectFilter && STATE._aspectFilter !== 'all') {
+      items = items.filter(item => !item._aspect || item._aspect === STATE._aspectFilter);
+    }
+
+    // Color filter
+    if (STATE._colorFilter && STATE._colorFilter !== 'all') {
+      items = items.filter(item => item._dominantColor === STATE._colorFilter);
+    }
+
+    // Hex palette filter
+    if (typeof window._hexPaletteMatch === 'function') {
+      items = items.filter(window._hexPaletteMatch);
+    }
+
+    clearGrid();
+    const visible = getDisplayResults(items, STATE.query);
+    if (visible.length) renderGrid(visible);
+    else showEmptyState();
+  };
+})();
+
+/* ============================================================
+   SIDE-BY-SIDE COMPARISON VIEW
+   Opens an overlay showing 2-4 selected images side by side
+   with their metadata for easy visual comparison.
+============================================================ */
+function openCompareView(items) {
+  if (!items || items.length < 2) return;
+  const compareItems = items.slice(0, 4); // max 4
+
+  const overlay = document.createElement('div');
+  overlay.className = 'compare-overlay';
+  overlay.innerHTML = `
+    <div class="compare-header">
+      <span class="section-label">comparing ${compareItems.length} images</span>
+      <button class="compare-close" aria-label="close">&times;</button>
+    </div>
+    <div class="compare-grid" data-count="${compareItems.length}"></div>
+  `;
+
+  const grid = overlay.querySelector('.compare-grid');
+  compareItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'compare-card';
+    card.innerHTML = `
+      <img src="${item.url || item.thumb}" alt="${item.title || ''}">
+      <div class="compare-meta">
+        <div class="title">${item.title || 'untitled'}</div>
+        <div>${item.source || ''} ${item.year ? '· ' + item.year : ''}</div>
+        ${item.description ? '<div style="margin-top:4px;font-size:9px;max-height:60px;overflow:hidden;">' + (item.description.length > 200 ? item.description.slice(0, 200) + '…' : item.description) + '</div>' : ''}
+        ${item.tags?.length ? '<div style="margin-top:4px;font-size:8px;color:var(--ink-3);">' + item.tags.slice(0, 6).join(' · ') + '</div>' : ''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  document.body.appendChild(overlay);
+
+  function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+  overlay.querySelector('.compare-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+}
+
+document.getElementById('bar-compare-btn')?.addEventListener('click', () => {
+  if (STATE.selected.length >= 2) openCompareView(STATE.selected);
+});
+
+/* ============================================================
+   IMAGE DOWNLOAD WITH AUTO-ATTRIBUTION
+   Shows a modal listing each selected image with a generated
+   attribution string, copy button, and direct download button.
+============================================================ */
+function buildAttributionString(item) {
+  const title = item.title || 'Untitled';
+  const source = item.source || 'Unknown source';
+  const url = item.sourceUrl || item.url || '';
+  const year = item.year || '';
+  const parts = [`"${title}"`];
+  if (year) parts.push(`(${year})`);
+  parts.push('—');
+  parts.push(source);
+  if (url) parts.push(`[${url}]`);
+  parts.push('— via InspoSearch');
+  return parts.join(' ');
+}
+
+function openDownloadPanel(items) {
+  if (!items?.length) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dl-overlay';
+
+  const panel = document.createElement('div');
+  panel.className = 'dl-panel';
+  panel.innerHTML = '<button class="dl-panel-close" aria-label="close">&times;</button><div class="section-label" style="margin-bottom:12px;">download with attribution</div>';
+
+  items.forEach(item => {
+    const attr = buildAttributionString(item);
+    const row = document.createElement('div');
+    row.className = 'dl-item';
+    row.innerHTML = `
+      <img src="${item.thumb}" alt="${item.title || ''}">
+      <div class="dl-item-info">
+        <div class="title">${item.title || 'untitled'}</div>
+        <div>${item.source || ''} ${item.year ? '· ' + item.year : ''}</div>
+        <div class="attribution">${attr}</div>
+        <div class="dl-item-actions">
+          <button data-action="copy">copy attribution</button>
+          <button data-action="download">download image</button>
+        </div>
+      </div>
+    `;
+    row.querySelector('[data-action="copy"]').addEventListener('click', (e) => {
+      navigator.clipboard.writeText(attr).then(() => {
+        e.target.textContent = 'copied!';
+        setTimeout(() => { e.target.textContent = 'copy attribution'; }, 1500);
+      }).catch(() => {});
+    });
+    row.querySelector('[data-action="download"]').addEventListener('click', () => {
+      const url = item.url || item.thumb;
+      // Use fetch+blob to bypass CORS where possible, with fallback to window.open
+      fetch(url, { mode: 'cors' })
+        .then(r => r.blob())
+        .then(blob => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          const ext = url.match(/\.(jpe?g|png|webp|gif|tiff?)(?:\?|$)/i)?.[1] || 'jpg';
+          a.download = `${(item.title || 'image').replace(/[^a-z0-9]/gi, '_').slice(0, 60)}.${ext}`;
+          a.click();
+          URL.revokeObjectURL(a.href);
+        })
+        .catch(() => { window.open(url, '_blank'); });
+    });
+    panel.appendChild(row);
+  });
+
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+  panel.querySelector('.dl-panel-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+}
+
+document.getElementById('bar-download-btn')?.addEventListener('click', () => {
+  if (STATE.selected.length) openDownloadPanel(STATE.selected);
+});
+
+/* ============================================================
+   BOARD SHARING — BASE64 URL EXPORT
+   Encodes the current board as a compact base64 URL parameter.
+   Loading the page with ?board=<data> restores the board.
+============================================================ */
+function encodeBoardToURL() {
+  if (!STATE.selected.length) return null;
+  const compact = STATE.selected.map(s => ({
+    i: s.id, t: s.thumb, n: s.title, s: s.source,
+    u: s.sourceUrl || '', y: s.year || '',
+  }));
+  const json = JSON.stringify(compact);
+  // Use base64url encoding (safe for URL params)
+  const b64 = btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const url = new URL(window.location.href);
+  url.searchParams.set('board', b64);
+  url.hash = '';
+  return url.toString();
+}
+
+function decodeBoardFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const b64 = params.get('board');
+  if (!b64) return null;
+  try {
+    const padded = b64.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(escape(atob(padded)));
+    const compact = JSON.parse(json);
+    if (!Array.isArray(compact)) return null;
+    return compact.map(c => ({
+      id: c.i, thumb: c.t, title: c.n, source: c.s,
+      sourceUrl: c.u || '', year: c.y || '',
+      tags: [], colors: [],
+    }));
+  } catch { return null; }
+}
+
+// Share button — copies shareable URL to clipboard
+document.getElementById('bar-share-btn')?.addEventListener('click', () => {
+  const url = encodeBoardToURL();
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('bar-share-btn');
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'link copied!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }
+  }).catch(() => {});
+});
+
+// On page load, check for shared board data in URL
+(function restoreSharedBoard() {
+  const items = decodeBoardFromURL();
+  if (!items || !items.length) return;
+  // Only restore if user doesn't already have a board
+  if (STATE.selected.length) return;
+  STATE.selected = items;
+  if (typeof updateFloatingBar === 'function') updateFloatingBar();
+  if (typeof syncBoardOverlay === 'function') syncBoardOverlay();
+  if (typeof persistBoardState === 'function') persistBoardState();
+  // Clean URL without reloading
+  const url = new URL(window.location.href);
+  url.searchParams.delete('board');
+  window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+})();
+
+/* ============================================================
+   BOARD TEMPLATES
+   Pre-defined layout arrangements for the board overlay.
+   Triggered from a "templates" button in the board header.
+============================================================ */
+const BOARD_TEMPLATES = [
+  {
+    name: 'grid 2×2',
+    cols: 2, rows: 2,
+    layout: (items, w, h) => items.slice(0, 4).map((_, i) => ({
+      x: (i % 2) * (w / 2) + w * 0.05,
+      y: Math.floor(i / 2) * (h / 2) + h * 0.05,
+      w: w * 0.4, h: h * 0.4,
+    })),
+  },
+  {
+    name: 'row',
+    layout: (items, w, h) => {
+      const n = Math.min(items.length, 6);
+      const iw = (w - 40) / n;
+      return items.slice(0, n).map((_, i) => ({
+        x: 20 + i * iw, y: h * 0.2, w: iw * 0.9, h: h * 0.6,
+      }));
+    },
+  },
+  {
+    name: 'focus + 3',
+    layout: (items, w, h) => {
+      const positions = [
+        { x: w * 0.05, y: h * 0.05, w: w * 0.55, h: h * 0.9 },
+      ];
+      for (let i = 1; i < Math.min(items.length, 4); i++) {
+        positions.push({
+          x: w * 0.65, y: h * 0.05 + (i - 1) * (h * 0.32),
+          w: w * 0.3, h: h * 0.28,
+        });
+      }
+      return positions;
+    },
+  },
+  {
+    name: 'mosaic',
+    layout: (items, w, h) => {
+      const n = Math.min(items.length, 6);
+      const cols = n <= 3 ? n : 3;
+      const rows = Math.ceil(n / cols);
+      return items.slice(0, n).map((_, i) => ({
+        x: (i % cols) * (w / cols) + 10,
+        y: Math.floor(i / cols) * (h / rows) + 10,
+        w: (w / cols) - 20,
+        h: (h / rows) - 20,
+      }));
+    },
+  },
+  {
+    name: 'compare 2',
+    layout: (items, w, h) => [
+      { x: w * 0.02, y: h * 0.05, w: w * 0.46, h: h * 0.9 },
+      { x: w * 0.52, y: h * 0.05, w: w * 0.46, h: h * 0.9 },
+    ],
+  },
+  {
+    name: 'scatter',
+    layout: (items, w, h) => {
+      // Deterministic pseudo-random scatter
+      const n = Math.min(items.length, 8);
+      return items.slice(0, n).map((_, i) => ({
+        x: (((i * 137) % 100) / 100) * (w * 0.7) + w * 0.05,
+        y: (((i * 97 + 31) % 100) / 100) * (h * 0.6) + h * 0.1,
+        w: w * 0.25, h: h * 0.35,
+      }));
+    },
+  },
+];
+
+function applyBoardTemplate(template) {
+  const boardEl = document.getElementById('board-canvas') || document.getElementById('board-overlay-content');
+  if (!boardEl || !STATE.selected.length) return;
+  const w = boardEl.clientWidth || 800;
+  const h = boardEl.clientHeight || 600;
+  const positions = template.layout(STATE.selected, w, h);
+
+  STATE.selected.forEach((item, i) => {
+    if (positions[i]) {
+      boardPositions[item.id] = {
+        x: positions[i].x, y: positions[i].y,
+        width: positions[i].w, height: positions[i].h,
+      };
+    }
+  });
+
+  if (typeof syncBoardOverlay === 'function') syncBoardOverlay();
+  if (typeof persistBoardState === 'function') persistBoardState();
+}
+
+// Add templates button to board overlay header
+(function initBoardTemplates() {
+  const header = document.getElementById('board-overlay-header');
+  if (!header) return;
+
+  const tmplBtn = document.createElement('button');
+  tmplBtn.className = 'btn';
+  tmplBtn.style.cssText = 'padding:2px 8px;font-size:9px;letter-spacing:0.06em;';
+  tmplBtn.textContent = 'layout';
+  tmplBtn.title = 'Apply a board layout template';
+  // Insert after the "boards" button (or before popout)
+  const popout = header.querySelector('#btn-board-popout');
+  if (popout) header.insertBefore(tmplBtn, popout);
+  else header.appendChild(tmplBtn);
+
+  tmplBtn.addEventListener('click', () => {
+    let dd = document.getElementById('tmpl-dropdown');
+    if (dd) { dd.remove(); return; }
+    dd = document.createElement('div');
+    dd.id = 'tmpl-dropdown';
+    dd.style.cssText = 'position:absolute;top:36px;left:80px;background:var(--bg-panel);border:1px solid var(--line-strong);z-index:100;';
+    dd.className = 'tmpl-grid';
+
+    BOARD_TEMPLATES.forEach(tmpl => {
+      const card = document.createElement('div');
+      card.className = 'tmpl-card';
+      card.textContent = tmpl.name;
+      card.addEventListener('click', () => {
+        applyBoardTemplate(tmpl);
+        dd.remove();
+      });
+      dd.appendChild(card);
+    });
+
+    header.style.position = 'relative';
+    header.appendChild(dd);
+    setTimeout(() => {
+      document.addEventListener('click', function rm(ev) {
+        if (!dd.contains(ev.target) && ev.target !== tmplBtn) { dd.remove(); document.removeEventListener('click', rm); }
+      });
+    }, 100);
+  });
+})();
+
+/* ============================================================
+   PATCH: Sample dominant color when thumbnail loads
+   Adds _dominantColor to each item for color filter support.
+============================================================ */
+(function patchColorSampling() {
+  const _origRenderGrid = renderGrid;
+  renderGrid = function(items) {
+    _origRenderGrid(items);
+    // After rendering, set up color sampling on newly loaded images
+    requestAnimationFrame(() => {
+      const grid = document.getElementById('image-grid');
+      if (!grid) return;
+      grid.querySelectorAll('.image-card img.loaded').forEach(img => {
+        const card = img.closest('.image-card');
+        if (!card) return;
+        const item = _gridItemMap.get(card.dataset.id);
+        if (item && !item._dominantColor) {
+          item._dominantColor = sampleImageColor(img);
+        }
+        if (item && !item._avgRGB) {
+          item._avgRGB = sampleImageRGB(img);
+        }
+      });
+    });
+    // Also set up a mutation observer to catch lazy-loaded images
+    setTimeout(() => {
+      const grid = document.getElementById('image-grid');
+      if (!grid) return;
+      grid.querySelectorAll('.image-card img:not(.loaded)').forEach(img => {
+        const origOnload = img.onload;
+        img.onload = function() {
+          if (origOnload) origOnload.call(this);
+          const card = img.closest('.image-card');
+          if (card) {
+            const item = _gridItemMap.get(card.dataset.id);
+            if (item && !item._dominantColor) {
+              item._dominantColor = sampleImageColor(img);
+            }
+            if (item && !item._avgRGB) {
+              item._avgRGB = sampleImageRGB(img);
+            }
+          }
+        };
+      });
+    }, 100);
+  };
+})();
+
+/* ============================================================
+   PWA INSTALL PROMPT
+   Captures beforeinstallprompt event and shows a subtle banner.
+============================================================ */
+(function initPWAInstall() {
+  let _deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    // Show install button after a short delay so it doesn't interrupt
+    setTimeout(showInstallBanner, 3000);
+  });
+
+  function showInstallBanner() {
+    if (!_deferredPrompt) return;
+    if (document.getElementById('pwa-install-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:var(--bg-panel);border:1px solid var(--line-strong);padding:10px 18px;display:flex;align-items:center;gap:12px;font-family:var(--font-ui);font-size:11px;letter-spacing:0.04em;color:var(--ink);box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+    banner.innerHTML = `
+      <span>install insposearch as an app</span>
+      <button id="pwa-install-btn" style="background:var(--accent);color:#0E0E0D;border:none;padding:6px 14px;font-family:var(--font-ui);font-size:10px;cursor:pointer;letter-spacing:0.06em;">install</button>
+      <button id="pwa-dismiss-btn" style="background:none;border:none;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;">&times;</button>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+      banner.remove();
+      if (_deferredPrompt) {
+        _deferredPrompt.prompt();
+        await _deferredPrompt.userChoice;
+        _deferredPrompt = null;
+      }
+    });
+    document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
+      banner.remove();
+      _deferredPrompt = null;
+    });
+  }
+})();
+
+/* ------------------------------------------------------------------
+   Discover Landing — shown when no search is active
+   ------------------------------------------------------------------ */
+(function initDiscoverLanding() {
+  const POPULAR = [
+    'still life', 'portrait', 'landscape', 'botanical', 'architecture',
+    'mythology', 'water', 'light', 'textile', 'manuscript',
+    'sculpture', 'ceramic', 'gold', 'vanitas', 'japanese'
+  ];
+
+  const CATEGORIES = [
+    { icon: '\u{1F5BC}', name: 'paintings',       query: 'painting oil canvas' },
+    { icon: '\u{1F4F7}', name: 'photography',     query: 'photograph vintage' },
+    { icon: '\u{1F5FF}', name: 'sculpture',        query: 'sculpture marble bronze' },
+    { icon: '\u{1F3DB}', name: 'architecture',     query: 'architecture building cathedral' },
+    { icon: '\u{1F4DC}', name: 'manuscripts',      query: 'manuscript illuminated medieval' },
+    { icon: '\u{1F5FA}', name: 'maps & charts',    query: 'map cartography atlas' },
+    { icon: '\u{1F9F5}', name: 'textiles',         query: 'textile tapestry embroidery' },
+    { icon: '\u2712',    name: 'prints',            query: 'print etching engraving woodcut' },
+    { icon: '\u{1F3FA}', name: 'ceramics',          query: 'ceramic pottery porcelain' },
+    { icon: '\u{1F33F}', name: 'natural history',   query: 'botanical flora fauna specimen' },
+  ];
+
+  const HEROES = [
+    { label: "today's muse",  title: 'the dutch golden age',          sub: 'rembrandt, vermeer, and the art of everyday life',   query: 'dutch golden age painting' },
+    { label: 'explore',       title: 'japanese woodblock prints',     sub: 'ukiyo-e masters \u2014 hokusai, hiroshige, utamaro', query: 'ukiyo-e woodblock print' },
+    { label: 'discover',      title: 'art nouveau & organic form',    sub: 'when nature met design \u2014 mucha, klimt, gall\u00e9',     query: 'art nouveau ornamental' },
+    { label: 'look closer',   title: 'illuminated manuscripts',       sub: 'gold leaf, ultramarine, and sacred geometry',        query: 'illuminated manuscript medieval' },
+    { label: 'inspiration',   title: 'botanical illustration',        sub: 'the beauty of scientific precision',                 query: 'botanical illustration flower' },
+    { label: 'venture into',  title: 'ancient maps & cartography',    sub: 'when the edges of the world were imagined',          query: 'antique map cartography' },
+    { label: 'a closer look', title: 'impressionist light',           sub: 'monet, renoir, and the capture of fleeting moments', query: 'impressionist painting light' },
+  ];
+
+  function getHeroOfDay() {
+    const day = Math.floor(Date.now() / 86400000);
+    return HEROES[day % HEROES.length];
+  }
+
+  function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+  function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+  function buildHTML() {
+    const hero = getHeroOfDay();
+    const pillsHTML = POPULAR.map(t =>
+      '<button class="discover-pill" data-query="' + escAttr(t) + '">' + escHtml(t) + '</button>'
+    ).join('');
+    const catsHTML = CATEGORIES.map(c =>
+      '<button class="discover-cat" data-query="' + escAttr(c.query) + '">' +
+        '<span class="discover-cat-icon">' + c.icon + '</span>' +
+        '<span class="discover-cat-name">' + escHtml(c.name) + '</span>' +
+      '</button>'
+    ).join('');
+    return '<div id="discover-landing" class="discover-landing" style="grid-column:1/-1;">' +
+      '<div class="discover-hero" data-query="' + escAttr(hero.query) + '">' +
+        '<div class="discover-hero-label">' + escHtml(hero.label) + '</div>' +
+        '<div class="discover-hero-title">' + escHtml(hero.title) + '</div>' +
+        '<div class="discover-hero-sub">' + escHtml(hero.sub) + '</div>' +
+      '</div>' +
+      '<div class="discover-section">' +
+        '<div class="discover-section-label">popular searches</div>' +
+        '<div class="discover-pills">' + pillsHTML + '</div>' +
+      '</div>' +
+      '<div class="discover-section">' +
+        '<div class="discover-section-label">browse by category</div>' +
+        '<div class="discover-categories">' + catsHTML + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function show() {
+    const grid = document.getElementById('image-grid');
+    if (!grid || grid.querySelector('#discover-landing')) return;
+    const es = grid.querySelector('.empty-state');
+    if (es) es.style.display = 'none';
+    grid.insertAdjacentHTML('afterbegin', buildHTML());
+  }
+
+  // Delegate clicks inside #image-grid for discover elements
+  document.getElementById('image-grid').addEventListener('click', function (e) {
+    var target = e.target.closest('.discover-pill') ||
+                 e.target.closest('.discover-cat') ||
+                 e.target.closest('.discover-hero');
+    if (!target || !target.dataset.query) return;
+    var q = target.dataset.query;
+    document.getElementById('search-input').value = q;
+    runSearch(q);
+  });
+
+  // Re-show when logo resets the search
+  document.querySelector('.logo').addEventListener('click', function () {
+    requestAnimationFrame(show);
+  });
+
+  // Expose for external use
+  window._showDiscoverLanding = show;
+
+  // Show on initial page load
+  show();
+})();
+
+/* ------------------------------------------------------------------
+   Onboarding Tour & Help Cheat Sheet
+   ------------------------------------------------------------------ */
+(function initOnboardingTour() {
+  var TOUR_STEPS = [
+    { el: '#search-input',        title: 'search',          body: 'type any word, feeling, or concept. explore mode automatically expands your query with synonyms.' },
+    { el: '#btn-search-mode',     title: 'search mode',     body: 'toggle between explore (synonym expansion) and exact (literal terms only).' },
+    { el: '#count-slider',        title: 'image count',     body: 'drag to control how many images load per source. higher = more results but slower.' },
+    { el: '#btn-settings',        title: 'api keys',        body: 'manage api keys to unlock premium sources like unsplash, met museum iiif, and more.' },
+    { el: '#sources-active-counter', title: 'active sources', body: 'shows how many sources are currently enabled and responding.' },
+    { el: '#btn-board',           title: 'board mode',      body: 'click images to select them, then switch to board to arrange and export your picks.' },
+  ];
+
+  var _backdrop = null;
+  var _tooltip = null;
+  var _step = 0;
+
+  function startTour() {
+    _step = 0;
+    _backdrop = document.createElement('div');
+    _backdrop.className = 'tour-backdrop';
+    _backdrop.addEventListener('click', endTour);
+    document.body.appendChild(_backdrop);
+    showStep();
+  }
+
+  function showStep() {
+    if (_step >= TOUR_STEPS.length) { endTour(); return; }
+    var s = TOUR_STEPS[_step];
+    var target = document.querySelector(s.el);
+    if (!target) { _step++; showStep(); return; }
+
+    // Remove previous highlight
+    var prev = document.querySelector('.tour-highlight');
+    if (prev) prev.classList.remove('tour-highlight');
+    target.classList.add('tour-highlight');
+
+    // Remove old tooltip
+    if (_tooltip) _tooltip.remove();
+
+    _tooltip = document.createElement('div');
+    _tooltip.className = 'tour-tooltip';
+    _tooltip.innerHTML =
+      '<div class="tour-tooltip-title">' + s.title + '</div>' +
+      '<div class="tour-tooltip-body">' + s.body + '</div>' +
+      '<div class="tour-tooltip-footer">' +
+        '<button class="tour-tooltip-skip" id="tour-skip">skip tour</button>' +
+        '<span class="tour-tooltip-step">' + (_step + 1) + ' / ' + TOUR_STEPS.length + '</span>' +
+        '<button class="tour-tooltip-btn" id="tour-next">' + (_step < TOUR_STEPS.length - 1 ? 'next' : 'done') + '</button>' +
+      '</div>';
+    document.body.appendChild(_tooltip);
+
+    // Position tooltip near target
+    var rect = target.getBoundingClientRect();
+    var ttW = _tooltip.offsetWidth;
+    var ttH = _tooltip.offsetHeight;
+    var left = rect.left + rect.width / 2 - ttW / 2;
+    var top = rect.bottom + 12;
+    // If too far right, shift
+    if (left + ttW > window.innerWidth - 12) left = window.innerWidth - ttW - 12;
+    if (left < 12) left = 12;
+    // If below viewport, flip above
+    if (top + ttH > window.innerHeight - 12) top = rect.top - ttH - 12;
+    _tooltip.style.left = left + 'px';
+    _tooltip.style.top = top + 'px';
+
+    document.getElementById('tour-next').addEventListener('click', function () { _step++; showStep(); });
+    document.getElementById('tour-skip').addEventListener('click', endTour);
+  }
+
+  function endTour() {
+    var hl = document.querySelector('.tour-highlight');
+    if (hl) hl.classList.remove('tour-highlight');
+    if (_tooltip) { _tooltip.remove(); _tooltip = null; }
+    if (_backdrop) { _backdrop.remove(); _backdrop = null; }
+    try { localStorage.setItem('inspo_tour_done', '1'); } catch (_) {}
+  }
+
+  // Auto-start on first visit
+  try {
+    if (!localStorage.getItem('inspo_tour_done')) {
+      setTimeout(startTour, 800);
+    }
+  } catch (_) {}
+
+  // ---- Cheat Sheet Overlay ----
+  var CHEAT_HTML =
+    '<div class="cheat-overlay" id="cheat-overlay">' +
+      '<div class="cheat-panel" style="position:relative;">' +
+        '<button class="cheat-close" id="cheat-close">&times;</button>' +
+        '<h2>help & shortcuts</h2>' +
+        '<h3>search syntax</h3>' +
+        '<dl>' +
+          '<dt><code>marble</code></dt><dd>search with synonym expansion (explore mode)</dd>' +
+          '<dt><code>"exact phrase"</code></dt><dd>match these words exactly</dd>' +
+          '<dt><code>marble NOT statue</code></dt><dd>exclude results containing "statue"</dd>' +
+          '<dt><code>landscape --no:photo</code></dt><dd>negative filter by source type</dd>' +
+        '</dl>' +
+        '<h3>keyboard shortcuts</h3>' +
+        '<dl>' +
+          '<dt><code>Enter</code></dt><dd>run search</dd>' +
+          '<dt><code>Ctrl/Cmd + Shift + E</code></dt><dd>toggle explore / exact mode</dd>' +
+          '<dt><code>Escape</code></dt><dd>close modals and panels</dd>' +
+        '</dl>' +
+        '<h3>tips</h3>' +
+        '<dl>' +
+          '<dt>select images</dt><dd>click any image to select it, then use board or compare</dd>' +
+          '<dt>boards</dt><dd>switch to board view to arrange, annotate, and export selected images</dd>' +
+          '<dt>color swatches</dt><dd>click a swatch to filter results by dominant color</dd>' +
+        '</dl>' +
+        '<div style="margin-top:20px; text-align:center;">' +
+          '<button class="tour-tooltip-btn" id="cheat-tour-btn">restart tour</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  function showCheatSheet() {
+    if (document.getElementById('cheat-overlay')) return;
+    document.body.insertAdjacentHTML('beforeend', CHEAT_HTML);
+    document.getElementById('cheat-close').addEventListener('click', hideCheatSheet);
+    document.getElementById('cheat-overlay').addEventListener('click', function (e) {
+      if (e.target === this) hideCheatSheet();
+    });
+    document.getElementById('cheat-tour-btn').addEventListener('click', function () {
+      hideCheatSheet();
+      try { localStorage.removeItem('inspo_tour_done'); } catch (_) {}
+      startTour();
+    });
+  }
+
+  function hideCheatSheet() {
+    var el = document.getElementById('cheat-overlay');
+    if (el) el.remove();
+  }
+
+  // Help button
+  var helpBtn = document.getElementById('btn-help');
+  if (helpBtn) helpBtn.addEventListener('click', showCheatSheet);
+
+  // ESC closes cheat sheet
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') hideCheatSheet();
+  });
+})();
+
+/* ------------------------------------------------------------------
+   Hex Color Palette Search — CIE76 delta-E distance matching
+   ------------------------------------------------------------------ */
+(function initHexPalette() {
+  var MAX_COLORS = 5;
+  var palette = []; // array of {hex, rgb:[r,g,b]}
+
+  var pickerEl = document.getElementById('hex-picker');
+  var inputEl  = document.getElementById('hex-input');
+  var addBtn   = document.getElementById('hex-add-btn');
+  var chipsEl  = document.getElementById('hex-chips');
+  if (!pickerEl || !inputEl || !addBtn || !chipsEl) return;
+
+  // Sync picker → text field
+  pickerEl.addEventListener('input', function () { inputEl.value = pickerEl.value; });
+
+  function hexToRGB(hex) {
+    hex = hex.replace(/^#/, '');
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    if (hex.length !== 6 || !/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+    return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+  }
+
+  // CIE76 delta-E (using CIELAB approximation)
+  function rgbToLab(r, g, b) {
+    // sRGB → linear
+    var rl = r/255, gl = g/255, bl = b/255;
+    rl = rl > 0.04045 ? Math.pow((rl+0.055)/1.055, 2.4) : rl/12.92;
+    gl = gl > 0.04045 ? Math.pow((gl+0.055)/1.055, 2.4) : gl/12.92;
+    bl = bl > 0.04045 ? Math.pow((bl+0.055)/1.055, 2.4) : bl/12.92;
+    // linear → XYZ (D65)
+    var x = (rl*0.4124564 + gl*0.3575761 + bl*0.1804375) / 0.95047;
+    var y = (rl*0.2126729 + gl*0.7151522 + bl*0.0721750);
+    var z = (rl*0.0193339 + gl*0.1191920 + bl*0.9503041) / 1.08883;
+    // XYZ → Lab
+    var fx = x > 0.008856 ? Math.cbrt(x) : (7.787*x + 16/116);
+    var fy = y > 0.008856 ? Math.cbrt(y) : (7.787*y + 16/116);
+    var fz = z > 0.008856 ? Math.cbrt(z) : (7.787*z + 16/116);
+    return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
+  }
+
+  function deltaE(rgb1, rgb2) {
+    var lab1 = rgbToLab(rgb1[0], rgb1[1], rgb1[2]);
+    var lab2 = rgbToLab(rgb2[0], rgb2[1], rgb2[2]);
+    return Math.sqrt(
+      Math.pow(lab1[0]-lab2[0], 2) +
+      Math.pow(lab1[1]-lab2[1], 2) +
+      Math.pow(lab1[2]-lab2[2], 2)
+    );
+  }
+
+  function addColor(hex) {
+    if (palette.length >= MAX_COLORS) return;
+    hex = hex.trim().toLowerCase();
+    if (!hex.startsWith('#')) hex = '#' + hex;
+    var rgb = hexToRGB(hex);
+    if (!rgb) return;
+    if (palette.some(function(c) { return c.hex === hex; })) return;
+    palette.push({ hex: hex, rgb: rgb });
+    renderChips();
+    applyPaletteFilter();
+    updateURL();
+  }
+
+  function removeColor(idx) {
+    palette.splice(idx, 1);
+    renderChips();
+    applyPaletteFilter();
+    updateURL();
+  }
+
+  function renderChips() {
+    chipsEl.innerHTML = '';
+    palette.forEach(function (c, i) {
+      var chip = document.createElement('span');
+      chip.className = 'hex-chip';
+      chip.innerHTML =
+        '<span class="hex-chip-swatch" style="background:' + c.hex + ';"></span>' +
+        '<span>' + c.hex + '</span>' +
+        '<button class="hex-chip-remove" data-idx="' + i + '">&times;</button>';
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  chipsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest('.hex-chip-remove');
+    if (btn) removeColor(parseInt(btn.dataset.idx, 10));
+  });
+
+  addBtn.addEventListener('click', function () {
+    addColor(inputEl.value || pickerEl.value);
+  });
+  inputEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addColor(inputEl.value || pickerEl.value);
+  });
+
+  // Clear named-color swatch when palette is active, and vice versa
+  function clearNamedSwatches() {
+    var btns = document.querySelectorAll('.color-swatch-btn');
+    btns.forEach(function(b) { b.classList.remove('active'); });
+    var allBtn = document.querySelector('.color-swatch-btn[data-color="all"]');
+    if (allBtn) allBtn.classList.add('active');
+    STATE._colorFilter = 'all';
+  }
+
+  var THRESHOLD = 35; // delta-E threshold for "matching" color
+
+  function applyPaletteFilter() {
+    STATE._hexPalette = palette.length ? palette.slice() : null;
+    if (palette.length) clearNamedSwatches();
+    if (typeof refilterResults === 'function') refilterResults();
+  }
+
+  // URL param support: ?palette=ff5733-3498db
+  function updateURL() {
+    if (!window.history || !window.history.replaceState) return;
+    var url = new URL(window.location);
+    if (palette.length) {
+      url.searchParams.set('palette', palette.map(function(c) { return c.hex.slice(1); }).join('-'));
+    } else {
+      url.searchParams.delete('palette');
+    }
+    window.history.replaceState(null, '', url);
+  }
+
+  function loadFromURL() {
+    try {
+      var p = new URLSearchParams(window.location.search).get('palette');
+      if (!p) return;
+      p.split('-').forEach(function(h) { addColor('#' + h); });
+    } catch (_) {}
+  }
+
+  // Expose for refilterResults
+  window._hexPaletteMatch = function (item) {
+    if (!STATE._hexPalette || !STATE._hexPalette.length) return true;
+    if (!item._avgRGB) return false;
+    // Item matches if it's within THRESHOLD of ANY palette color
+    for (var i = 0; i < STATE._hexPalette.length; i++) {
+      if (deltaE(STATE._hexPalette[i].rgb, item._avgRGB) <= THRESHOLD) return true;
+    }
+    return false;
+  };
+
+  loadFromURL();
+})();
+
+/* ------------------------------------------------------------------
+   Taxonomy Browse — expandable categories in sidebar
+   ------------------------------------------------------------------ */
+(function initTaxonomyBrowse() {
+  var TAXONOMY = [
+    { name: 'movements', tags: [
+      { label: 'renaissance',     query: 'renaissance painting' },
+      { label: 'baroque',         query: 'baroque art painting' },
+      { label: 'rococo',          query: 'rococo ornamental painting' },
+      { label: 'romanticism',     query: 'romanticism painting' },
+      { label: 'impressionism',   query: 'impressionist painting' },
+      { label: 'post-impressionism', query: 'post-impressionist art' },
+      { label: 'art nouveau',     query: 'art nouveau design' },
+      { label: 'art deco',        query: 'art deco design' },
+      { label: 'expressionism',   query: 'expressionist art painting' },
+      { label: 'cubism',          query: 'cubist art painting' },
+      { label: 'surrealism',      query: 'surrealist art' },
+      { label: 'abstract',        query: 'abstract art painting' },
+      { label: 'minimalism',      query: 'minimalist art' },
+      { label: 'pop art',         query: 'pop art' },
+    ]},
+    { name: 'genres', tags: [
+      { label: 'portrait',        query: 'portrait painting' },
+      { label: 'landscape',       query: 'landscape painting' },
+      { label: 'still life',      query: 'still life painting' },
+      { label: 'history painting', query: 'history painting' },
+      { label: 'genre scene',     query: 'genre painting daily life' },
+      { label: 'religious',       query: 'religious art sacred painting' },
+      { label: 'mythology',       query: 'mythological painting' },
+      { label: 'nude',            query: 'nude figure painting' },
+      { label: 'marine',          query: 'marine painting seascape' },
+      { label: 'vanitas',         query: 'vanitas still life memento mori' },
+    ]},
+    { name: 'media', tags: [
+      { label: 'oil painting',    query: 'oil painting canvas' },
+      { label: 'watercolor',      query: 'watercolor painting' },
+      { label: 'fresco',          query: 'fresco mural painting' },
+      { label: 'etching',         query: 'etching print' },
+      { label: 'lithograph',      query: 'lithograph print' },
+      { label: 'woodcut',         query: 'woodcut print' },
+      { label: 'engraving',       query: 'engraving print' },
+      { label: 'drawing',         query: 'drawing charcoal pencil' },
+      { label: 'pastel',          query: 'pastel drawing painting' },
+      { label: 'mosaic',          query: 'mosaic tile art' },
+      { label: 'tapestry',        query: 'tapestry weaving textile' },
+      { label: 'photograph',      query: 'photograph vintage' },
+    ]},
+    { name: 'periods', tags: [
+      { label: 'ancient',         query: 'ancient art antiquity' },
+      { label: 'medieval',        query: 'medieval art' },
+      { label: '15th century',    query: '15th century art 1400s' },
+      { label: '16th century',    query: '16th century art 1500s' },
+      { label: '17th century',    query: '17th century art 1600s' },
+      { label: '18th century',    query: '18th century art 1700s' },
+      { label: '19th century',    query: '19th century art 1800s' },
+      { label: 'early 20th c.',   query: '20th century early modern art' },
+      { label: 'contemporary',    query: 'contemporary art modern' },
+    ]},
+    { name: 'regions', tags: [
+      { label: 'italian',         query: 'italian art painting' },
+      { label: 'dutch & flemish', query: 'dutch flemish painting' },
+      { label: 'french',          query: 'french art painting' },
+      { label: 'spanish',         query: 'spanish art painting' },
+      { label: 'german',          query: 'german art painting' },
+      { label: 'british',         query: 'british art painting' },
+      { label: 'japanese',        query: 'japanese art ukiyo-e' },
+      { label: 'chinese',         query: 'chinese art painting' },
+      { label: 'islamic',         query: 'islamic art calligraphy' },
+      { label: 'african',         query: 'african art sculpture' },
+      { label: 'pre-columbian',   query: 'pre-columbian mesoamerican art' },
+    ]},
+  ];
+
+  var tree = document.getElementById('taxonomy-tree');
+  if (!tree) return;
+
+  TAXONOMY.forEach(function (group) {
+    var div = document.createElement('div');
+    div.className = 'taxonomy-group';
+    var tagsHTML = group.tags.map(function (t) {
+      return '<button class="taxonomy-tag" data-query="' + t.query.replace(/"/g, '&quot;') + '">' + t.label + '</button>';
+    }).join('');
+    div.innerHTML =
+      '<button class="taxonomy-group-header">' +
+        '<span>' + group.name + '</span>' +
+        '<span class="taxonomy-group-arrow">\u25B6</span>' +
+      '</button>' +
+      '<div class="taxonomy-group-body">' + tagsHTML + '</div>';
+    tree.appendChild(div);
+  });
+
+  tree.addEventListener('click', function (e) {
+    var header = e.target.closest('.taxonomy-group-header');
+    if (header) {
+      header.parentElement.classList.toggle('open');
+      return;
+    }
+    var tag = e.target.closest('.taxonomy-tag');
+    if (tag && tag.dataset.query) {
+      document.getElementById('search-input').value = tag.dataset.query;
+      runSearch(tag.dataset.query);
+    }
+  });
+})();
+
+/* ------------------------------------------------------------------
+   Artist Entity Pages — extract artist, show panel with works
+   ------------------------------------------------------------------ */
+(function initArtistEntity() {
+  var _wikiCache = {}; // sessionStorage fallback
+
+  function extractArtist(item) {
+    if (!item || !item.description) return null;
+    // Take first segment before " — " or " - "
+    var parts = item.description.split(/\s[\u2014\u2013\-]\s/);
+    var name = (parts[0] || '').trim();
+    // Skip if it looks like medium/date rather than a name
+    if (!name || name.length < 3 || /^\d{4}/.test(name) || /^(oil|watercolor|photograph|drawing|etching|lithograph|engraving|pastel|ink|tempera|fresco)/i.test(name)) return null;
+    // Skip if it contains "unknown" or "anonymous"
+    if (/unknown|anonymous|unidentified|after\s|attributed|circle|school|workshop|manner|follower|studio/i.test(name)) return null;
+    return name;
+  }
+
+  function getArtistWorks(artistName) {
+    return STATE.results.filter(function (item) {
+      return extractArtist(item) === artistName;
+    });
+  }
+
+  function fetchWikidata(name) {
+    return new Promise(function (resolve) {
+      var cached = _wikiCache[name];
+      if (cached) { resolve(cached); return; }
+      try {
+        var s = sessionStorage.getItem('inspo_wiki_' + name);
+        if (s) { _wikiCache[name] = JSON.parse(s); resolve(_wikiCache[name]); return; }
+      } catch (_) {}
+
+      var url = 'https://www.wikidata.org/w/api.php?action=wbsearchentities&search=' +
+        encodeURIComponent(name) + '&language=en&limit=1&format=json&origin=*';
+
+      fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+        var entity = data.search && data.search[0];
+        if (!entity) { resolve(null); return; }
+        var qid = entity.id;
+        var detailUrl = 'https://www.wikidata.org/w/api.php?action=wbgetentities&ids=' + qid +
+          '&props=claims|descriptions&languages=en&format=json&origin=*';
+        return fetch(detailUrl).then(function (r2) { return r2.json(); }).then(function (d2) {
+          var ent = d2.entities && d2.entities[qid];
+          if (!ent) { resolve(null); return; }
+          var claims = ent.claims || {};
+          var info = {
+            description: ent.descriptions && ent.descriptions.en ? ent.descriptions.en.value : '',
+            birth: claims.P569 && claims.P569[0]
+              ? (claims.P569[0].mainsnak.datavalue && claims.P569[0].mainsnak.datavalue.value.time || '').slice(1, 5) : '',
+            death: claims.P570 && claims.P570[0]
+              ? (claims.P570[0].mainsnak.datavalue && claims.P570[0].mainsnak.datavalue.value.time || '').slice(1, 5) : '',
+          };
+          _wikiCache[name] = info;
+          try { sessionStorage.setItem('inspo_wiki_' + name, JSON.stringify(info)); } catch (_) {}
+          resolve(info);
+        });
+      }).catch(function () { resolve(null); });
+    });
+  }
+
+  function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  function openArtistPanel(artistName) {
+    if (document.querySelector('.artist-overlay')) return;
+    var works = getArtistWorks(artistName);
+    var thumbsHTML = works.slice(0, 12).map(function (it) {
+      return '<img class="artist-panel-thumb" src="' + esc(it.thumb || it.url) + '" alt="' + esc(it.title) + '" crossorigin="anonymous">';
+    }).join('');
+
+    var overlay = document.createElement('div');
+    overlay.className = 'artist-overlay';
+    overlay.innerHTML =
+      '<div class="artist-panel">' +
+        '<button class="artist-panel-close">&times;</button>' +
+        '<div class="artist-panel-name">' + esc(artistName) + '</div>' +
+        '<div class="artist-panel-meta" id="artist-meta">loading...</div>' +
+        '<div class="artist-panel-works">' + thumbsHTML + '</div>' +
+        '<button class="artist-panel-search">search all works by ' + esc(artistName) + '</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    // Close handlers
+    overlay.querySelector('.artist-panel-close').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+
+    // Search button
+    overlay.querySelector('.artist-panel-search').addEventListener('click', function () {
+      overlay.remove();
+      document.getElementById('search-input').value = artistName;
+      runSearch(artistName);
+    });
+
+    // Fetch Wikidata
+    fetchWikidata(artistName).then(function (info) {
+      var meta = document.getElementById('artist-meta');
+      if (!meta) return;
+      if (!info) { meta.textContent = works.length + ' works in results'; return; }
+      var parts = [];
+      if (info.description) parts.push(info.description);
+      if (info.birth) parts.push((info.birth || '?') + ' \u2013 ' + (info.death || 'present'));
+      parts.push(works.length + ' works in results');
+      meta.textContent = parts.join(' \u00B7 ');
+    });
+  }
+
+  // Make artist name clickable in grid card descriptions
+  // We'll add an artist link via the existing grid delegation
+  var grid = document.getElementById('image-grid');
+  if (!grid) return;
+
+  // Double-click on a card's description area opens artist panel
+  grid.addEventListener('dblclick', function (e) {
+    var card = e.target.closest('.image-card');
+    if (!card) return;
+    var item = _gridItemMap.get(card.dataset.id);
+    if (!item) return;
+    var artist = extractArtist(item);
+    if (artist) openArtistPanel(artist);
+  });
+
+  // Expose for external use
+  window._extractArtist = extractArtist;
+  window._openArtistPanel = openArtistPanel;
+})();
+
+/* ------------------------------------------------------------------
+   Visual Similarity — "More Like This" re-sort
+   Uses color distance + tag overlap (no ML model needed)
+   ------------------------------------------------------------------ */
+(function initVisualSimilarity() {
+  function rgbToLab(r, g, b) {
+    var rl = r/255, gl = g/255, bl = b/255;
+    rl = rl > 0.04045 ? Math.pow((rl+0.055)/1.055, 2.4) : rl/12.92;
+    gl = gl > 0.04045 ? Math.pow((gl+0.055)/1.055, 2.4) : gl/12.92;
+    bl = bl > 0.04045 ? Math.pow((bl+0.055)/1.055, 2.4) : bl/12.92;
+    var x = (rl*0.4124564 + gl*0.3575761 + bl*0.1804375) / 0.95047;
+    var y = (rl*0.2126729 + gl*0.7151522 + bl*0.0721750);
+    var z = (rl*0.0193339 + gl*0.1191920 + bl*0.9503041) / 1.08883;
+    var fx = x > 0.008856 ? Math.cbrt(x) : (7.787*x + 16/116);
+    var fy = y > 0.008856 ? Math.cbrt(y) : (7.787*y + 16/116);
+    var fz = z > 0.008856 ? Math.cbrt(z) : (7.787*z + 16/116);
+    return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
+  }
+
+  function deltaE(rgb1, rgb2) {
+    var lab1 = rgbToLab(rgb1[0], rgb1[1], rgb1[2]);
+    var lab2 = rgbToLab(rgb2[0], rgb2[1], rgb2[2]);
+    return Math.sqrt(
+      Math.pow(lab1[0]-lab2[0],2) + Math.pow(lab1[1]-lab2[1],2) + Math.pow(lab1[2]-lab2[2],2)
+    );
+  }
+
+  function tagOverlap(tagsA, tagsB) {
+    if (!tagsA || !tagsB || !tagsA.length || !tagsB.length) return 0;
+    var setA = new Set(tagsA);
+    var inter = 0;
+    for (var i = 0; i < tagsB.length; i++) { if (setA.has(tagsB[i])) inter++; }
+    var union = new Set(tagsA.concat(tagsB)).size;
+    return union ? inter / union : 0;
+  }
+
+  function similarity(refItem, item) {
+    var colorScore = 0;
+    if (refItem._avgRGB && item._avgRGB) {
+      var de = deltaE(refItem._avgRGB, item._avgRGB);
+      colorScore = Math.max(0, 1 - de / 100); // normalize to 0-1
+    }
+    var tagScore = tagOverlap(refItem.tags, item.tags);
+    var aspectScore = (refItem._aspect && item._aspect && refItem._aspect === item._aspect) ? 1 : 0;
+    return colorScore * 0.5 + tagScore * 0.35 + aspectScore * 0.15;
+  }
+
+  function moreLikeThis(refItem) {
+    if (!refItem || !STATE.results.length) return;
+    var scored = STATE.results
+      .filter(function (it) { return it.id !== refItem.id; })
+      .map(function (it) { return { item: it, score: similarity(refItem, it) }; })
+      .sort(function (a, b) { return b.score - a.score; });
+
+    clearGrid();
+    // Add a banner
+    var grid = document.getElementById('image-grid');
+    var banner = document.createElement('div');
+    banner.className = 'sim-banner';
+    banner.innerHTML =
+      '<span>showing results similar to: <strong>' +
+      (refItem.title || 'untitled').replace(/</g, '&lt;') +
+      '</strong></span>' +
+      '<button class="sim-banner-close" title="clear">&times;</button>';
+    grid.appendChild(banner);
+    banner.querySelector('.sim-banner-close').addEventListener('click', function () {
+      clearGrid();
+      renderGrid(getDisplayResults(STATE.results, STATE.query));
+    });
+
+    var items = scored.map(function (s) { return s.item; });
+    renderGrid(items);
+  }
+
+  // Delegate click on .sim-btn
+  document.getElementById('image-grid').addEventListener('click', function (e) {
+    var btn = e.target.closest('.sim-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    var card = btn.closest('.image-card');
+    if (!card) return;
+    var item = _gridItemMap.get(card.dataset.id);
+    if (item) moreLikeThis(item);
+  });
+})();
+
+/* ------------------------------------------------------------------
+   Stories / Editorial — curated themed articles
+   ------------------------------------------------------------------ */
+(function initStories() {
+  var STORIES = [
+    {
+      id: 'dutch-light',
+      title: 'The Science of Dutch Light',
+      intro: 'How 17th-century Dutch painters captured light that still feels alive today.',
+      searches: [
+        { label: 'vermeer interiors', query: 'vermeer interior light' },
+        { label: 'rembrandt chiaroscuro', query: 'rembrandt chiaroscuro shadow' },
+        { label: 'dutch still life', query: 'dutch golden age still life' },
+      ],
+    },
+    {
+      id: 'pattern-nature',
+      title: 'Patterns in Nature',
+      intro: 'From spiral shells to fractal ferns \u2014 how artists recorded the geometry of the natural world.',
+      searches: [
+        { label: 'botanical illustration', query: 'botanical illustration scientific' },
+        { label: 'shells & specimens', query: 'shell specimen natural history' },
+        { label: 'ernst haeckel', query: 'haeckel kunstformen natur' },
+      ],
+    },
+    {
+      id: 'gold-sacred',
+      title: 'Gold & the Sacred',
+      intro: 'The use of gold leaf from Byzantine icons to Klimt \u2014 when material becomes meaning.',
+      searches: [
+        { label: 'byzantine icons', query: 'byzantine icon gold' },
+        { label: 'illuminated manuscripts', query: 'illuminated manuscript gold leaf' },
+        { label: 'klimt gold', query: 'klimt gold painting' },
+      ],
+    },
+    {
+      id: 'map-edge',
+      title: 'At the Edge of the Map',
+      intro: 'Sea monsters, terra incognita, and the art of mapping the unknown.',
+      searches: [
+        { label: 'antique maps', query: 'antique map world cartography' },
+        { label: 'sea monsters', query: 'sea monster map illustration' },
+        { label: 'celestial charts', query: 'celestial chart constellation map' },
+      ],
+    },
+    {
+      id: 'color-blue',
+      title: 'The Invention of Blue',
+      intro: 'From ultramarine to Prussian blue \u2014 the expensive, rare, and sometimes accidental history of a color.',
+      searches: [
+        { label: 'ultramarine paintings', query: 'ultramarine blue painting' },
+        { label: 'delftware', query: 'delft blue porcelain' },
+        { label: 'cyanotype', query: 'cyanotype blueprint photograph' },
+      ],
+    },
+    {
+      id: 'body-motion',
+      title: 'The Body in Motion',
+      intro: 'From Greek athletes to Degas dancers \u2014 capturing movement in stillness.',
+      searches: [
+        { label: 'greek sculpture', query: 'greek sculpture athlete' },
+        { label: 'degas dancers', query: 'degas dancer ballet' },
+        { label: 'muybridge motion', query: 'muybridge motion photograph' },
+      ],
+    },
+    {
+      id: 'print-revolution',
+      title: 'The Print Revolution',
+      intro: 'How woodcuts, etchings, and lithographs democratized images before photography.',
+      searches: [
+        { label: 'd\u00fcrer woodcuts', query: 'durer woodcut print' },
+        { label: 'hokusai prints', query: 'hokusai ukiyo-e woodblock' },
+        { label: 'goya etchings', query: 'goya etching caprichos' },
+      ],
+    },
+    {
+      id: 'garden-paradise',
+      title: 'The Garden as Paradise',
+      intro: 'Walled gardens, pleasure grounds, and painted edens across cultures.',
+      searches: [
+        { label: 'persian gardens', query: 'persian garden miniature painting' },
+        { label: 'monet giverny', query: 'monet garden water lilies giverny' },
+        { label: 'botanical gardens', query: 'botanical garden illustration' },
+      ],
+    },
+    {
+      id: 'textile-world',
+      title: 'Woven Worlds',
+      intro: 'Tapestries, silks, and embroideries that tell stories thread by thread.',
+      searches: [
+        { label: 'medieval tapestry', query: 'medieval tapestry unicorn' },
+        { label: 'japanese textiles', query: 'japanese kimono textile pattern' },
+        { label: 'william morris', query: 'william morris textile design pattern' },
+      ],
+    },
+    {
+      id: 'night-sky',
+      title: 'Under the Night Sky',
+      intro: 'How artists painted darkness, stars, and the mystery between dusk and dawn.',
+      searches: [
+        { label: 'nocturne paintings', query: 'nocturne night painting' },
+        { label: 'starry skies', query: 'star night sky painting' },
+        { label: 'moon illustrations', query: 'moon illustration astronomy' },
+      ],
+    },
+  ];
+
+  function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+
+  // ---- Story reader overlay ----
+  function openStory(story) {
+    if (document.getElementById('story-overlay')) return;
+    var searchBtns = story.searches.map(function (s) {
+      return '<button class="story-search-btn" data-query="' + esc(s.query) + '">' + esc(s.label) + ' \u2192</button>';
+    }).join('');
+
+    var overlay = document.createElement('div');
+    overlay.id = 'story-overlay';
+    overlay.className = 'story-overlay';
+    overlay.innerHTML =
+      '<div class="story-reader">' +
+        '<button class="story-close">&times;</button>' +
+        '<div class="story-reader-title">' + esc(story.title) + '</div>' +
+        '<div class="story-reader-intro">' + esc(story.intro) + '</div>' +
+        '<div class="story-reader-label">search this story</div>' +
+        '<div class="story-reader-searches">' + searchBtns + '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.story-close').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelectorAll('.story-search-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        overlay.remove();
+        document.getElementById('search-input').value = btn.dataset.query;
+        runSearch(btn.dataset.query);
+      });
+    });
+  }
+
+  // ---- Stories list in sidebar ----
+  // Inject a "stories" button near the chat button
+  var chatSection = document.getElementById('btn-ai-chat');
+  if (chatSection) {
+    var storiesBtn = document.createElement('button');
+    storiesBtn.className = 'btn';
+    storiesBtn.id = 'btn-stories';
+    storiesBtn.textContent = '\u270E stories';
+    storiesBtn.style.marginTop = '4px';
+    chatSection.parentElement.appendChild(storiesBtn);
+
+    storiesBtn.addEventListener('click', function () {
+      openStoriesList();
+    });
+  }
+
+  function openStoriesList() {
+    if (document.getElementById('stories-list-overlay')) return;
+    var cardsHTML = STORIES.map(function (s) {
+      return '<button class="stories-list-card" data-sid="' + s.id + '">' +
+        '<div class="stories-list-title">' + esc(s.title) + '</div>' +
+        '<div class="stories-list-intro">' + esc(s.intro) + '</div>' +
+      '</button>';
+    }).join('');
+
+    var overlay = document.createElement('div');
+    overlay.id = 'stories-list-overlay';
+    overlay.className = 'story-overlay';
+    overlay.innerHTML =
+      '<div class="stories-list-panel">' +
+        '<button class="story-close">&times;</button>' +
+        '<div class="stories-list-heading">stories</div>' +
+        '<div class="stories-list-grid">' + cardsHTML + '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.story-close').addEventListener('click', function () { overlay.remove(); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelectorAll('.stories-list-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        overlay.remove();
+        var story = STORIES.find(function (s) { return s.id === card.dataset.sid; });
+        if (story) openStory(story);
+      });
+    });
+  }
+
+  // Expose for discover landing
+  window._inspoStories = STORIES;
+  window._openStory = openStory;
+})();
+
+/* ------------------------------------------------------------------
+   SEO — Dynamic title, meta description, Open Graph updates
+   ------------------------------------------------------------------ */
+(function initDynamicSEO() {
+  var DEFAULT_TITLE = 'insposearch';
+  var DEFAULT_DESC = 'Search 521+ museum, archive, and photo sources for creative inspiration.';
+
+  function updateMeta(name, content) {
+    var el = document.querySelector('meta[property="' + name + '"]') ||
+             document.querySelector('meta[name="' + name + '"]');
+    if (el) el.setAttribute('content', content);
+  }
+
+  function setSearchMeta(query) {
+    var title = query + ' — insposearch';
+    var desc = 'Search results for "' + query + '" across 521+ cultural heritage sources.';
+    document.title = title;
+    updateMeta('description', desc);
+    updateMeta('og:title', title);
+    updateMeta('og:description', desc);
+    updateMeta('twitter:title', title);
+    updateMeta('twitter:description', desc);
+  }
+
+  function resetMeta() {
+    document.title = DEFAULT_TITLE;
+    updateMeta('description', DEFAULT_DESC);
+    updateMeta('og:title', DEFAULT_TITLE);
+    updateMeta('og:description', DEFAULT_DESC);
+    updateMeta('twitter:title', DEFAULT_TITLE);
+    updateMeta('twitter:description', DEFAULT_DESC);
+  }
+
+  // Patch runSearch to update SEO on search
+  var _origRunSearch = runSearch;
+  runSearch = async function(query, forceRefresh) {
+    setSearchMeta(query.trim());
+    return _origRunSearch.call(this, query, forceRefresh);
+  };
+
+  // Reset on logo click
+  document.querySelector('.logo').addEventListener('click', resetMeta);
+})();
+
+/* ============================================================
+   VIRTUAL SCROLLING — Recycle off-screen cards
+   When a card scrolls far out of view (>2000px margin), its
+   heavy children (img, buttons) are detached and replaced with
+   a lightweight placeholder that preserves the card's height.
+   When the placeholder scrolls back near the viewport, the full
+   card content is restored from a cache. This keeps the live
+   DOM lean even with 1000+ results.
+============================================================ */
+(function initVirtualScroll() {
+  const OFFSCREEN_MARGIN = '2000px';
+  const _cardCache = new Map();  // id → DocumentFragment of removed children
+
+  const virtualObs = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const card = entry.target;
+      if (!card.classList.contains('image-card')) continue;
+      const id = card.dataset.id;
+      if (!id) continue;
+
+      if (!entry.isIntersecting && !card.classList.contains('v-placeholder')) {
+        // Card scrolled far offscreen — virtualize it
+        const h = card.offsetHeight;
+        const frag = document.createDocumentFragment();
+        while (card.firstChild) frag.appendChild(card.firstChild);
+        _cardCache.set(id, frag);
+        card.classList.add('v-placeholder');
+        card.style.minHeight = h + 'px';
+      } else if (entry.isIntersecting && card.classList.contains('v-placeholder')) {
+        // Card scrolling back into view — restore it
+        const frag = _cardCache.get(id);
+        if (frag) {
+          card.appendChild(frag);
+          _cardCache.delete(id);
+          card.classList.remove('v-placeholder');
+          card.style.minHeight = '';
+        }
+      }
+    }
+  }, { rootMargin: OFFSCREEN_MARGIN });
+
+  // Observe cards as they are added to the grid
+  const grid = document.getElementById('image-grid');
+  const gridMO = new MutationObserver((mutations) => {
+    for (const mut of mutations) {
+      for (const node of mut.addedNodes) {
+        if (node.nodeType === 1 && node.classList.contains('image-card')) {
+          virtualObs.observe(node);
+        }
+        // Fragments append children directly
+        if (node.nodeType === 1) {
+          node.querySelectorAll && node.querySelectorAll('.image-card').forEach(c => virtualObs.observe(c));
+        }
+      }
+    }
+  });
+  gridMO.observe(grid, { childList: true });
+})();
+
+/* ============================================================
+   SEARCH-AS-YOU-TYPE — Live preview while typing
+   After 500ms of idle typing (≥3 chars), fires a lightweight
+   search using the already-prefetched keywords. Skips if the
+   user hits Enter first (which triggers the full search).
+============================================================ */
+(function initSearchAsYouType() {
+  const input = document.getElementById('search-input');
+  let _saytTimer = null;
+  let _lastSaytQuery = '';
+
+  input.addEventListener('input', () => {
+    clearTimeout(_saytTimer);
+    const q = input.value.trim();
+    if (q.length < 3 || q === STATE.query || q === _lastSaytQuery) return;
+    _saytTimer = setTimeout(() => {
+      // Don't fire if a full search is already loading
+      if (STATE.loading) return;
+      _lastSaytQuery = q;
+      runSearch(q);
+    }, 500);
+  });
+
+  // Cancel preview if user submits with Enter
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      clearTimeout(_saytTimer);
+      _lastSaytQuery = input.value.trim();
+    }
+  });
+})();
+
+/* ============================================================
+   ADVANCED SEARCH MODAL
+   Structured form: query, date range, medium, region, category,
+   color, orientation, exclude terms.  Builds a composite query
+   string and applies filters before running the standard search.
+============================================================ */
+(function initAdvancedSearch() {
+  var overlay = document.getElementById('adv-search-overlay');
+  var openBtn = document.getElementById('btn-advanced-search');
+  var closeBtn = document.getElementById('adv-close');
+  var resetBtn = document.getElementById('adv-reset');
+  var runBtn   = document.getElementById('adv-run');
+
+  function open() {
+    // Pre-fill query from search input
+    var q = document.getElementById('search-input').value.trim();
+    document.getElementById('adv-query').value = q;
+    overlay.style.display = 'flex';
+  }
+  function close() { overlay.style.display = 'none'; }
+
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.style.display === 'flex') close();
+  });
+
+  resetBtn.addEventListener('click', function() {
+    document.getElementById('adv-query').value = '';
+    document.getElementById('adv-date-from').value = '';
+    document.getElementById('adv-date-to').value = '';
+    document.getElementById('adv-medium').value = '';
+    document.getElementById('adv-region').value = '';
+    document.getElementById('adv-category').value = '';
+    document.getElementById('adv-color-enable').checked = false;
+    document.getElementById('adv-orient').value = '';
+    document.getElementById('adv-exclude').value = '';
+  });
+
+  runBtn.addEventListener('click', function() {
+    var query = (document.getElementById('adv-query').value || '').trim();
+    var medium = document.getElementById('adv-medium').value;
+    var exclude = (document.getElementById('adv-exclude').value || '').trim();
+    var dateFrom = document.getElementById('adv-date-from').value;
+    var dateTo   = document.getElementById('adv-date-to').value;
+    var region   = document.getElementById('adv-region').value;
+    var category = document.getElementById('adv-category').value;
+    var orient   = document.getElementById('adv-orient').value;
+    var colorEn  = document.getElementById('adv-color-enable').checked;
+    var color    = document.getElementById('adv-color').value;
+
+    // Build composite query
+    var parts = [];
+    if (query) parts.push(query);
+    if (medium) parts.push(medium);
+    var compositeQuery = parts.join(' ');
+
+    // Apply NOT terms
+    if (exclude) {
+      exclude.split(/[\s,]+/).filter(Boolean).forEach(function(t) {
+        compositeQuery += ' NOT ' + t;
+      });
+    }
+
+    if (!compositeQuery) return;
+
+    // Apply source category filter — enable only matching sources
+    if (category && SOURCE_GROUPS[category]) {
+      var groupSet = new Set(SOURCE_GROUPS[category]);
+      ALL_SOURCES.forEach(function(sid) {
+        if (groupSet.has(sid)) {
+          STATE.disabledSources.delete(sid);
+        } else {
+          STATE.disabledSources.add(sid);
+        }
+      });
+      if (typeof updateSourcesActiveCounter === 'function') updateSourcesActiveCounter();
+    }
+
+    // Apply region filter via SOURCE_META
+    if (region) {
+      ALL_SOURCES.forEach(function(sid) {
+        var meta = SOURCE_META[sid];
+        if (meta && meta.region === region) {
+          STATE.disabledSources.delete(sid);
+        } else if (meta && meta.region !== region) {
+          STATE.disabledSources.add(sid);
+        }
+      });
+      if (typeof updateSourcesActiveCounter === 'function') updateSourcesActiveCounter();
+    }
+
+    // Apply date range — set the date filter UI values
+    if (dateFrom || dateTo) {
+      var fromSlider = document.getElementById('date-from-slider') || document.getElementById('date-from');
+      var toSlider   = document.getElementById('date-to-slider') || document.getElementById('date-to');
+      if (fromSlider && dateFrom) fromSlider.value = dateFrom;
+      if (toSlider && dateTo)     toSlider.value = dateTo;
+    }
+
+    // Apply orientation filter
+    if (orient) {
+      var orientBtns = document.querySelectorAll('.aspect-btn, [data-aspect]');
+      orientBtns.forEach(function(btn) {
+        if (btn.dataset.aspect === orient) btn.click();
+      });
+    }
+
+    // Apply color filter
+    if (colorEn && color) {
+      var hexInput = document.getElementById('hex-input');
+      var hexAdd = document.getElementById('hex-add');
+      if (hexInput && hexAdd) {
+        hexInput.value = color;
+        hexAdd.click();
+      }
+    }
+
+    // Set main search input and run
+    document.getElementById('search-input').value = compositeQuery;
+    close();
+    runSearch(compositeQuery);
+  });
+})();
+
+/* ------------------------------------------------------------------
+   Artist Button in Detail Panel
+   Shows "view artist" when a selected image has an extractable artist name
+------------------------------------------------------------------ */
+(function initPanelArtistButton() {
+  var section = document.getElementById('panel-artist-section');
+  var btn = document.getElementById('btn-panel-artist');
+  if (!section || !btn) return;
+
+  var _currentArtist = null;
+
+  btn.addEventListener('click', function () {
+    if (_currentArtist && window._openArtistPanel) {
+      window._openArtistPanel(_currentArtist);
+    }
+  });
+
+  // Patch updatePanel to show/hide artist button
+  var _origUpdatePanel = window.updatePanel || updatePanel;
+  var _patchedUpdatePanel = async function () {
+    await _origUpdatePanel.apply(this, arguments);
+    _currentArtist = null;
+    if (STATE.selected.length && window._extractArtist) {
+      var last = STATE.selected[STATE.selected.length - 1];
+      _currentArtist = window._extractArtist(last);
+    }
+    if (_currentArtist) {
+      section.style.display = '';
+      btn.textContent = 'view artist \u2014 ' + _currentArtist;
+    } else {
+      section.style.display = 'none';
+    }
+  };
+  // Replace global reference
+  if (typeof updatePanel === 'function') {
+    window.updatePanel = _patchedUpdatePanel;
+    // Also patch the local scope reference used by toggleSelection
+    updatePanel = _patchedUpdatePanel;
+  }
+})();
+
+/* ------------------------------------------------------------------
+   Source Health Indicator
+   Shows count of unhealthy sources below the active counter
+------------------------------------------------------------------ */
+(function initSourceHealthIndicator() {
+  var el = document.getElementById('sources-health-indicator');
+  if (!el) return;
+
+  function update() {
+    var unhealthy = 0;
+    var names = [];
+    ALL_SOURCES.forEach(function (id) {
+      if (!isSourceHealthy(id) && !STATE.disabledSources.has(id)) {
+        unhealthy++;
+        var meta = SOURCE_META[id];
+        if (meta && meta.name && names.length < 5) names.push(meta.name);
+      }
+    });
+    if (unhealthy > 0) {
+      el.style.display = '';
+      el.textContent = unhealthy + ' source' + (unhealthy > 1 ? 's' : '') + ' temporarily paused';
+      el.title = names.length ? names.join(', ') + (unhealthy > names.length ? ' + more' : '') : '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  el.addEventListener('click', function () {
+    // Reset all health — re-enable paused sources
+    try { sessionStorage.removeItem('inspo_source_health'); } catch (_) {}
+    ALL_SOURCES.forEach(function (id) { _sourceHealth[id] = { misses: 0, hits: 0 }; });
+    update();
+    updateSourcesActiveCounter();
+  });
+
+  // Hook into the counter update cycle
+  var _origCounter = _updateSourcesActiveCounterImmediate;
+  _updateSourcesActiveCounterImmediate = function () {
+    _origCounter();
+    update();
+  };
+  update();
 })();

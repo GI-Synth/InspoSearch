@@ -1,0 +1,10 @@
+name = "insposearch-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://insposearch.pages.dev"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "PLACEHOLDER_KV_ID"

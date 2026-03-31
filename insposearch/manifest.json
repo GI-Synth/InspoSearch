@@ -1,0 +1,49 @@
+{
+  "name": "InspoSearch",
+  "short_name": "InspoSearch",
+  "description": "Search 3.2 billion images across 521 museums, archives & databases — one search, one interface.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0E0E0D",
+  "background_color": "#0E0E0D",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%230E0E0D'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='280' fill='%23C8B89A'>i</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230E0E0D'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='110' fill='%23C8B89A'>i</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='128' fill='%230E0E0D'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='280' fill='%23C8B89A'>i</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "text": "q",
+      "title": "q",
+      "url": "q"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "New Search",
+      "short_name": "Search",
+      "url": "./index.html",
+      "description": "Start a new image search"
+    }
+  ]
+}

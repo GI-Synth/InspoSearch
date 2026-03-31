@@ -82,15 +82,26 @@ function dedupeById(items) {
 }
 
 function saveSource(sourceId, sourceName, items) {
+  // Validate items — filter out entries missing required fields
+  const valid = items.filter(item => {
+    if (!item.img || typeof item.img !== 'string') return false;
+    if (!item.img.startsWith('https://')) return false;
+    return true;
+  });
+  if (valid.length === 0) {
+    log(sourceId, `SKIP: all ${items.length} items failed validation`);
+    return;
+  }
   const out = {
     sourceId,
     sourceName,
+    schemaVersion: 1,
     lastFetched: new Date().toISOString(),
-    items: items.slice(0, MAX_ITEMS),
+    items: valid.slice(0, MAX_ITEMS),
   };
   const path = join(DATA_DIR, `${sourceId}.json`);
   writeFileSync(path, JSON.stringify(out, null, 2), 'utf8');
-  log(sourceId, `saved ${out.items.length} items → ${path}`);
+  log(sourceId, `saved ${out.items.length} items (${items.length - valid.length} invalid filtered) → ${path}`);
 }
 
 // ── source fetchers ────────────────────────────────────────────────────────
@@ -787,8 +798,11 @@ async function fetchSource(source) {
       failCount++;
       log(source.id, `  term "${term}" failed: ${e.message}`);
     }
-    // Small delay between requests to avoid rate limiting
-    await new Promise(r => setTimeout(r, 300));
+    // Rate limit: Wikidata blocks after ~100 queries/min, so we slow down between terms
+    // 300ms baseline + extra 700ms for Wikidata SPARQL sources
+    const isWikidata = source.fetcher.toString().includes('Wikidata') || source.fetcher === fetchWikidataSparql;
+    const delay = isWikidata ? 1000 : 300;
+    await new Promise(r => setTimeout(r, delay));
   }
 
   const deduped = dedupeById(allItems);
@@ -839,14 +853,19 @@ async function main() {
   writeFileSync(join(DATA_DIR, '_index.json'), JSON.stringify(indexData, null, 2), 'utf8');
 
   console.log('\n=== FETCH COMPLETE ===');
-  console.log(`Succeeded: ${results.succeeded.join(', ') || '(none)'}`);
-  console.log(`Failed:    ${results.failed.join(', ') || '(none)'}`);
-  console.log('Exit 0 (partial success is OK for nightly fetch)');
+  console.log(`Succeeded: ${results.succeeded.length}/${SOURCES.length} — ${results.succeeded.join(', ') || '(none)'}`);
+  console.log(`Failed:    ${results.failed.length}/${SOURCES.length} — ${results.failed.join(', ') || '(none)'}`);
 
+  // Exit 1 if ALL sources failed (indicates a systemic problem)
+  if (results.succeeded.length === 0 && SOURCES.length > 0) {
+    console.error('ERROR: All sources failed — likely a network or rate-limit issue.');
+    process.exit(1);
+  }
+  // Exit 0 for partial success
   process.exit(0);
 }
 
 main().catch(e => {
   console.error('Fatal error in fetch script:', e);
-  process.exit(0); // still exit 0
+  process.exit(1);
 });
