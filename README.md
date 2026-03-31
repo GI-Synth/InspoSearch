@@ -3,7 +3,6 @@
 **The world's open cultural image search — 500+ sources, 3B+ images, one search.**
 
 [![Live](https://img.shields.io/badge/live-insposearch.pages.dev-000?style=flat&logo=cloudflare)](https://insposearch.pages.dev)
-[![Docs](https://img.shields.io/badge/docs-insposearch--docs.pages.dev-C8B89A?style=flat)](https://insposearch-docs.pages.dev/)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
 [![Sources](https://img.shields.io/badge/sources-500%2B-brightgreen?style=flat)](SOURCES.md)
 [![Images](https://img.shields.io/badge/images-3B%2B-brightgreen?style=flat)](SOURCES.md)
