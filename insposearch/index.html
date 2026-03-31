@@ -71,12 +71,12 @@
 
       <!-- Search input -->
       <div class="sidebar-section">
-        <div class="search-row">
+        <div class="search-row search-row--block">
           <label for="search-input" class="sr-only">Search images</label>
           <input
             type="text"
             id="search-input"
-            class="search-input"
+            class="search-input search-input--large"
             placeholder="search"
             autocomplete="off"
             autocapitalize="off"
@@ -85,6 +85,8 @@
             spellcheck="false"
             aria-label="search images"
           >
+        </div>
+        <div class="search-row search-row--controls">
           <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)" aria-label="search mode: explore">explore</button>
           <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search" aria-label="open advanced search">advanced</button>
         </div>
