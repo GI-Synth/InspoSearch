@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InspoSearch for Institutions</title>
+  <meta name="description" content="Add your museum, archive, or library collection to InspoSearch — the open cultural heritage search engine.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --font-ui: 'DM Mono', monospace;
+      --font-display: 'Cormorant Garamond', serif;
+      --bg: #0E0E0D; --bg-panel: #151514; --ink: #E8E6E1;
+      --ink-2: #8A8880; --ink-3: #4A4A46; --accent: #C8B89A;
+      --line: rgba(255,255,255,0.06);
+    }
+    body {
+      font-family: var(--font-ui); background: var(--bg); color: var(--ink);
+      line-height: 1.7; font-size: 12px; letter-spacing: 0.03em;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 60px 24px; }
+    h1 {
+      font-family: var(--font-display); font-weight: 300; font-style: italic;
+      font-size: 36px; color: var(--ink); margin-bottom: 8px; line-height: 1.2;
+    }
+    h2 {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--accent); margin: 40px 0 16px;
+    }
+    p { color: var(--ink-2); margin-bottom: 14px; }
+    a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .hero-sub {
+      font-family: var(--font-ui); font-size: 13px; color: var(--ink-2);
+      margin-bottom: 32px;
+    }
+    .stat-row {
+      display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0 32px;
+    }
+    .stat {
+      text-align: center; padding: 20px 24px; border: 1px solid var(--line); flex: 1; min-width: 120px;
+    }
+    .stat-num {
+      font-family: var(--font-display); font-size: 28px; color: var(--accent);
+      font-weight: 300;
+    }
+    .stat-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3);
+      margin-top: 4px;
+    }
+    .badge-verified {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border: 1px solid rgba(200,184,154,0.3);
+      font-size: 9px; letter-spacing: 0.08em; color: var(--accent);
+    }
+    .steps {
+      counter-reset: step;
+    }
+    .step {
+      padding: 16px 0; border-bottom: 1px solid var(--line);
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      font-family: var(--font-display); font-size: 24px; color: var(--accent);
+      font-weight: 300; min-width: 28px;
+    }
+    .step-body { flex: 1; }
+    .step-title { color: var(--ink); margin-bottom: 4px; }
+    .step-desc { color: var(--ink-2); font-size: 11px; }
+    code {
+      background: var(--bg-panel); padding: 2px 6px; font-size: 11px;
+      border: 1px solid var(--line);
+    }
+    pre {
+      background: var(--bg-panel); padding: 16px; margin: 12px 0 20px;
+      overflow-x: auto; font-size: 10px; line-height: 1.6;
+      border: 1px solid var(--line);
+    }
+    .cta {
+      display: inline-block; margin: 24px 0; padding: 10px 28px;
+      border: 1px solid var(--accent); color: var(--accent);
+      font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.06em;
+      text-decoration: none; transition: background 0.15s, color 0.15s;
+    }
+    .cta:hover { background: var(--accent); color: #0E0E0D; text-decoration: none; }
+    .source-types {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;
+      margin: 12px 0 24px;
+    }
+    .source-type {
+      padding: 12px 14px; border: 1px solid var(--line);
+    }
+    .source-type-name { color: var(--ink); font-size: 11px; }
+    .source-type-count { color: var(--ink-3); font-size: 9px; margin-top: 2px; }
+    footer { text-align: center; padding: 40px 0; color: var(--ink-3); font-size: 10px; }
+    footer a { color: var(--ink-2); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>InspoSearch for Institutions</h1>
+    <p class="hero-sub">Add your museum, archive, or library collection to the open cultural heritage search engine.</p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-num">521</div>
+        <div class="stat-label">active sources</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3.2B+</div>
+        <div class="stat-label">searchable images</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">108</div>
+        <div class="stat-label">no-setup sources</div>
+      </div>
+    </div>
+
+    <h2>Why list your collection?</h2>
+    <p>InspoSearch connects researchers, creatives, and students with cultural heritage imagery from hundreds of institutions. Adding your collection means more visibility, more engagement, and more people discovering your holdings.</p>
+    <p><span class="badge-verified">&#x2713; verified source</span> — Verified sources get a badge visible to all users.</p>
+
+    <h2>Source types</h2>
+    <div class="source-types">
+      <div class="source-type">
+        <div class="source-type-name">museums & galleries</div>
+        <div class="source-type-count">210+ sources</div>
+      </div>
+      <div class="source-type">
+        <div class="source-type-name">national archives</div>
+        <div class="source-type-count">80+ sources</div>
+      </div>
+      <div class="source-type">
+        <div class="source-type-name">university libraries</div>
+        <div class="source-type-count">65+ sources</div>
+      </div>
+      <div class="source-type">
+        <div class="source-type-name">digital collections</div>
+        <div class="source-type-count">120+ sources</div>
+      </div>
+      <div class="source-type">
+        <div class="source-type-name">photo archives</div>
+        <div class="source-type-count">46+ sources</div>
+      </div>
+    </div>
+
+    <h2>How to add your collection</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-body">
+          <div class="step-title">Check your API</div>
+          <div class="step-desc">InspoSearch works with REST APIs, IIIF manifests, OAI-PMH endpoints, and OpenSearch. If your collection has a public API, it can likely be added.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <div class="step-title">Create a source manifest</div>
+          <div class="step-desc">Create a JSON file describing your endpoint. See the <a href="https://github.com/GI-Synth/InspoSearch/tree/main/insposearch/sources">source templates on GitHub</a>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-body">
+          <div class="step-title">Submit a Pull Request</div>
+          <div class="step-desc">Open a PR on <a href="https://github.com/GI-Synth/InspoSearch">GitHub</a> with your source JSON. We'll test it and add it to the manifest.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Embed widget</h2>
+    <p>Add an InspoSearch search box to your institution's website:</p>
+    <pre>&lt;iframe src="https://insposearch.pages.dev"
+  width="100%" height="600"
+  style="border:1px solid #eee;"
+  title="InspoSearch"&gt;&lt;/iframe&gt;</pre>
+
+    <a class="cta" href="https://github.com/GI-Synth/InspoSearch/issues/new?title=New+Source+Request">Request Source Addition</a>
+    <a class="cta" href="https://insposearch.pages.dev" style="margin-left:8px;">← back to insposearch</a>
+  </div>
+
+  <footer>
+    <p>InspoSearch is free and open source. <a href="https://github.com/GI-Synth/InspoSearch">GitHub</a></p>
+  </footer>
+</body>
+</html>

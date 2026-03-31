@@ -11,6 +11,30 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="insposearch">
   <meta name="twitter:description" content="Search 10,000+ museum, archive, and photo sources for creative inspiration.">
+  <meta name="theme-color" content="#0E0E0D" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F7F5F2" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="InspoSearch">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230E0E0D'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='serif' font-style='italic' font-size='100' fill='%23C8B89A'>i</text></svg>">
+  <link rel="canonical" href="https://insposearch.pages.dev/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "InspoSearch",
+    "url": "https://insposearch.pages.dev",
+    "description": "Search 521+ museum, archive, and photo sources for creative inspiration — 3.2 billion images, zero storage.",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "GI-Synth", "url": "https://github.com/GI-Synth" }
+  }
+  </script>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; img-src * data: blob:; connect-src *; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,7 +62,7 @@
 
       <!-- Logo + theme/settings buttons -->
       <div class="sidebar-top">
-        <span class="logo">insposearch</span>
+        <h1 class="logo">insposearch</h1>
         <div style="display:flex;align-items:center;gap:8px;">
           <button class="settings-gear-btn" id="btn-settings" title="settings">⚙</button>
           <button class="theme-toggle" id="theme-toggle">dark</button>
@@ -48,6 +72,7 @@
       <!-- Search input -->
       <div class="sidebar-section">
         <div class="search-row">
+          <label for="search-input" class="sr-only">Search images</label>
           <input
             type="text"
             id="search-input"
@@ -61,9 +86,12 @@
             aria-label="search images"
           >
           <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)">explore</button>
+          <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search">advanced</button>
         </div>
+        <div id="search-history-dropdown" class="search-history-dropdown" hidden role="listbox" aria-label="search history"></div>
         <div id="loading-indicator" class="loading-indicator" role="status" aria-live="polite"></div>
         <div id="sources-active-counter" class="sources-active-counter"></div>
+        <div id="sources-health-indicator" class="sources-health-indicator" style="display:none;"></div>
       </div>
 
       <!-- Keyword expansion pills -->
@@ -117,8 +145,21 @@
         </div>
       </div>
 
-      <div class="divider"></div>
+      <!-- Date range filter -->
+      <div class="sidebar-section" id="date-filter-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="section-label">date range</span>
+          <button id="date-filter-clear" class="date-filter-clear" title="clear date filter">×</button>
+        </div>
+        <div class="date-range-row">
+          <input type="number" id="date-from" class="date-input" placeholder="1400" min="0" max="2030" aria-label="From year">
+          <span class="date-dash">—</span>
+          <input type="number" id="date-to" class="date-input" placeholder="2025" min="0" max="2030" aria-label="To year">
+          <button id="date-filter-apply" class="btn" style="padding:4px 10px;font-size:9px;">apply</button>
+        </div>
+      </div>
 
+      <div class="divider"></div>
       <!-- View toggle -->
       <div class="sidebar-section">
         <span class="section-label">view</span>
@@ -127,6 +168,43 @@
           <button class="btn" id="btn-board">board</button>
           <button class="btn" id="btn-3d">3d</button>
         </div>
+      </div>
+
+      <!-- Aspect ratio filter (hidden until results loaded) -->
+      <div class="sidebar-section" id="aspect-filter-section" style="display:none;">
+        <span class="section-label">orientation</span>
+        <div class="aspect-btn-group">
+          <button class="aspect-btn active" data-aspect="all">all</button>
+          <button class="aspect-btn" data-aspect="landscape">landscape</button>
+          <button class="aspect-btn" data-aspect="portrait">portrait</button>
+          <button class="aspect-btn" data-aspect="square">square</button>
+        </div>
+      </div>
+
+      <!-- Color search filter (hidden until results loaded) -->
+      <div class="sidebar-section" id="color-filter-section" style="display:none;">
+        <span class="section-label">color</span>
+        <div class="color-filter-grid" id="color-filter-grid">
+          <button class="color-swatch-btn active" data-color="all" title="all colors"><span style="background:conic-gradient(red,yellow,lime,aqua,blue,magenta,red);width:100%;height:100%;display:block;border-radius:50%;"></span></button>
+          <button class="color-swatch-btn" data-color="red" title="red"><span style="background:#c0392b;"></span></button>
+          <button class="color-swatch-btn" data-color="orange" title="orange"><span style="background:#e67e22;"></span></button>
+          <button class="color-swatch-btn" data-color="yellow" title="yellow"><span style="background:#f1c40f;"></span></button>
+          <button class="color-swatch-btn" data-color="green" title="green"><span style="background:#27ae60;"></span></button>
+          <button class="color-swatch-btn" data-color="blue" title="blue"><span style="background:#2980b9;"></span></button>
+          <button class="color-swatch-btn" data-color="purple" title="purple"><span style="background:#8e44ad;"></span></button>
+          <button class="color-swatch-btn" data-color="pink" title="pink"><span style="background:#e84393;"></span></button>
+          <button class="color-swatch-btn" data-color="brown" title="brown"><span style="background:#795548;"></span></button>
+          <button class="color-swatch-btn" data-color="black" title="black"><span style="background:#1a1a1a;"></span></button>
+          <button class="color-swatch-btn" data-color="white" title="white"><span style="background:#f5f5f5;border:1px solid var(--line-strong);"></span></button>
+          <button class="color-swatch-btn" data-color="gold" title="gold"><span style="background:#d4a017;"></span></button>
+        </div>
+        <!-- Hex palette picker -->
+        <div class="hex-palette-row" id="hex-palette-row">
+          <input type="color" id="hex-picker" class="hex-picker" value="#c0392b" title="pick a color">
+          <input type="text" id="hex-input" class="hex-input" placeholder="#ff5733" maxlength="7" spellcheck="false" autocomplete="off">
+          <button class="btn hex-add-btn" id="hex-add-btn" title="add to palette">+</button>
+        </div>
+        <div class="hex-chips" id="hex-chips"></div>
       </div>
 
       <!-- B&W mode toggle + Sketch draw toggle -->
@@ -149,8 +227,19 @@
 
       <div class="divider"></div>
 
+      <!-- Taxonomy Browse -->
+      <div class="sidebar-section" id="taxonomy-section">
+        <span class="section-label">browse</span>
+        <div id="taxonomy-tree" class="taxonomy-tree"></div>
+      </div>
+
+      <div class="divider"></div>
+
       <!-- Flex spacer — pushes keys button to bottom -->
       <div class="sidebar-spacer"></div>
+
+      <!-- Institutions link -->
+      <a href="institutions.html" id="btn-institutions" class="btn btn-sidebar-link" style="display:block;text-align:center;font-size:9px;letter-spacing:0.08em;margin:4px 0;">institutions</a>
 
       <!-- Help / onboarding button -->
       <button class="btn-help" id="btn-help" title="how to use insposearch">?</button>
@@ -249,7 +338,7 @@
 
       <!-- Grid view — default -->
       <div id="image-grid">
-        <div class="empty-state" id="empty-state" style="grid-column: 1 / -1; min-height: calc(100dvh - 4px);">
+        <div class="empty-state" id="empty-state" style="grid-column: 1 / -1; min-height: calc(100dvh - 4px); display:none;">
           <p>begin with an image, a word, a feeling</p>
           <span>try: texture / light / form / shadow</span>
         </div>
@@ -294,13 +383,43 @@
           width: auto;
           padding: 6px 14px;
           font-size: 10px;
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 4px;
         ">
           <span>interpret</span>
           <span style="color: var(--accent)">&#10022;</span>
         </button>
+
+        <button id="bar-slideshow-btn" class="btn" style="
+          width: auto;
+          padding: 6px 14px;
+          font-size: 10px;
+        ">slideshow</button>
+
+        <button id="bar-cite-btn" class="btn" style="
+          width: auto;
+          padding: 6px 14px;
+          font-size: 10px;
+        ">cite</button>
+
+        <button id="bar-compare-btn" class="btn" style="
+          width: auto;
+          padding: 6px 14px;
+          font-size: 10px;
+        ">compare</button>
+
+        <button id="bar-download-btn" class="btn" style="
+          width: auto;
+          padding: 6px 14px;
+          font-size: 10px;
+        ">download</button>
+
+        <button id="bar-share-btn" class="btn" style="
+          width: auto;
+          padding: 6px 14px;
+          font-size: 10px;
+        ">share</button>
 
         <button id="bar-clear-btn" style="
           background: none;
@@ -309,7 +428,7 @@
           font-family: var(--font-ui);
           font-size: 10px;
           cursor: pointer;
-          padding: 4px 8px;
+          padding: 6px 10px;
           transition: opacity 0.3s ease;
           letter-spacing: 0.05em;
         ">clear all</button>
@@ -321,7 +440,7 @@
           font-family: var(--font-ui);
           font-size: 14px;
           cursor: pointer;
-          padding: 0 4px;
+          padding: 6px 8px;
           transition: opacity 0.3s ease;
           line-height: 1;
         ">&times;</button>
@@ -335,7 +454,7 @@
     <aside id="panel">
 
       <div class="panel-header">
-        <span class="section-label">selected</span>
+        <h2 class="section-label">selected</h2>
         <button class="panel-close" id="panel-close">×</button>
       </div>
 
@@ -374,6 +493,11 @@
       <div class="panel-section" id="panel-related">
         <div class="section-label">explore related</div>
         <div id="related-container"></div>
+      </div>
+
+      <!-- Artist entity -->
+      <div class="panel-section" id="panel-artist-section" style="display:none;">
+        <button class="btn" id="btn-panel-artist" style="width:100%;text-align:center;font-size:9px;letter-spacing:0.08em;">view artist</button>
       </div>
 
       <!-- Source info -->
@@ -567,6 +691,8 @@
 
       <div class="settings-value-text" style="margin-bottom:8px;">insposearch v1.0</div>
       <button class="btn" id="btn-settings-guide">→ view guide</button>
+      <a href="https://github.com/nicoledroi1/insposearch" target="_blank" rel="noopener" class="btn" style="display:block;text-align:center;margin-top:4px;">→ github</a>
+      <div class="settings-value-text" style="margin-top:8px;font-size:8px;color:var(--ink-3);">browser extension available on github</div>
 
       <div class="keys-panel-footer">
         settings stored locally in your browser
@@ -627,6 +753,89 @@
   </div>
 
   <!-- ======================================================
+       ADVANCED SEARCH MODAL
+  ====================================================== -->
+  <div id="adv-search-overlay" class="adv-overlay" style="display:none;">
+    <div class="adv-panel">
+      <div class="adv-header">
+        <span class="adv-title">advanced search</span>
+        <button id="adv-close" class="adv-close">&times;</button>
+      </div>
+      <div class="adv-body">
+        <label class="adv-label">query
+          <input type="text" id="adv-query" class="adv-input" placeholder="type anything..." autocomplete="off">
+        </label>
+        <label class="adv-label">date range
+          <div class="adv-row">
+            <input type="number" id="adv-date-from" class="adv-input adv-input-sm" placeholder="from" min="0" max="2026">
+            <span class="adv-sep">–</span>
+            <input type="number" id="adv-date-to" class="adv-input adv-input-sm" placeholder="to" min="0" max="2026">
+          </div>
+        </label>
+        <label class="adv-label">medium
+          <select id="adv-medium" class="adv-select">
+            <option value="">any</option>
+            <option value="painting">painting</option>
+            <option value="photograph">photograph</option>
+            <option value="sculpture">sculpture</option>
+            <option value="drawing">drawing</option>
+            <option value="print">print</option>
+            <option value="textile">textile</option>
+            <option value="ceramic">ceramic</option>
+            <option value="watercolor">watercolor</option>
+            <option value="engraving">engraving</option>
+          </select>
+        </label>
+        <label class="adv-label">region
+          <select id="adv-region" class="adv-select">
+            <option value="">any</option>
+            <option value="europe">europe</option>
+            <option value="americas">americas</option>
+            <option value="asia">asia</option>
+            <option value="africa">africa</option>
+            <option value="oceania">oceania</option>
+            <option value="uk">uk</option>
+            <option value="global">global</option>
+          </select>
+        </label>
+        <label class="adv-label">source category
+          <select id="adv-category" class="adv-select">
+            <option value="">any</option>
+            <option value="museums">museums</option>
+            <option value="photography">photography</option>
+            <option value="nature">nature</option>
+            <option value="historical">historical</option>
+            <option value="artdesign">art & design</option>
+            <option value="archives">archives</option>
+            <option value="science">science</option>
+            <option value="maps">maps</option>
+            <option value="fashion">fashion</option>
+          </select>
+        </label>
+        <label class="adv-label">color
+          <input type="color" id="adv-color" class="adv-color" value="#c8b89a">
+          <label class="adv-check"><input type="checkbox" id="adv-color-enable"> filter by color</label>
+        </label>
+        <label class="adv-label">orientation
+          <select id="adv-orient" class="adv-select">
+            <option value="">any</option>
+            <option value="landscape">landscape</option>
+            <option value="portrait">portrait</option>
+            <option value="square">square</option>
+          </select>
+        </label>
+        <label class="adv-label">exclude terms
+          <input type="text" id="adv-exclude" class="adv-input" placeholder="NOT these words..." autocomplete="off">
+        </label>
+      </div>
+      <div class="adv-footer">
+        <button id="adv-reset" class="adv-btn">reset</button>
+        <button id="adv-run" class="adv-btn adv-btn-primary">search</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
        ONBOARDING OVERLAY
   ====================================================== -->
   <div id="onboarding" class="hidden" style="display:none;">
@@ -641,15 +850,6 @@
             <div class="ob-logo">insposearch</div>
             <div class="ob-hero-statement">every museum, archive & database.<br>one search.</div>
             <div class="ob-hero-sub">search <span id="ob-hero-src-count">—</span> sources and <span id="ob-hero-img-count">—</span> images simultaneously — no account, no storage, nothing to install.</div>
-          </div>
-
-          <!-- Step 1: Welcome -->
-          <div class="ob-step">
-            <div class="ob-logo" style="font-size:28px;">insposearch</div>
-            <div class="ob-tagline">search museums, archives & databases at once</div>
-            <div class="ob-big-num" id="ob-hero-count">—</div>
-            <div class="ob-big-label">images at your fingertips</div>
-            <div class="ob-text">one search — results from <span id="ob-source-count">—</span> sources simultaneously.<br>no signup required to start exploring.</div>
           </div>
 
           <!-- Step 1: How to search -->
