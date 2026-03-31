@@ -14647,6 +14647,7 @@ function applyBoardTemplate(template) {
 (function initAdvancedSearch() {
   var overlay = document.getElementById('adv-search-overlay');
   var openBtn = document.getElementById('btn-advanced-search');
+  if (!overlay || !openBtn) return;
   var closeBtn = document.getElementById('adv-close');
   var resetBtn = document.getElementById('adv-reset');
   var runBtn   = document.getElementById('adv-run');
