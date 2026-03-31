@@ -156,14 +156,14 @@ html, body {
 ============================================================ */
 .search-input {
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 300;
   color: var(--ink);
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--line-strong);
   width: 100%;
-  padding: 10px 0;
+  padding: 8px 0;
   outline: none;
   caret-color: var(--accent);
 }
@@ -174,37 +174,12 @@ html, body {
 .search-row {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
 }
 
 .search-row .search-input {
   flex: 1;
   min-width: 0;
-}
-
-/* Search go button */
-.search-go-btn {
-  font-family: var(--font-ui);
-  font-size: 15px;
-  font-weight: 300;
-  color: var(--ink-2);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--line-strong);
-  padding: 10px 8px;
-  line-height: 1;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  flex-shrink: 0;
-}
-.search-go-btn:hover { color: var(--accent); }
-
-/* Controls row below search input */
-.search-controls-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
 }
 
 .search-mode-toggle {
@@ -228,24 +203,6 @@ html, body {
   border-color: rgba(95, 172, 110, 0.65);
   color: #5fac6e;
 }
-
-/* Advanced search button */
-.search-advanced-btn {
-  font-family: var(--font-ui);
-  font-size: 9px;
-  font-weight: 300;
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
-  color: var(--ink-3);
-  background: transparent;
-  border: 1px solid var(--line);
-  padding: 6px 10px;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: border-color 0.3s ease, color 0.3s ease;
-}
-.search-advanced-btn:hover { border-color: var(--ink-2); color: var(--ink-2); }
 
 /* ============================================================
    COMPONENT — SEARCH HISTORY DROPDOWN
@@ -2471,8 +2428,6 @@ html, body {
   .aspect-btn,
   .filter-pill,
   .search-mode-toggle,
-  .search-go-btn,
-  .search-advanced-btn,
   .btn-help,
   .btn-keys,
   .settings-gear-btn,
