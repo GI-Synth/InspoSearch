@@ -154,6 +154,7 @@ html, body {
 /* ============================================================
    COMPONENT — SEARCH INPUT
 ============================================================ */
+
 .search-input {
   font-family: var(--font-ui);
   font-size: 13px;
@@ -166,14 +167,31 @@ html, body {
   padding: 8px 0;
   outline: none;
   caret-color: var(--accent);
+  transition: font-size 0.2s, padding 0.2s;
+}
+
+.search-input--large {
+  font-size: 16px;
+  padding: 14px 0 12px 0;
 }
 
 .search-input::placeholder { color: var(--ink-3); }
 .search-input:focus { border-bottom-color: var(--accent); }
 
+
 .search-row {
   display: flex;
   align-items: flex-end;
+  gap: 8px;
+}
+
+.search-row--block {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.search-row--controls {
+  display: flex;
   gap: 8px;
 }
 
