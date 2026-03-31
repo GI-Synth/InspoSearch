@@ -6418,6 +6418,7 @@ function renderGrid(items) {
     img.dataset.src = item.thumb;  // deferred — loaded by IntersectionObserver
     img.alt = item.title || '';
     img.loading = 'lazy';
+    img.crossOrigin = 'anonymous';
     img.onload  = () => {
       if (img.naturalWidth <= 1 || img.naturalHeight <= 1) {
         card.remove();
@@ -6428,8 +6429,28 @@ function renderGrid(items) {
       // Track aspect ratio for aspect filter
       const ratio = img.naturalWidth / img.naturalHeight;
       item._aspect = ratio > 1.15 ? 'landscape' : ratio < 0.85 ? 'portrait' : 'square';
+      // Sample dominant color for color filter
+      if (!item._dominantColor) item._dominantColor = sampleImageColor(img);
+      if (!item._avgRGB) item._avgRGB = sampleImageRGB(img);
+      // If a color filter is active, hide card if it doesn't match
+      if (STATE._colorFilter && STATE._colorFilter !== 'all' && item._dominantColor !== STATE._colorFilter) {
+        card.style.display = 'none';
+      }
+      if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length && !window._hexPaletteMatch(item)) {
+        card.style.display = 'none';
+      }
     };
-    img.onerror = () => { STATE._failedImages = (STATE._failedImages || 0) + 1; card.remove(); };
+    img.onerror = () => {
+      // CORS blocked — retry without crossOrigin (image displays but no color sampling)
+      if (!img._corsRetry && img.crossOrigin) {
+        img._corsRetry = true;
+        img.crossOrigin = null;
+        img.src = img.dataset.src || img.src;
+        return;
+      }
+      STATE._failedImages = (STATE._failedImages || 0) + 1;
+      card.remove();
+    };
     _lazyObserver.observe(img);
 
     const badge = document.createElement('span');
@@ -13136,14 +13157,14 @@ function sampleImageRGB(img) {
       items = items.filter(item => !item._aspect || item._aspect === STATE._aspectFilter);
     }
 
-    // Color filter
+    // Color filter — keep unsampled items (they'll be hidden on load if they don't match)
     if (STATE._colorFilter && STATE._colorFilter !== 'all') {
-      items = items.filter(item => item._dominantColor === STATE._colorFilter);
+      items = items.filter(item => !item._dominantColor || item._dominantColor === STATE._colorFilter);
     }
 
-    // Hex palette filter
-    if (typeof window._hexPaletteMatch === 'function') {
-      items = items.filter(window._hexPaletteMatch);
+    // Hex palette filter — keep unsampled items
+    if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length) {
+      items = items.filter(item => !item._avgRGB || window._hexPaletteMatch(item));
     }
 
     clearGrid();
