@@ -148,20 +148,6 @@
         </div>
       </div>
 
-      <!-- Date range filter -->
-      <div class="sidebar-section" id="date-filter-section" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="section-label">date range</span>
-          <button id="date-filter-clear" class="date-filter-clear" title="clear date filter">×</button>
-        </div>
-        <div class="date-range-row">
-          <input type="number" id="date-from" class="date-input" placeholder="1400" min="0" max="2030" aria-label="From year">
-          <span class="date-dash">—</span>
-          <input type="number" id="date-to" class="date-input" placeholder="2025" min="0" max="2030" aria-label="To year">
-          <button id="date-filter-apply" class="btn" style="padding:4px 10px;font-size:9px;">apply</button>
-        </div>
-      </div>
-
       <div class="divider"></div>
       <!-- View toggle -->
       <div class="sidebar-section">
@@ -170,17 +156,6 @@
           <button class="btn active" id="btn-grid" role="radio" aria-checked="true" aria-label="grid view">grid</button>
           <button class="btn" id="btn-board" role="radio" aria-checked="false" aria-label="moodboard view">board</button>
           <button class="btn" id="btn-3d" role="radio" aria-checked="false" aria-label="3D gallery view">3d</button>
-        </div>
-      </div>
-
-      <!-- Aspect ratio filter (hidden until results loaded) -->
-      <div class="sidebar-section" id="aspect-filter-section" style="display:none;">
-        <span class="section-label">orientation</span>
-        <div class="aspect-btn-group" role="radiogroup" aria-label="orientation filter">
-          <button class="aspect-btn active" data-aspect="all" role="radio" aria-checked="true">all</button>
-          <button class="aspect-btn" data-aspect="landscape" role="radio" aria-checked="false">landscape</button>
-          <button class="aspect-btn" data-aspect="portrait" role="radio" aria-checked="false">portrait</button>
-          <button class="aspect-btn" data-aspect="square" role="radio" aria-checked="false">square</button>
         </div>
       </div>
 
@@ -201,13 +176,6 @@
           <button class="color-swatch-btn" data-color="white" title="white"><span style="background:#f5f5f5;border:1px solid var(--line-strong);"></span></button>
           <button class="color-swatch-btn" data-color="gold" title="gold"><span style="background:#d4a017;"></span></button>
         </div>
-        <!-- Hex palette picker -->
-        <div class="hex-palette-row" id="hex-palette-row">
-          <input type="color" id="hex-picker" class="hex-picker" value="#c0392b" title="pick a color">
-          <input type="text" id="hex-input" class="hex-input" placeholder="#ff5733" maxlength="7" spellcheck="false" autocomplete="off">
-          <button class="btn hex-add-btn" id="hex-add-btn" title="add to palette">+</button>
-        </div>
-        <div class="hex-chips" id="hex-chips"></div>
       </div>
 
       <!-- B&W mode toggle + Sketch draw toggle -->
@@ -723,6 +691,10 @@
         <label class="adv-label">query
           <input type="text" id="adv-query" class="adv-input" placeholder="type anything..." autocomplete="off">
         </label>
+
+        <div class="adv-divider"></div>
+        <span class="adv-section-title">filters</span>
+
         <label class="adv-label">date range
           <div class="adv-row">
             <input type="number" id="adv-date-from" class="adv-input adv-input-sm" placeholder="from" min="0" max="2026">
@@ -742,6 +714,14 @@
             <option value="ceramic">ceramic</option>
             <option value="watercolor">watercolor</option>
             <option value="engraving">engraving</option>
+          </select>
+        </label>
+        <label class="adv-label">orientation
+          <select id="adv-orient" class="adv-select">
+            <option value="">any</option>
+            <option value="landscape">landscape</option>
+            <option value="portrait">portrait</option>
+            <option value="square">square</option>
           </select>
         </label>
         <label class="adv-label">region
@@ -770,20 +750,24 @@
             <option value="fashion">fashion</option>
           </select>
         </label>
-        <label class="adv-label">color
-          <input type="color" id="adv-color" class="adv-color" value="#c8b89a">
-          <label class="adv-check"><input type="checkbox" id="adv-color-enable"> filter by color</label>
-        </label>
-        <label class="adv-label">orientation
-          <select id="adv-orient" class="adv-select">
-            <option value="">any</option>
-            <option value="landscape">landscape</option>
-            <option value="portrait">portrait</option>
-            <option value="square">square</option>
-          </select>
-        </label>
         <label class="adv-label">exclude terms
           <input type="text" id="adv-exclude" class="adv-input" placeholder="NOT these words..." autocomplete="off">
+        </label>
+
+        <div class="adv-divider"></div>
+        <span class="adv-section-title">precise color</span>
+
+        <label class="adv-label">hex color palette
+          <div class="adv-row" style="gap:6px;">
+            <input type="color" id="hex-picker" class="hex-picker" value="#c0392b" title="pick a color">
+            <input type="text" id="hex-input" class="hex-input" placeholder="#ff5733" maxlength="7" spellcheck="false" autocomplete="off" style="flex:1;">
+            <button class="adv-btn" id="hex-add-btn" title="add to palette" style="padding:4px 12px;">+</button>
+          </div>
+          <div class="hex-chips" id="hex-chips"></div>
+        </label>
+        <label class="adv-label">color match
+          <input type="color" id="adv-color" class="adv-color" value="#c8b89a">
+          <label class="adv-check"><input type="checkbox" id="adv-color-enable"> filter by dominant color</label>
         </label>
       </div>
       <div class="adv-footer">
@@ -816,8 +800,9 @@
             <div class="ob-text">
               type anything — a word, a feeling, a color.<br>
               results stream in from all active sources at once.<br><br>
+              <strong style="color:var(--ink)">click any image</strong> — opens preview with palette, tags &amp; metadata<br>
+              <strong style="color:var(--ink)">ctrl+click</strong> (⌘+click on mac) — select images for comparison, export &amp; more<br>
               <strong style="color:var(--ink)">image slider</strong> — controls how many results per source<br>
-              <strong style="color:var(--ink)">click any image</strong> — see palette, tags, source & metadata<br>
               <strong style="color:var(--ink)">keyword pills</strong> — appear below search, click to refine
             </div>
           </div>
@@ -827,20 +812,20 @@
             <div class="ob-heading">not just a search engine</div>
             <div class="ob-features">
               <div class="ob-feat">
-                <div class="ob-feat-title">cross-reference</div>
-                <div class="ob-feat-desc">select two images from different centuries, different continents — find the invisible thread between them</div>
+                <div class="ob-feat-title">floating toolbar</div>
+                <div class="ob-feat-desc">ctrl+click images to select them — a draggable toolbar appears with tools: connect, interpret, compare, slideshow, download, cite &amp; share</div>
               </div>
               <div class="ob-feat">
-                <div class="ob-feat-title">interpret</div>
-                <div class="ob-feat-desc">ai vision reads what you’re looking at and surfaces connections you wouldn’t find on your own</div>
+                <div class="ob-feat-title">color search</div>
+                <div class="ob-feat-desc">filter by named color swatches in the sidebar, or open advanced search to pick exact hex colors and build a precise palette</div>
+              </div>
+              <div class="ob-feat">
+                <div class="ob-feat-title">advanced search</div>
+                <div class="ob-feat-desc">open the panel from the sidebar to filter by date range, medium, orientation, region, source category &amp; precise color</div>
               </div>
               <div class="ob-feat">
                 <div class="ob-feat-title">boards</div>
                 <div class="ob-feat-desc">drag, arrange, export — build collections that live in your browser and pop out into their own window</div>
-              </div>
-              <div class="ob-feat">
-                <div class="ob-feat-title">api keys</div>
-                <div class="ob-feat-desc">paste a free key, unlock an entire database — one time setup, permanent access</div>
               </div>
             </div>
           </div>
