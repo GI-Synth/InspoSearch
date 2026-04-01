@@ -337,10 +337,11 @@ function classifyQuery(q) {
   return { isNature, isSpace };
 }
 
-/* Returns true when sourceId should be skipped for this query (all modes).
+/* Returns true when sourceId should be skipped in exact mode for this query.
    Saves bandwidth by not querying nature-only or space-only sources when
    the query clearly doesn't match those domains. */
 function skipInExactMode(sourceId, queryClass) {
+  if (STATE.searchMode !== 'exact') return false;
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
   if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
   return false;
@@ -585,7 +586,7 @@ const MULTILINGUAL_ART_MAP = {
    and species names. Used to enrich keyword expansion and
    boost relevant source scoring.
 ============================================================ */
-const _ERA_REGEX = /\b(\d{4}s|\d{3}0s|\d{1,2}(st|nd|rd|th)\s+century|medieval|ancient|classical|byzantine|romanesque|gothic|renaissance|baroque|enlightenment|victorian|edwardian|modernist|contemporary)\b/i;
+const _ERA_REGEX = /\b(\d{4}s|\d{3}0s|\d{1,2}(st|nd|rd|th)\s+century|medieval|ancient|classical|byzantine|romanesque|gothic|renaissance|baroque|enlightenment|victorian|edwardian)\b/i;
 
 const _MEDIUM_TERMS = {
   Oil:        ['oil painting','oil on canvas','oil on panel','oil on board'],
@@ -1538,7 +1539,8 @@ function _updateSourcesActiveCounterImmediate() {
   if (el) el.textContent = active + ' sources active';
 }
 // Fires 155+ times per search; debounce to avoid excessive DOM writes
-const updateSourcesActiveCounter = debounce(_updateSourcesActiveCounterImmediate, CONSTANTS.COUNTER_DEBOUNCE);
+// Arrow wrapper so late monkey-patches of _updateSourcesActiveCounterImmediate propagate
+const updateSourcesActiveCounter = debounce(() => _updateSourcesActiveCounterImmediate(), CONSTANTS.COUNTER_DEBOUNCE);
 
 loadSourceHealth();
 loadDisabledSources();
@@ -1647,25 +1649,32 @@ function getAITagsCache(itemId) {
 
 function setAITagsCache(itemId, tags) {
   try {
-    // LRU eviction: cap at 200 entries
+    // LRU eviction: cap at 200 entries, only scan when counter suggests we're near limit
     const AI_CACHE_MAX = 200;
     const prefix = 'inspo_aitags_';
-    const keys = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) keys.push(key);
-    }
-    if (keys.length >= AI_CACHE_MAX) {
-      // Evict oldest entries
-      const entries = keys.map(k => {
-        try { return { k, ts: JSON.parse(localStorage.getItem(k))?.timestamp || 0 }; }
-        catch { return { k, ts: 0 }; }
-      }).sort((a, b) => a.ts - b.ts);
-      const toRemove = entries.slice(0, keys.length - AI_CACHE_MAX + 10);
-      toRemove.forEach(e => localStorage.removeItem(e.k));
+    const countKey = 'inspo_aitags_count';
+    let count = parseInt(localStorage.getItem(countKey), 10) || 0;
+    if (count >= AI_CACHE_MAX) {
+      // Full scan to evict oldest entries
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) keys.push(key);
+      }
+      count = keys.length;
+      if (count >= AI_CACHE_MAX) {
+        const entries = keys.map(k => {
+          try { return { k, ts: JSON.parse(localStorage.getItem(k))?.timestamp || 0 }; }
+          catch { return { k, ts: 0 }; }
+        }).sort((a, b) => a.ts - b.ts);
+        const toRemove = entries.slice(0, count - AI_CACHE_MAX + 10);
+        toRemove.forEach(e => localStorage.removeItem(e.k));
+        count -= toRemove.length;
+      }
     }
     localStorage.setItem(prefix + itemId,
       JSON.stringify({ tags, timestamp: Date.now() }));
+    localStorage.setItem(countKey, String(count + 1));
   } catch(e) {}
 }
 
@@ -1807,7 +1816,7 @@ function withTimeout(signal, ms = 3000) {
 }
 
 // ── Fetch concurrency limiter — max 25 in-flight network requests ──
-const _fetchSemaphore = { running: 0, queue: [], limit: 25 };
+const _fetchSemaphore = { running: 0, queue: [], limit: 25, _totalFailed: 0 };
 function _acquireFetchSlot() {
   return new Promise(resolve => {
     if (_fetchSemaphore.running < _fetchSemaphore.limit) {
@@ -1842,6 +1851,9 @@ async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
       res = await fetch(url, fetchOpts);
     }
     return res;
+  } catch (err) {
+    _fetchSemaphore._totalFailed++;
+    throw err;
   } finally {
     _releaseFetchSlot();
   }
@@ -6032,6 +6044,9 @@ async function fetchAll(keywords, totalCount, isSilent = false) {
   const seenIds = new Set();
   const all = [];
   const exactQueryClass = classifyQuery(keyword);
+
+  // Reset failed-fetch counter for offline detection
+  _fetchSemaphore._totalFailed = 0;
 
   // Decay source miss counters — halve instead of resetting so persistently
   // failing sources don't get unlimited free passes each search
@@ -14542,6 +14557,8 @@ function applyBoardTemplate(template) {
     setSearchMeta(query.trim());
     return _origRunSearch.call(this, query, forceRefresh);
   };
+  // Keep window.runSearch in sync so external callers (taxonomy, stories) get SEO too
+  window.runSearch = runSearch;
 
   // Reset on logo click
   document.querySelector('.logo').addEventListener('click', resetMeta);
@@ -14615,25 +14632,21 @@ function applyBoardTemplate(template) {
 (function initSearchAsYouType() {
   const input = document.getElementById('search-input');
   let _saytTimer = null;
-  let _lastSaytQuery = '';
 
   input.addEventListener('input', () => {
     clearTimeout(_saytTimer);
     const q = input.value.trim();
-    if (q.length < 3 || q === STATE.query || q === _lastSaytQuery) return;
+    if (q.length < 3) return;
+    // Only update the history dropdown while typing — don't fire a full search
     _saytTimer = setTimeout(() => {
-      // Don't fire if a full search is already loading
-      if (STATE.loading) return;
-      _lastSaytQuery = q;
-      runSearch(q);
-    }, 500);
+      renderSearchHistory(q);
+    }, 300);
   });
 
   // Cancel preview if user submits with Enter
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       clearTimeout(_saytTimer);
-      _lastSaytQuery = input.value.trim();
     }
   });
 })();
@@ -14836,7 +14849,7 @@ function applyBoardTemplate(template) {
   el.addEventListener('click', function () {
     // Reset all health — re-enable paused sources
     try { sessionStorage.removeItem('inspo_source_health'); } catch (_) {}
-    ALL_SOURCES.forEach(function (id) { _sourceHealth[id] = { misses: 0, hits: 0 }; });
+    ALL_SOURCES.forEach(function (id) { STATE.sourceHealth[id] = { misses: 0, hits: 0, _notified: false }; });
     update();
     updateSourcesActiveCounter();
   });
