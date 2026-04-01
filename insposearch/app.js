@@ -6445,11 +6445,19 @@ function renderGrid(items) {
       const ratio = img.naturalWidth / img.naturalHeight;
       item._aspect = ratio > 1.15 ? 'landscape' : ratio < 0.85 ? 'portrait' : 'square';
       // Sample dominant color for color filter
-      if (!item._dominantColor) item._dominantColor = sampleImageColor(img);
-      if (!item._avgRGB) item._avgRGB = sampleImageRGB(img);
-      // If a color filter is active, hide card if it doesn't match
-      if (STATE._colorFilter && STATE._colorFilter !== 'all' && item._dominantColor !== STATE._colorFilter) {
-        card.style.display = 'none';
+      if (!item._colorData) {
+        item._colorData = sampleImageColors(img);
+        if (item._colorData) {
+          item._dominantColor = item._colorData.dominant;
+          item._avgRGB = item._colorData.avgRGB;
+          item._colorNames = item._colorData.colorNames;
+          item._topColors = item._colorData.topColors;
+        }
+      }
+      // Named-color filter: match if ANY of the image's colors match
+      if (STATE._colorFilter && STATE._colorFilter !== 'all') {
+        var names = item._colorNames || (item._dominantColor ? [item._dominantColor] : []);
+        if (names.length && !names.includes(STATE._colorFilter)) card.style.display = 'none';
       }
       if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length && !window._hexPaletteMatch(item)) {
         card.style.display = 'none';
@@ -13105,36 +13113,131 @@ function classifyDominantColor(r, g, b) {
   return null;
 }
 
-function sampleImageColor(img) {
-  try {
-    const canvas = document.createElement('canvas');
-    const sz = 16;
-    canvas.width = sz; canvas.height = sz;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    ctx.drawImage(img, 0, 0, sz, sz);
-    const data = ctx.getImageData(0, 0, sz, sz).data;
-    let rT = 0, gT = 0, bT = 0, count = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      rT += data[i]; gT += data[i+1]; bT += data[i+2]; count++;
-    }
-    return classifyDominantColor(rT/count, gT/count, bT/count);
-  } catch { return null; }
+/* ── CIE Lab color space conversion ── */
+function rgbToLab(r, g, b) {
+  var rl = r/255, gl = g/255, bl = b/255;
+  rl = rl > 0.04045 ? Math.pow((rl+0.055)/1.055, 2.4) : rl/12.92;
+  gl = gl > 0.04045 ? Math.pow((gl+0.055)/1.055, 2.4) : gl/12.92;
+  bl = bl > 0.04045 ? Math.pow((bl+0.055)/1.055, 2.4) : bl/12.92;
+  var x = (rl*0.4124564 + gl*0.3575761 + bl*0.1804375) / 0.95047;
+  var y = (rl*0.2126729 + gl*0.7151522 + bl*0.0721750);
+  var z = (rl*0.0193339 + gl*0.1191920 + bl*0.9503041) / 1.08883;
+  var fx = x > 0.008856 ? Math.cbrt(x) : (7.787*x + 16/116);
+  var fy = y > 0.008856 ? Math.cbrt(y) : (7.787*y + 16/116);
+  var fz = z > 0.008856 ? Math.cbrt(z) : (7.787*z + 16/116);
+  return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
 }
 
-function sampleImageRGB(img) {
+/* ── CIEDE2000 perceptual color distance ── */
+function deltaE00(lab1, lab2) {
+  var L1 = lab1[0], a1 = lab1[1], b1 = lab1[2];
+  var L2 = lab2[0], a2 = lab2[1], b2 = lab2[2];
+  var C1 = Math.sqrt(a1*a1 + b1*b1);
+  var C2 = Math.sqrt(a2*a2 + b2*b2);
+  var Cab = (C1 + C2) / 2;
+  var Cab7 = Math.pow(Cab, 7);
+  var G = 0.5 * (1 - Math.sqrt(Cab7 / (Cab7 + 6103515625)));
+  var a1p = a1 * (1 + G), a2p = a2 * (1 + G);
+  var C1p = Math.sqrt(a1p*a1p + b1*b1);
+  var C2p = Math.sqrt(a2p*a2p + b2*b2);
+  var h1p = Math.atan2(b1, a1p) * 180 / Math.PI; if (h1p < 0) h1p += 360;
+  var h2p = Math.atan2(b2, a2p) * 180 / Math.PI; if (h2p < 0) h2p += 360;
+  var dLp = L2 - L1, dCp = C2p - C1p;
+  var dhp;
+  if (C1p * C2p === 0) dhp = 0;
+  else if (Math.abs(h2p - h1p) <= 180) dhp = h2p - h1p;
+  else if (h2p - h1p > 180) dhp = h2p - h1p - 360;
+  else dhp = h2p - h1p + 360;
+  var dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(dhp * Math.PI / 360);
+  var Lbp = (L1 + L2) / 2, Cbp = (C1p + C2p) / 2;
+  var hbp;
+  if (C1p * C2p === 0) hbp = h1p + h2p;
+  else if (Math.abs(h1p - h2p) <= 180) hbp = (h1p + h2p) / 2;
+  else if (h1p + h2p < 360) hbp = (h1p + h2p + 360) / 2;
+  else hbp = (h1p + h2p - 360) / 2;
+  var T = 1
+    - 0.17 * Math.cos((hbp - 30) * Math.PI / 180)
+    + 0.24 * Math.cos((2 * hbp) * Math.PI / 180)
+    + 0.32 * Math.cos((3 * hbp + 6) * Math.PI / 180)
+    - 0.20 * Math.cos((4 * hbp - 63) * Math.PI / 180);
+  var Lbp50sq = (Lbp - 50) * (Lbp - 50);
+  var SL = 1 + 0.015 * Lbp50sq / Math.sqrt(20 + Lbp50sq);
+  var SC = 1 + 0.045 * Cbp;
+  var SH = 1 + 0.015 * Cbp * T;
+  var Cbp7 = Math.pow(Cbp, 7);
+  var RC = 2 * Math.sqrt(Cbp7 / (Cbp7 + 6103515625));
+  var dtheta = 30 * Math.exp(-Math.pow((hbp - 275) / 25, 2));
+  var RT = -Math.sin(2 * dtheta * Math.PI / 180) * RC;
+  return Math.sqrt(
+    Math.pow(dLp / SL, 2) + Math.pow(dCp / SC, 2) +
+    Math.pow(dHp / SH, 2) + RT * (dCp / SC) * (dHp / SH)
+  );
+}
+
+/* ── Session color cache (keyed by image URL, max 2000 entries) ── */
+const _colorCache = new Map();
+
+/* ── Multi-color image sampling: center-weighted 32×32, top-3 histogram colors ── */
+function sampleImageColors(img) {
+  var cacheKey = img.src || img.dataset.src;
+  if (cacheKey && _colorCache.has(cacheKey)) return _colorCache.get(cacheKey);
   try {
     var canvas = document.createElement('canvas');
-    var sz = 16;
+    var sz = 32;
     canvas.width = sz; canvas.height = sz;
     var ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0, sz, sz);
     var data = ctx.getImageData(0, 0, sz, sz).data;
-    var rT = 0, gT = 0, bT = 0, count = 0;
-    for (var i = 0; i < data.length; i += 4) {
-      rT += data[i]; gT += data[i+1]; bT += data[i+2]; count++;
+    var qSz = sz >> 2; // quarter for center region
+    var buckets = {};
+    var rT = 0, gT = 0, bT = 0, wT = 0;
+    for (var y = 0; y < sz; y++) {
+      for (var x = 0; x < sz; x++) {
+        var i = (y * sz + x) * 4;
+        var r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        if (a < 128) continue;
+        var inCenter = x >= qSz && x < sz - qSz && y >= qSz && y < sz - qSz;
+        var w = inCenter ? 4 : 1;
+        rT += r * w; gT += g * w; bT += b * w; wT += w;
+        var rq = Math.round(r / 32) * 32;
+        var gq = Math.round(g / 32) * 32;
+        var bq = Math.round(b / 32) * 32;
+        var key = (rq << 16) | (gq << 8) | bq;
+        if (!buckets[key]) buckets[key] = { r: 0, g: 0, b: 0, w: 0 };
+        buckets[key].r += r * w; buckets[key].g += g * w;
+        buckets[key].b += b * w; buckets[key].w += w;
+      }
     }
-    return [Math.round(rT/count), Math.round(gT/count), Math.round(bT/count)];
+    if (wT === 0) return null;
+    var avgRGB = [Math.round(rT/wT), Math.round(gT/wT), Math.round(bT/wT)];
+    var sorted = Object.values(buckets).sort(function(a2, b2) { return b2.w - a2.w; });
+    var topColors = sorted.slice(0, 3).map(function(bk) {
+      return { r: Math.round(bk.r/bk.w), g: Math.round(bk.g/bk.w), b: Math.round(bk.b/bk.w), weight: bk.w / wT };
+    });
+    var dominant = classifyDominantColor(avgRGB[0], avgRGB[1], avgRGB[2]);
+    var colorNames = new Set();
+    if (dominant) colorNames.add(dominant);
+    topColors.forEach(function(c) {
+      var name = classifyDominantColor(c.r, c.g, c.b);
+      if (name) colorNames.add(name);
+    });
+    var result = { dominant: dominant, colorNames: Array.from(colorNames), topColors: topColors, avgRGB: avgRGB };
+    if (cacheKey) {
+      if (_colorCache.size > 2000) _colorCache.clear();
+      _colorCache.set(cacheKey, result);
+    }
+    return result;
   } catch { return null; }
+}
+
+function sampleImageColor(img) {
+  var d = sampleImageColors(img);
+  return d ? d.dominant : null;
+}
+
+function sampleImageRGB(img) {
+  var d = sampleImageColors(img);
+  return d ? d.avgRGB : null;
 }
 
 (function initColorFilter() {
@@ -13172,14 +13275,17 @@ function sampleImageRGB(img) {
       items = items.filter(item => !item._aspect || item._aspect === STATE._aspectFilter);
     }
 
-    // Color filter — keep unsampled items (they'll be hidden on load if they don't match)
+    // Color filter — multi-color: match if ANY extracted color matches
     if (STATE._colorFilter && STATE._colorFilter !== 'all') {
-      items = items.filter(item => !item._dominantColor || item._dominantColor === STATE._colorFilter);
+      items = items.filter(item => {
+        const names = item._colorNames || (item._dominantColor ? [item._dominantColor] : null);
+        return !names || names.includes(STATE._colorFilter);
+      });
     }
 
     // Hex palette filter — keep unsampled items
     if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length) {
-      items = items.filter(item => !item._avgRGB || window._hexPaletteMatch(item));
+      items = items.filter(item => (!item._avgRGB && !item._topColors) || window._hexPaletteMatch(item));
     }
 
     clearGrid();
@@ -13885,33 +13991,7 @@ function applyBoardTemplate(template) {
     return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
   }
 
-  // CIE76 delta-E (using CIELAB approximation)
-  function rgbToLab(r, g, b) {
-    // sRGB → linear
-    var rl = r/255, gl = g/255, bl = b/255;
-    rl = rl > 0.04045 ? Math.pow((rl+0.055)/1.055, 2.4) : rl/12.92;
-    gl = gl > 0.04045 ? Math.pow((gl+0.055)/1.055, 2.4) : gl/12.92;
-    bl = bl > 0.04045 ? Math.pow((bl+0.055)/1.055, 2.4) : bl/12.92;
-    // linear → XYZ (D65)
-    var x = (rl*0.4124564 + gl*0.3575761 + bl*0.1804375) / 0.95047;
-    var y = (rl*0.2126729 + gl*0.7151522 + bl*0.0721750);
-    var z = (rl*0.0193339 + gl*0.1191920 + bl*0.9503041) / 1.08883;
-    // XYZ → Lab
-    var fx = x > 0.008856 ? Math.cbrt(x) : (7.787*x + 16/116);
-    var fy = y > 0.008856 ? Math.cbrt(y) : (7.787*y + 16/116);
-    var fz = z > 0.008856 ? Math.cbrt(z) : (7.787*z + 16/116);
-    return [116*fy - 16, 500*(fx - fy), 200*(fy - fz)];
-  }
-
-  function deltaE(rgb1, rgb2) {
-    var lab1 = rgbToLab(rgb1[0], rgb1[1], rgb1[2]);
-    var lab2 = rgbToLab(rgb2[0], rgb2[1], rgb2[2]);
-    return Math.sqrt(
-      Math.pow(lab1[0]-lab2[0], 2) +
-      Math.pow(lab1[1]-lab2[1], 2) +
-      Math.pow(lab1[2]-lab2[2], 2)
-    );
-  }
+  // Uses global rgbToLab + deltaE00 (CIEDE2000) defined above
 
   function addColor(hex) {
     if (palette.length >= MAX_COLORS) return;
@@ -13967,7 +14047,7 @@ function applyBoardTemplate(template) {
     STATE._colorFilter = 'all';
   }
 
-  var THRESHOLD = 35; // delta-E threshold for "matching" color
+  var THRESHOLD = 18; // CIEDE2000 perceptual threshold
 
   function applyPaletteFilter() {
     STATE._hexPalette = palette.length ? palette.slice() : null;
@@ -13998,10 +14078,17 @@ function applyBoardTemplate(template) {
   // Expose for refilterResults
   window._hexPaletteMatch = function (item) {
     if (!STATE._hexPalette || !STATE._hexPalette.length) return true;
-    if (!item._avgRGB) return false;
-    // Item matches if it's within THRESHOLD of ANY palette color
+    var colors = item._topColors;
+    if (!colors || !colors.length) {
+      if (!item._avgRGB) return false;
+      colors = [{ r: item._avgRGB[0], g: item._avgRGB[1], b: item._avgRGB[2] }];
+    }
     for (var i = 0; i < STATE._hexPalette.length; i++) {
-      if (deltaE(STATE._hexPalette[i].rgb, item._avgRGB) <= THRESHOLD) return true;
+      var pLab = rgbToLab(STATE._hexPalette[i].rgb[0], STATE._hexPalette[i].rgb[1], STATE._hexPalette[i].rgb[2]);
+      for (var j = 0; j < colors.length; j++) {
+        var cLab = rgbToLab(colors[j].r, colors[j].g, colors[j].b);
+        if (deltaE00(pLab, cLab) <= THRESHOLD) return true;
+      }
     }
     return false;
   };
