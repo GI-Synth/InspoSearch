@@ -7958,9 +7958,11 @@ async function runSearch(query, forceRefresh = false) {
   loadFuse(() => buildFuseIndex());
   // Check for failed images after a delay (images load lazily)
   setTimeout(checkFailedImages, 3000);
-  // Show date-filter, aspect-filter, and color-filter sections when results exist
-  document.getElementById('date-filter-section').style.display = '';
-  document.getElementById('aspect-filter-section').style.display = '';
+  // Show color-filter section when results exist (date & aspect now in advanced search)
+  var _dfs = document.getElementById('date-filter-section');
+  var _afs = document.getElementById('aspect-filter-section');
+  if (_dfs) _dfs.style.display = '';
+  if (_afs) _afs.style.display = '';
   document.getElementById('color-filter-section').style.display = '';
 }
 
@@ -12545,45 +12547,43 @@ console.log('[insposearch] Phase 10 — Settings Module ready.');
    DATE RANGE FILTER
    Shows after results load; filters visible results by year.
 ============================================================ */
+/* --- extractYear exposed globally (date filter is in advanced search) --- */
+function _extractYearFn(item) {
+  if (item.year) {
+    var n = parseInt(item.year, 10);
+    if (n > 0 && n <= 2100) return n;
+  }
+  var text = (item.title || '') + ' ' + (item.description || '') + ' ' + (item.date || '');
+  var m = text.match(/\b(1[0-9]{3}|20[0-2][0-9])\b/);
+  return m ? parseInt(m[1], 10) : null;
+}
+window._extractYear = _extractYearFn;
+
 (function initDateFilter() {
-  const applyBtn = document.getElementById('date-filter-apply');
-  const clearBtn = document.getElementById('date-filter-clear');
-  const fromInput = document.getElementById('date-from');
-  const toInput = document.getElementById('date-to');
+  var applyBtn = document.getElementById('date-filter-apply');
+  var clearBtn = document.getElementById('date-filter-clear');
+  var fromInput = document.getElementById('date-from');
+  var toInput = document.getElementById('date-to');
   if (!applyBtn) return;
 
-  function extractYear(item) {
-    // Try year field first, then scan title/description for 4-digit year
-    if (item.year) {
-      const n = parseInt(item.year, 10);
-      if (n > 0 && n <= 2100) return n;
-    }
-    const text = `${item.title || ''} ${item.description || ''} ${item.date || ''}`;
-    const m = text.match(/\b(1[0-9]{3}|20[0-2][0-9])\b/);
-    return m ? parseInt(m[1], 10) : null;
-  }
-
   function applyDateFilter() {
-    const from = parseInt(fromInput.value, 10) || 0;
-    const to = parseInt(toInput.value, 10) || 9999;
+    var from = parseInt(fromInput.value, 10) || 0;
+    var to = parseInt(toInput.value, 10) || 9999;
     if (from === 0 && to === 9999) return;
-    STATE._dateFilter = { from, to };
+    STATE._dateFilter = { from: from, to: to };
     refilterResults();
   }
 
   applyBtn.addEventListener('click', applyDateFilter);
-  fromInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyDateFilter(); });
-  toInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyDateFilter(); });
+  fromInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') applyDateFilter(); });
+  toInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') applyDateFilter(); });
 
-  clearBtn.addEventListener('click', () => {
+  clearBtn.addEventListener('click', function() {
     fromInput.value = '';
     toInput.value = '';
     STATE._dateFilter = null;
     refilterResults();
   });
-
-  // Refilter: apply date + aspect filters on existing results
-  window._extractYear = extractYear; // expose for other filters
 })();
 
 function refilterResults() {
@@ -14786,7 +14786,7 @@ function applyBoardTemplate(template) {
     // Pre-fill query from search input
     var q = document.getElementById('search-input').value.trim();
     document.getElementById('adv-query').value = q;
-    overlay.style.display = 'flex';
+    overlay.style.display = 'block';
   }
   function close() { overlay.style.display = 'none'; }
 
@@ -14794,7 +14794,7 @@ function applyBoardTemplate(template) {
   closeBtn.addEventListener('click', close);
   overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && overlay.style.display === 'flex') close();
+    if (e.key === 'Escape' && overlay.style.display === 'block') close();
   });
 
   resetBtn.addEventListener('click', function() {
@@ -14807,6 +14807,8 @@ function applyBoardTemplate(template) {
     document.getElementById('adv-color-enable').checked = false;
     document.getElementById('adv-orient').value = '';
     document.getElementById('adv-exclude').value = '';
+    STATE._dateFilter = null;
+    STATE._aspectFilter = null;
   });
 
   runBtn.addEventListener('click', function() {
@@ -14862,20 +14864,17 @@ function applyBoardTemplate(template) {
       if (typeof updateSourcesActiveCounter === 'function') updateSourcesActiveCounter();
     }
 
-    // Apply date range — set the date filter UI values
+    // Apply date range — set STATE directly
     if (dateFrom || dateTo) {
-      var fromSlider = document.getElementById('date-from-slider') || document.getElementById('date-from');
-      var toSlider   = document.getElementById('date-to-slider') || document.getElementById('date-to');
-      if (fromSlider && dateFrom) fromSlider.value = dateFrom;
-      if (toSlider && dateTo)     toSlider.value = dateTo;
+      STATE._dateFilter = {
+        from: parseInt(dateFrom, 10) || 0,
+        to:   parseInt(dateTo, 10) || 9999
+      };
     }
 
-    // Apply orientation filter
+    // Apply orientation filter — set STATE directly
     if (orient) {
-      var orientBtns = document.querySelectorAll('.aspect-btn, [data-aspect]');
-      orientBtns.forEach(function(btn) {
-        if (btn.dataset.aspect === orient) btn.click();
-      });
+      STATE._aspectFilter = orient;
     }
 
     // Apply color filter
