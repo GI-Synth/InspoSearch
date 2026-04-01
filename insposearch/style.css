@@ -1762,7 +1762,7 @@ html, body {
   background: var(--line);
   border-color: var(--line-strong);
 }
-.bar-icon-btn svg { display: block; }
+.bar-icon-btn svg { display: block; pointer-events: none; }
 .bar-icon-muted { color: var(--ink-3); }
 .bar-icon-muted:hover { color: var(--ink-2); }
 
