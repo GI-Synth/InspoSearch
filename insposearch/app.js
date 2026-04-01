@@ -7417,10 +7417,9 @@ document.getElementById('interpret-btn').addEventListener('click', () => {
   runInterpret();
 });
 
-/* -- Clear All: clear selections but keep bar open -- */
+/* -- Clear All: clear selections and hide bar -- */
 document.getElementById('bar-clear-btn').addEventListener('click', (e) => {
   e.stopPropagation();
-  e.preventDefault();
   // Remove visual selection from cards
   document.querySelectorAll('.image-card.selected')
     .forEach(c => c.classList.remove('selected'));
@@ -7432,16 +7431,24 @@ document.getElementById('bar-clear-btn').addEventListener('click', (e) => {
   // Clear UI
   hideReferenceStrip();
   hideConceptPills();
+  document.getElementById('bar-thumbs').innerHTML = '';
+  document.getElementById('bar-count').textContent = '';
   // Close panel
   document.getElementById('panel').classList.remove('open');
-  // Hide bar
+  // Hide bar reliably (display:none, same as close button)
   const bar = document.getElementById('floating-bar');
+  bar.classList.add('bar-hidden');
   bar.classList.remove('visible');
-  bar.classList.remove('bar-hidden');
+  bar.classList.remove('bar-positioned');
+  bar.style.removeProperty('left');
+  bar.style.removeProperty('top');
+  bar.style.removeProperty('bottom');
   document.getElementById('canvas').classList.remove('bar-active');
   STATE.floatingBarVisible = false;
   STATE.floatingBarHidden = false;
   document.getElementById('bar-toggle-section').style.display = 'none';
+  // Persist empty board so selections don't restore on reload
+  if (typeof persistBoardState === 'function') persistBoardState();
 });
 
 /* -- Close button: hide bar entirely -- */
