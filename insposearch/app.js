@@ -7418,17 +7418,30 @@ document.getElementById('interpret-btn').addEventListener('click', () => {
 });
 
 /* -- Clear All: clear selections but keep bar open -- */
-document.getElementById('bar-clear-btn').addEventListener('click', () => {
+document.getElementById('bar-clear-btn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  // Remove visual selection from cards
+  document.querySelectorAll('.image-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+  // Clear state
   STATE.selected = [];
   STATE.crossRefMode = null;
   STATE.crossRefTerms = [];
   STATE.referenceImages = [];
-  document.querySelectorAll('.image-card.selected')
-    .forEach(c => c.classList.remove('selected'));
+  // Clear UI
   hideReferenceStrip();
   hideConceptPills();
-  updatePanel();
-  updateFloatingBar();
+  // Close panel
+  document.getElementById('panel').classList.remove('open');
+  // Hide bar
+  const bar = document.getElementById('floating-bar');
+  bar.classList.remove('visible');
+  bar.classList.remove('bar-hidden');
+  document.getElementById('canvas').classList.remove('bar-active');
+  STATE.floatingBarVisible = false;
+  STATE.floatingBarHidden = false;
+  document.getElementById('bar-toggle-section').style.display = 'none';
 });
 
 /* -- Close button: hide bar entirely -- */
