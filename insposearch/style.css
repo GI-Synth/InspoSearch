@@ -898,6 +898,10 @@ html, body {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
 
 /* ============================================================
    TOAST NOTIFICATION
@@ -1675,12 +1679,12 @@ html, body {
   transition: transform 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   background: var(--bg-panel);
   border: 1px solid var(--line-strong);
-  padding: 10px 16px;
+  padding: 8px 12px;
   width: fit-content;
-  max-width: 600px;
+  max-width: 520px;
   overflow-x: auto;
   scrollbar-width: none;
   z-index: 50;
@@ -1695,11 +1699,32 @@ html, body {
   display: none !important;
 }
 
+.bar-thumbs {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.bar-count {
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.bar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
 .bar-thumb {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   object-fit: cover;
   cursor: pointer;
   opacity: 1;
@@ -1708,20 +1733,33 @@ html, body {
 
 .bar-thumb:hover { opacity: 0.6; }
 
-/* Floating bar buttons — minimum 44px touch target */
-#floating-bar .btn,
-#bar-clear-btn,
-#bar-hide-btn {
-  min-height: 44px;
-  min-width: 44px;
+/* Icon buttons in floating bar */
+.bar-icon-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  padding: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  position: relative;
 }
+.bar-icon-btn:hover {
+  color: var(--ink);
+  background: var(--line);
+  border-color: var(--line-strong);
+}
+.bar-icon-btn svg { display: block; }
+.bar-icon-muted { color: var(--ink-3); }
+.bar-icon-muted:hover { color: var(--ink-2); }
 
 #interpret-btn.disabled {
-  opacity: 0.35;
+  opacity: 0.25;
   cursor: default;
+  pointer-events: none;
 }
 
 #interpret-btn {
@@ -3205,9 +3243,10 @@ h1.logo, h2.section-label {
 
 /* ── Advanced Search Modal ── */
 .adv-overlay {
-  position: fixed; inset: 0; z-index: 9000;
-  background: rgba(0,0,0,0.55); display: flex;
-  align-items: center; justify-content: center;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.35);
+  width: 100vw;
   animation: fadeIn 0.2s ease;
   overflow: visible !important;
 }
@@ -3216,10 +3255,11 @@ body.adv-modal-open {
   overflow: hidden !important;
 }
 .adv-panel {
-  background: var(--bg); border: 1px solid var(--line);
-  width: min(420px, 90vw); max-height: 85vh;
+  background: var(--bg); border-right: 1px solid var(--line);
+  width: min(380px, 85vw); height: 100vh;
   display: flex; flex-direction: column;
   font-family: var(--font-ui); overflow: hidden;
+  animation: slideInLeft 0.25s ease;
 }
 .adv-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -3232,7 +3272,7 @@ body.adv-modal-open {
 }
 .adv-body {
   padding: 16px 20px; overflow-y: auto; display: flex;
-  flex-direction: column; gap: 14px;
+  flex-direction: column; gap: 14px; flex: 1;
 }
 .adv-label {
   display: flex; flex-direction: column; gap: 4px;

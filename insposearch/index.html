@@ -184,9 +184,9 @@
         </div>
       </div>
 
-      <!-- Color search filter (hidden until results loaded) -->
-      <div class="sidebar-section" id="color-filter-section" style="display:none;">
-        <span class="section-label">color</span>
+      <!-- Color search filter -->
+      <div class="sidebar-section" id="color-filter-section">
+        <span class="section-label">search by color</span>
         <div class="color-filter-grid" id="color-filter-grid">
           <button class="color-swatch-btn active" data-color="all" title="all colors"><span style="background:conic-gradient(red,yellow,lime,aqua,blue,magenta,red);width:100%;height:100%;display:block;border-radius:50%;"></span></button>
           <button class="color-swatch-btn" data-color="red" title="red"><span style="background:#c0392b;"></span></button>
@@ -358,96 +358,46 @@
 
       <!-- Floating action bar — appears when 2+ images selected -->
       <div id="floating-bar">
-        <div id="bar-thumbs" style="
-          display: flex;
-          gap: 4px;
-          align-items: center;
-        "></div>
+        <div id="bar-thumbs" class="bar-thumbs"></div>
+        <span id="bar-count" class="bar-count"></span>
 
-        <span id="bar-count" style="
-          font-size: 10px;
-          color: var(--ink-3);
-          letter-spacing: 0.08em;
-          white-space: nowrap;
-        "></span>
+        <div class="bar-divider"></div>
 
-        <div style="
-          width: 1px;
-          height: 20px;
-          background: var(--line-strong);
-        "></div>
-
-        <button id="connect-btn" class="btn" aria-label="connect selected images" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">connect</button>
-
-        <button id="interpret-btn" class="btn" aria-label="interpret selection with AI" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        ">
-          <span>interpret</span>
-          <span style="color: var(--accent)">&#10022;</span>
+        <button id="connect-btn" class="bar-icon-btn" aria-label="connect" title="find connections between selected images">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="12" r="3"/><circle cx="19" cy="5" r="3"/><circle cx="19" cy="19" r="3"/><line x1="7.5" y1="10.5" x2="16.5" y2="6"/><line x1="7.5" y1="13.5" x2="16.5" y2="18"/></svg>
         </button>
 
-        <button id="bar-slideshow-btn" class="btn" aria-label="start slideshow" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">slideshow</button>
+        <button id="interpret-btn" class="bar-icon-btn" aria-label="interpret with AI" title="interpret selection with AI">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+        </button>
 
-        <button id="bar-cite-btn" class="btn" aria-label="cite selected images" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">cite</button>
+        <button id="bar-compare-btn" class="bar-icon-btn" aria-label="compare" title="compare side by side">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="8" height="18" rx="1"/><rect x="14" y="3" width="8" height="18" rx="1"/></svg>
+        </button>
 
-        <button id="bar-compare-btn" class="btn" aria-label="compare selected images" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">compare</button>
+        <button id="bar-slideshow-btn" class="bar-icon-btn" aria-label="slideshow" title="start slideshow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="6,3 20,12 6,21"/></svg>
+        </button>
 
-        <button id="bar-download-btn" class="btn" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">download</button>
+        <div class="bar-divider"></div>
 
-        <button id="bar-share-btn" class="btn" style="
-          width: auto;
-          padding: 6px 14px;
-          font-size: 10px;
-        ">share</button>
+        <button id="bar-download-btn" class="bar-icon-btn" aria-label="download" title="download selected">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v13m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+        </button>
 
-        <button id="bar-clear-btn" style="
-          background: none;
-          border: none;
-          color: var(--ink-3);
-          font-family: var(--font-ui);
-          font-size: 10px;
-          cursor: pointer;
-          padding: 6px 10px;
-          transition: opacity 0.3s ease;
-          letter-spacing: 0.05em;
-        ">clear all</button>
+        <button id="bar-cite-btn" class="bar-icon-btn" aria-label="cite" title="copy citation">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9h0a3 3 0 013-3h0a3 3 0 013 3v1a5 5 0 01-5 5H6"/><path d="M14 9h0a3 3 0 013-3h0a3 3 0 013 3v1a5 5 0 01-5 5h-1"/></svg>
+        </button>
 
-        <button id="bar-hide-btn" style="
-          background: none;
-          border: none;
-          color: var(--ink-3);
-          font-family: var(--font-ui);
-          font-size: 14px;
-          cursor: pointer;
-          padding: 6px 8px;
-          transition: opacity 0.3s ease;
-          line-height: 1;
-        ">&times;</button>
+        <button id="bar-share-btn" class="bar-icon-btn" aria-label="share" title="share selection">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+
+        <div class="bar-divider"></div>
+
+        <button id="bar-clear-btn" class="bar-icon-btn bar-icon-muted" aria-label="clear selection" title="clear all">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
 
     </main><!-- /#canvas -->

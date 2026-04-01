@@ -6556,10 +6556,11 @@ function renderGrid(items) {
           }
         }
       }
+      updatePanel();
       return;
     }
-    toggleSelection(item);
-    updatePanel();
+    // Normal click: preview item in panel without adding to floating bar
+    updatePanel(item);
   });
 
   grid.addEventListener('keydown', e => {
@@ -6568,8 +6569,10 @@ function renderGrid(items) {
     const item = getItemFromCard(card);
     if (!item) return;
     e.preventDefault();
-    toggleSelection(item);
-    updatePanel();
+    if (e.ctrlKey || e.metaKey) {
+      toggleSelection(item);
+    }
+    updatePanel(item);
   });
 
   grid.addEventListener('dragstart', e => {
@@ -6860,7 +6863,7 @@ function renderSourceInfo(items) {
 }
 
 /* -- Full panel update -- */
-async function updatePanel() {
+async function updatePanel(previewItem) {
   const panel = document.getElementById('panel');
   const emptyHint = document.getElementById('panel-empty-hint');
   const colorsSection = document.getElementById('panel-colors');
@@ -6870,10 +6873,13 @@ async function updatePanel() {
   const aiSection = document.getElementById('panel-ai-tags');
   const analyseSection = document.getElementById('analyse-section');
 
+  // Items to display: preview item if provided, else full selection
+  const displayItems = previewItem ? [previewItem] : STATE.selected;
+
   // Reposition sketch overlay after panel transition completes
   if (_fabricCanvas) setTimeout(positionFabricOverlay, 420);
 
-  if (!STATE.selected.length) {
+  if (!displayItems.length) {
     panel.classList.add('open');
     if (emptyHint) emptyHint.style.display = 'block';
     colorsSection.style.display = 'none';
@@ -6890,9 +6896,9 @@ async function updatePanel() {
   if (emptyHint) emptyHint.style.display = 'none';
   sourceSection.style.display = '';
 
-  // Aggregate colors from all selected images (deduplicated)
+  // Aggregate colors from display items (deduplicated)
   const allColors = [];
-  STATE.selected.forEach(item => {
+  displayItems.forEach(item => {
     (item.colors || []).forEach(c => {
       if (!allColors.includes(c)) allColors.push(c);
     });
@@ -6904,8 +6910,8 @@ async function updatePanel() {
     colorsSection.style.display = 'none';
   }
 
-  // Merge & deduplicate tags from all selected
-  const allTags = [...new Set(STATE.selected.flatMap(i => i.tags || []))];
+  // Merge & deduplicate tags from display items
+  const allTags = [...new Set(displayItems.flatMap(i => i.tags || []))];
   if (allTags.length) {
     tagsSection.style.display = '';
     relatedSection.style.display = '';
@@ -6917,14 +6923,14 @@ async function updatePanel() {
   }
 
   // Source info
-  renderSourceInfo(STATE.selected);
+  renderSourceInfo(displayItems);
 
   // AI key note
   const noKeyNote = document.getElementById('no-key-note');
   const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
   noKeyNote.textContent = hasAiKey ? '' : 'no key — add an ai key for vision';
 
-  updateAnalyseButton(STATE.selected[STATE.selected.length - 1]);
+  updateAnalyseButton(displayItems[displayItems.length - 1]);
 
   showQuietTip('panel-colors', 'palette appears here as you select references', 'inspo_tip_palette');
 }
@@ -7412,32 +7418,13 @@ document.getElementById('interpret-btn').addEventListener('click', () => {
   runInterpret();
 });
 
-/* -- Clear All: clear selections but keep bar visible at same place -- */
+/* -- Clear All: clear selections and close bar -- */
 document.getElementById('bar-clear-btn').addEventListener('click', () => {
-  STATE.selected = [];
-  STATE.crossRefMode = null;
-  STATE.crossRefTerms = [];
-  STATE.referenceImages = [];
-  STATE.floatingBarHidden = false;
-  document.querySelectorAll('.image-card.selected')
-    .forEach(c => c.classList.remove('selected'));
-  document.getElementById('bar-toggle-section').style.display = 'none';
-  hideReferenceStrip();
-  hideConceptPills();
-  updatePanel();
-  // Bar stays visible (updateFloatingBar will hide it naturally since selected < 2)
-  updateFloatingBar();
-});
-
-/* -- × button: clear all + close bar instantly -- */
-document.getElementById('bar-hide-btn').addEventListener('click', () => {
-  // Instantly hide bar
   const bar = document.getElementById('floating-bar');
   bar.classList.add('bar-hidden');
   bar.classList.remove('visible');
   document.getElementById('canvas').classList.remove('bar-active');
   STATE.floatingBarVisible = false;
-  // Clear selections
   STATE.selected = [];
   STATE.crossRefMode = null;
   STATE.crossRefTerms = [];
