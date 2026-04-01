@@ -6538,6 +6538,9 @@ function renderGrid(items) {
       if (item) openDeepZoom(item);
       return;
     }
+    // Similar button
+    const sim = e.target.closest('.sim-btn');
+    if (sim) return;
     // Card click
     const card = e.target.closest('.image-card');
     const item = getItemFromCard(card);
@@ -6594,17 +6597,13 @@ function renderGrid(items) {
     const item = getItemFromCard(card);
     if (!item) return;
     e.stopPropagation();
-    if (!STATE.selected.find(s => s.id === item.id)) {
-      STATE.selected.push(item);
-      card.classList.add('selected');
-      const img2 = card.querySelector('img');
-      if (img2 && img2.complete && img2.naturalWidth > 1) {
-        try { item.colors = getDominantColors(img2); } catch {}
-      }
-      updateFloatingBar();
-    }
+    // Double-click adds to board if open, but does NOT select
+    // Selection requires Ctrl/Cmd+click
     const boardCanvas = document.getElementById('board-canvas');
     if (document.getElementById('board-overlay')?.classList.contains('open')) {
+      if (!STATE.selected.find(s => s.id === item.id)) {
+        toggleSelection(item);
+      }
       let alreadyOnBoard = false;
       boardCanvas.querySelectorAll('.board-card').forEach(bc => {
         if (boardCardMap.get(bc)?.id === item.id) alreadyOnBoard = true;
@@ -6616,9 +6615,9 @@ function renderGrid(items) {
           24 + Math.floor(offset / 320) * 180,
           boardCanvas);
       }
+      if (typeof persistBoardState === 'function') persistBoardState();
+      if (typeof broadcastBoardSync  === 'function') broadcastBoardSync();
     }
-    if (typeof persistBoardState === 'function') persistBoardState();
-    if (typeof broadcastBoardSync  === 'function') broadcastBoardSync();
   });
 })();
 
@@ -7418,24 +7417,29 @@ document.getElementById('interpret-btn').addEventListener('click', () => {
   runInterpret();
 });
 
-/* -- Clear All: clear selections and close bar -- */
+/* -- Clear All: clear selections but keep bar open -- */
 document.getElementById('bar-clear-btn').addEventListener('click', () => {
+  STATE.selected = [];
+  STATE.crossRefMode = null;
+  STATE.crossRefTerms = [];
+  STATE.referenceImages = [];
+  document.querySelectorAll('.image-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+  hideReferenceStrip();
+  hideConceptPills();
+  updatePanel();
+  updateFloatingBar();
+});
+
+/* -- Close button: hide bar entirely -- */
+document.getElementById('bar-close-btn').addEventListener('click', () => {
   const bar = document.getElementById('floating-bar');
   bar.classList.add('bar-hidden');
   bar.classList.remove('visible');
   document.getElementById('canvas').classList.remove('bar-active');
   STATE.floatingBarVisible = false;
-  STATE.selected = [];
-  STATE.crossRefMode = null;
-  STATE.crossRefTerms = [];
-  STATE.referenceImages = [];
-  STATE.floatingBarHidden = false;
-  document.querySelectorAll('.image-card.selected')
-    .forEach(c => c.classList.remove('selected'));
-  document.getElementById('bar-toggle-section').style.display = 'none';
-  hideReferenceStrip();
-  hideConceptPills();
-  updatePanel();
+  STATE.floatingBarHidden = true;
+  document.getElementById('bar-toggle-section').style.display = '';
 });
 
 /* -- Sidebar toggle: bring back floating bar -- */
@@ -7446,6 +7450,45 @@ document.getElementById('btn-bar-toggle').addEventListener('click', () => {
   document.getElementById('bar-toggle-section').style.display = 'none';
   updateFloatingBar();
 });
+
+/* -- Draggable floating bar -- */
+(function initBarDrag() {
+  const bar = document.getElementById('floating-bar');
+  let dragging = false, startX, startY, barX, barY;
+
+  bar.addEventListener('pointerdown', e => {
+    // Don't start drag on buttons or interactive elements
+    if (e.target.closest('button, input, a, .bar-thumb')) return;
+    dragging = true;
+    bar.classList.add('dragging');
+    bar.setPointerCapture(e.pointerId);
+    const rect = bar.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    barX = rect.left;
+    barY = rect.top;
+    e.preventDefault();
+  });
+
+  bar.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const newX = Math.max(0, Math.min(window.innerWidth - bar.offsetWidth, barX + dx));
+    const newY = Math.max(0, Math.min(window.innerHeight - bar.offsetHeight, barY + dy));
+    bar.style.left = newX + 'px';
+    bar.style.top = newY + 'px';
+    bar.style.bottom = 'auto';
+    bar.classList.add('bar-positioned');
+  });
+
+  bar.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    dragging = false;
+    bar.classList.remove('dragging');
+    bar.releasePointerCapture(e.pointerId);
+  });
+})();
 
 document.getElementById('strip-clear-btn').addEventListener('click', () => {
   // Instantly hide bar

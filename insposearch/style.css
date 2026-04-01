@@ -1672,11 +1672,11 @@ html, body {
    FLOATING ACTION BAR (cross-reference)
 ============================================================ */
 #floating-bar {
-  position: sticky;
+  position: fixed;
   bottom: calc(24px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%) translateY(120%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1689,11 +1689,21 @@ html, body {
   scrollbar-width: none;
   z-index: 50;
   font-family: var(--font-ui);
+  cursor: grab;
+  user-select: none;
+}
+#floating-bar.dragging {
+  cursor: grabbing;
+  transition: none;
+  opacity: 0.92;
 }
 #floating-bar::-webkit-scrollbar { display: none; }
 
 #floating-bar.visible {
   transform: translateX(-50%) translateY(0);
+}
+#floating-bar.visible.bar-positioned {
+  transform: none;
 }
 #floating-bar.bar-hidden {
   display: none !important;
