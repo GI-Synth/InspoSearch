@@ -1881,6 +1881,21 @@ html, body {
   flex-shrink: 0;
   position: relative;
 }
+#sib-docs-link {
+  position: absolute;
+  right: 12px;
+  font-family: var(--font-ui);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  transition: opacity 0.2s ease;
+}
+#sib-docs-link:hover { opacity: 0.7; }
 
 /* API badge button */
 #sib-api-badge {
@@ -2497,6 +2512,7 @@ html, body {
     font-size: 9px;
     padding: 3px 10px 3px calc(10px + env(safe-area-inset-left));
   }
+  #sib-docs-link { display: none; }
 }
 
 /* ============================================================
