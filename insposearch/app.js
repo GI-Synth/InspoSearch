@@ -14770,76 +14770,113 @@ function applyBoardTemplate(template) {
 })();
 
 /* ============================================================
-   ADVANCED SEARCH MODAL
+   ADVANCED SEARCH PANEL
    Structured form: query, date range, medium, region, category,
    color, orientation, exclude terms.  Builds a composite query
    string and applies filters before running the standard search.
 ============================================================ */
 (function initAdvancedSearch() {
-  var overlay = document.getElementById('adv-search-overlay');
-  var openBtn = document.getElementById('btn-advanced-search');
+  var overlay  = document.getElementById('adv-search-overlay');
+  var openBtn  = document.getElementById('btn-advanced-search');
   if (!overlay || !openBtn) return;
+
+  var panel    = overlay.querySelector('.adv-panel');
   var closeBtn = document.getElementById('adv-close');
   var resetBtn = document.getElementById('adv-reset');
   var runBtn   = document.getElementById('adv-run');
 
+  // Field references
+  var qInput       = document.getElementById('adv-query');
+  var dateFromEl   = document.getElementById('adv-date-from');
+  var dateToEl     = document.getElementById('adv-date-to');
+  var mediumEl     = document.getElementById('adv-medium');
+  var orientEl     = document.getElementById('adv-orient');
+  var regionEl     = document.getElementById('adv-region');
+  var categoryEl   = document.getElementById('adv-category');
+  var excludeEl    = document.getElementById('adv-exclude');
+  var colorEnEl    = document.getElementById('adv-color-enable');
+  var colorEl      = document.getElementById('adv-color');
+
   function open() {
-    // Pre-fill query from search input
     var q = document.getElementById('search-input').value.trim();
-    document.getElementById('adv-query').value = q;
+    if (qInput) qInput.value = q;
     overlay.style.display = 'block';
+    // Focus query input after animation
+    setTimeout(function() { if (qInput) qInput.focus(); }, 250);
   }
-  function close() { overlay.style.display = 'none'; }
+
+  function close() {
+    overlay.style.display = 'none';
+  }
 
   openBtn.addEventListener('click', open);
   closeBtn.addEventListener('click', close);
-  overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) close();
+  });
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && overlay.style.display === 'block') close();
   });
 
+  // Reset all fields + state
   resetBtn.addEventListener('click', function() {
-    document.getElementById('adv-query').value = '';
-    document.getElementById('adv-date-from').value = '';
-    document.getElementById('adv-date-to').value = '';
-    document.getElementById('adv-medium').value = '';
-    document.getElementById('adv-region').value = '';
-    document.getElementById('adv-category').value = '';
-    document.getElementById('adv-color-enable').checked = false;
-    document.getElementById('adv-orient').value = '';
-    document.getElementById('adv-exclude').value = '';
+    if (qInput)     qInput.value = '';
+    if (dateFromEl) dateFromEl.value = '';
+    if (dateToEl)   dateToEl.value = '';
+    if (mediumEl)   mediumEl.value = '';
+    if (orientEl)   orientEl.value = '';
+    if (regionEl)   regionEl.value = '';
+    if (categoryEl) categoryEl.value = '';
+    if (excludeEl)  excludeEl.value = '';
+    if (colorEnEl)  colorEnEl.checked = false;
     STATE._dateFilter = null;
     STATE._aspectFilter = null;
   });
 
-  runBtn.addEventListener('click', function() {
-    var query = (document.getElementById('adv-query').value || '').trim();
-    var medium = document.getElementById('adv-medium').value;
-    var exclude = (document.getElementById('adv-exclude').value || '').trim();
-    var dateFrom = document.getElementById('adv-date-from').value;
-    var dateTo   = document.getElementById('adv-date-to').value;
-    var region   = document.getElementById('adv-region').value;
-    var category = document.getElementById('adv-category').value;
-    var orient   = document.getElementById('adv-orient').value;
-    var colorEn  = document.getElementById('adv-color-enable').checked;
-    var color    = document.getElementById('adv-color').value;
+  // Enter key in any input triggers search
+  overlay.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.matches('.adv-input')) {
+      e.preventDefault();
+      runBtn.click();
+    }
+  });
 
-    // Build composite query
+  // Run search with all filters
+  runBtn.addEventListener('click', function() {
+    var query    = (qInput ? qInput.value : '').trim();
+    var medium   = mediumEl   ? mediumEl.value   : '';
+    var exclude  = (excludeEl ? excludeEl.value  : '').trim();
+    var dateFrom = dateFromEl ? dateFromEl.value  : '';
+    var dateTo   = dateToEl   ? dateToEl.value    : '';
+    var region   = regionEl   ? regionEl.value    : '';
+    var category = categoryEl ? categoryEl.value  : '';
+    var orient   = orientEl   ? orientEl.value    : '';
+    var colorEn  = colorEnEl  ? colorEnEl.checked : false;
+    var color    = colorEl    ? colorEl.value     : '';
+
+    // Build composite query string
     var parts = [];
-    if (query) parts.push(query);
+    if (query)  parts.push(query);
     if (medium) parts.push(medium);
     var compositeQuery = parts.join(' ');
 
-    // Apply NOT terms
+    // Append NOT terms
     if (exclude) {
       exclude.split(/[\s,]+/).filter(Boolean).forEach(function(t) {
         compositeQuery += ' NOT ' + t;
       });
     }
 
-    if (!compositeQuery) return;
+    if (!compositeQuery) {
+      // Flash the query input to indicate it's required
+      if (qInput) {
+        qInput.style.borderColor = '#c0392b';
+        setTimeout(function() { qInput.style.borderColor = ''; }, 1200);
+      }
+      return;
+    }
 
-    // Apply source category filter — enable only matching sources
+    // Source category filter — enable only matching sources
     if (category && SOURCE_GROUPS[category]) {
       var groupSet = new Set(SOURCE_GROUPS[category]);
       ALL_SOURCES.forEach(function(sid) {
@@ -14852,7 +14889,7 @@ function applyBoardTemplate(template) {
       if (typeof updateSourcesActiveCounter === 'function') updateSourcesActiveCounter();
     }
 
-    // Apply region filter via SOURCE_META
+    // Region filter via SOURCE_META
     if (region) {
       ALL_SOURCES.forEach(function(sid) {
         var meta = SOURCE_META[sid];
@@ -14865,26 +14902,26 @@ function applyBoardTemplate(template) {
       if (typeof updateSourcesActiveCounter === 'function') updateSourcesActiveCounter();
     }
 
-    // Apply date range — set STATE directly
+    // Date range filter → STATE
     if (dateFrom || dateTo) {
       STATE._dateFilter = {
         from: parseInt(dateFrom, 10) || 0,
-        to:   parseInt(dateTo, 10) || 9999
+        to:   parseInt(dateTo, 10)   || 9999
       };
+    } else {
+      STATE._dateFilter = null;
     }
 
-    // Apply orientation filter — set STATE directly
-    if (orient) {
-      STATE._aspectFilter = orient;
-    }
+    // Orientation filter → STATE
+    STATE._aspectFilter = orient || null;
 
-    // Apply color filter
+    // Color filter — add to hex palette
     if (colorEn && color) {
-      var hexInput = document.getElementById('hex-input');
-      var hexAdd = document.getElementById('hex-add');
-      if (hexInput && hexAdd) {
-        hexInput.value = color;
-        hexAdd.click();
+      var hInput = document.getElementById('hex-input');
+      var hAdd   = document.getElementById('hex-add-btn');
+      if (hInput && hAdd) {
+        hInput.value = color;
+        hAdd.click();
       }
     }
 

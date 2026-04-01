@@ -679,7 +679,7 @@
   </div>
 
   <!-- ======================================================
-       ADVANCED SEARCH MODAL
+       ADVANCED SEARCH PANEL
   ====================================================== -->
   <div id="adv-search-overlay" class="adv-overlay" style="display:none;">
     <div class="adv-panel">
@@ -687,22 +687,31 @@
         <span class="adv-title">advanced search</span>
         <button id="adv-close" class="adv-close">&times;</button>
       </div>
-      <div class="adv-body">
-        <label class="adv-label">query
-          <input type="text" id="adv-query" class="adv-input" placeholder="type anything..." autocomplete="off">
-        </label>
 
-        <div class="adv-divider"></div>
+      <div class="adv-body">
+
+        <!-- Query -->
+        <div class="adv-field">
+          <span class="adv-field-label">query</span>
+          <input type="text" id="adv-query" class="adv-input" placeholder="type anything..." autocomplete="off">
+        </div>
+
+        <hr class="adv-hr">
         <span class="adv-section-title">filters</span>
 
-        <label class="adv-label">date range
+        <!-- Date range -->
+        <div class="adv-field">
+          <span class="adv-field-label">date range</span>
           <div class="adv-row">
-            <input type="number" id="adv-date-from" class="adv-input adv-input-sm" placeholder="from" min="0" max="2026">
-            <span class="adv-sep">–</span>
-            <input type="number" id="adv-date-to" class="adv-input adv-input-sm" placeholder="to" min="0" max="2026">
+            <input type="number" id="adv-date-from" class="adv-input adv-input--sm" placeholder="from year" min="0" max="2026">
+            <span class="adv-sep">&ndash;</span>
+            <input type="number" id="adv-date-to" class="adv-input adv-input--sm" placeholder="to year" min="0" max="2026">
           </div>
-        </label>
-        <label class="adv-label">medium
+        </div>
+
+        <!-- Medium -->
+        <div class="adv-field">
+          <span class="adv-field-label">medium / type</span>
           <select id="adv-medium" class="adv-select">
             <option value="">any</option>
             <option value="painting">painting</option>
@@ -714,65 +723,92 @@
             <option value="ceramic">ceramic</option>
             <option value="watercolor">watercolor</option>
             <option value="engraving">engraving</option>
+            <option value="mosaic">mosaic</option>
+            <option value="fresco">fresco</option>
+            <option value="tapestry">tapestry</option>
           </select>
-        </label>
-        <label class="adv-label">orientation
+        </div>
+
+        <!-- Orientation -->
+        <div class="adv-field">
+          <span class="adv-field-label">orientation</span>
           <select id="adv-orient" class="adv-select">
             <option value="">any</option>
             <option value="landscape">landscape</option>
             <option value="portrait">portrait</option>
             <option value="square">square</option>
           </select>
-        </label>
-        <label class="adv-label">region
+        </div>
+
+        <!-- Region -->
+        <div class="adv-field">
+          <span class="adv-field-label">region</span>
           <select id="adv-region" class="adv-select">
             <option value="">any</option>
             <option value="europe">europe</option>
+            <option value="uk">uk</option>
             <option value="americas">americas</option>
             <option value="asia">asia</option>
             <option value="africa">africa</option>
             <option value="oceania">oceania</option>
-            <option value="uk">uk</option>
             <option value="global">global</option>
           </select>
-        </label>
-        <label class="adv-label">source category
+        </div>
+
+        <!-- Source category -->
+        <div class="adv-field">
+          <span class="adv-field-label">source category</span>
           <select id="adv-category" class="adv-select">
             <option value="">any</option>
             <option value="museums">museums</option>
             <option value="photography">photography</option>
             <option value="nature">nature</option>
             <option value="historical">historical</option>
-            <option value="artdesign">art & design</option>
+            <option value="artdesign">art &amp; design</option>
             <option value="archives">archives</option>
             <option value="science">science</option>
             <option value="maps">maps</option>
             <option value="fashion">fashion</option>
           </select>
-        </label>
-        <label class="adv-label">exclude terms
-          <input type="text" id="adv-exclude" class="adv-input" placeholder="NOT these words..." autocomplete="off">
-        </label>
+        </div>
 
-        <div class="adv-divider"></div>
-        <span class="adv-section-title">precise color</span>
+        <!-- Exclude terms -->
+        <div class="adv-field">
+          <span class="adv-field-label">exclude terms</span>
+          <input type="text" id="adv-exclude" class="adv-input" placeholder="words to exclude (comma separated)" autocomplete="off">
+        </div>
 
-        <label class="adv-label">hex color palette
+        <hr class="adv-hr">
+        <span class="adv-section-title">color</span>
+
+        <!-- Hex palette -->
+        <div class="adv-field">
+          <span class="adv-field-label">hex color palette</span>
           <div class="adv-row" style="gap:6px;">
-            <input type="color" id="hex-picker" class="hex-picker" value="#c0392b" title="pick a color">
-            <input type="text" id="hex-input" class="hex-input" placeholder="#ff5733" maxlength="7" spellcheck="false" autocomplete="off" style="flex:1;">
-            <button class="adv-btn" id="hex-add-btn" title="add to palette" style="padding:4px 12px;">+</button>
+            <input type="color" id="hex-picker" class="adv-color-picker" value="#c0392b" title="pick a color">
+            <input type="text" id="hex-input" class="adv-input" placeholder="#ff5733" maxlength="7" spellcheck="false" autocomplete="off" style="flex:1;font-family:var(--font-ui);">
+            <button class="adv-btn" id="hex-add-btn" title="add to palette">+</button>
           </div>
-          <div class="hex-chips" id="hex-chips"></div>
-        </label>
-        <label class="adv-label">color match
-          <input type="color" id="adv-color" class="adv-color" value="#c8b89a">
-          <label class="adv-check"><input type="checkbox" id="adv-color-enable"> filter by dominant color</label>
-        </label>
+          <div id="hex-chips" class="hex-chips"></div>
+        </div>
+
+        <!-- Dominant color match -->
+        <div class="adv-field">
+          <span class="adv-field-label">dominant color</span>
+          <div class="adv-row" style="gap:8px;">
+            <input type="color" id="adv-color" class="adv-color-picker" value="#c8b89a">
+            <div class="adv-check-row">
+              <input type="checkbox" id="adv-color-enable">
+              <span>filter by dominant color</span>
+            </div>
+          </div>
+        </div>
+
       </div>
+
       <div class="adv-footer">
         <button id="adv-reset" class="adv-btn">reset</button>
-        <button id="adv-run" class="adv-btn adv-btn-primary">search</button>
+        <button id="adv-run" class="adv-btn adv-btn--primary">search</button>
       </div>
     </div>
   </div>
