@@ -1,6 +1,6 @@
 /* InspoSearch Service Worker — static asset cache + stale-while-revalidate */
 /* Cache version — update on each deploy (build script or manual) */
-const CACHE_VERSION = '20260401e';
+const CACHE_VERSION = '20260401f';
 const CACHE_NAME = 'inspo-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',

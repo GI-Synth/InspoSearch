@@ -12327,11 +12327,12 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 /* -- Auto-analyse: patch updatePanel to trigger AI on selection -- */
 (function patchUpdatePanelForAutoAnalyse() {
   const _orig = updatePanel;
-  updatePanel = async function() {
-    await _orig();
+  updatePanel = async function(previewItem) {
+    await _orig(previewItem);
     const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
-    if (!STATE.autoAnalyse || !hasKey || !STATE.selected.length) return;
-    const item = STATE.selected[STATE.selected.length - 1];
+    const displayItems = previewItem ? [previewItem] : STATE.selected;
+    if (!STATE.autoAnalyse || !hasKey || !displayItems.length) return;
+    const item = displayItems[displayItems.length - 1];
     if (item.aiTags && item.aiTags.length) return;
     const cached = getAITagsCache(item.id);
     if (cached) {
@@ -14913,11 +14914,12 @@ function applyBoardTemplate(template) {
 
   // Patch updatePanel to show/hide artist button
   var _origUpdatePanel = window.updatePanel || updatePanel;
-  var _patchedUpdatePanel = async function () {
+  var _patchedUpdatePanel = async function (previewItem) {
     await _origUpdatePanel.apply(this, arguments);
     _currentArtist = null;
-    if (STATE.selected.length && window._extractArtist) {
-      var last = STATE.selected[STATE.selected.length - 1];
+    var displayItems = previewItem ? [previewItem] : STATE.selected;
+    if (displayItems.length && window._extractArtist) {
+      var last = displayItems[displayItems.length - 1];
       _currentArtist = window._extractArtist(last);
     }
     if (_currentArtist) {
