@@ -65,6 +65,19 @@ body.dark {
   --line-strong:  rgba(232,230,225,0.14);
 }
 
+/* LIGHT MODE — manual toggle (overrides system dark) */
+body.light {
+  --bg:           #F7F5F2;
+  --bg-panel:     #F2F0ED;
+  --bg-card:      #EEECEA;
+  --ink:          #1A1A18;
+  --ink-2:        #6B6960;
+  --ink-3:        #B0ADA6;
+  --accent:       #C8B89A;
+  --line:         rgba(26,26,24,0.08);
+  --line-strong:  rgba(26,26,24,0.16);
+}
+
 /* ============================================================
    SCROLLBARS
 ============================================================ */

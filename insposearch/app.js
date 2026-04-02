@@ -8205,7 +8205,15 @@ countSlider.addEventListener('input', debouncedRerender);
 // Dark mode toggle
 const themeToggle = document.getElementById('theme-toggle');
 themeToggle.addEventListener('click', () => {
-  const isDark = document.body.classList.toggle('dark');
+  const wasDark = document.body.classList.contains('dark') ||
+    (!document.body.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.body.classList.remove('dark', 'light');
+  if (wasDark) {
+    document.body.classList.add('light');
+  } else {
+    document.body.classList.add('dark');
+  }
+  const isDark = !wasDark;
   themeToggle.textContent = isDark ? 'light' : 'dark';
   localStorage.setItem('inspo_theme', isDark ? 'dark' : 'light');
   if (typeof boardChannel !== 'undefined' && boardChannel) {
@@ -8213,10 +8221,19 @@ themeToggle.addEventListener('click', () => {
   }
 });
 
-// Initialise toggle label to match system preference
-if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  themeToggle.textContent = 'light';
-}
+// Initialise toggle label to match saved pref or system preference
+(function initTheme() {
+  const saved = localStorage.getItem('inspo_theme');
+  if (saved === 'dark') {
+    document.body.classList.add('dark');
+    themeToggle.textContent = 'light';
+  } else if (saved === 'light') {
+    document.body.classList.add('light');
+    themeToggle.textContent = 'dark';
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    themeToggle.textContent = 'light';
+  }
+})();
 
 /* ============================================================
    PHASE 4 — SKETCH MODE & CONTROLS
@@ -9055,7 +9072,8 @@ if (boardChannel && !_isBoardPopup) {
       syncBoardOverlay();
     }
     if (msg.type === 'theme') {
-      document.body.classList.toggle('dark', msg.dark);
+      document.body.classList.remove('dark', 'light');
+      document.body.classList.add(msg.dark ? 'dark' : 'light');
       const tt = document.getElementById('theme-toggle');
       if (tt) tt.textContent = msg.dark ? 'light' : 'dark';
     }
@@ -12103,18 +12121,17 @@ document.getElementById('settings-panel-close').addEventListener('click', () => 
 
 /* -- Theme: shared applier -- */
 function applyThemePref(pref) {
+  document.body.classList.remove('dark', 'light');
   if (pref === 'dark') {
     document.body.classList.add('dark');
     localStorage.setItem('inspo_theme', 'dark');
   } else if (pref === 'light') {
-    document.body.classList.remove('dark');
+    document.body.classList.add('light');
     localStorage.setItem('inspo_theme', 'light');
   } else {
     localStorage.setItem('inspo_theme', 'system');
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
     }
   }
   const isDark = document.body.classList.contains('dark');
@@ -12300,8 +12317,9 @@ document.getElementById('settings-import-input').addEventListener('change', e =>
       buildKeyRows();
       updateKeysDot();
       const theme = localStorage.getItem('inspo_theme');
-      if (theme === 'dark')  { document.body.classList.add('dark');    document.getElementById('theme-toggle').textContent = 'light'; }
-      if (theme === 'light') { document.body.classList.remove('dark'); document.getElementById('theme-toggle').textContent = 'dark';  }
+      document.body.classList.remove('dark', 'light');
+      if (theme === 'dark')  { document.body.classList.add('dark');  document.getElementById('theme-toggle').textContent = 'light'; }
+      if (theme === 'light') { document.body.classList.add('light'); document.getElementById('theme-toggle').textContent = 'dark';  }
       updateSettingsPanelUI();
     } catch (err) {
       console.warn('insposearch: failed to import settings:', err.message);
