@@ -2922,26 +2922,93 @@ h1.logo, h2.section-label {
   display: flex; flex-direction: column; gap: 40px;
   padding: 60px 0 40px; max-width: 720px; margin: 0 auto; width: 100%;
 }
+
+/* ── Hero ── full-bleed image, text on lower-third gradient ── */
 .discover-hero {
-  text-align: center; padding: 48px 24px;
-  border: 1px solid var(--line); cursor: pointer;
-  transition: border-color 0.2s;
+  position: relative;
+  min-height: 360px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.5s ease;
 }
-.discover-hero:hover { border-color: var(--accent); }
+.discover-hero:hover { transform: scale(1.01); }
+
+/* gradient scrim — text lives here */
+.discover-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(14,14,13,0.80) 0%,
+    rgba(14,14,13,0.30) 45%,
+    rgba(14,14,13,0.05) 100%
+  );
+  transition: background 0.3s;
+}
+.discover-hero:hover::before {
+  background: linear-gradient(
+    to top,
+    rgba(14,14,13,0.85) 0%,
+    rgba(14,14,13,0.35) 50%,
+    rgba(14,14,13,0.08) 100%
+  );
+}
+
+/* light mode scrim */
+body.light .discover-hero::before,
+:root:not(.dark) .discover-hero::before {
+  background: linear-gradient(
+    to top,
+    rgba(14,14,13,0.75) 0%,
+    rgba(14,14,13,0.25) 50%,
+    transparent 100%
+  );
+}
+
+.discover-hero-content {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 32px 36px;
+  text-align: left;
+}
+
 .discover-hero-label {
   font-family: var(--font-ui); font-size: 9px;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--ink-3); margin-bottom: 16px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(232,230,225,0.65);
+  margin-bottom: 10px;
 }
 .discover-hero-title {
-  font-family: var(--font-display); font-size: 28px;
+  font-family: var(--font-display); font-size: 34px;
   font-weight: 300; font-style: italic;
-  color: var(--ink); line-height: 1.3;
+  color: #F7F5F2;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
 .discover-hero-sub {
   font-family: var(--font-ui); font-size: 10px;
-  color: var(--ink-2); margin-top: 12px; letter-spacing: 0.04em;
+  color: rgba(232,230,225,0.70);
+  margin-top: 10px; letter-spacing: 0.04em;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.3);
 }
+
+/* no image fallback — keep old bordered look */
+.discover-hero:not([style*="background-image"])::before { display: none; }
+.discover-hero:not([style*="background-image"]) {
+  border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+}
+.discover-hero:not([style*="background-image"]) .discover-hero-content {
+  position: static; padding: 48px 24px; text-align: center;
+}
+.discover-hero:not([style*="background-image"]) .discover-hero-label { color: var(--ink-3); }
+.discover-hero:not([style*="background-image"]) .discover-hero-title { color: var(--ink); font-size: 28px; text-shadow: none; }
+.discover-hero:not([style*="background-image"]) .discover-hero-sub   { color: var(--ink-2); text-shadow: none; }
+
+/* ── Section labels / pills ─────────────────────────── */
 .discover-section {
   display: flex; flex-direction: column; gap: 12px;
 }
@@ -2960,25 +3027,67 @@ h1.logo, h2.section-label {
   transition: border-color 0.15s, color 0.15s;
 }
 .discover-pill:hover { border-color: var(--accent); color: var(--ink); }
+
+/* ── Category grid — image-backed cards ─────────────── */
 .discover-categories {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
 }
 .discover-cat {
-  padding: 20px 14px; border: 1px solid var(--line);
-  background: none; text-align: left; cursor: pointer;
-  transition: border-color 0.15s;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex; align-items: flex-end;
+  padding: 0;
+  transition: transform 0.35s ease, border-color 0.2s;
 }
-.discover-cat:hover { border-color: var(--accent); }
-.discover-cat-icon { font-size: 18px; margin-bottom: 8px; display: block; }
+.discover-cat:hover { transform: scale(1.03); border-color: transparent; }
+
+/* gradient scrim on each card */
+.discover-cat::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(14,14,13,0.72) 0%, rgba(14,14,13,0.10) 60%, transparent 100%);
+  transition: background 0.25s;
+}
+.discover-cat:hover::before {
+  background: linear-gradient(to top, rgba(14,14,13,0.82) 0%, rgba(14,14,13,0.20) 65%, transparent 100%);
+}
+
+/* no image fallback */
+.discover-cat:not([style*="background-image"])::before { display: none; }
+.discover-cat:not([style*="background-image"]) { align-items: center; justify-content: center; }
+.discover-cat:not([style*="background-image"]):hover { border-color: var(--accent); }
+
 .discover-cat-name {
+  position: relative; /* above scrim */
+  width: 100%;
   font-family: var(--font-ui); font-size: 10px;
-  letter-spacing: 0.06em; color: var(--ink); display: block;
+  letter-spacing: 0.07em; text-transform: lowercase;
+  color: #F7F5F2;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  padding: 0 12px 12px;
+  display: block;
+}
+/* no-image fallback text color */
+.discover-cat:not([style*="background-image"]) .discover-cat-name {
+  color: var(--ink);
+  text-shadow: none;
+  padding: 0;
+  text-align: center;
 }
 
 @media (max-width: 600px) {
   .discover-landing { padding: 32px 16px 24px; gap: 28px; }
-  .discover-hero { padding: 32px 16px; }
-  .discover-hero-title { font-size: 22px; }
+  .discover-hero { min-height: 260px; }
+  .discover-hero-title { font-size: 24px; }
+  .discover-hero-content { padding: 24px 20px; }
   .discover-categories { grid-template-columns: repeat(2, 1fr); }
 }
 
