@@ -13803,52 +13803,76 @@ function applyBoardTemplate(template) {
   ];
 
   const CATEGORIES = [
-    { icon: '\u{1F5BC}', name: 'paintings',       query: 'painting oil canvas' },
-    { icon: '\u{1F4F7}', name: 'photography',     query: 'photograph vintage' },
-    { icon: '\u{1F5FF}', name: 'sculpture',        query: 'sculpture marble bronze' },
-    { icon: '\u{1F3DB}', name: 'architecture',     query: 'architecture building cathedral' },
-    { icon: '\u{1F4DC}', name: 'manuscripts',      query: 'manuscript illuminated medieval' },
-    { icon: '\u{1F5FA}', name: 'maps & charts',    query: 'map cartography atlas' },
-    { icon: '\u{1F9F5}', name: 'textiles',         query: 'textile tapestry embroidery' },
-    { icon: '\u2712',    name: 'prints',            query: 'print etching engraving woodcut' },
-    { icon: '\u{1F3FA}', name: 'ceramics',          query: 'ceramic pottery porcelain' },
-    { icon: '\u{1F33F}', name: 'natural history',   query: 'botanical flora fauna specimen' },
+    { name: 'paintings',      query: 'painting oil canvas' },
+    { name: 'photography',    query: 'photograph vintage' },
+    { name: 'sculpture',      query: 'sculpture marble bronze' },
+    { name: 'architecture',   query: 'architecture building cathedral' },
+    { name: 'manuscripts',    query: 'manuscript illuminated medieval' },
+    { name: 'maps & charts',  query: 'map cartography atlas' },
+    { name: 'textiles',       query: 'textile tapestry embroidery' },
+    { name: 'prints',         query: 'print etching engraving woodcut' },
+    { name: 'ceramics',       query: 'ceramic pottery porcelain' },
+    { name: 'natural history', query: 'botanical flora fauna specimen' },
   ];
 
   const HEROES = [
-    { label: "today's muse",  title: 'the dutch golden age',          sub: 'rembrandt, vermeer, and the art of everyday life',   query: 'dutch golden age painting' },
-    { label: 'explore',       title: 'japanese woodblock prints',     sub: 'ukiyo-e masters \u2014 hokusai, hiroshige, utamaro', query: 'ukiyo-e woodblock print' },
-    { label: 'discover',      title: 'art nouveau & organic form',    sub: 'when nature met design \u2014 mucha, klimt, gall\u00e9',     query: 'art nouveau ornamental' },
-    { label: 'look closer',   title: 'illuminated manuscripts',       sub: 'gold leaf, ultramarine, and sacred geometry',        query: 'illuminated manuscript medieval' },
-    { label: 'inspiration',   title: 'botanical illustration',        sub: 'the beauty of scientific precision',                 query: 'botanical illustration flower' },
-    { label: 'venture into',  title: 'ancient maps & cartography',    sub: 'when the edges of the world were imagined',          query: 'antique map cartography' },
-    { label: 'a closer look', title: 'impressionist light',           sub: 'monet, renoir, and the capture of fleeting moments', query: 'impressionist painting light' },
+    { label: "today's muse",  title: 'the dutch golden age',          sub: 'rembrandt, vermeer, and the art of everyday life',   query: 'dutch golden age painting',     imgKey: 'the dutch golden age' },
+    { label: 'explore',       title: 'japanese woodblock prints',     sub: 'ukiyo-e masters \u2014 hokusai, hiroshige, utamaro', query: 'ukiyo-e woodblock print',        imgKey: 'japanese woodblock prints' },
+    { label: 'discover',      title: 'art nouveau & organic form',    sub: 'when nature met design \u2014 mucha, klimt, gall\u00e9', query: 'art nouveau ornamental',      imgKey: 'art nouveau & organic form' },
+    { label: 'look closer',   title: 'illuminated manuscripts',       sub: 'gold leaf, ultramarine, and sacred geometry',        query: 'illuminated manuscript medieval', imgKey: 'illuminated manuscripts' },
+    { label: 'inspiration',   title: 'botanical illustration',        sub: 'the beauty of scientific precision',                 query: 'botanical illustration flower',  imgKey: 'botanical illustration' },
+    { label: 'venture into',  title: 'ancient maps & cartography',    sub: 'when the edges of the world were imagined',          query: 'antique map cartography',        imgKey: 'ancient maps & cartography' },
+    { label: 'a closer look', title: 'impressionist light',           sub: 'monet, renoir, and the capture of fleeting moments', query: 'impressionist painting light',   imgKey: 'impressionist light' },
   ];
 
+  // Image pools — fetched once from homepage-images.json, then cached
+  var _imgPools = null;
+
+  function getDay() { return Math.floor(Date.now() / 86400000); }
+
+  // Pick a URL from a pool by day+offset so each slot rotates independently
+  function pickFromPool(pools, key, offset) {
+    if (!pools) return '';
+    var pool = pools[key];
+    if (!pool || !pool.length) return '';
+    return pool[(getDay() * 7 + (offset || 0)) % pool.length] || '';
+  }
+
   function getHeroOfDay() {
-    const day = Math.floor(Date.now() / 86400000);
-    return HEROES[day % HEROES.length];
+    return HEROES[getDay() % HEROES.length];
   }
 
   function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
   function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
-  function buildHTML() {
+  function buildHTML(pools) {
     const hero = getHeroOfDay();
+    const heroImg = pickFromPool(pools ? pools.heroes : null, hero.imgKey, 0);
+    const heroStyle = heroImg
+      ? ' style="background-image:url(\'' + escAttr(heroImg) + '\')"'
+      : '';
+
     const pillsHTML = POPULAR.map(t =>
       '<button class="discover-pill" data-query="' + escAttr(t) + '">' + escHtml(t) + '</button>'
     ).join('');
-    const catsHTML = CATEGORIES.map(c =>
-      '<button class="discover-cat" data-query="' + escAttr(c.query) + '">' +
-        '<span class="discover-cat-icon">' + c.icon + '</span>' +
+
+    const catsHTML = CATEGORIES.map(function(c, idx) {
+      var bgImg = pickFromPool(pools ? pools.categories : null, c.name, idx + 1);
+      var style = bgImg
+        ? ' style="background-image:url(\'' + escAttr(bgImg) + '\')"'
+        : '';
+      return '<button class="discover-cat" data-query="' + escAttr(c.query) + '"' + style + '>' +
         '<span class="discover-cat-name">' + escHtml(c.name) + '</span>' +
-      '</button>'
-    ).join('');
+      '</button>';
+    }).join('');
+
     return '<div id="discover-landing" class="discover-landing" style="grid-column:1/-1;">' +
-      '<div class="discover-hero" data-query="' + escAttr(hero.query) + '">' +
-        '<div class="discover-hero-label">' + escHtml(hero.label) + '</div>' +
-        '<div class="discover-hero-title">' + escHtml(hero.title) + '</div>' +
-        '<div class="discover-hero-sub">' + escHtml(hero.sub) + '</div>' +
+      '<div class="discover-hero"' + heroStyle + ' data-query="' + escAttr(hero.query) + '">' +
+        '<div class="discover-hero-content">' +
+          '<div class="discover-hero-label">' + escHtml(hero.label) + '</div>' +
+          '<div class="discover-hero-title">' + escHtml(hero.title) + '</div>' +
+          '<div class="discover-hero-sub">' + escHtml(hero.sub) + '</div>' +
+        '</div>' +
       '</div>' +
       '<div class="discover-section">' +
         '<div class="discover-section-label">popular searches</div>' +
@@ -13866,7 +13890,36 @@ function applyBoardTemplate(template) {
     if (!grid || grid.querySelector('#discover-landing')) return;
     const es = grid.querySelector('.empty-state');
     if (es) es.style.display = 'none';
-    grid.insertAdjacentHTML('afterbegin', buildHTML());
+
+    // Insert with whatever we have (may be no images yet while fetch completes)
+    grid.insertAdjacentHTML('afterbegin', buildHTML(_imgPools));
+
+    // Fetch image pools if not yet loaded, then patch background-images in place
+    if (!_imgPools) {
+      fetch('data/homepage-images.json')
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(pools) {
+          if (!pools) return;
+          _imgPools = pools;
+          // Patch hero background
+          var heroEl = document.querySelector('.discover-hero');
+          if (heroEl && !heroEl.style.backgroundImage) {
+            var hero = getHeroOfDay();
+            var img = pickFromPool(pools.heroes, hero.imgKey, 0);
+            if (img) heroEl.style.backgroundImage = 'url(\'' + img.replace(/'/g, "\\'") + '\')';
+          }
+          // Patch category backgrounds
+          document.querySelectorAll('.discover-cat').forEach(function(btn, idx) {
+            if (!btn.style.backgroundImage) {
+              var cat = CATEGORIES[idx];
+              if (!cat) return;
+              var img = pickFromPool(pools.categories, cat.name, idx + 1);
+              if (img) btn.style.backgroundImage = 'url(\'' + img.replace(/'/g, "\\'") + '\')';
+            }
+          });
+        })
+        .catch(function() {});
+    }
   }
 
   // Delegate clicks inside #image-grid for discover elements
