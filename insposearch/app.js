@@ -295,6 +295,7 @@ const STATE = {
 
 // Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
 const _secondaryControllers = new Set();
+let _realRenderGrid = null;
 
 const ONBOARDING_TERMS = ['shadow', 'texture', 'light', 'ruins'];
 
@@ -1859,6 +1860,26 @@ async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
   }
 }
 
+/* Per-source adaptive timeout: tracks avg response time and tightens deadline */
+const _sourceTimings = {};
+function sourceFetch(url, opts = {}, sourceName) {
+  const timing = _sourceTimings[sourceName];
+  const timeout = timing
+    ? Math.min(5000, Math.max(2000, Math.round(timing.avg * 2)))
+    : CONSTANTS.FETCH_TIMEOUT;
+  const start = performance.now();
+  return safeFetch(url, opts, timeout).then(res => {
+    const elapsed = performance.now() - start;
+    if (!_sourceTimings[sourceName]) _sourceTimings[sourceName] = { avg: elapsed, count: 1 };
+    else {
+      const t = _sourceTimings[sourceName];
+      t.avg = (t.avg * t.count + elapsed) / (t.count + 1);
+      t.count = Math.min(t.count + 1, 20);
+    }
+    return res;
+  });
+}
+
 // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
 async function fetchFromDataCache(sourceId, keyword) {
   try {
@@ -1946,6 +1967,23 @@ function createSourceIdentity(sourceId, labelText) {
   return wrapper;
 }
 
+/* Trigram similarity (0–1) for fuzzy matching */
+function trigramSimilarity(a, b) {
+  if (!a || !b) return 0;
+  a = a.toLowerCase(); b = b.toLowerCase();
+  if (a === b) return 1;
+  const trigrams = s => {
+    const t = new Set();
+    const padded = '  ' + s + ' ';
+    for (let i = 0; i < padded.length - 2; i++) t.add(padded.slice(i, i + 3));
+    return t;
+  };
+  const tA = trigrams(a), tB = trigrams(b);
+  let matches = 0;
+  for (const t of tA) if (tB.has(t)) matches++;
+  return matches / Math.max(tA.size, tB.size);
+}
+
 function scoreItemRelevance(item, query) {
   const q = (query || '').toLowerCase().trim();
   if (!q) return 0;
@@ -1968,12 +2006,51 @@ function scoreItemRelevance(item, query) {
   });
 
   if (terms.length > 1 && termMatches === terms.length) score += 4;
+  if (score === 0 && query) {
+    const hay = `${title} ${desc} ${tags}`;
+    const words = hay.split(/\s+/);
+    for (const term of terms) {
+      for (const word of words) {
+        if (trigramSimilarity(term, word) > 0.55) { score += 1; break; }
+      }
+    }
+  }
   return score;
 }
 
+/* Seeded PRNG (mulberry32) — deterministic shuffle for stable card order */
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function seededShuffle(arr, rng) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function queryToSeed(query) {
+  let h = 0;
+  for (let i = 0; i < query.length; i++) {
+    h = ((h << 5) - h + query.charCodeAt(i)) | 0;
+  }
+  return h;
+}
+
+/* Cache of last shuffled display order so slider re-slicing doesn't reshuffle */
+let _lastDisplayOrder = [];
+
 function getDisplayResults(items, query) {
   const base = Array.isArray(items) ? [...items] : [];
-  if (!base.length) return [];
+  if (!base.length) { _lastDisplayOrder = []; return []; }
 
   if (STATE.searchMode === 'exact') {
     const terms = (query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -1988,18 +2065,20 @@ function getDisplayResults(items, query) {
       .filter(x => x.score > 0)
       .sort((a, b) => b.score - a.score)
       .map(x => x.item);
+    _lastDisplayOrder = ranked;
     return ranked.slice(0, STATE.imageCount);
   }
 
-  // Fair round-robin: group by source, then interleave, then shuffle within rows
+  // Fair round-robin: group by source, then interleave with seeded shuffle
   const buckets = {};
   for (const item of base) {
     const s = item.source || 'unknown';
     (buckets[s] || (buckets[s] = [])).push(item);
   }
-  // Shuffle within each bucket for variety
-  const arrays = Object.values(buckets).map(arr => shuffle(arr));
-  return interleave(arrays).slice(0, STATE.imageCount);
+  const rng = mulberry32(queryToSeed(query || ''));
+  const arrays = Object.values(buckets).map(arr => seededShuffle(arr, rng));
+  _lastDisplayOrder = interleave(arrays);
+  return _lastDisplayOrder.slice(0, STATE.imageCount);
 }
 
 function showQuietTip(targetId, text, tipKey) {
@@ -6510,6 +6589,7 @@ function renderGrid(items) {
   }
   flush();
 }
+_realRenderGrid = renderGrid;
 
 /* ── Delegated event listeners on #image-grid ── */
 (function setupGridDelegation() {
@@ -6964,7 +7044,7 @@ function toggleSelection(item) {
 }
 
 /* -- Panel close button -- */
-document.getElementById('panel-close').addEventListener('click', () => {
+document.getElementById('panel-close')?.addEventListener('click', () => {
   // Deselect all
   STATE.selected = [];
   document.querySelectorAll('.image-card.selected').forEach(c => c.classList.remove('selected'));
@@ -6975,7 +7055,7 @@ document.getElementById('panel-close').addEventListener('click', () => {
   if (_fabricCanvas) setTimeout(positionFabricOverlay, 420);
 });
 
-document.getElementById('analyse-btn').addEventListener('click', () => {
+document.getElementById('analyse-btn')?.addEventListener('click', () => {
   runGeminiOnSelected();
 });
 
@@ -6991,7 +7071,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* -- Arrow key navigation within image grid -- */
-document.getElementById('image-grid').addEventListener('keydown', (e) => {
+document.getElementById('image-grid')?.addEventListener('keydown', (e) => {
   if (!['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)) return;
   const cards = [...document.querySelectorAll('.image-card')];
   if (!cards.length) return;
@@ -7406,19 +7486,19 @@ function hideFloatingBar() {
   STATE.floatingBarVisible = false;
 }
 
-document.getElementById('connect-btn').addEventListener('click', () => {
+document.getElementById('connect-btn')?.addEventListener('click', () => {
   if (STATE.selected.length < 2) return;
   runConnect();
 });
 
-document.getElementById('interpret-btn').addEventListener('click', () => {
+document.getElementById('interpret-btn')?.addEventListener('click', () => {
   if (STATE.selected.length < 2) return;
   if (!(STATE.geminiKey || STATE.claudeKey || STATE.openaiKey)) return;
   runInterpret();
 });
 
 /* -- Clear All: clear selections and hide bar -- */
-document.getElementById('bar-clear-btn').addEventListener('click', (e) => {
+document.getElementById('bar-clear-btn')?.addEventListener('click', (e) => {
   e.stopPropagation();
   // Remove visual selection from cards
   document.querySelectorAll('.image-card.selected')
@@ -7452,7 +7532,7 @@ document.getElementById('bar-clear-btn').addEventListener('click', (e) => {
 });
 
 /* -- Close button: hide bar entirely -- */
-document.getElementById('bar-close-btn').addEventListener('click', () => {
+document.getElementById('bar-close-btn')?.addEventListener('click', () => {
   const bar = document.getElementById('floating-bar');
   bar.classList.add('bar-hidden');
   bar.classList.remove('visible');
@@ -7463,7 +7543,7 @@ document.getElementById('bar-close-btn').addEventListener('click', () => {
 });
 
 /* -- Sidebar toggle: bring back floating bar -- */
-document.getElementById('btn-bar-toggle').addEventListener('click', () => {
+document.getElementById('btn-bar-toggle')?.addEventListener('click', () => {
   STATE.floatingBarHidden = false;
   const bar = document.getElementById('floating-bar');
   bar.classList.remove('bar-hidden');
@@ -7510,7 +7590,7 @@ document.getElementById('btn-bar-toggle').addEventListener('click', () => {
   });
 })();
 
-document.getElementById('strip-clear-btn').addEventListener('click', () => {
+document.getElementById('strip-clear-btn')?.addEventListener('click', () => {
   // Instantly hide bar
   const bar = document.getElementById('floating-bar');
   bar.classList.add('bar-hidden');
@@ -7552,7 +7632,7 @@ function buildFuseIndex() {
 }
 
 let _fuseFilterTimer = null;
-document.getElementById('local-filter').addEventListener('input', (e) => {
+document.getElementById('local-filter')?.addEventListener('input', (e) => {
   clearTimeout(_fuseFilterTimer);
   _fuseFilterTimer = setTimeout(() => {
     const val = e.target.value.trim();
@@ -7884,19 +7964,34 @@ async function runSearch(query, forceRefresh = false) {
     }).catch(() => {});
   }
 
-  // 150 ms first-paint buffer — batch early results before any card appears
+  // Two-wave progressive render: flush at 80ms or 12+ items, full restore at 300ms
   const _rrg = renderGrid;
   let _buf = [];
-  const _batchTimer = setTimeout(() => {
-    renderGrid = _rrg;
-    if (_buf.length) _rrg(_buf.splice(0));
-  }, 150);
-  const _restore = () => {
-    clearTimeout(_batchTimer);
-    renderGrid = _rrg;
-    if (_buf.length) _rrg(_buf.splice(0));
+  let _restored = false;
+  const _flush = () => {
+    if (_buf.length) { _rrg(_buf.splice(0)); }
   };
-  renderGrid = items => _buf.push(...items);
+  const _fastTimer = setTimeout(_flush, 80);
+  const _batchTimer = setTimeout(() => {
+    clearTimeout(_fastTimer);
+    _restored = true;
+    renderGrid = _rrg;
+    _flush();
+  }, 300);
+  const _restore = () => {
+    clearTimeout(_fastTimer);
+    clearTimeout(_batchTimer);
+    _restored = true;
+    renderGrid = _rrg;
+    _flush();
+  };
+  renderGrid = items => {
+    _buf.push(...items);
+    if (!_restored && _buf.length >= 12) {
+      clearTimeout(_fastTimer);
+      _flush();
+    }
+  };
 
   // Check cache
   hideCacheIndicator();
@@ -8079,6 +8174,7 @@ _searchInputEl.addEventListener('focus', () => {
 
 _searchInputEl.addEventListener('input', () => {
   renderSearchHistory(_searchInputEl.value.trim());
+  if (STATE.autoSearch && typeof debouncedAutoSearch === 'function') debouncedAutoSearch(_searchInputEl.value);
 });
 
 // Dismiss on Escape
@@ -8087,7 +8183,7 @@ _searchInputEl.addEventListener('keydown', e => {
 });
 
 // Click a history item
-document.getElementById('search-history-dropdown').addEventListener('mousedown', e => {
+document.getElementById('search-history-dropdown')?.addEventListener('mousedown', e => {
   // mousedown fires before blur, so we can grab the value before input loses focus
   const btn = e.target.closest('.search-history-item');
   if (!btn) return;
@@ -8139,7 +8235,7 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Search — Enter key
-document.getElementById('search-input').addEventListener('keydown', e => {
+document.getElementById('search-input')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     const q = e.target.value.trim();
     // If 2+ images selected and input empty: run connect instead of normal search
@@ -8152,7 +8248,7 @@ document.getElementById('search-input').addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('btn-search-mode').addEventListener('click', () => {
+document.getElementById('btn-search-mode')?.addEventListener('click', () => {
   setSearchMode(STATE.searchMode === 'explore' ? 'exact' : 'explore');
 });
 
@@ -8164,12 +8260,12 @@ document.addEventListener('keydown', e => {
 });
 
 // Refresh cache button
-document.getElementById('btn-refresh-cache').addEventListener('click', () => {
+document.getElementById('btn-refresh-cache')?.addEventListener('click', () => {
   if (STATE.query) runSearch(STATE.query, true);
 });
 
 // Load more
-document.getElementById('btn-load-more').addEventListener('click', fetchMoreResults);
+document.getElementById('btn-load-more')?.addEventListener('click', fetchMoreResults);
 
 // Prefetch keywords while typing (400 ms debounce)
 const debouncedPrefetch = debounce(async q => {
@@ -8193,11 +8289,25 @@ countSlider.addEventListener('input', () => {
 });
 
 const debouncedRerender = debounce(() => {
-  if (STATE.results.length > 0) {
-    clearGrid();
-    const final = getDisplayResults(STATE.results, STATE.query);
-    renderGrid(final);
+  if (STATE.results.length <= 0 || !_lastDisplayOrder.length) return;
+  const target = _lastDisplayOrder.slice(0, STATE.imageCount);
+  const grid = document.getElementById('image-grid');
+  const currentCards = grid.querySelectorAll('.image-card');
+  const currentCount = currentCards.length;
+  const targetCount = target.length;
+
+  if (targetCount > currentCount) {
+    const toAdd = target.slice(currentCount);
+    (_realRenderGrid || renderGrid)(toAdd);
+  } else if (targetCount < currentCount) {
+    for (let i = currentCount - 1; i >= targetCount; i--) {
+      const card = currentCards[i];
+      const itemId = card?.dataset?.id;
+      if (itemId) { renderedIds.delete(itemId); _gridItemMap.delete(itemId); }
+      card?.remove();
+    }
   }
+  updateLoadMoreLabel();
 }, CONSTANTS.DEBOUNCE_SLIDER);
 
 countSlider.addEventListener('input', debouncedRerender);
@@ -8525,9 +8635,9 @@ function switchView(newView) {
   }, 200);
 }
 
-document.getElementById('btn-grid').addEventListener('click',  () => switchView('grid'));
-document.getElementById('btn-board').addEventListener('click', () => toggleBoardOverlay());
-document.getElementById('btn-3d').addEventListener('click',    () => switchView('3d'));
+document.getElementById('btn-grid')?.addEventListener('click',  () => switchView('grid'));
+document.getElementById('btn-board')?.addEventListener('click', () => toggleBoardOverlay());
+document.getElementById('btn-3d')?.addEventListener('click',    () => switchView('3d'));
 
 // Initialise active state on load
 setActiveViewBtn('grid');
@@ -8735,7 +8845,7 @@ function createBoardCard(item, x, y, container, w = 200) {
 }
 
 // Export board as PNG
-document.getElementById('btn-export').addEventListener('click', async () => {
+document.getElementById('btn-export')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-export');
   btn.textContent = 'exporting...';
   btn.disabled = true;
@@ -12340,10 +12450,6 @@ const debouncedAutoSearch = debounce(q => {
   if (!STATE.autoSearch || !q.trim() || q.trim() === STATE.query) return;
   runSearch(q.trim());
 }, 800);
-
-document.getElementById('search-input').addEventListener('input', e => {
-  if (STATE.autoSearch) debouncedAutoSearch(e.target.value);
-});
 
 /* -- Remember last query on Enter -- */
 document.getElementById('search-input').addEventListener('keydown', e => {

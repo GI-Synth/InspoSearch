@@ -578,24 +578,27 @@ html, body {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 1px;
+  height: 3px;
   background: var(--line-strong);
   outline: none;
   cursor: pointer;
+  padding: 8px 0;
+  box-sizing: content-box;
+  background-clip: content-box;
 }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   background: var(--ink);
   cursor: pointer;
   border-radius: 0;
 }
 
 .slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   background: var(--ink);
   cursor: pointer;
   border-radius: 0;
