@@ -260,6 +260,7 @@ const STATE = {
   smithsonianKey:      null,    // string | null (localStorage)
   pexelsKey:           null,    // string | null (localStorage)
   pixabayKey:          null,    // string | null (localStorage)
+  flickrKey:           null,    // string | null (localStorage)
   troveKey:            null,    // string | null (localStorage)
   digitalnzKey:        null,    // string | null (localStorage)
   dplaKey:             null,    // string | null (localStorage)
@@ -702,6 +703,7 @@ STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')      || null;
 STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key')  || null;
 STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')       || null;
 STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')      || null;
+STATE.flickrKey      = localStorage.getItem('inspo_flickr_key')       || null;
 STATE.troveKey       = localStorage.getItem('inspo_trove_key')        || null;
 STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')    || null;
 STATE.dplaKey        = localStorage.getItem('inspo_dpla_key')         || null;
@@ -2996,9 +2998,10 @@ async function fetchVA(keyword, limit, signal) {
 }
 
 async function fetchFlickrCommons(keyword, limit, signal) {
+  if (!STATE.flickrKey) return [];
   try {
     const res = await safeFetch(
-      `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=a6d819499131071f21efa8a74b2accc8&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&sort=relevance`,
+      `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${STATE.flickrKey}&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&sort=relevance`,
       { signal }
     );
     if (!res.ok) throw new Error('Flickr failed');
@@ -9922,10 +9925,10 @@ const KEY_SOURCES = [
     name:      'Flickr Commons',
     desc:      'public domain photography, Creative Commons',
     imageCount: 500000,
-    alwaysOn:  true,
-    stateKey:  null,
-    storageKey: null,
-    getKeyUrl: null,
+    alwaysOn:  false,
+    stateKey:  'flickrKey',
+    storageKey: 'inspo_flickr_key',
+    getKeyUrl: 'https://www.flickr.com/services/api/keys/',
   },
   {
     id:        'rijks',
@@ -11653,6 +11656,7 @@ document.getElementById('keys-import-input').addEventListener('change', e => {
       STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key') || null;
       STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')      || null;
       STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
+      STATE.flickrKey      = localStorage.getItem('inspo_flickr_key')      || null;
       STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
       STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
       STATE.ddbKey          = localStorage.getItem('inspo_ddb_key')          || null;
@@ -12421,6 +12425,7 @@ document.getElementById('settings-import-input').addEventListener('change', e =>
       STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key') || null;
       STATE.pexelsKey      = localStorage.getItem('inspo_pexels_key')      || null;
       STATE.pixabayKey     = localStorage.getItem('inspo_pixabay_key')     || null;
+      STATE.flickrKey      = localStorage.getItem('inspo_flickr_key')      || null;
       STATE.troveKey       = localStorage.getItem('inspo_trove_key')       || null;
       STATE.digitalnzKey   = localStorage.getItem('inspo_digitalnz_key')   || null;
       STATE.ddbKey          = localStorage.getItem('inspo_ddb_key')          || null;
