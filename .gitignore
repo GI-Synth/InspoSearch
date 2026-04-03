@@ -14,3 +14,12 @@ Thumbs.db
 # Editor
 .vscode/
 *.swp
+
+# Build artifacts
+insposearch/app.js.map
+insposearch/app.monolith.js
+
+# AI / dev notes
+VERIFICATION-SUMMARY.md
+SEARCH_IMPROVEMENTS.md
+scripts/analyze-deps.cjs

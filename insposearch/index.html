@@ -36,6 +36,16 @@
   </script>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data: blob:; connect-src *; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline';">
 
+  <!-- API endpoint preconnect hints — eliminates cold TCP+TLS on first-wave fetches -->
+  <link rel="preconnect" href="https://commons.wikimedia.org">
+  <link rel="preconnect" href="https://collectionapi.metmuseum.org">
+  <link rel="preconnect" href="https://api.artic.edu">
+  <link rel="preconnect" href="https://api.gbif.org">
+  <link rel="preconnect" href="https://archive.org">
+  <link rel="preconnect" href="https://openaccess-api.clevelandart.org">
+  <link rel="preconnect" href="https://api.vam.ac.uk">
+  <link rel="preconnect" href="https://api.inaturalist.org">
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

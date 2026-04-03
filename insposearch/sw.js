@@ -1,6 +1,6 @@
 /* InspoSearch Service Worker — static asset cache + stale-while-revalidate */
 /* Cache version — update on each deploy (build script or manual) */
-const CACHE_VERSION = '20260401h';
+const CACHE_VERSION = '20260403a';
 const CACHE_NAME = 'inspo-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
@@ -60,17 +60,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // For API calls (external), use network-first strategy
+  // For API calls (external), use network-only — localStorage handles TTL/LRU caching.
+  // Caching API responses in the SW cache here caused unbounded growth with no TTL/eviction.
   if (url.origin !== location.origin) {
     event.respondWith(
       fetch(event.request)
-        .then(response => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        })
         .catch(() => caches.match(event.request))
     );
     return;
