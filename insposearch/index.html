@@ -99,11 +99,12 @@
             enterkeyhint="search"
             spellcheck="false"
             aria-label="search images"
+            data-i18n-placeholder="searchPlaceholder"
           >
         </div>
         <div class="search-row search-row--controls">
-          <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)" aria-label="search mode: explore">explore</button>
-          <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search" aria-label="open advanced search">advanced</button>
+          <button id="btn-search-mode" class="search-mode-toggle" title="toggle explore / exact (Ctrl/Cmd+Shift+E)" aria-label="search mode: explore" data-i18n="explore">explore</button>
+          <button id="btn-advanced-search" class="search-mode-toggle" title="advanced search" aria-label="open advanced search" data-i18n="advanced">advanced</button>
         </div>
         <div id="search-history-dropdown" class="search-history-dropdown" hidden role="listbox" aria-label="search history"></div>
         <div id="loading-indicator" class="loading-indicator" role="status" aria-live="polite"></div>
@@ -123,6 +124,7 @@
           autocapitalize="off"
           autocorrect="off"
           spellcheck="false"
+          data-i18n-placeholder="filterPlaceholder"
           style="
             width: 100%;
             padding: 5px 8px;
@@ -168,9 +170,9 @@
       <div class="sidebar-section">
         <span class="section-label">view</span>
         <div class="btn-group" role="radiogroup" aria-label="view mode">
-          <button class="btn active" id="btn-grid" role="radio" aria-checked="true" aria-label="grid view">grid</button>
-          <button class="btn" id="btn-board" role="radio" aria-checked="false" aria-label="moodboard view">board</button>
-          <button class="btn" id="btn-3d" role="radio" aria-checked="false" aria-label="3D gallery view">3d</button>
+          <button class="btn active" id="btn-grid" role="radio" aria-checked="true" aria-label="grid view" data-i18n="grid">grid</button>
+          <button class="btn" id="btn-board" role="radio" aria-checked="false" aria-label="moodboard view" data-i18n="board">board</button>
+          <button class="btn" id="btn-3d" role="radio" aria-checked="false" aria-label="3D gallery view" data-i18n="threeD">3d</button>
         </div>
       </div>
 
@@ -195,8 +197,8 @@
 
       <!-- B&W mode toggle + Sketch draw toggle -->
       <div class="sidebar-section" style="display:flex;gap:6px;">
-        <button class="btn" id="btn-bw" style="flex:1;">b&w</button>
-        <button class="btn" id="btn-sketch" style="flex:1;">sketch</button>
+        <button class="btn" id="btn-bw" style="flex:1;" data-i18n="bw">b&w</button>
+        <button class="btn" id="btn-sketch" style="flex:1;" data-i18n="sketch">sketch</button>
       </div>
 
       <!-- Show floating bar toggle (hidden by default) -->
@@ -208,7 +210,7 @@
 
       <!-- AI Chat button -->
       <div class="sidebar-section">
-        <button class="btn" id="btn-ai-chat">✦ chat</button>
+        <button class="btn" id="btn-ai-chat" data-i18n="chat">✦ chat</button>
       </div>
 
       <div class="divider"></div>
@@ -225,14 +227,14 @@
       <div class="sidebar-spacer"></div>
 
       <!-- Institutions link -->
-      <a href="institutions" id="btn-institutions" class="btn btn-sidebar-link" style="display:block;text-align:center;font-size:9px;letter-spacing:0.08em;margin:4px 0;">institutions</a>
+      <a href="institutions" id="btn-institutions" class="btn btn-sidebar-link" style="display:block;text-align:center;font-size:9px;letter-spacing:0.08em;margin:4px 0;" data-i18n="institutions">institutions</a>
 
       <!-- Help / onboarding button -->
       <button class="btn-help" id="btn-help" title="how to use insposearch" aria-label="help and keyboard shortcuts">?</button>
 
       <!-- API keys toggle button (pinned to bottom) -->
       <button class="btn btn-keys" id="btn-keys">
-        api keys
+        <span data-i18n="apiKeys">api keys</span>
         <span class="btn-keys-dot" id="keys-dot" style="display:none;"></span>
       </button>
 
@@ -333,7 +335,7 @@
 
       <!-- Load more -->
       <div id="more-container">
-        <button class="btn" id="btn-load-more">load more</button>
+        <button class="btn" id="btn-load-more" data-i18n="loadMore">load more</button>
       </div>
 
       <!-- 3D view — activated by JS -->
@@ -399,7 +401,7 @@
         <button class="panel-close" id="panel-close">×</button>
       </div>
 
-      <div id="panel-empty-hint" class="panel-empty-hint">click any image to begin</div>
+      <div id="panel-empty-hint" class="panel-empty-hint" data-i18n="panelHint">click any image to begin</div>
 
       <!-- Palette / color swatches -->
       <div class="panel-section" id="panel-colors">
@@ -532,6 +534,18 @@
 
       <!-- APPEARANCE -->
       <div class="section-label">appearance</div>
+
+      <div class="settings-toggle-row">
+        <span class="settings-row-label" data-i18n="language">language</span>
+        <select id="settings-language" style="font-family:var(--font-ui);font-size:10px;letter-spacing:0.04em;background:var(--bg-input);color:var(--ink);border:1px solid var(--line);padding:3px 6px;cursor:pointer;">
+          <option value="en">english</option>
+          <option value="fr">français</option>
+          <option value="de">deutsch</option>
+          <option value="es">español</option>
+          <option value="nl">nederlands</option>
+          <option value="it">italiano</option>
+        </select>
+      </div>
 
       <div class="settings-toggle-row">
         <span class="settings-row-label">theme</span>
@@ -699,7 +713,7 @@
   <div id="adv-search-overlay" class="adv-overlay" style="display:none;">
     <div class="adv-panel">
       <div class="adv-header">
-        <span class="adv-title">advanced search</span>
+        <span class="adv-title" data-i18n="advancedSearch">advanced search</span>
         <button id="adv-close" class="adv-close">&times;</button>
       </div>
 
@@ -833,8 +847,8 @@
       </div>
 
       <div class="adv-footer">
-        <button id="adv-reset" class="adv-btn">reset</button>
-        <button id="adv-run" class="adv-btn adv-btn--primary">search</button>
+        <button id="adv-reset" class="adv-btn" data-i18n="reset">reset</button>
+        <button id="adv-run" class="adv-btn adv-btn--primary" data-i18n="apply">search</button>
       </div>
     </div>
   </div>
