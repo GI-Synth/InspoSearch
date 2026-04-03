@@ -1,6 +1,7 @@
 ﻿/* ============================================================
    app.js — Fetch orchestration, rendering, search, UI, events, features
    ============================================================ */
+import { t as tr, initLocale, setLocale, getLocale, applyI18n, SUPPORTED_LOCALES } from './i18n.js';
 import {
   ADAPTERS, ALL_SOURCES, BADGE_META, CONSTANTS, DPLA_HUBS, DYNAMIC_REGISTRY,
   EUROPEANA_PROVIDERS, KEY_SOURCES, SI_UNITS, SOURCE_DOMAINS, SOURCE_GROUPS,
@@ -65,6 +66,10 @@ import {
   fetchWereldculturen, fetchWhitney, fetchWikiArt, fetchWikidata,
   fetchWikimedia, fetchWikimediaCategory, fetchYale
 } from './fetchers.js';
+
+// ── i18n: detect/restore locale and apply translations to DOM ──────────────
+initLocale();
+applyI18n();
 
 export async function fetchAll(keywords, totalCount, isSilent = false) {
   // isSilent = true means background/cross-ref call — don't cancel existing requests
@@ -461,7 +466,7 @@ export function showDidYouMean(suggestion) {
     const canvas = document.getElementById('canvas');
     if (canvas) canvas.insertBefore(el, canvas.firstChild);
   }
-  el.innerHTML = `did you mean <button style="background:none;border:none;color:var(--accent,#C8B89A);cursor:pointer;font-family:var(--font-ui);font-size:11px;letter-spacing:0.04em;text-decoration:underline;padding:0;" id="dym-btn">${suggestion}</button>?`;
+  el.innerHTML = `${tr('didYouMean')} <button style="background:none;border:none;color:var(--accent,#C8B89A);cursor:pointer;font-family:var(--font-ui);font-size:11px;letter-spacing:0.04em;text-decoration:underline;padding:0;" id="dym-btn">${suggestion}</button>?`;
   el.style.display = 'flex';
   document.getElementById('dym-btn')?.addEventListener('click', () => {
     document.getElementById('search-input').value = suggestion;
@@ -928,7 +933,7 @@ export function renderPanelTags(tags) {
 /* -- Render related explore links -- */
 export async function renderRelated(tags) {
   const container = document.getElementById('related-container');
-  container.innerHTML = '<span class="loading-indicator" style="animation:none;opacity:0.5;">loading...</span>';
+  container.innerHTML = '<span class="loading-indicator" style="animation:none;opacity:0.5;">' + tr('loading') + '</span>';
 
   const topTags = tags.slice(0, 3);
   const results = await Promise.allSettled(topTags.map(t => getRelated(t)));
@@ -2242,7 +2247,7 @@ export async function trySpellingSuggestion(query) {
       document.getElementById('search-input').value = suggestion;
       runSearch(suggestion);
     });
-    hint.append('did you mean: ', btn, '?');
+    hint.append(tr('didYouMean') + ': ', btn, '?');
     emptyState.appendChild(hint);
   } catch (_) {}
 }
@@ -2368,7 +2373,7 @@ export const countLabel  = document.getElementById('count-label');
 
 countSlider.addEventListener('input', () => {
   STATE.imageCount = parseInt(countSlider.value, 10);
-  countLabel.textContent = STATE.imageCount + ' images';
+  countLabel.textContent = STATE.imageCount + ' ' + tr('images');
   updateLoadMoreLabel();
 });
 
@@ -5144,6 +5149,9 @@ export function updateSettingsPanelUI() {
     }
   }
   updateSettingsCacheStatus();
+  // Sync language selector to current locale
+  var langSel2 = document.getElementById('settings-language');
+  if (langSel2) langSel2.value = getLocale();
 }
 
 export function loadSettings() {
@@ -5180,6 +5188,23 @@ document.getElementById('btn-settings')?.addEventListener('click', () => {
 document.getElementById('settings-panel-close')?.addEventListener('click', () => {
   document.getElementById('settings-panel')?.classList.remove('open');
 });
+
+/* -- Language selector -- */
+(function () {
+  var langSel = document.getElementById('settings-language');
+  if (!langSel) return;
+  // Restore current locale in selector
+  langSel.value = getLocale();
+  langSel.addEventListener('change', function () {
+    setLocale(langSel.value);
+    // Re-apply count label since it contains a translated word
+    var cl = document.getElementById('count-label');
+    if (cl) {
+      var n = parseInt(document.getElementById('count-slider')?.value || '24', 10);
+      cl.textContent = n + ' ' + tr('images');
+    }
+  });
+})();
 
 /* -- Theme: shared applier -- */
 export function applyThemePref(pref) {
@@ -7458,9 +7483,9 @@ export function applyBoardTemplate(template) {
       '<div class="artist-panel">' +
         '<button class="artist-panel-close">&times;</button>' +
         '<div class="artist-panel-name">' + esc(artistName) + '</div>' +
-        '<div class="artist-panel-meta" id="artist-meta">loading...</div>' +
+        '<div class="artist-panel-meta" id="artist-meta">' + tr('loading') + '</div>' +
         '<div class="artist-panel-works">' + thumbsHTML + '</div>' +
-        '<button class="artist-panel-search">search all works by ' + esc(artistName) + '</button>' +
+        '<button class="artist-panel-search">' + tr('searchAllBy') + ' ' + esc(artistName) + '</button>' +
       '</div>';
     document.body.appendChild(overlay);
 
@@ -7479,11 +7504,11 @@ export function applyBoardTemplate(template) {
     fetchWikidata(artistName).then(function (info) {
       var meta = document.getElementById('artist-meta');
       if (!meta) return;
-      if (!info) { meta.textContent = works.length + ' works in results'; return; }
+      if (!info) { meta.textContent = works.length + ' ' + tr('worksInResults'); return; }
       var parts = [];
       if (info.description) parts.push(info.description);
       if (info.birth) parts.push((info.birth || '?') + ' \u2013 ' + (info.death || 'present'));
-      parts.push(works.length + ' works in results');
+      parts.push(works.length + ' ' + tr('worksInResults'));
       meta.textContent = parts.join(' \u00B7 ');
     });
   }
