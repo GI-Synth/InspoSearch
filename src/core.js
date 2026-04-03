@@ -694,14 +694,33 @@ export let getDisplayResults = function getDisplayResults(items, query) {
     return ranked.slice(0, STATE.imageCount);
   }
 
-  // Fair round-robin: group by source, then interleave with seeded shuffle
+  // Explore mode: group by source, sort within each bucket by relevance,
+  // then interleave so every source contributes but best matches come first.
   const buckets = {};
   for (const item of base) {
     const s = item.source || 'unknown';
     (buckets[s] || (buckets[s] = [])).push(item);
   }
   const rng = mulberry32(queryToSeed(query || ''));
-  const arrays = Object.values(buckets).map(arr => seededShuffle(arr, rng));
+  const arrays = Object.values(buckets).map(arr => {
+    if (query) {
+      // Sort by relevance score descending within each source bucket
+      arr.sort((a, b) => scoreItemRelevance(b, query) - scoreItemRelevance(a, query));
+      // Seeded-shuffle only among items with equal score (stability)
+      let start = 0;
+      while (start < arr.length) {
+        let end = start + 1;
+        const s = scoreItemRelevance(arr[start], query);
+        while (end < arr.length && scoreItemRelevance(arr[end], query) === s) end++;
+        const group = arr.slice(start, end);
+        const shuffled = seededShuffle(group, rng);
+        arr.splice(start, group.length, ...shuffled);
+        start = end;
+      }
+      return arr;
+    }
+    return seededShuffle(arr, rng);
+  });
   _lastDisplayOrder = interleave(arrays);
   return _lastDisplayOrder.slice(0, STATE.imageCount);
 }
@@ -873,6 +892,63 @@ export function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+/* ============================================================
+   SPELL CHECK — "Did you mean?"
+   Uses Datamuse sp= endpoint to suggest a correction when a
+   single-word query looks misspelled.
+============================================================ */
+export async function spellCheck(query) {
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return null;
+  // Only check the first word — cheap and usually enough
+  const word = words[0].toLowerCase().replace(/[^a-z]/g, '');
+  if (word.length < 4) return null;  // skip short words
+  try {
+    const res = await safeFetch(
+      `https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&max=1`,
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) return null;
+    const suggestion = data[0].word;
+    if (!suggestion || suggestion === word) return null;
+    // Return the full query with the first word replaced
+    return [suggestion, ...words.slice(1)].join(' ');
+  } catch { return null; }
+}
+
+/* ============================================================
+   PERCEPTUAL HASH — cross-source duplicate detection
+   Computes an 8×8 average hash (aHash) on a loaded <img>.
+   Two images with Hamming distance < PHASH_THRESHOLD are
+   considered visually identical duplicates.
+============================================================ */
+export const PHASH_THRESHOLD = 10; // out of 64 bits
+
+export function computePHash(imgEl) {
+  try {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 8;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(imgEl, 0, 0, 8, 8);
+    const data = ctx.getImageData(0, 0, 8, 8).data;
+    const grays = [];
+    for (let i = 0; i < 64; i++) {
+      grays.push((data[i * 4] + data[i * 4 + 1] + data[i * 4 + 2]) / 3);
+    }
+    const mean = grays.reduce((a, b) => a + b, 0) / 64;
+    return grays.map(g => g >= mean ? 1 : 0);
+  } catch { return null; }
+}
+
+export function pHashDistance(a, b) {
+  if (!a || !b || a.length !== b.length) return 64;
+  let dist = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) dist++;
+  return dist;
 }
 
 /* ── Setters for monkey-patchable bindings (used by app.js feature IIFEs) ── */

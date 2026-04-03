@@ -6,7 +6,7 @@ import {
   EUROPEANA_PROVIDERS, KEY_SOURCES, SI_UNITS, SOURCE_DOMAINS, SOURCE_GROUPS,
   SOURCE_META, STATE, WD_PHASE_H, WIKIMEDIA_CATS, _isBoardPopup,
   _realRenderGrid, _secondaryControllers, classifyQuery, filterNegativeTerms,
-  parseNegativeTerms, skipInExactMode, ONBOARDING_TERMS,
+  filterPhrases, parseNegativeTerms, skipInExactMode, ONBOARDING_TERMS,
   NATURE_QUERY_TERMS, SPACE_QUERY_TERMS, SEED_MAP,
   ARCHIVE_COLLECTIONS, WIKIMEDIA_CATS_EXTENDED, ART_QUERY_TERMS,
   classifyQueryExtended, classifyQueryV2,
@@ -30,7 +30,8 @@ import {
   interleave, shuffle, cacheKey, CACHE_TTL, CACHE_MAX_BYTES,
   disableGeminiButtons, SOURCE_VIEW_FILTER, sourceFetch, fetchFromDataCache,
   setScoreItemRelevance, setGetDisplayResults,
-  set_updateSourcesActiveCounterImmediate
+  set_updateSourcesActiveCounterImmediate,
+  spellCheck, computePHash, pHashDistance, PHASH_THRESHOLD
 } from './core.js';
 import {
   WD_PHASE_H_FETCHERS, expandKeywords,
@@ -402,10 +403,13 @@ export function checkFailedImages() {
 }
 
 export const renderedIds = new Set();
+// pHash seen set — reset on each new search, checked as each image loads
+export const _pHashSeen = new Set();
 export function clearGrid() {
   document.getElementById('image-grid').innerHTML = '';
   renderedIds.clear();
   _gridItemMap.clear();
+  _pHashSeen.clear();
 }
 
 /* -- IntersectionObserver for lazy image loading -- */
@@ -437,6 +441,63 @@ export function showEmptyState() {
         <span>try: texture / light / form / shadow</span>
       </div>`;
   }
+}
+
+/* ── "Did you mean?" banner ────────────────────────────────── */
+export function showDidYouMean(suggestion) {
+  let el = document.getElementById('did-you-mean');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'did-you-mean';
+    el.style.cssText = [
+      'position:sticky;top:0;z-index:20;',
+      'padding:7px 16px;',
+      'background:var(--bg-panel);',
+      'border-bottom:1px solid var(--line);',
+      'font-family:var(--font-ui);font-size:11px;',
+      'color:var(--ink-3);letter-spacing:0.04em;',
+      'display:flex;align-items:center;gap:8px;',
+    ].join('');
+    const canvas = document.getElementById('canvas');
+    if (canvas) canvas.insertBefore(el, canvas.firstChild);
+  }
+  el.innerHTML = `did you mean <button style="background:none;border:none;color:var(--accent,#C8B89A);cursor:pointer;font-family:var(--font-ui);font-size:11px;letter-spacing:0.04em;text-decoration:underline;padding:0;" id="dym-btn">${suggestion}</button>?`;
+  el.style.display = 'flex';
+  document.getElementById('dym-btn')?.addEventListener('click', () => {
+    document.getElementById('search-input').value = suggestion;
+    hideDidYouMean();
+    runSearch(suggestion);
+  });
+}
+export function hideDidYouMean() {
+  const el = document.getElementById('did-you-mean');
+  if (el) el.style.display = 'none';
+}
+
+/* ── License filter (post-fetch) ──────────────────────────── */
+// CC license info lives on item.license or item.rights if sources provide it.
+// Known CC0/public-domain source IDs — always pass the CC0 filter.
+const _CC0_SOURCES = new Set([
+  'met','nga','cleveland','chicago','rijksmuseum','lac','smk','nationalmuseumse',
+  'mia','lacma','walters','cooper-hewitt','cooperhewitt','ypm','carnegie',
+  'open-access','openaccess','smithsonian','picsum',
+]);
+export function applyLicenseFilter(items, filter) {
+  if (!filter || filter === 'any') return items;
+  return items.filter(item => {
+    const lic = (item.license || item.rights || '').toLowerCase();
+    const src = (item.source || '').toLowerCase();
+    if (filter === 'cc0') {
+      return _CC0_SOURCES.has(src) || lic.includes('cc0') || lic.includes('public domain') || lic.includes('pdm');
+    }
+    if (filter === 'cc-by') {
+      return lic.includes('cc') || lic.includes('creative commons') || _CC0_SOURCES.has(src);
+    }
+    if (filter === 'open') {
+      return lic.includes('cc') || lic.includes('public domain') || lic.includes('open') || lic.includes('pdm') || _CC0_SOURCES.has(src);
+    }
+    return true;
+  });
 }
 
 export function showOfflineState() {
@@ -488,7 +549,7 @@ export function renderGrid(items) {
 
     const img = document.createElement('img');
     img.dataset.src = item.thumb;  // deferred — loaded by IntersectionObserver
-    img.alt = item.title || '';
+    img.alt = [item.title, item.artist].filter(Boolean).join(' — ') || '';
     img.loading = 'lazy';
     img.crossOrigin = 'anonymous';
     img.onload  = () => {
@@ -519,6 +580,19 @@ export function renderGrid(items) {
       if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length && !window._hexPaletteMatch(item)) {
         card.style.display = 'none';
       }
+      // pHash dedup: hide this card if it's visually identical to an already-rendered image
+      if (!item._phash) {
+        item._phash = computePHash(img);
+      }
+      if (item._phash && _pHashSeen.size > 0) {
+        for (const seen of _pHashSeen) {
+          if (pHashDistance(item._phash, seen) < PHASH_THRESHOLD) {
+            card.style.display = 'none';
+            break;
+          }
+        }
+      }
+      if (item._phash) _pHashSeen.add(item._phash);
     };
     img.onerror = () => {
       // CORS blocked — retry without crossOrigin (image displays but no color sampling)
@@ -1235,6 +1309,7 @@ export function showReferenceStrip(images) {
 
     const img = document.createElement('img');
     img.src = item.thumb;
+    img.alt = [item.title, item.artist].filter(Boolean).join(' — ') || 'reference image';
     img.style.cssText = 'width:60px;height:60px;object-fit:cover;display:block;';
     img.title = item.title;
 
@@ -1416,6 +1491,7 @@ export function updateFloatingBar() {
   STATE.selected.slice(0, 5).forEach(item => {
     const img = document.createElement('img');
     img.src = item.thumb;
+    img.alt = [item.title, item.artist].filter(Boolean).join(' — ') || 'selected image';
     img.className = 'bar-thumb';
     img.title = item.title;
     img.addEventListener('click', () => toggleSelection(item));
@@ -1895,9 +1971,9 @@ export async function runSearch(query, forceRefresh = false) {
   STATE.imageCount = parseInt(document.getElementById('count-slider').value) || 24;
   STATE.query = query.trim();
 
-  // Parse negative terms: "marble NOT statue" → positive="marble", negatives=["statue"]
-  const { positive: _posQuery, negatives: _negTerms } = parseNegativeTerms(STATE.query);
-  // Use positive portion only for API calls; negatives filter results post-fetch
+  // Parse operators: -word, NOT word, "exact phrase"
+  const { positive: _posQuery, negatives: _negTerms, phrases: _phrases } = parseNegativeTerms(STATE.query);
+  // Use positive portion only for API calls; negatives/phrases filter results post-fetch
   const effectiveQuery = _posQuery || STATE.query;
 
   // Reset cross-ref mode on new text search
@@ -2038,17 +2114,36 @@ export async function runSearch(query, forceRefresh = false) {
   }
   // ────────────────────────────────────────────────────────────────────
 
-  // Apply negative-term post-filter
+  // Apply negative-term and phrase post-filters
   if (_negTerms.length) {
     STATE.results = filterNegativeTerms(STATE.results, _negTerms);
+  }
+  if (_phrases.length) {
+    STATE.results = filterPhrases(STATE.results, _phrases);
+  }
+  // Apply license filter if set by advanced search
+  if (STATE._licenseFilter) {
+    STATE.results = applyLicenseFilter(STATE.results, STATE._licenseFilter);
   }
 
   clearGrid();
   const visible = getDisplayResults(STATE.results, effectiveQuery);
-  if (visible.length) renderGrid(visible);
-  else {
+  if (visible.length) {
+    renderGrid(visible);
+    // "Did you mean?" — check spelling in background if few results
+    if (visible.length < 4 && STATE.searchMode !== 'exact') {
+      spellCheck(effectiveQuery).then(suggestion => {
+        if (suggestion && suggestion !== effectiveQuery) showDidYouMean(suggestion);
+      }).catch(() => {});
+    } else {
+      hideDidYouMean();
+    }
+  } else {
     showEmptyState();
-    trySpellingSuggestion(effectiveQuery);
+    // "Did you mean?" on zero results
+    spellCheck(effectiveQuery).then(suggestion => {
+      if (suggestion) showDidYouMean(suggestion);
+    }).catch(() => {});
   }
 
   STATE.loading = false;
@@ -7849,6 +7944,7 @@ export function applyBoardTemplate(template) {
   var regionEl     = document.getElementById('adv-region');
   var categoryEl   = document.getElementById('adv-category');
   var excludeEl    = document.getElementById('adv-exclude');
+  var licenseEl    = document.getElementById('adv-license');
   var colorEnEl    = document.getElementById('adv-color-enable');
   var colorEl      = document.getElementById('adv-color');
 
@@ -7883,9 +7979,11 @@ export function applyBoardTemplate(template) {
     if (regionEl)   regionEl.value = '';
     if (categoryEl) categoryEl.value = '';
     if (excludeEl)  excludeEl.value = '';
+    if (licenseEl)  licenseEl.value = '';
     if (colorEnEl)  colorEnEl.checked = false;
     STATE._dateFilter = null;
     STATE._aspectFilter = null;
+    STATE._licenseFilter = null;
   });
 
   // Enter key in any input triggers search
@@ -7969,6 +8067,10 @@ export function applyBoardTemplate(template) {
 
     // Orientation filter → STATE
     STATE._aspectFilter = orient || null;
+
+    // License filter → STATE
+    var license = licenseEl ? licenseEl.value : '';
+    STATE._licenseFilter = license || null;
 
     // Color filter — add to hex palette
     if (colorEn && color) {
