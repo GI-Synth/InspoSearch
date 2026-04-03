@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>insposearch — admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    /* ── reset ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ── tokens ────────────────────────────────────── */
+    :root {
+      --font-ui:      'DM Mono', monospace;
+      --font-display: 'Cormorant Garamond', serif;
+      --bg:           #0E0E0D;
+      --bg-panel:     #141413;
+      --bg-card:      #1C1C1A;
+      --bg-hover:     #242422;
+      --ink:          #E8E6E1;
+      --ink-2:        #9A9890;
+      --ink-3:        #4A4940;
+      --accent:       #C8B89A;
+      --accent-dim:   rgba(200,184,154,0.15);
+      --green:        #6BCB77;
+      --red:          #E74C3C;
+      --line:         rgba(232,230,225,0.07);
+    }
+
+    /* ── layout ────────────────────────────────────── */
+    html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 12px; }
+    body { display: flex; }
+
+    /* ── sidebar nav ───────────────────────────────── */
+    .sidebar {
+      width: 220px; min-width: 220px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      font-family: var(--font-display);
+      font-size: 18px; font-weight: 300; font-style: italic;
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--line);
+      color: var(--accent);
+    }
+    .sidebar-logo small {
+      display: block; font-family: var(--font-ui);
+      font-size: 9px; font-style: normal;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink-3); margin-top: 4px;
+    }
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; font-size: 11px;
+      letter-spacing: 0.04em; color: var(--ink-2);
+      transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-nav a:hover { background: var(--bg-hover); color: var(--ink); }
+    .sidebar-nav a.active { color: var(--accent); background: var(--accent-dim); }
+    .sidebar-nav a .icon { width: 16px; text-align: center; font-size: 13px; }
+    .sidebar-nav .section-label {
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--ink-3);
+      padding: 20px 20px 6px;
+    }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+      font-size: 9px; color: var(--ink-3);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── main content ──────────────────────────────── */
+    .main { flex: 1; overflow-y: auto; }
+    .main-header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .main-header h1 {
+      font-family: var(--font-display);
+      font-size: 20px; font-weight: 300; font-style: italic;
+    }
+    .main-body { padding: 32px; }
+
+    /* ── page: placeholder ─────────────────────────── */
+    .placeholder-page {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 400px; color: var(--ink-3);
+      font-size: 13px; letter-spacing: 0.06em;
+    }
+
+    /* ── page: image pool ──────────────────────────── */
+    .pool-controls {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .pool-controls select,
+    .pool-controls button {
+      font-family: var(--font-ui); font-size: 11px;
+      background: var(--bg-card); color: var(--ink);
+      border: 1px solid var(--line); padding: 6px 12px;
+      letter-spacing: 0.04em;
+    }
+    .pool-controls select:focus,
+    .pool-controls button:focus { outline: 1px solid var(--accent); }
+    .pool-controls button:hover { border-color: var(--accent); }
+    .pool-controls .btn-accent {
+      background: var(--accent); color: var(--bg);
+      border-color: var(--accent); font-weight: 400;
+    }
+    .pool-controls .btn-accent:hover { opacity: 0.9; }
+
+    .pool-stats {
+      font-size: 10px; color: var(--ink-3);
+      letter-spacing: 0.04em; margin-top: 16px;
+    }
+    .pool-stats span { color: var(--ink-2); }
+
+    /* ── category section ──────────────────────────── */
+    .cat-section { margin-top: 32px; }
+    .cat-section-header {
+      display: flex; align-items: baseline; gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .cat-section-header h2 {
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 300; font-style: italic;
+    }
+    .cat-section-header .cat-count {
+      font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em;
+    }
+
+    /* ── image grid ────────────────────────────────── */
+    .img-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .img-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .img-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .img-card.kept { border-color: var(--green); }
+    .img-card.rejected { border-color: var(--red); opacity: 0.3; }
+    .img-card.rejected:hover { opacity: 0.7; }
+
+    .img-card img {
+      width: 100%; aspect-ratio: 4/3;
+      object-fit: cover; display: block;
+      background: var(--bg-panel);
+    }
+    .img-card-info {
+      padding: 8px 10px;
+    }
+    .img-card-title {
+      font-size: 10px; color: var(--ink);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+    .img-card-meta {
+      font-size: 9px; color: var(--ink-3);
+      margin-top: 2px; letter-spacing: 0.04em;
+    }
+
+    /* ── status badge ──────────────────────────────── */
+    .img-card-badge {
+      position: absolute; top: 8px; right: 8px;
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      background: rgba(14,14,13,0.7);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .img-card:hover .img-card-badge { opacity: 1; }
+    .img-card.kept .img-card-badge,
+    .img-card.rejected .img-card-badge { opacity: 1; }
+    .img-card.kept .img-card-badge { background: rgba(107,203,119,0.2); }
+    .img-card.rejected .img-card-badge { background: rgba(231,76,60,0.2); }
+
+    /* ── action buttons on card ────────────────────── */
+    .img-card-actions {
+      position: absolute; top: 8px; left: 8px;
+      display: flex; gap: 4px;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .img-card:hover .img-card-actions { opacity: 1; }
+    .img-card-actions button {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: none; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(14,14,13,0.7);
+      backdrop-filter: blur(4px);
+      color: var(--ink);
+      transition: background 0.15s;
+    }
+    .img-card-actions .btn-keep:hover { background: rgba(107,203,119,0.5); }
+    .img-card-actions .btn-reject:hover { background: rgba(231,76,60,0.5); }
+
+    /* ── lightbox ──────────────────────────────────── */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(14,14,13,0.92);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: auto; }
+    .lightbox img {
+      max-width: 85vw; max-height: 70vh;
+      object-fit: contain;
+    }
+    .lightbox-info {
+      text-align: center; max-width: 600px;
+    }
+    .lightbox-info h3 {
+      font-family: var(--font-display);
+      font-size: 18px; font-weight: 300; font-style: italic;
+      margin-bottom: 4px;
+    }
+    .lightbox-info p {
+      font-size: 10px; color: var(--ink-2); letter-spacing: 0.04em;
+    }
+    .lightbox-info a {
+      color: var(--accent); text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .lightbox-actions {
+      display: flex; gap: 8px; margin-top: 12px;
+      justify-content: center;
+    }
+    .lightbox-actions button {
+      font-family: var(--font-ui); font-size: 11px;
+      padding: 8px 20px; border: 1px solid var(--line);
+      background: var(--bg-card); color: var(--ink);
+      letter-spacing: 0.04em;
+      transition: border-color 0.15s;
+    }
+    .lightbox-actions button:hover { border-color: var(--accent); }
+    .lightbox-actions .btn-keep-lg { border-color: var(--green); color: var(--green); }
+    .lightbox-actions .btn-reject-lg { border-color: var(--red); color: var(--red); }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px;
+      background: none; border: none; color: var(--ink-2);
+      font-size: 24px; cursor: pointer;
+    }
+
+    /* ── empty / loading states ────────────────────── */
+    .loading-msg {
+      text-align: center; padding: 80px 20px;
+      color: var(--ink-3); font-size: 13px;
+    }
+    .empty-msg {
+      text-align: center; padding: 60px 20px;
+      color: var(--ink-3);
+    }
+    .empty-msg p { font-size: 12px; margin-bottom: 8px; }
+    .empty-msg code {
+      font-family: var(--font-ui); font-size: 11px;
+      background: var(--bg-card); padding: 4px 10px;
+      color: var(--ink-2);
+    }
+
+    /* ── scrollbar ─────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sidebar ──────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      insposearch
+      <small>admin dashboard</small>
+    </div>
+    <div class="sidebar-nav">
+      <div class="section-label">content</div>
+      <a href="#image-pool" class="active" data-page="image-pool">
+        <span class="icon">◻</span> image pool
+      </a>
+      <a href="#" data-page="hero-themes">
+        <span class="icon">◈</span> hero themes
+      </a>
+
+      <div class="section-label">manage</div>
+      <a href="#" data-page="sources">
+        <span class="icon">⊞</span> sources
+      </a>
+      <a href="#" data-page="analytics">
+        <span class="icon">⊡</span> analytics
+      </a>
+      <a href="#" data-page="settings">
+        <span class="icon">⊙</span> settings
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      internal only — not for production
+    </div>
+  </nav>
+
+  <!-- ── Main ─────────────────────────────────────── -->
+  <div class="main" id="main">
+    <div class="main-header">
+      <h1 id="page-title">image pool</h1>
+      <div class="pool-controls" id="pool-controls">
+        <select id="filter-category">
+          <option value="all">all categories</option>
+        </select>
+        <select id="filter-status">
+          <option value="all">all status</option>
+          <option value="unreviewed">unreviewed</option>
+          <option value="kept">kept</option>
+          <option value="rejected">rejected</option>
+        </select>
+        <select id="filter-source">
+          <option value="all">all sources</option>
+        </select>
+        <button id="btn-export" class="btn-accent">export curated json</button>
+        <button id="btn-save">save progress</button>
+      </div>
+    </div>
+    <div class="main-body" id="main-body">
+      <div class="loading-msg" id="loading-msg">loading candidates...</div>
+    </div>
+  </div>
+
+  <!-- ── Lightbox ─────────────────────────────────── -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close">×</button>
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-info">
+      <h3 id="lightbox-title"></h3>
+      <p id="lightbox-meta"></p>
+      <div class="lightbox-actions">
+        <button class="btn-keep-lg" id="lb-keep">✓ keep</button>
+        <button class="btn-reject-lg" id="lb-reject">✗ reject</button>
+        <button id="lb-open">open source ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       InspoSearch Admin — Image Pool Review
+       ═══════════════════════════════════════════════════ */
+
+    const DATA_PATH = 'data/homepage-candidates.json';
+    const SAVE_KEY  = 'insposearch-admin-pool';
+
+    let pool = null;        // full data object
+    let flatItems = [];     // flattened array of all items (categories + heroes)
+    let currentItem = null; // item shown in lightbox
+    let currentIdx = -1;
+
+    // ── Load data ─────────────────────────────────────
+    async function init() {
+      try {
+        const res = await fetch(DATA_PATH);
+        if (!res.ok) throw new Error(res.status);
+        pool = await res.json();
+      } catch (e) {
+        document.getElementById('loading-msg').innerHTML = '';
+        document.getElementById('main-body').innerHTML =
+          '<div class="empty-msg">' +
+          '<p>no candidates file found</p>' +
+          '<code>node scripts/pull-homepage-images.cjs</code>' +
+          '<p style="margin-top:12px;color:var(--ink-3)">run the script first to generate image candidates</p>' +
+          '</div>';
+        return;
+      }
+
+      // Restore saved review state from localStorage
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
+        try {
+          const savedMap = JSON.parse(saved); // { url: keep|reject }
+          applyReviewState(savedMap);
+        } catch (_) {}
+      }
+
+      flattenItems();
+      populateFilters();
+      render();
+    }
+
+    function applyReviewState(map) {
+      for (const section of [pool.categories, pool.heroes]) {
+        for (const items of Object.values(section)) {
+          for (const item of items) {
+            if (map[item.url] !== undefined) {
+              item.keep = map[item.url];
+            }
+          }
+        }
+      }
+    }
+
+    function flattenItems() {
+      flatItems = [];
+      for (const [cat, items] of Object.entries(pool.categories || {})) {
+        for (const item of items) {
+          item._section = 'category';
+          item._group = cat;
+          flatItems.push(item);
+        }
+      }
+      for (const [hero, items] of Object.entries(pool.heroes || {})) {
+        for (const item of items) {
+          item._section = 'hero';
+          item._group = hero;
+          flatItems.push(item);
+        }
+      }
+    }
+
+    // ── Filters ───────────────────────────────────────
+    function populateFilters() {
+      const catSelect = document.getElementById('filter-category');
+      const srcSelect = document.getElementById('filter-source');
+
+      const categories = new Set();
+      const sources = new Set();
+      for (const item of flatItems) {
+        categories.add(item._group);
+        sources.add(item.source);
+      }
+
+      for (const cat of [...categories].sort()) {
+        const opt = document.createElement('option');
+        opt.value = cat; opt.textContent = cat;
+        catSelect.appendChild(opt);
+      }
+      for (const src of [...sources].sort()) {
+        const opt = document.createElement('option');
+        opt.value = src; opt.textContent = src;
+        srcSelect.appendChild(opt);
+      }
+    }
+
+    function getFiltered() {
+      const cat = document.getElementById('filter-category').value;
+      const status = document.getElementById('filter-status').value;
+      const src = document.getElementById('filter-source').value;
+
+      return flatItems.filter(item => {
+        if (cat !== 'all' && item._group !== cat) return false;
+        if (src !== 'all' && item.source !== src) return false;
+        if (status === 'unreviewed' && item.keep !== null) return false;
+        if (status === 'kept' && item.keep !== true) return false;
+        if (status === 'rejected' && item.keep !== false) return false;
+        return true;
+      });
+    }
+
+    // ── Render ────────────────────────────────────────
+    function render() {
+      const body = document.getElementById('main-body');
+      const filtered = getFiltered();
+
+      // Group by _group
+      const groups = {};
+      for (const item of filtered) {
+        (groups[item._group] = groups[item._group] || []).push(item);
+      }
+
+      // Stats
+      const kept = flatItems.filter(i => i.keep === true).length;
+      const rejected = flatItems.filter(i => i.keep === false).length;
+      const unreviewed = flatItems.filter(i => i.keep === null).length;
+
+      let html = `<div class="pool-stats">
+        <span>${flatItems.length}</span> total &nbsp;·&nbsp;
+        <span style="color:var(--green)">${kept}</span> kept &nbsp;·&nbsp;
+        <span style="color:var(--red)">${rejected}</span> rejected &nbsp;·&nbsp;
+        <span>${unreviewed}</span> unreviewed &nbsp;·&nbsp;
+        showing <span>${filtered.length}</span>
+      </div>`;
+
+      for (const [group, items] of Object.entries(groups)) {
+        html += `<div class="cat-section">
+          <div class="cat-section-header">
+            <h2>${group}</h2>
+            <span class="cat-count">${items.length} images</span>
+          </div>
+          <div class="img-grid">`;
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const stateClass = item.keep === true ? 'kept' : item.keep === false ? 'rejected' : '';
+          const badge = item.keep === true ? '✓' : item.keep === false ? '✗' : '';
+
+          html += `<div class="img-card ${stateClass}" data-url="${esc(item.url)}">
+            <div class="img-card-actions">
+              <button class="btn-keep" data-action="keep" title="keep">✓</button>
+              <button class="btn-reject" data-action="reject" title="reject">✗</button>
+            </div>
+            <div class="img-card-badge">${badge}</div>
+            <img src="${esc(item.thumb || item.url)}" alt="${esc(item.title)}" loading="lazy"
+                 onerror="this.style.display='none'">
+            <div class="img-card-info">
+              <div class="img-card-title">${esc(item.title)}</div>
+              <div class="img-card-meta">${esc(item.source)}${item.year ? ' · ' + esc(item.year) : ''}</div>
+            </div>
+          </div>`;
+        }
+
+        html += '</div></div>';
+      }
+
+      if (Object.keys(groups).length === 0) {
+        html += '<div class="empty-msg"><p>no images match current filters</p></div>';
+      }
+
+      // Preserve scroll position across re-renders
+      const scrollTop = body.scrollTop;
+      body.innerHTML = html;
+      body.scrollTop = scrollTop;
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Card Interactions — event delegation (one listener, survives re-renders)
+    document.getElementById('main-body').addEventListener('click', function (e) {
+      // Keep / reject buttons
+      const btn = e.target.closest('.btn-keep, .btn-reject');
+      if (btn) {
+        e.stopPropagation();
+        const card = btn.closest('.img-card');
+        if (!card) return;
+        const url  = card.dataset.url;
+        const item = flatItems.find(i => i.url === url);
+        if (!item) return;
+        const action = btn.classList.contains('btn-keep') ? 'keep' : 'reject';
+        if (action === 'keep')   item.keep = item.keep === true  ? null : true;
+        else                     item.keep = item.keep === false ? null : false;
+        // Update only this card's classes without full re-render
+        card.className = 'img-card' + (item.keep === true ? ' kept' : item.keep === false ? ' rejected' : '');
+        card.querySelector('.img-card-badge').textContent = item.keep === true ? '\u2713' : item.keep === false ? '\u2717' : '';
+        if (item.keep === true) {
+          card.querySelector('.img-card-badge').style.background = 'rgba(107,203,119,0.2)';
+        } else if (item.keep === false) {
+          card.querySelector('.img-card-badge').style.background = 'rgba(231,76,60,0.2)';
+        } else {
+          card.querySelector('.img-card-badge').style.background = 'rgba(14,14,13,0.7)';
+        }
+        // Update stats bar without scrolling
+        updateStats();
+        saveProgress();
+        return;
+      }
+
+      // Click on image → lightbox
+      const img = e.target.closest('.img-card img');
+      if (img) {
+        const card = img.closest('.img-card');
+        if (!card) return;
+        const url  = card.dataset.url;
+        const item = flatItems.find(i => i.url === url);
+        if (item) openLightbox(item);
+      }
+    });
+
+    function updateStats() {
+      const el = document.querySelector('.pool-stats');
+      if (!el) return;
+      const kept      = flatItems.filter(i => i.keep === true).length;
+      const rejected  = flatItems.filter(i => i.keep === false).length;
+      const unreviewed = flatItems.filter(i => i.keep === null).length;
+      const filtered  = getFiltered().length;
+      el.innerHTML =
+        `<span>${flatItems.length}</span> total &nbsp;·&nbsp; ` +
+        `<span style="color:var(--green)">${kept}</span> kept &nbsp;·&nbsp; ` +
+        `<span style="color:var(--red)">${rejected}</span> rejected &nbsp;·&nbsp; ` +
+        `<span>${unreviewed}</span> unreviewed &nbsp;·&nbsp; ` +
+        `showing <span>${filtered}</span>`;
+    }
+
+    // ── Lightbox ──────────────────────────────────────
+    function openLightbox(item) {
+      currentItem = item;
+      currentIdx = flatItems.indexOf(item);
+      document.getElementById('lightbox-img').src = item.url;
+      document.getElementById('lightbox-title').textContent = item.title || 'Untitled';
+      document.getElementById('lightbox-meta').textContent =
+        `${item.source}${item.artist ? ' · ' + item.artist : ''}${item.year ? ' · ' + item.year : ''}`;
+      document.getElementById('lb-open').onclick = () => {
+        if (item.sourceUrl) window.open(item.sourceUrl, '_blank');
+      };
+      document.getElementById('lightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      currentItem = null;
+    }
+
+    document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeLightbox();
+    });
+
+    function applyKeepToCurrentCard() {
+      if (!currentItem) return;
+      const card = document.querySelector(`.img-card[data-url="${CSS.escape(currentItem.url)}"]`);
+      if (card) {
+        card.className = 'img-card' + (currentItem.keep === true ? ' kept' : currentItem.keep === false ? ' rejected' : '');
+        const badge = card.querySelector('.img-card-badge');
+        badge.textContent = currentItem.keep === true ? '\u2713' : currentItem.keep === false ? '\u2717' : '';
+        badge.style.background = currentItem.keep === true ? 'rgba(107,203,119,0.2)'
+          : currentItem.keep === false ? 'rgba(231,76,60,0.2)' : 'rgba(14,14,13,0.7)';
+      }
+      updateStats();
+      saveProgress();
+    }
+
+    document.getElementById('lb-keep').addEventListener('click', () => {
+      if (!currentItem) return;
+      currentItem.keep = currentItem.keep === true ? null : true;
+      applyKeepToCurrentCard();
+      closeLightbox();
+    });
+    document.getElementById('lb-reject').addEventListener('click', () => {
+      if (!currentItem) return;
+      currentItem.keep = currentItem.keep === false ? null : false;
+      applyKeepToCurrentCard();
+      closeLightbox();
+    });
+
+    // ── Keyboard navigation ───────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+
+      if (e.key === 'Escape') { closeLightbox(); return; }
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateLightbox(1);
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateLightbox(-1);
+      }
+      if (e.key === 'k' || e.key === 'K') {
+        if (currentItem) {
+          currentItem.keep = currentItem.keep === true ? null : true;
+          applyKeepToCurrentCard();
+          navigateLightbox(1);
+        }
+      }
+      if (e.key === 'x' || e.key === 'X') {
+        if (currentItem) {
+          currentItem.keep = currentItem.keep === false ? null : false;
+          applyKeepToCurrentCard();
+          navigateLightbox(1);
+        }
+      }
+    });
+
+    function navigateLightbox(dir) {
+      const filtered = getFiltered();
+      if (!filtered.length) return;
+      const curInFiltered = filtered.indexOf(currentItem);
+      let next = curInFiltered + dir;
+      if (next < 0) next = filtered.length - 1;
+      if (next >= filtered.length) next = 0;
+      openLightbox(filtered[next]);
+    }
+
+    // ── Save / Export ─────────────────────────────────
+    function buildReviewMap() {
+      const map = {};
+      for (const item of flatItems) {
+        if (item.keep !== null) map[item.url] = item.keep;
+      }
+      return map;
+    }
+
+    async function saveToServer(map) {
+      try {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewMap: map }),
+        });
+        return res.ok;
+      } catch (_) { return false; }
+    }
+
+    async function saveProgress() {
+      const map = buildReviewMap();
+      localStorage.setItem(SAVE_KEY, JSON.stringify(map));
+      await saveToServer(map);
+    }
+
+    function exportCurated() {
+      const curated = {
+        _generated: new Date().toISOString(),
+        _status: 'curated — ready for homepage-images.json',
+        categories: {},
+        heroes: {},
+      };
+
+      for (const [cat, items] of Object.entries(pool.categories || {})) {
+        const kept = items.filter(i => i.keep === true).map(({_section, _group, keep, ...rest}) => rest);
+        if (kept.length) curated.categories[cat] = kept;
+      }
+      for (const [hero, items] of Object.entries(pool.heroes || {})) {
+        const kept = items.filter(i => i.keep === true).map(({_section, _group, keep, ...rest}) => rest);
+        if (kept.length) curated.heroes[hero] = kept;
+      }
+
+      const blob = new Blob([JSON.stringify(curated, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'homepage-images.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ── Event wiring ──────────────────────────────────
+    document.getElementById('filter-category').addEventListener('change', render);
+    document.getElementById('filter-status').addEventListener('change', render);
+    document.getElementById('filter-source').addEventListener('change', render);
+    document.getElementById('btn-export').addEventListener('click', exportCurated);
+    document.getElementById('btn-save').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-save');
+      btn.textContent = 'saving...';
+      await saveProgress();
+      btn.textContent = 'saved ✓';
+      setTimeout(() => btn.textContent = 'save progress', 1500);
+    });
+
+    // ── Sidebar nav (scaffold) ────────────────────────
+    document.querySelectorAll('.sidebar-nav a[data-page]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+        const page = link.dataset.page;
+        document.getElementById('page-title').textContent = link.textContent.trim();
+
+        if (page === 'image-pool') {
+          document.getElementById('pool-controls').style.display = 'flex';
+          if (pool) render();
+          else init();
+        } else if (page === 'hero-themes') {
+          document.getElementById('pool-controls').style.display = 'flex';
+          document.getElementById('filter-category').value = 'all';
+          // Show heroes filter
+          if (pool) render();
+        } else {
+          document.getElementById('pool-controls').style.display = 'none';
+          document.getElementById('main-body').innerHTML =
+            '<div class="placeholder-page">' + page + ' — coming soon</div>';
+        }
+      });
+    });
+
+    // ── Boot ──────────────────────────────────────────
+    // Auto-sync localStorage → server on load so prior review work is not lost
+    async function autoSyncLocalStorage() {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (!saved) return;
+      try {
+        const map = JSON.parse(saved);
+        if (Object.keys(map).length > 0) {
+          const ok = await saveToServer(map);
+          if (ok) console.log('[admin] Auto-synced localStorage → server (' + Object.keys(map).length + ' entries)');
+        }
+      } catch (_) {}
+    }
+    init().then(autoSyncLocalStorage);
+  </script>
+</body>
+</html>

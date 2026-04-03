@@ -1,10 +1,7 @@
 # Dependencies
 node_modules/
 
-# Markdown — track all remaining docs (stale ones already deleted)
-# *.md rule removed — all .md files are now tracked
-
-# Internal / planning (test scripts only — fetch-cors-blocked.js is tracked)
+# Test/dev scripts
 scripts/test-*.cjs
 scripts/test-*.js
 scripts/validate-sources.js
