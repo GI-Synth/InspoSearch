@@ -29,7 +29,7 @@ The magic works without AI. AI amplifies it when you want to go deeper.
 
 ```bash
 # Option 1: Open directly (no install)
-# Just open insposearch/index.html in any browser
+# Just open https://insposearch.pages.dev/ in any browser
 
 # Option 2: Serve locally
 npm start       # → http://localhost:3000
