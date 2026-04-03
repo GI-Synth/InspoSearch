@@ -6715,7 +6715,7 @@ export function decodeBoardFromURL() {
 }
 
 // Share button — KV short link (preferred) with URL-encoded fallback
-const _API_BASE = 'https://insposearch-api.workers.dev';
+const _API_BASE = 'https://insposearch-api.official-ndsclsd.workers.dev';
 
 document.getElementById('bar-share-btn')?.addEventListener('click', async () => {
   if (!STATE.selected.length) return;
