@@ -39,7 +39,7 @@
     "author": { "@type": "Organization", "name": "GI-Synth", "url": "https://github.com/GI-Synth" }
   }
   </script>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src * data: blob:; connect-src *; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com; img-src * data: blob:; connect-src * https://cloudflareinsights.com; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-attr 'unsafe-inline';">
 
   <!-- API endpoint preconnect hints — eliminates cold TCP+TLS on first-wave fetches -->
   <link rel="preconnect" href="https://commons.wikimedia.org">
@@ -628,6 +628,20 @@
 
       <div class="divider" style="margin:12px 0;"></div>
 
+      <!-- SAFE SEARCH -->
+      <div class="section-label">safe search</div>
+
+      <div class="settings-toggle-row">
+        <span class="settings-row-label">nsfw filter</span>
+        <div class="btn-group">
+          <button class="btn" id="settings-nsfw-on">on</button>
+          <button class="btn active" id="settings-nsfw-off">off</button>
+        </div>
+      </div>
+      <div class="settings-value-text" style="font-size:8px;color:var(--ink-3);margin-top:4px;">hides images flagged as explicit by workers ai (sampled, not per-image)</div>
+
+      <div class="divider" style="margin:12px 0;"></div>
+
       <!-- CACHE & STORAGE -->
       <div class="section-label">cache & storage</div>
 
@@ -1025,6 +1039,10 @@
   </div>
 
   <script src="app.js"></script>
+
+  <!-- Cloudflare Web Analytics — replace TOKEN with your beacon token from the CF dashboard -->
+  <!-- https://developers.cloudflare.com/analytics/web-analytics/ -->
+  <!-- <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "REPLACE_WITH_YOUR_TOKEN"}'></script> -->
 
 </body>
 </html>

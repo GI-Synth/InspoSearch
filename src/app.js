@@ -505,6 +505,40 @@ export function applyLicenseFilter(items, filter) {
   });
 }
 
+// NSFW filter — sampled: caption first 8 result cards via Workers AI, hide flagged ones.
+// "Sampled" = checks only the first wave; doesn't re-check on load-more. Opt-in only.
+const _NSFW_KEYWORDS = /\bnude|naked|explicit|pornograph|sexual|erotic|genital|nsfw\b/i;
+export async function applySampledNsfwFilter(items) {
+  // Pick a representative sample — first 8 with a real thumb URL
+  const sample = items
+    .filter(it => (it.thumb || it.url) && /^https?:\/\//.test(it.thumb || it.url))
+    .slice(0, 8);
+  const flagged = new Set();
+
+  await Promise.allSettled(sample.map(async it => {
+    const imgUrl = it.thumb || it.url;
+    try {
+      const res = await fetch(`${_API_BASE}/caption`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: imgUrl }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) return;
+      const { caption } = await res.json();
+      if (caption && _NSFW_KEYWORDS.test(caption)) flagged.add(it.id);
+    } catch { /* skip */ }
+  }));
+
+  if (!flagged.size) return;
+  // Hide flagged cards from DOM and remove from STATE.results
+  STATE.results = STATE.results.filter(it => !flagged.has(it.id));
+  flagged.forEach(id => {
+    const card = document.getElementById('card-' + id);
+    if (card) card.style.display = 'none';
+  });
+}
+
 export function showOfflineState() {
   const grid = document.getElementById('image-grid');
   grid.innerHTML = `
@@ -960,14 +994,48 @@ export async function renderRelated(tags) {
 }
 
 /* -- Render source info block -- */
+/* ── JSON-LD structured data injection ─────────────────────────────────────
+   Injects an ImageObject / VisualArtwork schema when a panel item is selected.
+   Removes the previous script tag first. Helps with rich results and SEO.
+*/
+const _JSONLD_ID = 'inspo-item-jsonld';
+export function injectItemJsonLd(item) {
+  const old = document.getElementById(_JSONLD_ID);
+  if (old) old.remove();
+  if (!item) return;
+
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': item.artist || item.year ? 'VisualArtwork' : 'ImageObject',
+    name: item.title || '',
+    image: item.url || item.thumb || '',
+    url: item.sourceUrl || '',
+    description: item.description || '',
+  };
+  if (item.artist) schema.creator = { '@type': 'Person', name: item.artist };
+  if (item.year)   schema.dateCreated = String(item.year);
+  if (item.source) schema.provider = { '@type': 'Organization', name: getSourceName(item.source) };
+  if (item.license || item.rights) schema.license = item.license || item.rights;
+
+  const script = document.createElement('script');
+  script.id = _JSONLD_ID;
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(schema);
+  document.head.appendChild(script);
+}
+
 export function renderSourceInfo(items) {
   const el = document.getElementById('source-info');
-  if (!items.length) { el.innerHTML = ''; return; }
+  if (!items.length) { el.innerHTML = ''; injectItemJsonLd(null); return; }
 
   // Show info for the most recently selected item
   const item = items[items.length - 1];
   const sourceLabel = getSourceName(item.source);
   el.innerHTML = '';
+
+  // Inject JSON-LD structured data for SEO / rich results
+  injectItemJsonLd(item);
 
   const title = document.createElement('div');
   title.style.cssText = 'margin-bottom:6px;color:var(--ink);font-weight:400;';
@@ -1864,7 +1932,6 @@ export async function refreshSource(sourceName) {
     ala:         () => fetchALA(kw, lim, signal),
     // Phase D
     nasa_images: () => fetchNASAImages(kw, lim, signal),
-    loc:         () => fetchLOC(kw, lim, signal),
   };
   const fetcher = fetchMap[sourceName];
   if (!fetcher) { _secondaryControllers.delete(ac); return; }
@@ -2129,6 +2196,10 @@ export async function runSearch(query, forceRefresh = false) {
   // Apply license filter if set by advanced search
   if (STATE._licenseFilter) {
     STATE.results = applyLicenseFilter(STATE.results, STATE._licenseFilter);
+  }
+  // NSFW filter — sampled: caption first 6 items via Worker AI, flag & hide positives
+  if (STATE._nsfwFilter && STATE.results.length) {
+    applySampledNsfwFilter(STATE.results).catch(() => {});
   }
 
   clearGrid();
@@ -5152,6 +5223,9 @@ export function updateSettingsPanelUI() {
   // Sync language selector to current locale
   var langSel2 = document.getElementById('settings-language');
   if (langSel2) langSel2.value = getLocale();
+  // Sync NSFW toggle
+  document.getElementById('settings-nsfw-on')?.classList.toggle('active', STATE._nsfwFilter);
+  document.getElementById('settings-nsfw-off')?.classList.toggle('active', !STATE._nsfwFilter);
 }
 
 export function loadSettings() {
@@ -5203,6 +5277,29 @@ document.getElementById('settings-panel-close')?.addEventListener('click', () =>
       var n = parseInt(document.getElementById('count-slider')?.value || '24', 10);
       cl.textContent = n + ' ' + tr('images');
     }
+  });
+})();
+
+/* -- NSFW filter settings wiring -- */
+(function () {
+  var onBtn  = document.getElementById('settings-nsfw-on');
+  var offBtn = document.getElementById('settings-nsfw-off');
+  if (!onBtn || !offBtn) return;
+
+  // Restore from localStorage
+  STATE._nsfwFilter = localStorage.getItem('inspo_nsfw_filter') === 'true';
+  onBtn.classList.toggle('active', STATE._nsfwFilter);
+  offBtn.classList.toggle('active', !STATE._nsfwFilter);
+
+  onBtn.addEventListener('click', function () {
+    STATE._nsfwFilter = true;
+    localStorage.setItem('inspo_nsfw_filter', 'true');
+    onBtn.classList.add('active'); offBtn.classList.remove('active');
+  });
+  offBtn.addEventListener('click', function () {
+    STATE._nsfwFilter = false;
+    localStorage.setItem('inspo_nsfw_filter', 'false');
+    offBtn.classList.add('active'); onBtn.classList.remove('active');
   });
 })();
 
