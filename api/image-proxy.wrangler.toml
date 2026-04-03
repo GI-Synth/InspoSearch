@@ -1,0 +1,7 @@
+name            = "insposearch-img"
+main            = "image-proxy.js"
+compatibility_date = "2024-01-01"
+account_id      = "PLACEHOLDER_ACCOUNT_ID"
+
+[vars]
+ALLOWED_ORIGIN = "https://insposearch.pages.dev"

@@ -314,6 +314,7 @@ export const STATE = {
   _searchGen:          0,        // monotonic counter to detect stale results
   _licenseFilter:      null,     // null | 'cc0' | 'cc-by' | 'open'
   _didYouMeanBanner:   null,     // suggested spelling correction shown to user
+  _nsfwFilter:         false,    // NSFW filter enabled (sampled Workers AI check)
 };
 
 // Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
@@ -1013,7 +1014,6 @@ export const SOURCE_META = {
   ala:                { category: ['nature','science'],               region: 'oceania',  access: 'no_key' },
   // Phase D — niche & specialized
   nasa_images:        { category: ['science','space','photos'],       region: 'global',   access: 'no_key' },
-  loc:                { category: ['historical','archives','photos'], region: 'usa',      access: 'no_key' },
   // Phase E — CORS-blocked, cache-first
   nhm_london:              { category: ['nature','science'],          region: 'uk',       access: 'no_key' },
   wallace_collection:      { category: ['museums','art'],             region: 'uk',       access: 'no_key', corsBlocked: true },
