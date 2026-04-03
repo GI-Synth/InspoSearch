@@ -28,13 +28,15 @@ if (!existsSync(ENTRY)) {
   process.exit(0);
 }
 
+const isDev = isWatch || process.argv.includes('--dev');
+
 const config = {
   entryPoints: [ENTRY],
   bundle: true,
   format: 'iife',
   outfile: OUT,
-  minify: false,        // keep readable for now
-  sourcemap: true,
+  minify: !isDev,       // minify in production builds
+  sourcemap: isDev,     // sourcemap only in dev (saves bandwidth in prod)
   target: ['es2020'],
   logLevel: 'info',
 };

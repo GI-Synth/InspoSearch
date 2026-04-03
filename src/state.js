@@ -312,6 +312,8 @@ export const STATE = {
   keywordExpansion:    true,     // enable Datamuse keyword expansion (toggled from settings)
   pendingOnboardingSearch: false, // first-visit guided search
   _searchGen:          0,        // monotonic counter to detect stale results
+  _licenseFilter:      null,     // null | 'cc0' | 'cc-by' | 'open'
+  _didYouMeanBanner:   null,     // suggested spelling correction shown to user
 };
 
 // Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
@@ -692,15 +694,34 @@ export function classifyQueryV2(q) {
 
 /* ============================================================
    3d. NEGATIVE SEARCH SYNTAX
-   Splits "marble NOT statue NOT greek" into:
-     { positive: "marble", negatives: ["statue", "greek"] }
+   Splits "marble -statue NOT greek "exact phrase"" into:
+     { positive: "marble", negatives: ["statue","greek"], phrases: ["exact phrase"] }
+   Supports:
+     -word     → exclude word
+     NOT word  → exclude word (legacy syntax)
+     "phrase"  → require exact phrase
 ============================================================ */
 export function parseNegativeTerms(query) {
-  if (!query || !query.includes(' NOT ')) return { positive: query, negatives: [] };
-  const parts = query.split(/\sNOT\s/i);
-  const positive = (parts[0] || '').trim();
-  const negatives = parts.slice(1).map(p => p.trim().toLowerCase()).filter(Boolean);
-  return { positive, negatives };
+  if (!query) return { positive: '', negatives: [], phrases: [] };
+
+  // 1. Extract "quoted phrases" — must be present in results
+  const phrases = [];
+  let q = query.replace(/"([^"]+)"/g, (_, p) => { phrases.push(p.trim().toLowerCase()); return ' '; }).trim();
+
+  // 2. Extract -word negations (prefix minus, not inside a word)
+  const negatives = [];
+  q = q.replace(/(?:^|\s)-(\S+)/g, (_, w) => { negatives.push(w.toLowerCase()); return ' '; }).trim();
+
+  // 3. Extract NOT word syntax (legacy, kept for backwards compat)
+  const parts = q.split(/\s+NOT\s+/i);
+  q = (parts[0] || '').trim();
+  parts.slice(1).forEach(p => {
+    const w = p.trim().toLowerCase();
+    if (w) negatives.push(w);
+  });
+
+  const positive = q.trim() || '';
+  return { positive, negatives: [...new Set(negatives)], phrases };
 }
 
 export function filterNegativeTerms(items, negatives) {
@@ -708,6 +729,14 @@ export function filterNegativeTerms(items, negatives) {
   return items.filter(item => {
     const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
     return !negatives.some(neg => hay.includes(neg));
+  });
+}
+
+export function filterPhrases(items, phrases) {
+  if (!phrases.length) return items;
+  return items.filter(item => {
+    const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+    return phrases.every(phrase => hay.includes(phrase));
   });
 }
 
