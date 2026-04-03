@@ -6617,34 +6617,88 @@ export function decodeBoardFromURL() {
   } catch { return null; }
 }
 
-// Share button — copies shareable URL to clipboard
-document.getElementById('bar-share-btn')?.addEventListener('click', () => {
-  const url = encodeBoardToURL();
-  if (!url) return;
-  navigator.clipboard.writeText(url).then(() => {
-    const btn = document.getElementById('bar-share-btn');
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = 'link copied!';
-      setTimeout(() => { btn.textContent = orig; }, 2000);
+// Share button — KV short link (preferred) with URL-encoded fallback
+const _API_BASE = 'https://insposearch-api.workers.dev';
+
+document.getElementById('bar-share-btn')?.addEventListener('click', async () => {
+  if (!STATE.selected.length) return;
+  const btn = document.getElementById('bar-share-btn');
+  if (btn) btn.setAttribute('disabled', '');
+
+  // Build compact items payload
+  const items = STATE.selected.map(s => ({
+    i: s.id, t: s.thumb, n: s.title, s: s.source,
+    u: s.sourceUrl || '', y: s.year || '',
+  }));
+  const currentQuery = document.getElementById('search-input')?.value?.trim() || '';
+
+  try {
+    const res = await fetch(`${_API_BASE}/board`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, query: currentQuery }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const shareUrl = data.url || encodeBoardToURL();
+      await navigator.clipboard.writeText(shareUrl);
+      if (btn) {
+        btn.removeAttribute('disabled');
+        btn.textContent = 'link copied!';
+        setTimeout(() => { btn.textContent = ''; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>'; }, 2500);
+      }
+      return;
     }
-  }).catch(() => {});
+  } catch { /* fall through */ }
+
+  // Fallback: long URL-encoded board
+  const url = encodeBoardToURL();
+  if (!url) { if (btn) btn.removeAttribute('disabled'); return; }
+  navigator.clipboard.writeText(url).then(() => {
+    if (btn) {
+      btn.removeAttribute('disabled');
+      btn.textContent = 'link copied!';
+      setTimeout(() => { btn.textContent = ''; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>'; }, 2500);
+    }
+  }).catch(() => { if (btn) btn.removeAttribute('disabled'); });
 });
 
 // On page load, check for shared board data in URL
+// Supports both ?board=<base64> (legacy long URL) and ?share=<id> (KV short link)
 (function restoreSharedBoard() {
-  const items = decodeBoardFromURL();
-  if (!items || !items.length) return;
-  // Only restore if user doesn't already have a board
-  if (STATE.selected.length) return;
-  STATE.selected = items;
-  if (typeof updateFloatingBar === 'function') updateFloatingBar();
-  if (typeof syncBoardOverlay === 'function') syncBoardOverlay();
-  if (typeof persistBoardState === 'function') persistBoardState();
-  // Clean URL without reloading
-  const url = new URL(window.location.href);
-  url.searchParams.delete('board');
-  window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+  const params = new URLSearchParams(window.location.search);
+  const shareId = params.get('share');
+
+  function applyItems(items) {
+    if (!items || !items.length) return;
+    if (STATE.selected.length) return;
+    STATE.selected = items;
+    if (typeof updateFloatingBar === 'function') updateFloatingBar();
+    if (typeof syncBoardOverlay === 'function') syncBoardOverlay();
+    if (typeof persistBoardState === 'function') persistBoardState();
+    const u = new URL(window.location.href);
+    u.searchParams.delete('board');
+    u.searchParams.delete('share');
+    window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+  }
+
+  if (shareId && /^[a-zA-Z0-9_-]{6,32}$/.test(shareId)) {
+    // KV short link — fetch from API
+    fetch(`${_API_BASE}/board/${encodeURIComponent(shareId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || !Array.isArray(data.items)) return;
+        applyItems(data.items.map(c => ({
+          id: c.i, thumb: c.t, title: c.n, source: c.s,
+          sourceUrl: c.u || '', year: c.y || '', tags: [], colors: [],
+        })));
+      })
+      .catch(() => {});
+    return;
+  }
+
+  // Legacy ?board= base64 URL
+  applyItems(decodeBoardFromURL());
 })();
 
 /* ============================================================
@@ -8154,6 +8208,74 @@ export function applyBoardTemplate(template) {
     // Also patch the local scope reference used by toggleSelection
     updatePanel = _patchedUpdatePanel;
   }
+})();
+
+/* ------------------------------------------------------------------
+   Reverse Image Search / Find Visually Similar
+   Panel section that appears when any image is selected.
+   Primary: Workers AI caption → InspoSearch query
+   Secondary: Direct links to Google Lens and TinEye
+------------------------------------------------------------------ */
+(function initReverseImageSearch() {
+  var section = document.getElementById('panel-reverse-section');
+  var findBtn = document.getElementById('btn-find-similar');
+  var lensLink = document.getElementById('btn-google-lens');
+  var tineyeLink = document.getElementById('btn-tineye');
+  if (!section || !findBtn) return;
+
+  var _currentImageUrl = null;
+
+  // Patch updatePanel to show/hide the reverse section
+  var _origRevPanel = window.updatePanel || updatePanel;
+  var _patchedRevPanel = async function (previewItem) {
+    await _origRevPanel.apply(this, arguments);
+    var displayItems = previewItem ? [previewItem] : STATE.selected;
+    if (!displayItems.length) { section.style.display = 'none'; return; }
+    var last = displayItems[displayItems.length - 1];
+    _currentImageUrl = last.url || last.thumb || null;
+    section.style.display = _currentImageUrl ? '' : 'none';
+    if (_currentImageUrl) {
+      var encoded = encodeURIComponent(_currentImageUrl);
+      if (lensLink) lensLink.href = 'https://lens.google.com/uploadbyurl?url=' + encoded;
+      if (tineyeLink) tineyeLink.href = 'https://www.tineye.com/search?url=' + encoded;
+    }
+  };
+  if (typeof updatePanel === 'function') {
+    window.updatePanel = _patchedRevPanel;
+    updatePanel = _patchedRevPanel;
+  }
+
+  findBtn.addEventListener('click', async function () {
+    if (!_currentImageUrl) return;
+    findBtn.textContent = 'captioning\u2026';
+    findBtn.disabled = true;
+    try {
+      var res = await fetch(_API_BASE + '/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: _currentImageUrl }),
+      });
+      if (res.ok) {
+        var data = await res.json();
+        var caption = data.caption || '';
+        if (caption) {
+          var inp = document.getElementById('search-input');
+          if (inp) inp.value = caption;
+          runSearch(caption);
+          findBtn.textContent = '\u2714 searching\u2026';
+          setTimeout(function () {
+            findBtn.textContent = '\u2726 find visually similar';
+            findBtn.disabled = false;
+          }, 3000);
+          return;
+        }
+      }
+    } catch { /* fall through */ }
+    // Fallback: open Google Lens in new tab
+    if (lensLink && lensLink.href) { window.open(lensLink.href, '_blank', 'noopener'); }
+    findBtn.textContent = '\u2726 find visually similar';
+    findBtn.disabled = false;
+  });
 })();
 
 /* ------------------------------------------------------------------

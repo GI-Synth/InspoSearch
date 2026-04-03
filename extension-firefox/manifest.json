@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "InspoSearch — Save to Board",
+  "version": "1.0.0",
+  "description": "Right-click any image to save it to your InspoSearch board.",
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "<all_urls>"
+  ],
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "insposearch@insposearch.pages.dev",
+      "strict_min_version": "109.0"
+    }
+  }
+}
