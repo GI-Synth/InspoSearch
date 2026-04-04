@@ -2202,10 +2202,11 @@ export async function runSearch(query, forceRefresh = false) {
     applySampledNsfwFilter(STATE.results).catch(() => {});
   }
 
-  clearGrid();
   const visible = getDisplayResults(STATE.results, effectiveQuery);
   if (visible.length) {
-    renderGrid(visible);
+    // Only append items not yet in the DOM — preserves first-wave images already visible
+    const novel = visible.filter(item => !renderedIds.has(item.id));
+    if (novel.length) renderGrid(novel);
     // "Did you mean?" — check spelling in background if few results
     if (visible.length < 4 && STATE.searchMode !== 'exact') {
       spellCheck(effectiveQuery).then(suggestion => {
