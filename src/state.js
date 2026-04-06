@@ -324,6 +324,7 @@ export const STATE = {
   pendingOnboardingSearch: false, // first-visit guided search
   _searchGen:          0,        // monotonic counter to detect stale results
   _licenseFilter:      null,     // null | 'cc0' | 'cc-by' | 'open'
+  _mediumFilter:       null,     // null | 'painting' | 'photograph' | ... (from advanced search)
   _didYouMeanBanner:   null,     // suggested spelling correction shown to user
   _nsfwFilter:         false,    // NSFW filter enabled (sampled Workers AI check)
 };

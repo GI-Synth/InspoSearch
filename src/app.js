@@ -8224,6 +8224,7 @@ export function applyBoardTemplate(template) {
     if (licenseEl)  licenseEl.value = '';
     if (colorEnEl)  colorEnEl.checked = false;
     STATE._dateFilter = null;
+    STATE._mediumFilter = null;
     STATE._aspectFilter = null;
     STATE._licenseFilter = null;
   });
@@ -8306,6 +8307,9 @@ export function applyBoardTemplate(template) {
     } else {
       STATE._dateFilter = null;
     }
+
+    // Medium filter → STATE (used by Europeana TYPE param + client-side filtering)
+    STATE._mediumFilter = medium || null;
 
     // Orientation filter → STATE
     STATE._aspectFilter = orient || null;

@@ -12,6 +12,23 @@ import {
   safeFetch, sleep, sourceFetch, stripHtml
 } from './core.js';
 
+/* Map UI medium values → Europeana TYPE facet values */
+const _MEDIUM_TO_EUROPEANA_TYPE = {
+  painting:    'IMAGE',
+  photograph:  'IMAGE',
+  sculpture:   'IMAGE',
+  drawing:     'IMAGE',
+  print:       'IMAGE',
+  textile:     'IMAGE',
+  ceramic:     'IMAGE',
+  watercolor:  'IMAGE',
+  engraving:   'IMAGE',
+  mosaic:      'IMAGE',
+  fresco:      'IMAGE',
+  tapestry:    'IMAGE',
+  manuscript:  'TEXT',
+};
+
 export async function expandKeywords(keyword) {
   if (!STATE.keywordExpansion) return [keyword];
   try {
@@ -356,6 +373,15 @@ export async function fetchEuropeana(keyword, limit, signal, start = 1) {
   try {
     let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&start=${start}`;
     if (STATE._licenseFilter === 'cc0' || STATE._licenseFilter === 'cc-by' || STATE._licenseFilter === 'open') url += '&reusability=open';
+    if (STATE._dateFilter) {
+      const yFrom = STATE._dateFilter.from || 0;
+      const yTo   = STATE._dateFilter.to   || 9999;
+      url += `&qf=YEAR:[${yFrom} TO ${yTo}]`;
+    }
+    if (STATE._mediumFilter) {
+      const euroType = _MEDIUM_TO_EUROPEANA_TYPE[STATE._mediumFilter];
+      if (euroType) url += `&qf=TYPE:${encodeURIComponent(euroType)}`;
+    }
     const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('Europeana fetch failed');
     const data = await res.json();
@@ -392,6 +418,15 @@ export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, 
     let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&qf=${filterParam}:${encodeURIComponent(filterValue)}`;
     if (extraQf) url += `&qf=${encodeURIComponent(extraQf)}`;
     if (STATE._licenseFilter === 'cc0' || STATE._licenseFilter === 'cc-by' || STATE._licenseFilter === 'open') url += '&reusability=open';
+    if (STATE._dateFilter) {
+      const yFrom = STATE._dateFilter.from || 0;
+      const yTo   = STATE._dateFilter.to   || 9999;
+      url += `&qf=YEAR:[${yFrom} TO ${yTo}]`;
+    }
+    if (STATE._mediumFilter) {
+      const euroType = _MEDIUM_TO_EUROPEANA_TYPE[STATE._mediumFilter];
+      if (euroType) url += `&qf=TYPE:${encodeURIComponent(euroType)}`;
+    }
     const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('Europeana filtered fetch failed');
     const data = await res.json();
