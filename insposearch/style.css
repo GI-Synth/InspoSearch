@@ -698,6 +698,11 @@ html, body {
   aspect-ratio: 1;
   content-visibility: auto;
   contain-intrinsic-size: auto 202px;
+  animation: cardFadeIn 0.35s ease both;
+}
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .image-card img {
@@ -1825,8 +1830,8 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(10, 10, 10, 0.88);
-  backdrop-filter: blur(5px);
+  background: rgba(10, 10, 10, 0.55);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3181,6 +3186,87 @@ body.light .discover-hero::before,
   letter-spacing: 0.04em; transition: border-color 0.15s, color 0.15s;
 }
 .taxonomy-tag:hover { border-color: var(--accent); color: var(--ink); }
+
+/* ============================================================
+   MOBILE TOUCH TARGETS
+============================================================ */
+@media (pointer: coarse) {
+  .source-badge     { min-height: 36px; min-width: 36px; display: inline-flex; align-items: center; }
+  .zoom-btn,
+  .sim-btn          { min-height: 44px; min-width: 44px; font-size: 18px; }
+  .badge-refresh    { min-height: 36px; min-width: 28px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn-help         { width: 44px; height: 44px; font-size: 14px; }
+  .keyword-pill     { min-height: 36px; padding: 6px 12px; }
+  .keyword-pill .keyword-x { min-width: 24px; min-height: 24px; font-size: 12px; }
+  .ob-btn           { min-height: 44px; padding: 10px 24px; }
+  .ob-dot           { width: 10px; height: 10px; }
+  .ob-skip          { min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
+  .filter-pill      { min-height: 36px; padding: 6px 10px; }
+  #panel .act-btn   { min-height: 44px; min-width: 44px; }
+  .color-swatch     { min-height: 36px; min-width: 36px; }
+  .preset-btn       { min-height: 36px; padding: 6px 12px; }
+}
+
+/* ============================================================
+   GUIDED TOUR TOOLTIPS
+============================================================ */
+.guided-tip {
+  position: fixed;
+  z-index: 11000;
+  max-width: 260px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: auto;
+}
+.guided-tip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.guided-tip-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.guided-tip-dismiss {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  background: none;
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.guided-tip-dismiss:hover { border-color: var(--accent); color: var(--ink); }
+.guided-tip-counter {
+  font-size: 8px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  float: right;
+  margin-top: 10px;
+}
+.guided-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10500;
+  background: rgba(10, 10, 10, 0.25);
+  transition: opacity 0.3s ease;
+}
 
 /* ============================================================
    ARTIST ENTITY PANEL

@@ -745,6 +745,11 @@ set_realRenderGrid(renderGrid);
     }
     // Normal click: preview item in panel without adding to floating bar
     updatePanel(item);
+    // Multi-select discovery tip: show once on first card click
+    if (!localStorage.getItem('inspo_tip_multiselect')) {
+      localStorage.setItem('inspo_tip_multiselect', '1');
+      showQuietTip(card.id, 'ctrl+click images to select & compare — a floating toolbar appears', null);
+    }
   });
 
   grid.addEventListener('keydown', e => {
@@ -4186,6 +4191,14 @@ export function getSourceStats() {
   startBtn.addEventListener('click', close);
   helpBtn.addEventListener('click', () => show());
 
+  // "Guided Tour" buttons — close onboarding slides, launch walkthrough tooltips
+  el.querySelectorAll('.ob-guided-tour').forEach(btn => {
+    btn.addEventListener('click', () => {
+      close();
+      startGuidedTour();
+    });
+  });
+
   // Click outside .ob-inner closes onboarding
   el.addEventListener('click', e => {
     if (e.target === el) close();
@@ -4218,6 +4231,91 @@ export function getSourceStats() {
   window._showOnboarding = show;
   window._refreshOnboardingStats = populateStats;
 })();
+
+/* ── Guided Tour — lightweight step-through tooltips ── */
+function startGuidedTour() {
+  const TOUR_STEPS = [
+    { target: 'search-input',   label: 'search bar',       text: 'type anything — a word, a feeling, a color. results stream in from every source at once.' },
+    { target: 'image-grid',     label: 'image grid',        text: 'click any image to open the preview panel. ctrl+click (⌘+click on mac) to select multiple for the floating toolbar.' },
+    { target: 'btn-advanced',   label: 'advanced search',   text: 'filter by date range, medium, orientation, region, source category, and precise hex colors.' },
+    { target: 'sidebar',        label: 'sidebar',           text: 'toggle sources on/off, search by color, adjust image count, and manage api keys.' },
+    { target: 'btn-board',      label: 'board mode',        text: 'switch to board view — drag, arrange, and export a collection that lives in your browser.' },
+    { target: 'btn-help',       label: 'help',              text: 'reopen the onboarding slides anytime from this button.' },
+  ];
+
+  let current = 0;
+  let overlay = null;
+  let tipEl = null;
+
+  function cleanup() {
+    if (tipEl) { tipEl.remove(); tipEl = null; }
+    if (overlay) { overlay.remove(); overlay = null; }
+  }
+
+  function showStep(i) {
+    cleanup();
+    if (i >= TOUR_STEPS.length) return;
+    current = i;
+    const step = TOUR_STEPS[i];
+    const target = document.getElementById(step.target);
+    if (!target) { showStep(i + 1); return; }
+
+    // Light overlay
+    overlay = document.createElement('div');
+    overlay.className = 'guided-overlay';
+    overlay.addEventListener('click', () => { cleanup(); });
+    document.body.appendChild(overlay);
+
+    // Bring target above overlay
+    const origZ = target.style.zIndex;
+    const origPos = target.style.position;
+    target.style.zIndex = '10600';
+    if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+
+    // Tooltip
+    tipEl = document.createElement('div');
+    tipEl.className = 'guided-tip';
+    tipEl.innerHTML = `
+      <div class="guided-tip-label">${step.label}</div>
+      <div>${step.text}</div>
+      <span class="guided-tip-counter">${i + 1} / ${TOUR_STEPS.length}</span>
+      <button class="guided-tip-dismiss">${i < TOUR_STEPS.length - 1 ? 'next →' : 'done'}</button>
+    `;
+    document.body.appendChild(tipEl);
+
+    // Position below target
+    const rect = target.getBoundingClientRect();
+    let top = rect.bottom + 10;
+    let left = Math.max(10, Math.min(window.innerWidth - 270, rect.left));
+    // If below viewport, show above
+    if (top + 100 > window.innerHeight) top = Math.max(10, rect.top - tipEl.offsetHeight - 10);
+    tipEl.style.left = left + 'px';
+    tipEl.style.top = top + 'px';
+
+    requestAnimationFrame(() => tipEl.classList.add('visible'));
+
+    const dismiss = tipEl.querySelector('.guided-tip-dismiss');
+    dismiss.addEventListener('click', () => {
+      target.style.zIndex = origZ;
+      target.style.position = origPos;
+      cleanup();
+      showStep(i + 1);
+    });
+
+    // Escape to exit tour
+    const onKey = e => {
+      if (e.key === 'Escape') {
+        target.style.zIndex = origZ;
+        target.style.position = origPos;
+        cleanup();
+        document.removeEventListener('keydown', onKey);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+  }
+
+  showStep(0);
+}
 
 /* Persistent top info bar — updated on load & after dynamic discovery */
 export function updateInfoBar() {
@@ -8033,7 +8131,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 493+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 403+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8043,7 +8141,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 493+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 403+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);
