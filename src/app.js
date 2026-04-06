@@ -1052,6 +1052,30 @@ export function renderSourceInfo(items) {
   el.appendChild(title);
   el.appendChild(sourceLine);
 
+  // Europeana dual attribution: show data provider(s) + "via Europeana" line
+  const isEuro = item.source === 'europeana' || item.source?.startsWith('euro_');
+  const providers = Array.isArray(item.dataProvider) ? item.dataProvider : (item.dataProvider ? [item.dataProvider] : []);
+  if (isEuro && providers.length) {
+    const euroLine = document.createElement('div');
+    euroLine.style.cssText = 'margin-top:3px;font-size:0.82em;color:var(--ink-soft);display:flex;align-items:center;gap:4px;flex-wrap:wrap;';
+    const provSpan = document.createElement('span');
+    provSpan.textContent = providers.join(' · ');
+    provSpan.style.fontWeight = '500';
+    const viaSpan = document.createElement('span');
+    viaSpan.style.cssText = 'display:inline-flex;align-items:center;gap:3px;';
+    viaSpan.innerHTML = ' · ' + tr('viaEuropeana') + ' <img src="https://www.europeana.eu/favicon.ico" alt="Europeana" style="width:14px;height:14px;vertical-align:middle;border-radius:2px;"> ';
+    const euroLink = document.createElement('a');
+    euroLink.href = 'https://www.europeana.eu';
+    euroLink.target = '_blank';
+    euroLink.rel = 'noopener noreferrer';
+    euroLink.textContent = 'Europeana';
+    euroLink.style.cssText = 'color:#0A72CC;border-bottom:1px solid rgba(10,114,204,0.3);';
+    viaSpan.appendChild(euroLink);
+    euroLine.appendChild(provSpan);
+    euroLine.appendChild(viaSpan);
+    el.appendChild(euroLine);
+  }
+
   if (item.sourceUrl) {
     const linkWrap = document.createElement('div');
     linkWrap.style.marginTop = '4px';
@@ -1060,7 +1084,7 @@ export function renderSourceInfo(items) {
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.style.cssText = 'color:var(--accent);border-bottom:1px solid var(--line-strong);';
-    link.textContent = 'view original ↗';
+    link.textContent = isEuro ? tr('viewOnEuropeana') + ' ↗' : 'view original ↗';
     linkWrap.appendChild(link);
     el.appendChild(linkWrap);
   }
@@ -2238,6 +2262,8 @@ export async function runSearch(query, forceRefresh = false) {
   if (_dfs) _dfs.style.display = '';
   if (_afs) _afs.style.display = '';
   document.getElementById('color-filter-section').style.display = '';
+  var _lfs = document.getElementById('license-filter-section');
+  if (_lfs) _lfs.style.display = '';
 }
 
 /* ============================================================
@@ -4538,6 +4564,18 @@ export function buildSourceRow(container, src) {
           badge.className = 'key-status-badge badge-active';
           badge.textContent = '\u2713 active';
           updateKeysDot();
+          // Reset health so source is no longer paused after adding key
+          if (STATE.sourceHealth[src.id]) {
+            STATE.sourceHealth[src.id].misses = 0;
+            STATE.sourceHealth[src.id]._notified = false;
+          }
+          // Also reset health for sub-sources (e.g. euro_* when europeana key is added)
+          Object.keys(STATE.sourceHealth).forEach(k => {
+            if (k.startsWith(src.id + '_')) {
+              STATE.sourceHealth[k].misses = 0;
+              STATE.sourceHealth[k]._notified = false;
+            }
+          });
           // If it's the Gemini key, update the counter UI
           if (src.stateKey === 'geminiKey') {
             document.getElementById('no-key-note').textContent = '';
@@ -5807,6 +5845,20 @@ window._extractYear = _extractYearFn;
   });
 })();
 
+/* ── License quick-filter pills ── */
+(function initLicenseFilter() {
+  var row = document.getElementById('license-pill-row');
+  if (!row) return;
+  row.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-license]');
+    if (!btn) return;
+    row.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    STATE._licenseFilter = btn.dataset.license || null;
+    refilterResults();
+  });
+})();
+
 export function refilterResults() {
   if (!STATE.results.length) return;
   let items = [...STATE.results];
@@ -5823,13 +5875,16 @@ export function refilterResults() {
 
   // Aspect ratio filter
   if (STATE._aspectFilter && STATE._aspectFilter !== 'all') {
-    // Aspect ratio is checked at render time via naturalWidth/naturalHeight
-    // We store it in item._aspect after first load (see renderGrid img.onload patch below)
     const af = STATE._aspectFilter;
     items = items.filter(item => {
       if (!item._aspect) return true; // keep if unknown
       return item._aspect === af;
     });
+  }
+
+  // License filter
+  if (STATE._licenseFilter) {
+    items = applyLicenseFilter(items, STATE._licenseFilter);
   }
 
   clearGrid();
