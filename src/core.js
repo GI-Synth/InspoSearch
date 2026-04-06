@@ -542,6 +542,7 @@ export function getSourceDomain(sourceId) {
   if (fromConfig) {
     try { return new URL(fromConfig).hostname; } catch {}
   }
+  if (sourceId?.startsWith('euro_')) return 'europeana.eu';
   return SOURCE_DOMAINS[sourceId] || (sourceId + '.org');
 }
 
