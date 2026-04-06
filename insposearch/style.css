@@ -747,6 +747,15 @@ html, body {
 
 .source-badge .badge-refresh:hover { opacity: 1; }
 
+/* Phase 5.1+5.2 — verified cultural institution indicator */
+.source-badge .badge-verified {
+  opacity: 0.65;
+  margin-left: 2px;
+  color: #7ec8a0;
+  font-size: 8px;
+  vertical-align: middle;
+}
+
 /* Deep Zoom button on image cards */
 .image-card .zoom-btn {
   position: absolute;

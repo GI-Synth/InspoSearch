@@ -558,6 +558,12 @@ window.addEventListener('unhandledrejection', (e) => {
 
 export const _gridItemMap = new Map();
 
+// Phase 5.1+5.2 — Sources excluded from "verified cultural institution" badge
+const _NON_VERIFIED = new Set([
+  'flickr','pexels','pixabay','picsum','unsplash','openverse','artsy',
+  'wikiart','eol','gbif','gbiflit','inaturalist','naturalis',
+]);
+
 export function renderGrid(items) {
   const grid = document.getElementById('image-grid');
   // Remove empty-state placeholder once real cards arrive
@@ -650,7 +656,11 @@ export function renderGrid(items) {
     const _sm = BADGE_META[item.source];
     badge.className = 'source-badge badge-' + (_sm ? _sm[0] : 'wiki');
     const sourceLabel = _sm ? _sm[1] : item.source;
-    badge.innerHTML = `<span class="badge-label">${sourceLabel}</span><span class="badge-refresh" title="Refresh ${sourceLabel}">↺</span>`;
+    const _srcMeta = SOURCE_META[item.source];
+    const _isVerified = _srcMeta && !_NON_VERIFIED.has(item.source) &&
+      !item.source.startsWith('wmc_') && !item.source.startsWith('ia_') &&
+      (_srcMeta.category?.includes('museums') || _srcMeta.category?.includes('archives') || _srcMeta.category?.includes('historical'));
+    badge.innerHTML = `<span class="badge-label">${sourceLabel}</span>${_isVerified ? '<span class="badge-verified" title="Verified cultural institution \u00b7 Human-curated collection">\u2713</span>' : ''}<span class="badge-refresh" title="Refresh ${sourceLabel}">\u21BA</span>`;
 
     card.appendChild(img);
     card.appendChild(badge);
@@ -8023,7 +8033,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 521+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 493+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8033,7 +8043,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 521+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 493+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);
