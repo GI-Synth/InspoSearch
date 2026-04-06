@@ -354,10 +354,9 @@ export async function fetchEuropeana(keyword, limit, signal, start = 1) {
   if (!STATE.europeanaKey) return [];
 
   try {
-    const res = await safeFetch(
-      `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&start=${start}`,
-      { signal }
-    );
+    let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&start=${start}`;
+    if (STATE._licenseFilter === 'cc0' || STATE._licenseFilter === 'cc-by' || STATE._licenseFilter === 'open') url += '&reusability=open';
+    const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('Europeana fetch failed');
     const data = await res.json();
     return (data.items || [])
@@ -370,6 +369,8 @@ export async function fetchEuropeana(keyword, limit, signal, start = 1) {
         description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
         source:      'europeana',
         sourceUrl:   item.guid || '',
+        dataProvider: item.dataProvider || [],
+        rights:      item.rights?.[0] || '',
         year:        (item.year?.[0] || '').toString().slice(0, 4) || null,
         tags:        (item.dcSubject || []).map(s => s.toLowerCase()),
         colors:      [],
@@ -390,6 +391,7 @@ export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, 
   try {
     let url = `https://api.europeana.eu/record/v2/search.json?wskey=${STATE.europeanaKey}&query=${encodeURIComponent(keyword)}&media=true&rows=${limit}&profile=rich&qf=${filterParam}:${encodeURIComponent(filterValue)}`;
     if (extraQf) url += `&qf=${encodeURIComponent(extraQf)}`;
+    if (STATE._licenseFilter === 'cc0' || STATE._licenseFilter === 'cc-by' || STATE._licenseFilter === 'open') url += '&reusability=open';
     const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('Europeana filtered fetch failed');
     const data = await res.json();
@@ -403,6 +405,8 @@ export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, 
         description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
         source:      'europeana',
         sourceUrl:   item.guid || '',
+        dataProvider: item.dataProvider || [],
+        rights:      item.rights?.[0] || '',
         year:        (item.year?.[0] || '').toString().slice(0, 4) || null,
         tags:        (item.dcSubject || []).map(s => s.toLowerCase()),
         colors: [], aiTags: [],

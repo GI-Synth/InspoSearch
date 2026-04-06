@@ -1459,7 +1459,7 @@ html, body {
 .badge-archive      { background: rgba(56,100,184,0.7); }
 .badge-nasa         { background: rgba(20,60,120,0.75); }
 .badge-rijks        { background: rgba(140,40,40,0.7); }
-.badge-euro         { background: rgba(0,90,120,0.7); }
+.badge-euro         { background: rgba(10,114,204,0.8); }
 .badge-harvard      { background: rgba(180,30,30,0.7); }
 .badge-smithsonian  { background: rgba(20,80,160,0.7); }
 .badge-pexels       { background: rgba(5,160,100,0.7); }
@@ -2364,6 +2364,12 @@ html, body {
   border-color: var(--line);
   color: var(--ink-1);
   background: #1a1a1a;
+}
+.license-pill-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 #filter-source-count {
   font-size: 10px;

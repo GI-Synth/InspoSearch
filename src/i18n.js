@@ -77,6 +77,8 @@ const STRINGS = {
     noKeyNote:          'add a gemini key in the keys panel to enable ai features',
     begin:              'begin with an image, a word, a feeling',
     tryTerms:           'try: texture / light / form / shadow',
+    viaEuropeana:       'via',
+    viewOnEuropeana:    'view on Europeana',
   },
   fr: {
     searchPlaceholder:  'rechercher',
@@ -142,8 +144,8 @@ const STRINGS = {
     hexColorPlaceholder:'#ff5733',
     noKeyNote:          'ajoutez une cl\u00e9 gemini dans le panneau de cl\u00e9s pour activer les fonctions ia',
     begin:              'commencez par une image, un mot, un sentiment',
-    tryTerms:           'essayez : texture / lumi\u00e8re / forme / ombre',
-  },
+    tryTerms:           'essayez : texture / lumi\u00e8re / forme / ombre',    viaEuropeana:       'via',
+    viewOnEuropeana:    'voir sur Europeana',  },
   de: {
     searchPlaceholder:  'suchen',
     filterPlaceholder:  'filtern\u2026',
@@ -208,8 +210,8 @@ const STRINGS = {
     hexColorPlaceholder:'#ff5733',
     noKeyNote:          'gemini-schl\u00fcssel im schl\u00fcsselpanel hinzuf\u00fcgen, um ki-funktionen zu aktivieren',
     begin:              'beginnen sie mit einem bild, einem wort, einem gef\u00fchl',
-    tryTerms:           'probieren sie: textur / licht / form / schatten',
-  },
+    tryTerms:           'probieren sie: textur / licht / form / schatten',    viaEuropeana:       'über',
+    viewOnEuropeana:    'auf Europeana ansehen',  },
   es: {
     searchPlaceholder:  'buscar',
     filterPlaceholder:  'filtrar\u2026',
@@ -275,6 +277,8 @@ const STRINGS = {
     noKeyNote:          'a\u00f1ade una clave gemini en el panel de claves para activar las funciones de ia',
     begin:              'empieza con una imagen, una palabra, un sentimiento',
     tryTerms:           'prueba: textura / luz / forma / sombra',
+    viaEuropeana:       'vía',
+    viewOnEuropeana:    'ver en Europeana',
   },
   nl: {
     searchPlaceholder:  'zoeken',
@@ -341,6 +345,8 @@ const STRINGS = {
     noKeyNote:          'voeg een gemini-sleutel toe in het sleutels-paneel om ai-functies te activeren',
     begin:              'begin met een afbeelding, een woord, een gevoel',
     tryTerms:           'probeer: textuur / licht / vorm / schaduw',
+    viaEuropeana:       'via',
+    viewOnEuropeana:    'bekijk op Europeana',
   },
   it: {
     searchPlaceholder:  'cerca',
@@ -407,6 +413,8 @@ const STRINGS = {
     noKeyNote:          'aggiungi una chiave gemini nel pannello chiavi per abilitare le funzioni ia',
     begin:              'inizia con un\u2019immagine, una parola, un sentimento',
     tryTerms:           'prova: texture / luce / forma / ombra',
+    viaEuropeana:       'tramite',
+    viewOnEuropeana:    'vedi su Europeana',
   },
 };
 
