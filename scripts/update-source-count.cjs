@@ -26,12 +26,8 @@ try {
   manifestCount = (manifest.sources || []).length;
 } catch {}
 
-// 3. Count dynamic registry (Wikimedia cats + Archive collections)
-const wmcMatch = state.match(/WIKIMEDIA_CATS_EXTENDED\s*=\s*\[([\s\S]*?)\];/);
-const wmcCount = wmcMatch ? (wmcMatch[1].match(/\bcat:/g) || []).length : 0;
-const arcMatch = state.match(/ARCHIVE_COLLECTIONS\s*=\s*\[([\s\S]*?)\];/);
-const arcCount = arcMatch ? (arcMatch[1].match(/\bcollection:/g) || []).length : 0;
-const dynamicCount = wmcCount + arcCount;
+// 3. Dynamic registry count (no longer includes Wikimedia cats or Archive collections)
+const dynamicCount = 0;
 
 const totalSources = allSourcesCount + manifestCount + dynamicCount;
 

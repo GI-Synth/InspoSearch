@@ -75,15 +75,13 @@ export function selectDynamicSources(keyword, maxCount = 150) {
 
 /* Extend source groups with Phase A sub-collections */
 (function() {
-  SOURCE_GROUPS.fashion.push('euro_fashion', 'wmc_fashion', 'si_chndm');
+  SOURCE_GROUPS.fashion.push('euro_fashion', 'si_chndm');
   SOURCE_GROUPS.museums.push('si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp','si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2','si_npm','si_acm','si_renwick','euro_rijksmuseum','euro_kulturpool','euro_estonian');
   SOURCE_GROUPS.archives.push(...Object.keys(EUROPEANA_PROVIDERS), ...Object.keys(DPLA_HUBS));
-  SOURCE_GROUPS.artdesign.push('euro_rijksmuseum','euro_fashion','wmc_paintings','wmc_sculptures','wmc_portraits','wmc_architecture','wmc_fashion','si_saam','si_hmsg','si_renwick','si_nmafa','si_fsg');
-  SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','wmc_natural_history','wmc_botanical','idigbio','ala');
-  SOURCE_GROUPS.maps.push('wmc_maps');
+  SOURCE_GROUPS.artdesign.push('euro_rijksmuseum','euro_fashion','si_saam','si_hmsg','si_renwick','si_nmafa','si_fsg');
+  SOURCE_GROUPS.nature.push('si_nzp','si_nmnh','idigbio','ala');
   SOURCE_GROUPS.historical.push(...Object.keys(DPLA_HUBS),'euro_newspapers','euro_ddb','euro_bnf','euro_bne','euro_kb','euro_bn_pl','euro_nkr','euro_kulturpool','euro_hispana','euro_nuk','euro_estonian','euro_lithuanian','euro_latvian','euro_hungarian','euro_romanian','euro_bulgarian','si_nmah','si_npm','si_acm','si_nmai');
-  SOURCE_GROUPS.botanical.push('wmc_botanical');
-  SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','wmc_natural_history','wmc_scientific','idigbio','ala','nasa_images');
+  SOURCE_GROUPS.science.push('si_nmnh','si_nzp','si_nasm2','idigbio','ala','nasa_images');
   SOURCE_GROUPS.historical.push('loc');
   SOURCE_GROUPS.archives.push('loc');
   // Phase E — CORS-blocked, cache-first

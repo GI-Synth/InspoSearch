@@ -108,132 +108,10 @@ export function normalizeMet(obj) {
   };
 }
 
-export function normalizeArchive(doc) {
-  const thumb = `https://archive.org/services/img/${doc.identifier}`;
-  const desc = Array.isArray(doc.description)
-    ? doc.description.join(' ')
-    : (doc.description || '');
-  const subjects = Array.isArray(doc.subject)
-    ? doc.subject
-    : (doc.subject ? [doc.subject] : []);
-  return {
-    id:          `archive_${doc.identifier}`,
-    url:         thumb,
-    thumb:       thumb,
-    title:       Array.isArray(doc.title) ? doc.title[0] : (doc.title || 'Untitled'),
-    description: desc,
-    source:      'archive',
-    sourceUrl:   `https://archive.org/details/${doc.identifier}`,
-    year:        (doc.date || '').slice(0, 4) || null,
-    tags:        subjects.map(s => String(s).toLowerCase()),
-    colors:      [],
-    aiTags:      [],
-  };
-}
 
 /* ============================================================
    10. API FETCH FUNCTIONS
 ============================================================ */
-export async function fetchWikimedia(keyword, limit, signal) {
-
-  try {
-    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await sourceFetch(searchUrl, { signal }, 'wikimedia');
-    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; return fetchWikimediaRetry(keyword, limit, signal); }
-    const data = await res.json();
-    const hits = (data.query?.search || []).filter(h => {
-      const t = h.title.toLowerCase();
-      return !t.includes('.svg') && !t.includes('diagram') && !t.includes('map')
-          && !t.includes('logo') && !t.includes('icon') && !t.includes('chart');
-    });
-    if (!hits.length) return [];
-
-    // Batch up to 10 titles per request
-    const results = [];
-    for (let i = 0; i < hits.length; i += 10) {
-      if (signal?.aborted) break;
-      const batch = hits.slice(i, i + 10);
-      const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
-      try {
-        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
-        const infoRes = await safeFetch(infoUrl, { signal });
-        const infoData = await infoRes.json();
-        for (const page of Object.values(infoData.query?.pages || {})) {
-          const item = normalizeWikimedia(page);
-          if (!item) continue;
-          if (!item.url.match(/\.(jpe?g|png)(\?|$)/i)) continue;
-          item.tags = extractTags(item);
-          if (isLikelyReal(item)) results.push(item);
-        }
-      } catch (batchErr) {
-        console.warn('Wikimedia batch failed:', batchErr.message);
-      }
-    }
-    return results;
-  } catch (err) {
-    if (err.name === 'AbortError') return [];
-    console.warn('Wikimedia failed:', err.message);
-    return [];
-  }
-}
-
-export async function fetchWikimediaRetry(keyword, limit, signal) {
-
-  try {
-    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(keyword)}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await safeFetch(searchUrl, { signal });
-    const data = await res.json();
-    const hits = (data.query?.search || []);
-    if (!hits.length) return [];
-    const titles = hits.slice(0, 10).map(h => encodeURIComponent(h.title)).join('|');
-    const infoRes = await safeFetch(`https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`, { signal });
-    const infoData = await infoRes.json();
-    return Object.values(infoData.query?.pages || {})
-      .map(normalizeWikimedia).filter(Boolean)
-      .filter(item => isLikelyReal(item))
-      .map(item => { item.tags = extractTags(item); return item; });
-  } catch { return []; }
-}
-
-export async function fetchWikimediaCategory(category, keyword, limit, signal) {
-  try {
-    const catPart = `incategory:${category}`;
-    const srsearch = keyword ? `${encodeURIComponent(keyword)}+${catPart}` : catPart;
-    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${srsearch}&srnamespace=6&srlimit=${limit}&format=json&origin=*`;
-    const res = await safeFetch(searchUrl, { signal });
-    if (res.status === 429) return [];
-    const data = await res.json();
-    const hits = (data.query?.search || []).filter(h => {
-      const t = h.title.toLowerCase();
-      return !t.includes('.svg') && !t.includes('logo') && !t.includes('icon') && !t.includes('chart');
-    });
-    if (!hits.length) return [];
-    const results = [];
-    for (let i = 0; i < hits.length; i += 10) {
-      if (signal?.aborted) break;
-      const batch = hits.slice(i, i + 10);
-      const titles = batch.map(h => encodeURIComponent(h.title)).join('|');
-      try {
-        const infoUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${titles}&prop=imageinfo&iiprop=url|extmetadata|size&iiurlwidth=600&format=json&origin=*`;
-        const infoRes = await safeFetch(infoUrl, { signal });
-        const infoData = await infoRes.json();
-        for (const page of Object.values(infoData.query?.pages || {})) {
-          const item = normalizeWikimedia(page);
-          if (!item) continue;
-          if (!item.url.match(/\.(jpe?g|png)(\?|$)/i)) continue;
-          item.tags = extractTags(item);
-          if (isLikelyReal(item)) results.push(item);
-        }
-      } catch (batchErr) { console.warn('WMC category batch failed:', batchErr.message); }
-    }
-    return results;
-  } catch (err) {
-    if (err.name === 'AbortError') return [];
-    console.warn('Wikimedia category failed:', err.message);
-    return [];
-  }
-}
-
 export async function fetchMet(keyword, limit, signal, offset = 0) {
 
   try {
@@ -258,25 +136,6 @@ export async function fetchMet(keyword, limit, signal, offset = 0) {
   } catch (err) {
     if (err.name === 'AbortError') return [];
     console.warn('Met failed:', err.message);
-    return [];
-  }
-}
-
-export async function fetchArchive(keyword, limit, signal) {
-  // Note: run via localhost or Cloudflare Pages to avoid file:// CORS warnings
-  try {
-    const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`;
-    const res = await sourceFetch(url, { signal }, 'archive');
-    const data = await res.json();
-    const docs = data.response?.docs || [];
-    return docs
-      .map(normalizeArchive)
-      .filter(Boolean)
-      .filter(isLikelyReal)
-      .map(item => { item.tags = extractTags(item); return item; });
-  } catch (err) {
-    if (err.name === 'AbortError') return [];
-    console.warn('Archive.org unavailable (CORS) — skipping source');
     return [];
   }
 }
@@ -3385,35 +3244,6 @@ WD_PHASE_H.forEach(s => {
   };
 });
 
-export async function fetchArchiveMaps(keyword, limit, signal) {
-  try {
-    const res = await safeFetch(
-      `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keyword)}+AND+mediatype:image+AND+subject:map&fl[]=identifier,title,description,date,subject&rows=${limit}&output=json`,
-      { signal }
-    );
-    if (!res.ok) throw new Error('Archive Maps failed');
-    const data = await res.json();
-    return (data.response?.docs || []).map(doc => ({
-      id:          `archivemap_${doc.identifier}`,
-      url:         `https://archive.org/services/img/${doc.identifier}`,
-      thumb:       `https://archive.org/services/img/${doc.identifier}`,
-      title:       Array.isArray(doc.title) ? doc.title[0] : (doc.title || 'Archive Map'),
-      description: Array.isArray(doc.description) ? doc.description[0] : (doc.description || ''),
-      source:      'archive',
-      sourceUrl:   `https://archive.org/details/${doc.identifier}`,
-      year:        (doc.date || '').slice(0, 4) || null,
-      tags:        (Array.isArray(doc.subject) ? doc.subject : [doc.subject])
-                     .filter(Boolean).map(s => s.toLowerCase()),
-      colors: [], aiTags: [],
-    }))
-    .filter(isLikelyReal)
-    .slice(0, limit);
-  } catch (e) {
-    console.warn('Archive Maps failed:', e.message);
-    return [];
-  }
-}
-
 export async function fetchOpenLibrarySubjects(keyword, limit, signal) {
   if (keyword.length < 4) return [];
   try {
@@ -3707,32 +3537,6 @@ export async function fetchCUDL(keyword, limit, signal) {
   }
 }
 
-/* ── Archive.org collection adapter (no key needed) ── */
-export async function fetchArchiveCollection(collection, keyword, limit, signal) {
-  try {
-    const url = `https://archive.org/advancedsearch.php?q=collection:(${encodeURIComponent(collection)})+AND+(${encodeURIComponent(keyword)})&fl=identifier,title,description&output=json&rows=${limit}&sort=downloads+desc`;
-    const res = await safeFetch(url, { signal });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.response?.docs || [])
-      .map(doc => ({
-        id:          `ia_${collection}_${doc.identifier}`,
-        url:         `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`,
-        thumb:       `https://archive.org/services/img/${encodeURIComponent(doc.identifier)}`,
-        title:       doc.title || 'Archive.org item',
-        description: doc.description ? String(Array.isArray(doc.description) ? doc.description[0] : doc.description).slice(0, 200) : '',
-        source:      'ia_' + collection,
-        sourceUrl:   `https://archive.org/details/${encodeURIComponent(doc.identifier)}`,
-        year:        null, tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    if (e.name === 'AbortError') return [];
-    return [];
-  }
-}
-
 /* Generic IIIF Content Search adapter — used by manifest-loaded sources */
 export async function fetchIIIFCollection(config, keyword, limit, signal) {
   try {
@@ -3898,8 +3702,6 @@ export async function fetchIIIFSearch(config, keyword, limit, signal) {
 ADAPTERS.europeana_provider  = (cfg, kw, lim, sig) => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, kw, lim, sig, cfg.extra || '');
 ADAPTERS.dpla_hub            = (cfg, kw, lim, sig) => fetchDPLAProvider(cfg.provider, kw, lim, sig);
 ADAPTERS.smithsonian_unit    = (cfg, kw, lim, sig) => fetchSmithsonianUnit(cfg.code, kw, lim, sig);
-ADAPTERS.wikimedia_category  = (cfg, kw, lim, sig) => fetchWikimediaCategory(cfg.cat, kw, lim, sig);
-ADAPTERS.archive_collection  = (cfg, kw, lim, sig) => fetchArchiveCollection(cfg.collection, kw, lim, sig);
 ADAPTERS.iiif_collection     = (cfg, kw, lim, sig) => fetchIIIFCollection(cfg, kw, lim, sig);
 ADAPTERS.iiif_content_search = (cfg, kw, lim, sig) => fetchIIIFSearch(cfg, kw, lim, sig);
 

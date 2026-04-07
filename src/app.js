@@ -5,11 +5,11 @@ import { t as tr, initLocale, setLocale, getLocale, applyI18n, SUPPORTED_LOCALES
 import {
   ADAPTERS, ALL_SOURCES, BADGE_META, CONSTANTS, DPLA_HUBS, DYNAMIC_REGISTRY,
   EUROPEANA_PROVIDERS, KEY_SOURCES, SI_UNITS, SOURCE_DOMAINS, SOURCE_GROUPS,
-  SOURCE_META, STATE, WD_PHASE_H, WIKIMEDIA_CATS, _isBoardPopup,
+  SOURCE_META, STATE, WD_PHASE_H, _isBoardPopup,
   _realRenderGrid, _secondaryControllers, classifyQuery, filterNegativeTerms,
   filterPhrases, parseNegativeTerms, skipInExactMode, ONBOARDING_TERMS,
   NATURE_QUERY_TERMS, SPACE_QUERY_TERMS, SEED_MAP,
-  ARCHIVE_COLLECTIONS, WIKIMEDIA_CATS_EXTENDED, ART_QUERY_TERMS,
+  ART_QUERY_TERMS,
   classifyQueryExtended, classifyQueryV2,
   set_realRenderGrid
 } from './state.js';
@@ -37,7 +37,7 @@ import {
 import {
   WD_PHASE_H_FETCHERS, expandKeywords,
   fetchAGO, fetchALA, fetchAPOD, fetchAltePinakothek, fetchAmsterdamMuseum,
-  fetchArchive, fetchArchiveCollection, fetchArchiveMaps, fetchArtsDecoratifs,
+  fetchArtsDecoratifs,
   fetchArtsy, fetchAuckland, fetchBHL, fetchBSB, fetchBelvedere,
   fetchBodleian, fetchBoijmans, fetchCUDL, fetchCarnegie, fetchCentraalMuseum,
   fetchChicagoArt, fetchChroniclingAmerica, fetchCleveland, fetchCooperHewitt,
@@ -64,7 +64,7 @@ import {
   fetchThyssen, fetchTrove, fetchUSGS, fetchUnsplash, fetchVA,
   fetchVanGoghMuseum, fetchWallaceCollection, fetchWalters, fetchWellcome,
   fetchWereldculturen, fetchWhitney, fetchWikiArt, fetchWikidata,
-  fetchWikimedia, fetchWikimediaCategory, fetchYale
+  fetchYale
 } from './fetchers.js';
 
 // ── i18n: detect/restore locale and apply translations to DOM ──────────────
@@ -159,10 +159,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
 
   await Promise.allSettled([
     // ── Batch 1 ────────────────────────────────────────────
-    callIfHealthy('wikimedia',    fetchWikimedia(keyword,                       limitFor('wikimedia'), signal)).then(onSourceResult('wikimedia')).catch(() => {}),
-    callIfHealthy('wikimedia',    fetchWikimedia('Featured_picture ' + keyword, limitFor('wikimedia'), signal)).then(onSourceResult('wikimedia')).catch(() => {}),
     callIfHealthy('met',          fetchMet(keywords.join(' '),                  limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
-    callIfHealthy('archive',      fetchArchive(altKeyword,                      limitFor('archive'), signal)).then(onSourceResult('archive')).catch(() => {}),
     skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
     skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
     callIfHealthy('loc',          fetchLOC(keyword,                             limitFor('loc'), signal)).then(onSourceResult('loc')).catch(() => {}),
@@ -223,9 +220,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('wdl',          fetchLOC('wdl ' + keyword,                   fetchBatch, signal)
       .then(r => r.map(i => ({ ...i, source: 'wdl', id: i.id.replace('loc_', 'wdl_') }))))
       .then(onSourceResult('wdl')).catch(() => {}),
-    // ── C18: Wikimedia Artwork extra calls ─────────────────
-    callIfHealthy('wikimedia',    fetchWikimedia('Artwork ' + keyword,          limitFor('wikimedia'), signal)).then(onSourceResult('wikimedia')).catch(() => {}),
-    callIfHealthy('wikimedia',    fetchWikimedia(keyword + ' painting',         limitFor('wikimedia'), signal)).then(onSourceResult('wikimedia')).catch(() => {}),
     // ── Batch 4 — new sources ──────────────────────────────
     callIfHealthy('walters',      fetchWalters(keyword,                         perSource+4, signal)).then(onSourceResult('walters')).catch(() => {}),
     callIfHealthy('princeton',    fetchPrinceton(keyword,                       perSource+4, signal)).then(onSourceResult('princeton')).catch(() => {}),
@@ -246,8 +240,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' print',          perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
     callIfHealthy('bhl',          fetchBHL('illustrated ' + keyword,            perSource+4, signal)).then(onSourceResult('bhl')).catch(() => {}),
     callIfHealthy('smithsonian',  fetchSmithsonian(keyword + ' photograph',     perSource+4, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
-    callIfHealthy('archive',      fetchArchive(keyword + ' visual art',         limitFor('archive'), signal)).then(onSourceResult('archive')).catch(() => {}),
-    callIfHealthy('wikimedia',    fetchWikimedia(keyword + ' filetype:bitmap',  limitFor('wikimedia'), signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+
     // ── Batch 7 ────────────────────────────────────────────
     callIfHealthy('mia',              fetchMia(keyword,                            perSource+2, signal)).then(onSourceResult('mia')).catch(() => {}),
     callIfHealthy('lacma',            fetchLACMA(keyword,                          perSource+2, signal)).then(onSourceResult('lacma')).catch(() => {}),
@@ -261,7 +254,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     skipInExactMode('nationalzoo', exactQueryClass) ? Promise.resolve() : callIfHealthy('nationalzoo', fetchNationalZoo(keyword,     perSource+2, signal)).then(onSourceResult('nationalzoo')).catch(() => {}),
     skipInExactMode('gbiflit',     exactQueryClass) ? Promise.resolve() : callIfHealthy('gbiflit',     fetchGBIFLiterature(keyword,  perSource+2, signal)).then(onSourceResult('gbiflit')).catch(() => {}),
     callIfHealthy('freersackler',     fetchFreerSackler(keyword,                   perSource+2, signal)).then(onSourceResult('freersackler')).catch(() => {}),
-    callIfHealthy('archive',          fetchArchiveMaps(keyword,                    perSource+2, signal)).then(onSourceResult('archive')).catch(() => {}),
+
     callIfHealthy('openlibrary',      fetchOpenLibrarySubjects(keyword,            perSource+2, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
     callIfHealthy('ago',              fetchAGO(keyword,                            perSource+2, signal)).then(onSourceResult('ago')).catch(() => {}),
     callIfHealthy('pem',              fetchPEM(keyword,                            perSource+2, signal)).then(onSourceResult('pem')).catch(() => {}),
@@ -271,7 +264,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('met',              fetchMet('heilbrunn ' + keyword,             perSource+2, signal)).then(onSourceResult('met')).catch(() => {}),
     callIfHealthy('nmaahc',           fetchNMAAHC(keyword + ' photograph',         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
     callIfHealthy('cooperhewitt',     fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
-    callIfHealthy('wikimedia',        fetchWikimedia('incategory:Drawings ' + keyword, perSource+2, signal)).then(onSourceResult('wikimedia')).catch(() => {}),
+
     callIfHealthy('wellcome',         fetchWellcome(keyword + ' illustration',      perSource+2, signal)).then(onSourceResult('wellcome')).catch(() => {}),
     // ── Phase 2 — new sources ─────────────────────────────
     callIfHealthy('unsplash',         fetchUnsplash(keyword,                        perSource+2, signal)).then(onSourceResult('unsplash')).catch(() => {}),
@@ -303,12 +296,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         .then(r => r.map(i => ({ ...i, source: id }))))
         .then(onSourceResult(id)).catch(() => {})
     ),
-    // ── Phase A — Wikimedia category filters (10) ─────────────────────────
-    ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) =>
-      callIfHealthy(id, fetchWikimediaCategory(cfg.cat, keyword, Math.max(2, Math.ceil(perSource/2)), signal)
-        .then(r => r.map(i => ({ ...i, source: id }))))
-        .then(onSourceResult(id)).catch(() => {})
-    ),
+
     // ── Phase B — zero-auth free APIs ────────────────────────────────────
     skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
     skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
@@ -355,8 +343,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('quai_branly',             fetchQuaiBranly(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('quai_branly')).catch(() => {}),
     // Phase H — 113 World Museum sources
     ...WD_PHASE_H.map(s => callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal)).then(onSourceResult(s.id)).catch(() => {})),
-    // ── DYNAMIC REGISTRY — 200+ Wikimedia cats, 40+ Archive.org collections,
-    //    4000+ Europeana providers, 4000+ DPLA hubs (when keys set) ──────────
+    // ── DYNAMIC REGISTRY — Europeana providers, DPLA hubs (when keys set) ──
     ...selectDynamicSources(keyword, 150).map(entry => {
       const adapter = ADAPTERS[entry.adapter];
       if (!adapter) return Promise.resolve();
@@ -658,7 +645,6 @@ export function renderGrid(items) {
     const sourceLabel = _sm ? _sm[1] : item.source;
     const _srcMeta = SOURCE_META[item.source];
     const _isVerified = _srcMeta && !_NON_VERIFIED.has(item.source) &&
-      !item.source.startsWith('wmc_') && !item.source.startsWith('ia_') &&
       (_srcMeta.category?.includes('museums') || _srcMeta.category?.includes('archives') || _srcMeta.category?.includes('historical'));
     badge.innerHTML = `<span class="badge-label">${sourceLabel}</span>${_isVerified ? '<span class="badge-verified" title="Verified cultural institution \u00b7 Human-curated collection">\u2713</span>' : ''}<span class="badge-refresh" title="Refresh ${sourceLabel}">\u21BA</span>`;
 
@@ -1842,9 +1828,7 @@ export function renderKeywordPills(keywords) {
       if (STATE.keywords.length > 0 && STATE.results.length > 0) {
         const final = shuffle(interleave(
           // slice cached results; no re-fetch on pill removal
-          [STATE.results.filter(r => r.source === 'wikimedia'),
-           STATE.results.filter(r => r.source === 'met'),
-           STATE.results.filter(r => r.source === 'archive')]
+          [STATE.results.filter(r => r.source === 'met')]
         )).slice(0, STATE.imageCount);
         renderGrid(final);
       }
@@ -1906,9 +1890,7 @@ export async function refreshSource(sourceName) {
   const kw = STATE.keywords[0] || STATE.query;
   const lim = STATE.imageCount;
   const fetchMap = {
-    wikimedia:    () => fetchWikimedia(kw, lim, signal),
     met:          () => fetchMet(kw, lim, signal),
-    archive:      () => fetchArchive(kw, lim, signal),
     nasa:         () => fetchNASA(kw, lim, signal),
     apod:         () => fetchAPOD(kw, lim, signal),
     rijksmuseum:  () => fetchRijksmuseum(kw, lim, signal),
@@ -1964,7 +1946,6 @@ export async function refreshSource(sourceName) {
       ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) => [id, () => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, kw, lim, signal, cfg.extra || '')]),
       ...Object.entries(DPLA_HUBS).map(([id, cfg]) => [id, () => fetchDPLAProvider(cfg.provider, kw, lim, signal)]),
       ...Object.entries(SI_UNITS).map(([id, cfg]) => [id, () => fetchSmithsonianUnit(cfg.code, kw, lim, signal)]),
-      ...Object.entries(WIKIMEDIA_CATS).map(([id, cfg]) => [id, () => fetchWikimediaCategory(cfg.cat, kw, lim, signal)]),
     ]),
     // Phase B
     idigbio:     () => fetchIDigBio(kw, lim, signal),
@@ -2024,8 +2005,7 @@ export async function fetchMoreResults() {
     callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
     callIfHealthy('openverse',   fetchOpenverse(kw, perSource, signal, page)),
     callIfHealthy('loc',         fetchLOC(kw, perSource, signal, page)),
-    callIfHealthy('wikimedia',   fetchWikimedia(kw, perSource, signal)),
-    callIfHealthy('archive',     fetchArchive(kw, perSource, signal)),
+
     callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
     callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
     callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal)),
@@ -2212,7 +2192,7 @@ export async function runSearch(query, forceRefresh = false) {
     const lq = STATE.query.toLowerCase();
     // 3. Discard results from rogue sources that don't contain the exact query
     //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
-    const ROGUE_SOURCES = new Set(['wikimedia', 'flickr']);
+    const ROGUE_SOURCES = new Set(['flickr']);
     STATE.results = STATE.results.filter(r => {
       if (!ROGUE_SOURCES.has(r.source)) return true;
       return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
@@ -6028,7 +6008,7 @@ export const SOURCE_AUTHORITY = {
   met: 10, rijksmuseum: 10, va: 9, chicago: 9, nga: 9, louvre: 9,
   cleveland: 8, harvard: 8, yale: 8, tate: 8, prado: 8, mia: 8,
   lacma: 8, smithsonian: 8, europeana: 7, loc: 7, gallica: 7,
-  wikimedia: 6, nasa: 7, inaturalist: 7, gbif: 6, flickr: 5,
+  nasa: 7, inaturalist: 7, gbif: 6, flickr: 5,
   openverse: 5, unsplash: 5, pixabay: 4, pexels: 4,
 };
 
@@ -8131,7 +8111,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 403+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 197+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8141,7 +8121,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 403+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 197+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);

@@ -9,10 +9,8 @@ export const CONSTANTS = {
   CLAUDE_KEY_STORAGE:   'inspo_claude_key',
   OPENAI_KEY_STORAGE:   'inspo_openai_key',
   DATAMUSE_MAX:          8,
-  WIKIMEDIA_LIMIT:      25,
   MET_LIMIT:            20,
   MET_DETAIL_LIMIT:     15,
-  ARCHIVE_LIMIT:        15,
   DEBOUNCE_SLIDER:     200,
   RETRY_DELAY:        2000,
   MAX_RESULTS:        2000,
@@ -23,9 +21,7 @@ export const CONSTANTS = {
   // Per-source fetch limit overrides — high-inventory sources get larger quotas,
   // low-inventory sources get smaller ones. Falls back to calculated fetchBatch if absent.
   PER_SOURCE_LIMIT: {
-    wikimedia:   30,
     met:         25,
-    archive:     20,
     chicago:     25,
     cleveland:   20,
     va:          20,
@@ -46,8 +42,8 @@ export const CONSTANTS = {
    Each key maps to [cssClass, displayLabel].
 ============================================================ */
 export const BADGE_META = {
-  wikimedia:        ['wiki','wiki'],       met:              ['met','met'],
-  archive:          ['archive','archive'], nasa:             ['nasa','nasa'],
+  met:              ['met','met'],
+  nasa:             ['nasa','nasa'],
   rijksmuseum:      ['rijks','rijks'],     europeana:        ['euro','euro'],
   // Europeana sub-collections — all use badge-euro CSS class
   euro_rijksmuseum: ['euro','rijks·euro'], euro_fashion:     ['euro','fashion·euro'],
@@ -386,9 +382,7 @@ export function skipInExactMode(sourceId, queryClass) {
 }
 
 export const SOURCE_DOMAINS = {
-  wikimedia: 'commons.wikimedia.org',
   met: 'metmuseum.org',
-  archive: 'archive.org',
   nasa: 'images.nasa.gov',
   inaturalist: 'inaturalist.org',
   loc: 'loc.gov',
@@ -780,7 +774,7 @@ STATE.unsplashKey    = localStorage.getItem('inspo_unsplash_key')     || null;
    66 unique source IDs used by callIfHealthy (all fetchAll calls)
 ============================================================ */
 export const ALL_SOURCES = [
-  'wikimedia','met','archive','nasa','inaturalist','loc','openlibrary',
+  'met','nasa','inaturalist','loc','openlibrary',
   'chicago','cleveland','va','wikiart','nordic','flickr','europeana',
   'rijksmuseum','harvard','smithsonian','pexels','pixabay','getty','nga',
   'gbif','eol','apod','gallica','chronicling','openverse','trove','digitalnz',
@@ -811,10 +805,6 @@ export const ALL_SOURCES = [
   'si_nmah','si_nmnh','si_npg_dc','si_saam','si_hmsg','si_nzp',
   'si_chndm','si_fsg','si_nmafa','si_nmai','si_nmaahc2','si_nasm2',
   'si_npm','si_acm','si_renwick',
-  // A4: Wikimedia category filters (10)
-  'wmc_fashion','wmc_architecture','wmc_paintings','wmc_sculptures',
-  'wmc_maps','wmc_natural_history','wmc_portraits','wmc_botanical',
-  'wmc_scientific','wmc_street',
   // Phase B — zero-auth free APIs (2)
   'idigbio','ala',
   // Phase D — niche & specialized (1)
@@ -844,12 +834,12 @@ export const SOURCE_GROUPS = {
                'ago','pem','nmaahc','nasm','whitney','freersackler',
                'npg','louvread'],
   photography: ['flickr','pexels','pixabay','noaa','nasa','apod','hubble',
-               'loc','nypl','archive','chronicling','openverse','trove',
+               'loc','nypl','chronicling','openverse','trove',
                'digitalnz','wikidata','inaturalist','usgs','finna',
                'mia','lacma','whitney','unsplash'],
   nature:      ['inaturalist','gbif','eol','bhl','noaa','hubble','apod',
                'nasa','usgs','naturalis','nationalzoo','gbiflit'],
-  historical:  ['archive','chronicling','gallica','loc','trove','digitalnz',
+  historical:  ['chronicling','gallica','loc','trove','digitalnz',
                'wdl','bhl','folger','onb','nypl','soch','nordic',
                'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb','ddb'],
   artdesign:   ['wikiart','wikidata','openverse','cooperhewitt','tate','va',
@@ -862,16 +852,14 @@ export const SOURCE_GROUPS = {
   science:     ['nasa','apod','hubble','noaa','usgs','gbif','eol',
                'inaturalist','smg','naturalis','nasm','nationalzoo','gbiflit'],
   botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
-  archives:    ['archive','loc','gallica','chronicling','openverse','bhl',
+  archives:    ['loc','gallica','chronicling','openverse','bhl',
                'trove','digitalnz','nypl','folger','onb','soch','finna',
                'wdl','photogrammar','wikidata','bodleian','cudl','bsb','ddb'],
 };
 
 /* ── Source metadata for filtering (Phase 2) ── */
 export const SOURCE_META = {
-  wikimedia:        { category: ['photos','archives','art'],        region: 'global',   access: 'no_key' },
   met:              { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
-  archive:          { category: ['archives','photos','historical'], region: 'global',   access: 'no_key' },
   nasa:             { category: ['science','photos'],               region: 'global',   access: 'no_key' },
   inaturalist:      { category: ['nature','science'],               region: 'global',   access: 'no_key' },
   loc:              { category: ['archives','historical','maps'],   region: 'americas', access: 'no_key' },
@@ -1010,17 +998,6 @@ export const SOURCE_META = {
   si_npm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
   si_acm:     { category: ['museums','historical'],             region: 'americas', access: 'no_key' },
   si_renwick: { category: ['museums','art','design'],           region: 'americas', access: 'no_key' },
-  // Phase A — Wikimedia category filters (10)
-  wmc_fashion:         { category: ['art','fashion'],      region: 'global',   access: 'no_key' },
-  wmc_architecture:    { category: ['art'],                region: 'global',   access: 'no_key' },
-  wmc_paintings:       { category: ['art','museums'],      region: 'global',   access: 'no_key' },
-  wmc_sculptures:      { category: ['art','museums'],      region: 'global',   access: 'no_key' },
-  wmc_maps:            { category: ['maps','historical'],  region: 'global',   access: 'no_key' },
-  wmc_natural_history: { category: ['nature','science'],   region: 'global',   access: 'no_key' },
-  wmc_portraits:       { category: ['art','photos'],       region: 'global',   access: 'no_key' },
-  wmc_botanical:       { category: ['botanical','nature'], region: 'global',   access: 'no_key' },
-  wmc_scientific:      { category: ['science'],            region: 'global',   access: 'no_key' },
-  wmc_street:          { category: ['photos'],             region: 'global',   access: 'no_key' },
   // Phase B — zero-auth free APIs
   idigbio:            { category: ['nature','science'],               region: 'global',   access: 'no_key' },
   ala:                { category: ['nature','science'],               region: 'oceania',  access: 'no_key' },
@@ -1130,19 +1107,6 @@ export const SI_UNITS = {
   si_renwick: { code: 'SAAM',   name: 'Renwick Gallery (SI)' },
 };
 
-export const WIKIMEDIA_CATS = {
-  wmc_fashion:         { cat: 'Fashion',                 name: 'Wikimedia Fashion' },
-  wmc_architecture:    { cat: 'Architecture',            name: 'Wikimedia Architecture' },
-  wmc_paintings:       { cat: 'Paintings',               name: 'Wikimedia Paintings' },
-  wmc_sculptures:      { cat: 'Sculptures',              name: 'Wikimedia Sculptures' },
-  wmc_maps:            { cat: 'Historical_maps',         name: 'Wikimedia Historical Maps' },
-  wmc_natural_history: { cat: 'Natural_history',         name: 'Wikimedia Natural History' },
-  wmc_portraits:       { cat: 'Portraits',               name: 'Wikimedia Portraits' },
-  wmc_botanical:       { cat: 'Botanical_illustrations', name: 'Wikimedia Botanical Illustrations' },
-  wmc_scientific:      { cat: 'Scientific_diagrams',     name: 'Wikimedia Scientific Diagrams' },
-  wmc_street:          { cat: 'Street_photography',      name: 'Wikimedia Street Photography' },
-};
-
 /* ============================================================
    DYNAMIC SOURCE REGISTRY — scales to 10K+ sources, zero storage
    Each entry is a lightweight config object; images are fetched
@@ -1210,245 +1174,6 @@ export function classifyQueryExtended(q) {
   };
 }
 
-/* ── Extended Wikimedia Commons categories (200+) ── */
-export const WIKIMEDIA_CATS_EXTENDED = [
-  // Art movements
-  {cat:'Art_Nouveau',name:'Art Nouveau',tags:['art','design']},
-  {cat:'Art_Deco',name:'Art Deco',tags:['art','design']},
-  {cat:'Baroque_art',name:'Baroque Art',tags:['art']},
-  {cat:'Renaissance_art',name:'Renaissance Art',tags:['art']},
-  {cat:'Impressionist_paintings',name:'Impressionist Paintings',tags:['art']},
-  {cat:'Cubism',name:'Cubism',tags:['art']},
-  {cat:'Surrealism',name:'Surrealism',tags:['art']},
-  {cat:'Abstract_art',name:'Abstract Art',tags:['art']},
-  {cat:'Pop_art',name:'Pop Art',tags:['art']},
-  {cat:'Minimalist_art',name:'Minimalist Art',tags:['art','design']},
-  {cat:'Gothic_art',name:'Gothic Art',tags:['art','history']},
-  {cat:'Romanticism',name:'Romanticism',tags:['art']},
-  {cat:'Expressionism',name:'Expressionism',tags:['art']},
-  {cat:'Neoclassicism',name:'Neoclassicism',tags:['art','arch']},
-  {cat:'Futurism',name:'Futurism',tags:['art']},
-  {cat:'Constructivism',name:'Constructivism',tags:['art','design']},
-  {cat:'Dadaism',name:'Dadaism',tags:['art']},
-  {cat:'Pointillism',name:'Pointillism',tags:['art']},
-  {cat:'Symbolism_(arts)',name:'Symbolism',tags:['art']},
-  {cat:'Fauvism',name:'Fauvism',tags:['art']},
-  {cat:'Mannerism',name:'Mannerism',tags:['art']},
-  {cat:'Realism_(art_movement)',name:'Realism',tags:['art']},
-  {cat:'Pre-Raphaelite_paintings',name:'Pre-Raphaelite',tags:['art']},
-  {cat:'Ukiyo-e',name:'Ukiyo-e',tags:['art','history']},
-  // Media & techniques
-  {cat:'Photographs',name:'Photographs',tags:['photo']},
-  {cat:'Drawings',name:'Drawings',tags:['art']},
-  {cat:'Engravings',name:'Engravings',tags:['art','history']},
-  {cat:'Etchings',name:'Etchings',tags:['art']},
-  {cat:'Lithographs',name:'Lithographs',tags:['art']},
-  {cat:'Watercolor_paintings',name:'Watercolors',tags:['art']},
-  {cat:'Woodcuts',name:'Woodcuts',tags:['art','history']},
-  {cat:'Prints',name:'Prints',tags:['art']},
-  {cat:'Posters',name:'Posters',tags:['design','history']},
-  {cat:'Illuminated_manuscripts',name:'Illuminated Manuscripts',tags:['art','history']},
-  {cat:'Book_illustrations',name:'Book Illustrations',tags:['art','design']},
-  {cat:'Collage',name:'Collage',tags:['art']},
-  {cat:'Silkscreen_prints',name:'Silkscreen Prints',tags:['art','design']},
-  {cat:'Pastel_paintings',name:'Pastels',tags:['art']},
-  {cat:'Frescoes',name:'Frescoes',tags:['art','arch']},
-  {cat:'Icons_(art)',name:'Icons',tags:['art','history']},
-  // Subjects
-  {cat:'Landscapes_in_art',name:'Landscapes in Art',tags:['art','nature']},
-  {cat:'Seascapes',name:'Seascapes',tags:['art','nature']},
-  {cat:'Still_life_paintings',name:'Still Life',tags:['art']},
-  {cat:'Religious_art',name:'Religious Art',tags:['art','history']},
-  {cat:'Mythology_in_art',name:'Mythology in Art',tags:['art','history']},
-  {cat:'Allegory_in_art',name:'Allegory in Art',tags:['art']},
-  {cat:'Genre_paintings',name:'Genre Paintings',tags:['art']},
-  {cat:'War_art',name:'War Art',tags:['art','history']},
-  {cat:'Animals_in_art',name:'Animals in Art',tags:['art','nature']},
-  {cat:'Flowers_in_art',name:'Flowers in Art',tags:['art','nature','design']},
-  {cat:'Self-portraits',name:'Self-Portraits',tags:['art']},
-  {cat:'Nudes_in_art',name:'Nudes in Art',tags:['art']},
-  {cat:'Interior_scenes_in_art',name:'Interior Scenes',tags:['art','design']},
-  {cat:'Dance_in_art',name:'Dance in Art',tags:['art']},
-  {cat:'Music_in_art',name:'Music in Art',tags:['art']},
-  {cat:'Food_and_drink_in_art',name:'Food in Art',tags:['art']},
-  // Architecture
-  {cat:'Castles',name:'Castles',tags:['arch','history']},
-  {cat:'Churches',name:'Churches',tags:['arch','history']},
-  {cat:'Mosques',name:'Mosques',tags:['arch','history']},
-  {cat:'Temples',name:'Temples',tags:['arch','history']},
-  {cat:'Bridges',name:'Bridges',tags:['arch']},
-  {cat:'Skyscrapers',name:'Skyscrapers',tags:['arch']},
-  {cat:'Ruins',name:'Ruins',tags:['arch','history']},
-  {cat:'Gardens',name:'Gardens',tags:['arch','nature','design']},
-  {cat:'Fountains',name:'Fountains',tags:['arch','design']},
-  {cat:'Lighthouses',name:'Lighthouses',tags:['arch','photo']},
-  {cat:'Windmills',name:'Windmills',tags:['arch','history']},
-  {cat:'Palaces',name:'Palaces',tags:['arch','history']},
-  {cat:'Domes',name:'Domes',tags:['arch']},
-  {cat:'Towers',name:'Towers',tags:['arch']},
-  {cat:'Staircases',name:'Staircases',tags:['arch','design']},
-  {cat:'Brutalist_architecture',name:'Brutalist Architecture',tags:['arch','design']},
-  {cat:'Art_Nouveau_architecture',name:'Art Nouveau Architecture',tags:['arch','design']},
-  {cat:'Gothic_architecture',name:'Gothic Architecture',tags:['arch','history']},
-  {cat:'Romanesque_architecture',name:'Romanesque Architecture',tags:['arch','history']},
-  {cat:'Byzantine_architecture',name:'Byzantine Architecture',tags:['arch','history']},
-  {cat:'Modernist_architecture',name:'Modernist Architecture',tags:['arch','design']},
-  // Nature & science
-  {cat:'Birds',name:'Birds',tags:['nature','science']},
-  {cat:'Insects',name:'Insects',tags:['nature','science']},
-  {cat:'Mammals',name:'Mammals',tags:['nature','science']},
-  {cat:'Reptiles',name:'Reptiles',tags:['nature','science']},
-  {cat:'Fish',name:'Fish',tags:['nature','science']},
-  {cat:'Trees',name:'Trees',tags:['nature']},
-  {cat:'Fungi',name:'Fungi',tags:['nature','science']},
-  {cat:'Fossils',name:'Fossils',tags:['nature','science','history']},
-  {cat:'Minerals',name:'Minerals',tags:['nature','science']},
-  {cat:'Crystals',name:'Crystals',tags:['nature','science']},
-  {cat:'Shells',name:'Shells',tags:['nature','science']},
-  {cat:'Corals',name:'Corals',tags:['nature','science']},
-  {cat:'Butterflies',name:'Butterflies',tags:['nature','science']},
-  {cat:'Spiders',name:'Spiders',tags:['nature','science']},
-  {cat:'Amphibians',name:'Amphibians',tags:['nature','science']},
-  {cat:'Wildflowers',name:'Wildflowers',tags:['nature']},
-  {cat:'Ferns',name:'Ferns',tags:['nature']},
-  {cat:'Mosses',name:'Mosses',tags:['nature']},
-  {cat:'Lichens',name:'Lichens',tags:['nature','science']},
-  {cat:'Seaweeds',name:'Seaweeds',tags:['nature','science']},
-  {cat:'Microscopy_images',name:'Microscopy',tags:['science']},
-  {cat:'Astronomy',name:'Astronomy',tags:['science','space']},
-  {cat:'Anatomy',name:'Anatomy',tags:['science']},
-  {cat:'Cartography',name:'Cartography',tags:['science','history']},
-  {cat:'Chemistry',name:'Chemistry',tags:['science']},
-  // History & culture
-  {cat:'Ancient_Egypt',name:'Ancient Egypt',tags:['history','art']},
-  {cat:'Ancient_Greece',name:'Ancient Greece',tags:['history','art']},
-  {cat:'Ancient_Rome',name:'Ancient Rome',tags:['history','art']},
-  {cat:'Medieval_art',name:'Medieval Art',tags:['history','art']},
-  {cat:'Victorian_era',name:'Victorian Era',tags:['history']},
-  {cat:'Propaganda_posters',name:'Propaganda Posters',tags:['history','design']},
-  {cat:'Vintage_advertisements',name:'Vintage Advertisements',tags:['history','design']},
-  {cat:'World_War_I_in_art',name:'World War I Art',tags:['history','art']},
-  {cat:'World_War_II_in_art',name:'World War II Art',tags:['history','art']},
-  {cat:'Film_stills',name:'Film Stills',tags:['history','photo']},
-  {cat:'Daguerreotypes',name:'Daguerreotypes',tags:['history','photo']},
-  {cat:'Stereoscopic_photographs',name:'Stereoscopic Photos',tags:['history','photo']},
-  {cat:'Postcards',name:'Postcards',tags:['history','photo']},
-  {cat:'Trade_cards',name:'Trade Cards',tags:['history','design']},
-  // Design & decorative arts
-  {cat:'Textiles',name:'Textiles',tags:['design']},
-  {cat:'Ceramics',name:'Ceramics',tags:['design','art']},
-  {cat:'Jewelry',name:'Jewelry',tags:['design']},
-  {cat:'Masks',name:'Masks',tags:['art','history']},
-  {cat:'Musical_instruments',name:'Musical Instruments',tags:['design','history']},
-  {cat:'Costumes',name:'Costumes',tags:['design','history']},
-  {cat:'Armour',name:'Armour',tags:['history','design']},
-  {cat:'Coins',name:'Coins',tags:['history']},
-  {cat:'Stamps',name:'Stamps',tags:['history','design']},
-  {cat:'Typography',name:'Typography',tags:['design']},
-  {cat:'Graphic_design',name:'Graphic Design',tags:['design']},
-  {cat:'Furniture',name:'Furniture',tags:['design']},
-  {cat:'Glassware',name:'Glassware',tags:['design','art']},
-  {cat:'Metalwork',name:'Metalwork',tags:['design']},
-  {cat:'Woodwork',name:'Woodwork',tags:['design']},
-  {cat:'Lacquerware',name:'Lacquerware',tags:['design','art']},
-  {cat:'Enamelware',name:'Enamelware',tags:['design','art']},
-  {cat:'Stained_glass',name:'Stained Glass',tags:['art','arch','design']},
-  {cat:'Mosaics',name:'Mosaics',tags:['art','arch','design']},
-  {cat:'Tapestries',name:'Tapestries',tags:['art','design']},
-  {cat:'Calligraphy',name:'Calligraphy',tags:['art','design']},
-  {cat:'Bookplates',name:'Bookplates',tags:['design','art']},
-  {cat:'Street_art',name:'Street Art',tags:['art','photo']},
-  {cat:'Graffiti',name:'Graffiti',tags:['art','photo']},
-  {cat:'Murals',name:'Murals',tags:['art','arch']},
-  {cat:'Embroidery',name:'Embroidery',tags:['design']},
-  {cat:'Quilts',name:'Quilts',tags:['design']},
-  {cat:'Wallpaper',name:'Wallpaper',tags:['design']},
-  {cat:'Clocks_and_watches',name:'Clocks & Watches',tags:['design','history']},
-  {cat:'Toys',name:'Toys',tags:['design','history']},
-  {cat:'Maps',name:'Maps',tags:['history','science']},
-  // Geography & regions
-  {cat:'Africa_in_art',name:'Africa in Art',tags:['art','history']},
-  {cat:'Asia_in_art',name:'Asia in Art',tags:['art','history']},
-  {cat:'Japan_in_art',name:'Japan in Art',tags:['art','history']},
-  {cat:'China_in_art',name:'China in Art',tags:['art','history']},
-  {cat:'India_in_art',name:'India in Art',tags:['art','history']},
-  {cat:'Americas_in_art',name:'Americas in Art',tags:['art','history']},
-  {cat:'Oceania_in_art',name:'Oceania in Art',tags:['art','history']},
-];
-
-/* ── Archive.org collections (no key needed) ── */
-export const ARCHIVE_COLLECTIONS = [
-  {collection:'smithsonian_libraries',name:'Smithsonian Libraries',tags:['science','nature','history']},
-  {collection:'biodiversitylibrary',name:'Biodiversity Heritage Library',tags:['nature','science']},
-  {collection:'americana',name:'Americana',tags:['history']},
-  {collection:'prelinger',name:'Prelinger Archives',tags:['history','photo']},
-  {collection:'nasa',name:'NASA (Archive.org)',tags:['science','space']},
-  {collection:'maps_usgs',name:'USGS Maps (Archive.org)',tags:['science','history']},
-  {collection:'folklife',name:'Folklife',tags:['history','photo']},
-  {collection:'metropolitanmuseumofart-gallery',name:'Met Gallery (Archive.org)',tags:['art']},
-  {collection:'nypl',name:'NYPL (Archive.org)',tags:['history','art']},
-  {collection:'library_of_congress',name:'LOC (Archive.org)',tags:['history']},
-  {collection:'internetarchivebooks',name:'Internet Archive Books',tags:['history']},
-  {collection:'toronto',name:'University of Toronto',tags:['history']},
-  {collection:'getty_research',name:'Getty Research (Archive.org)',tags:['art']},
-  {collection:'wellcomelibrary',name:'Wellcome Library (Archive.org)',tags:['science','history']},
-  {collection:'blc',name:'British Library (Archive.org)',tags:['history']},
-  {collection:'europeanlibraries',name:'European Libraries',tags:['history']},
-  {collection:'cdl',name:'California Digital Library',tags:['history']},
-  {collection:'bostonpubliclibrary',name:'Boston Public Library',tags:['history','art']},
-  {collection:'iacl',name:'Archive.org Art & Culture',tags:['art','history']},
-  {collection:'animationandcartoons',name:'Animation & Cartoons',tags:['art','design']},
-  {collection:'coverartarchive',name:'Cover Art Archive',tags:['art','design']},
-  {collection:'flickrcommons',name:'Flickr Commons (Archive.org)',tags:['photo','history']},
-  {collection:'creativecommons',name:'Creative Commons Media',tags:['photo','art']},
-  {collection:'artsandmusicvideos',name:'Arts & Music Videos',tags:['art']},
-  {collection:'national_library_of_scotland',name:'National Library of Scotland',tags:['history']},
-  {collection:'national_library_of_australia',name:'National Library of Australia',tags:['history']},
-  {collection:'solarsystemcollection',name:'Solar System Collection',tags:['science','space']},
-  {collection:'hubblesite',name:'HubbleSite (Archive.org)',tags:['science','space']},
-  {collection:'vintage_postcards',name:'Vintage Postcards',tags:['history','photo']},
-  {collection:'maps',name:'Maps Collection',tags:['history','science']},
-  {collection:'war_posters',name:'War Posters',tags:['history','design']},
-  {collection:'vintage_cartoons',name:'Vintage Cartoons',tags:['art','history']},
-  {collection:'medicineintheamericas',name:'Medicine in the Americas',tags:['science','history']},
-  {collection:'textile_patterns',name:'Textile Patterns',tags:['design']},
-  {collection:'art_of_bookbinding',name:'Art of Bookbinding',tags:['art','design']},
-  {collection:'atsf_railroad',name:'Railroad Photography',tags:['history','photo']},
-  {collection:'rurallife',name:'Rural Life',tags:['history','photo','nature']},
-  {collection:'comics_and_cartoons',name:'Comics & Cartoons',tags:['art','design']},
-  {collection:'nih_photographs',name:'NIH Photographs',tags:['science','photo']},
-  {collection:'architectureinhelsinki',name:'Architecture in Helsinki',tags:['arch','photo']},
-];
-
-/* ── Populate dynamic registry at module load ── */
-(function populateStaticRegistry() {
-  // 1. Extended Wikimedia categories (150+)
-  for (const entry of WIKIMEDIA_CATS_EXTENDED) {
-    const id = 'wmc_' + entry.cat.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30);
-    DYNAMIC_REGISTRY.push({
-      id,
-      adapter: 'wikimedia_category',
-      config:  { cat: entry.cat },
-      name:    entry.name,
-      tags:    entry.tags || [],
-      keyRequired: null,
-    });
-  }
-  // 2. Archive.org collections (40+)
-  for (const entry of ARCHIVE_COLLECTIONS) {
-    const id = 'ia_' + entry.collection.replace(/[^a-z0-9]+/g, '_').slice(0, 30);
-    DYNAMIC_REGISTRY.push({
-      id,
-      adapter: 'archive_collection',
-      config:  { collection: entry.collection },
-      name:    entry.name,
-      tags:    entry.tags || [],
-      keyRequired: null,
-    });
-  }
-  console.log(`[insposearch] Static registry: ${DYNAMIC_REGISTRY.length} dynamic sources loaded.`);
-})();
-
 /* ── Smart source selector — picks relevant subset per query ── */
 
 
@@ -1469,26 +1194,6 @@ export const KEY_SOURCES = [
     name:      'The Met Museum',
     desc:      '400k art objects, global collection',
     imageCount: 400000,
-    alwaysOn:  true,
-    stateKey:  null,
-    storageKey: null,
-    getKeyUrl: null,
-  },
-  {
-    id:        'wikimedia',
-    name:      'Wikimedia Commons',
-    desc:      'millions of real photos & documents',
-    imageCount: 90000000,
-    alwaysOn:  true,
-    stateKey:  null,
-    storageKey: null,
-    getKeyUrl: null,
-  },
-  {
-    id:        'archive',
-    name:      'Internet Archive',
-    desc:      'historical photos & ephemera',
-    imageCount: 20000000,
     alwaysOn:  true,
     stateKey:  null,
     storageKey: null,
@@ -2216,7 +1921,7 @@ export const KEY_SOURCES = [
   {
     id:        'nationalmuseumse',
     name:      'Nationalmuseum Stockholm',
-    desc:      'Swedish art via Wikimedia',
+    desc:      'Swedish national art collection',
     imageCount: 6000,
     alwaysOn:  true,
     stateKey:  null,
