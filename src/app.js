@@ -142,7 +142,12 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     // Layer 2: hard gate in exact mode — discard items with zero keyword presence
     if (STATE.searchMode === 'exact' && items && items.length) {
       const terms = keyword.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      const isSingleWord = terms.length === 1;
       items = items.filter(item => {
+        // Single-word queries: require the term in the title specifically
+        if (isSingleWord) {
+          return (item.title || '').toLowerCase().includes(terms[0]);
+        }
         const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
         return terms.some(t => hay.includes(t));
       });
