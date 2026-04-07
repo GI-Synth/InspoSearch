@@ -172,8 +172,10 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('flickr',       fetchFlickrCommons(keyword,                   fetchBatch, signal)).then(onSourceResult('flickr')).catch(() => {}),
     callIfHealthy('europeana',    fetchEuropeana(keyword,                       fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
     callIfHealthy('europeana',    fetchEuropeana(alt2,                          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
-    callIfHealthy('europeana',    fetchEuropeana(keyword + ' fashion',          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
-    callIfHealthy('europeana',    fetchEuropeana(keyword + ' textile costume',  fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    ...(STATE.searchMode === 'exact' ? [] : [
+      callIfHealthy('europeana',    fetchEuropeana(keyword + ' fashion',          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+      callIfHealthy('europeana',    fetchEuropeana(keyword + ' textile costume',  fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    ]),
     callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword,                     fetchBatch, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
     callIfHealthy('harvard',      fetchHarvard(keyword,                         fetchBatch, signal)).then(onSourceResult('harvard')).catch(() => {}),
     callIfHealthy('smithsonian',  fetchSmithsonian(keyword,                     fetchBatch, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
@@ -233,13 +235,17 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('mak',          fetchMAK(keyword,                             perSource+4, signal)).then(onSourceResult('mak')).catch(() => {}),
     callIfHealthy('mna',          fetchMNA(keyword,                             perSource+4, signal)).then(onSourceResult('mna')).catch(() => {}),
     // ── Batch 4 — extra calls (reusing existing functions) ─
-    callIfHealthy('louvre',       fetchJoconde(keyword + ' Louvre',             perSource+4, signal)
-      .then(r => r.map(i => ({ ...i, id: i.id.replace('joconde_', 'louvre_'), source: 'louvre' }))))
-      .then(onSourceResult('louvre')).catch(() => {}),
-    callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' drawing',        perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
-    callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' print',          perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
-    callIfHealthy('bhl',          fetchBHL('illustrated ' + keyword,            perSource+4, signal)).then(onSourceResult('bhl')).catch(() => {}),
-    callIfHealthy('smithsonian',  fetchSmithsonian(keyword + ' photograph',     perSource+4, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
+    ...(STATE.searchMode === 'exact' ? [] : [
+      callIfHealthy('louvre',       fetchJoconde(keyword + ' Louvre',             perSource+4, signal)
+        .then(r => r.map(i => ({ ...i, id: i.id.replace('joconde_', 'louvre_'), source: 'louvre' }))))
+        .then(onSourceResult('louvre')).catch(() => {}),
+    ]),
+    ...(STATE.searchMode === 'exact' ? [] : [
+      callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' drawing',        perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
+      callIfHealthy('rijksmuseum',  fetchRijksmuseum(keyword + ' print',          perSource+4, signal)).then(onSourceResult('rijksmuseum')).catch(() => {}),
+      callIfHealthy('bhl',          fetchBHL('illustrated ' + keyword,            perSource+4, signal)).then(onSourceResult('bhl')).catch(() => {}),
+      callIfHealthy('smithsonian',  fetchSmithsonian(keyword + ' photograph',     perSource+4, signal)).then(onSourceResult('smithsonian')).catch(() => {}),
+    ]),
 
     // ── Batch 7 ────────────────────────────────────────────
     callIfHealthy('mia',              fetchMia(keyword,                            perSource+2, signal)).then(onSourceResult('mia')).catch(() => {}),
@@ -261,11 +267,12 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('npg',              fetchNPG(keyword,                            perSource+2, signal)).then(onSourceResult('npg')).catch(() => {}),
     callIfHealthy('louvread',         fetchLouvreAD(keyword,                       perSource+2, signal)).then(onSourceResult('louvread')).catch(() => {}),
     // ── Batch 7 — extra calls (reusing existing functions) ─
-    callIfHealthy('met',              fetchMet('heilbrunn ' + keyword,             perSource+2, signal)).then(onSourceResult('met')).catch(() => {}),
-    callIfHealthy('nmaahc',           fetchNMAAHC(keyword + ' photograph',         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
-    callIfHealthy('cooperhewitt',     fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
-
-    callIfHealthy('wellcome',         fetchWellcome(keyword + ' illustration',      perSource+2, signal)).then(onSourceResult('wellcome')).catch(() => {}),
+    ...(STATE.searchMode === 'exact' ? [] : [
+      callIfHealthy('met',              fetchMet('heilbrunn ' + keyword,             perSource+2, signal)).then(onSourceResult('met')).catch(() => {}),
+      callIfHealthy('nmaahc',           fetchNMAAHC(keyword + ' photograph',         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
+      callIfHealthy('cooperhewitt',     fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
+      callIfHealthy('wellcome',         fetchWellcome(keyword + ' illustration',      perSource+2, signal)).then(onSourceResult('wellcome')).catch(() => {}),
+    ]),
     // ── Phase 2 — new sources ─────────────────────────────
     callIfHealthy('unsplash',         fetchUnsplash(keyword,                        perSource+2, signal)).then(onSourceResult('unsplash')).catch(() => {}),
     callIfHealthy('bodleian',         fetchBodleian(keyword,                        perSource+2, signal)).then(onSourceResult('bodleian')).catch(() => {}),
@@ -2192,7 +2199,7 @@ export async function runSearch(query, forceRefresh = false) {
     const lq = STATE.query.toLowerCase();
     // 3. Discard results from rogue sources that don't contain the exact query
     //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
-    const ROGUE_SOURCES = new Set(['flickr']);
+    const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage']);
     STATE.results = STATE.results.filter(r => {
       if (!ROGUE_SOURCES.has(r.source)) return true;
       return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);

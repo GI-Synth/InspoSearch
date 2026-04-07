@@ -618,13 +618,13 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
   const text = `${title} ${desc} ${tags}`;
 
   let score = 0;
-  if (title.includes(q)) score += 9;
+  if (title.includes(q)) score += 15;
   if (desc.includes(q)) score += 4;
   if (text.includes(q)) score += 5;
 
   let termMatches = 0;
   terms.forEach(t => {
-    if (title.includes(t)) { score += 3; termMatches++; }
+    if (title.includes(t)) { score += 6; termMatches++; }
     else if (desc.includes(t)) { score += 2; termMatches++; }
     else if (tags.includes(t)) { score += 2; termMatches++; }
   });
