@@ -1017,7 +1017,7 @@ export function injectItemJsonLd(item) {
     '@context': 'https://schema.org',
     '@type': item.artist || item.year ? 'VisualArtwork' : 'ImageObject',
     name: item.title || '',
-    image: item.url || item.thumb || '',
+    image: item.fullUrl || item.url || item.thumb || '',
     url: item.sourceUrl || '',
     description: item.description || '',
   };
@@ -3659,7 +3659,7 @@ export function openDeepZoom(item) {
       tileSources = item.iiifManifest;
     } else {
       // Use sourceUrl-derived full image if available, then url, then thumb
-      tileSources = { type: 'image', url: item.url || item.thumb };
+      tileSources = { type: 'image', url: item.fullUrl || item.url || item.thumb };
     }
 
     _osdViewer = OpenSeadragon({
@@ -6208,7 +6208,7 @@ export function openLightbox(items, startIndex) {
   function show(i) {
     idx = ((i % items.length) + items.length) % items.length;
     const item = items[idx];
-    img.src = item.url || item.thumb;
+    img.src = item.fullUrl || item.url || item.thumb;
     img.alt = item.title || '';
     caption.textContent = `${item.title || 'untitled'} — ${item.source || ''}`;
     counter.textContent = `${idx + 1} / ${items.length}`;
@@ -6796,7 +6796,7 @@ export function openDownloadPanel(items) {
       }).catch(() => {});
     });
     row.querySelector('[data-action="download"]').addEventListener('click', () => {
-      const url = item.url || item.thumb;
+      const url = item.fullUrl || item.url || item.thumb;
       // Use fetch+blob to bypass CORS where possible, with fallback to window.open
       fetch(url, { mode: 'cors' })
         .then(r => r.blob())

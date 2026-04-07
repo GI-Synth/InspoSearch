@@ -91,12 +91,13 @@ export function normalizeWikimedia(page) {
 }
 
 export function normalizeMet(obj) {
-  const img = obj.primaryImageSmall || obj.primaryImage;
-  if (!img) return null;
+  const thumb = obj.primaryImageSmall || obj.primaryImage;
+  const full  = obj.primaryImage || obj.primaryImageSmall;
+  if (!thumb) return null;
   return {
     id:          `met_${obj.objectID}`,
-    url:         img,
-    thumb:       img,
+    url:         full,
+    thumb:       thumb,
     title:       obj.title || 'Untitled',
     description: [obj.artistDisplayName, obj.medium, obj.culture].filter(Boolean).join(' — '),
     source:      'met',
@@ -332,7 +333,7 @@ export async function fetchHarvard(keyword, limit, signal) {
       .filter(obj => obj.primaryimageurl)
       .map(obj => ({
         id:          `harvard_${obj.objectid}`,
-        url:         obj.primaryimageurl,
+        url:         obj.primaryimageurl.replace(/\/full\/\d+,\/0\/default\.jpg$/, '/full/max/0/default.jpg'),
         thumb:       obj.primaryimageurl,
         title:       obj.title || 'Untitled',
         description: [obj.people?.[0]?.name, obj.medium, obj.dated].filter(Boolean).join(' — '),
@@ -369,7 +370,7 @@ export async function fetchSmithsonian(keyword, limit, signal) {
         const media = row.indexedStructured.online_media[0];
         return {
           id:          `si_${row.id}`,
-          url:         media.thumbnail || media.content,
+          url:         media.content || media.thumbnail,
           thumb:       media.thumbnail || media.content,
           title:       row.title || 'Untitled',
           description: row.content?.indexedStructured?.object_type?.[0] || '',
@@ -406,7 +407,7 @@ export async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
         const media = row.indexedStructured.online_media[0];
         return {
           id:          `si_${unitCode.toLowerCase()}_${row.id}`,
-          url:         media.thumbnail || media.content,
+          url:         media.content || media.thumbnail,
           thumb:       media.thumbnail || media.content,
           title:       row.title || 'Untitled',
           description: row.content?.indexedStructured?.object_type?.[0] || '',
@@ -502,6 +503,14 @@ export async function fetchINaturalist(keyword, limit, signal) {
   }
 }
 
+// Derive a full-resolution IIIF URL from a LOC storage-services thumbnail URL.
+// Falls back to the original URL if the pattern doesn't match.
+function locIiifUrl(storageUrl) {
+  const m = String(storageUrl).match(/\/storage-services\/service\/(.+?)\.(?:jpe?g|png|tiff?)(?:\?.*)?$/i);
+  if (!m) return storageUrl;
+  return `https://tile.loc.gov/image-services/iiif/service:${m[1].replace(/\//g, ':')}/full/pct:100/0/default.jpg`;
+}
+
 export async function fetchLOC(keyword, limit, signal, sp = 1) {
 
   try {
@@ -523,6 +532,7 @@ export async function fetchLOC(keyword, limit, signal, sp = 1) {
           id:          `loc_${encodeURIComponent(item.id || title)}`,
           url:         img,
           thumb:       img,
+          fullUrl:     locIiifUrl(img),
           title,
           description: desc,
           source:      'loc',
@@ -589,7 +599,7 @@ export async function fetchChicagoArt(keyword, limit, signal, page = 1) {
       .filter(obj => obj.image_id)
       .map(obj => ({
         id:          `aic_${obj.id}`,
-        url:         `${iiif}/${obj.image_id}/full/843,/0/default.jpg`,
+        url:         `${iiif}/${obj.image_id}/full/max/0/default.jpg`,
         thumb:       `${iiif}/${obj.image_id}/full/400,/0/default.jpg`,
         title:       obj.title || 'Untitled',
         description: [obj.artist_display, obj.medium_display, obj.date_display]
@@ -622,7 +632,7 @@ export async function fetchCleveland(keyword, limit, signal) {
       .filter(obj => obj.images?.web?.url)
       .map(obj => ({
         id:          `cle_${obj.id}`,
-        url:         obj.images.web.url,
+        url:         obj.images.print?.url || obj.images.full?.url || obj.images.web.url,
         thumb:       obj.images.web.url,
         title:       obj.title || 'Untitled',
         description: [obj.creators?.[0]?.description, obj.technique, obj.creation_date]
@@ -655,7 +665,7 @@ export async function fetchVA(keyword, limit, signal) {
       .filter(obj => obj._primaryImageId)
       .map(obj => ({
         id:          `va_${obj.systemNumber}`,
-        url:         `https://framemark.vam.ac.uk/collections/${obj._primaryImageId}/full/735,/0/default.jpg`,
+        url:         `https://framemark.vam.ac.uk/collections/${obj._primaryImageId}/full/max/0/default.jpg`,
         thumb:       `https://framemark.vam.ac.uk/collections/${obj._primaryImageId}/full/400,/0/default.jpg`,
         title:       obj._primaryTitle || 'Untitled',
         description: [obj._primaryMaker?.name, obj._primaryDate]
@@ -1009,7 +1019,7 @@ export async function fetchGallica(keyword, limit, signal) {
         if (!identifier) return null;
         return {
           id:          `gallica_${identifier.split('/').pop()}`,
-          url:         identifier + '.thumbnail',
+          url:         identifier + '.highres',
           thumb:       identifier + '.thumbnail',
           title:       d?.['dc:title']?.[0] || 'Gallica Item',
           description: d?.['dc:description']?.[0] || '',
@@ -1043,7 +1053,7 @@ export async function fetchChroniclingAmerica(keyword, limit, signal) {
       .filter(item => item.id)
       .map(item => ({
         id:          `chron_${item.id.replace(/\//g, '_')}`,
-        url:         `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:50/0/default.jpg`,
+        url:         `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:100/0/default.jpg`,
         thumb:       `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:25/0/default.jpg`,
         title:       `${item.title || 'Newspaper'} — ${(item.date || '').slice(0, 4)}`,
         description: item.ocr_eng?.slice(0, 100) || '',
@@ -1145,7 +1155,7 @@ export async function fetchDigitalNZ(keyword, limit, signal) {
       .filter(item => item.thumbnail_url)
       .map(item => ({
         id:          `dnz_${item.id}`,
-        url:         item.thumbnail_url,
+        url:         item.large_thumbnail_url || item.thumbnail_url,
         thumb:       item.thumbnail_url,
         title:       item.title || 'DigitalNZ Item',
         description: item.description || '',
@@ -1190,7 +1200,7 @@ export async function fetchBHL(keyword, limit, signal) {
     return pages
       .map(page => ({
         id:          `bhl_${page.PageID}`,
-        url:         `https://www.biodiversitylibrary.org/pagethumb/${page.PageID}/500/500`,
+        url:         `https://www.biodiversitylibrary.org/pagethumb/${page.PageID}/1000/1000`,
         thumb:       `https://www.biodiversitylibrary.org/pagethumb/${page.PageID}/200/200`,
         title:       `${titleFull} p.${page.PageNumber || '?'}`,
         description: '',
@@ -1334,7 +1344,7 @@ export async function fetchYale(keyword, limit, signal) {
         const iiifId = String(item.id).replace('obj:', '');
         return {
           id:          `yale_${iiifId}`,
-          url:         `https://images.britishart.yale.edu/iiif/2/${iiifId}/full/!800,800/0/default.jpg`,
+          url:         `https://images.britishart.yale.edu/iiif/2/${iiifId}/full/max/0/default.jpg`,
           thumb:       `https://images.britishart.yale.edu/iiif/2/${iiifId}/full/!400,400/0/default.jpg`,
           title:       item.title || 'Yale YCBA Work',
           description: item.artist || '',
@@ -1437,7 +1447,7 @@ export async function fetchCooperHewitt(keyword, limit, signal) {
       .filter(item => item.images?.[0]?.b?.url)
       .map(item => ({
         id:          `ch_${item.id}`,
-        url:         item.images[0].b.url,
+        url:         item.images[0].n?.url || item.images[0].b.url,
         thumb:       item.images[0].z?.url || item.images[0].b.url,
         title:       item.title || 'Cooper Hewitt Object',
         description: item.medium || '',
@@ -1643,9 +1653,9 @@ export async function fetchTePapa(keyword, limit, signal) {
       .filter(item => item.media?.[0]?.previewUrl)
       .map(item => ({
         id:          'tepapa_' + item.id,
-        url:         item.media[0].previewUrl,
+        url:         item.media[0].downloadUrl || item.media[0].previewUrl,
         thumb:       item.media[0].previewUrl,
-        title:       item.title || 'Te Papa Object',
+        title:       item.media[0].title || item.title || 'Te Papa Object',
         description: item.primaryMaker?.title || '',
         source:      'tepapa',
         sourceUrl:   `https://collections.tepapa.govt.nz/object/${item.id}`,
@@ -1787,7 +1797,7 @@ export async function fetchArtsy(keyword, limit, signal) {
       .filter(item => item._links?.thumbnail?.href)
       .map(item => ({
         id:          'artsy_' + item.id,
-        url:         item._links.thumbnail.href,
+        url:         (item._links?.image?.href || item._links?.thumbnail?.href || '').replace('{image_version}', 'larger'),
         thumb:       item._links.thumbnail.href,
         title:       item.title || 'Artsy Artwork',
         description: item.date || '',
@@ -1853,7 +1863,7 @@ export async function fetchSMG(keyword, limit, signal) {
       .filter(item => item.attributes?.images?.[0]?.processed?.medium?.location)
       .map(item => ({
         id:          'smg_' + item.id,
-        url:         item.attributes.images[0].processed.medium.location,
+        url:         item.attributes.images[0].processed.large?.location || item.attributes.images[0].processed.medium.location,
         thumb:       item.attributes.images[0].processed.medium.location,
         title:       item.attributes?.summary_title || 'Science Museum Object',
         description: item.attributes?.description?.[0]?.value?.slice(0, 100) || '',
@@ -1955,7 +1965,7 @@ export async function fetchWellcome(keyword, limit, signal) {
       .filter(item => item.thumbnail?.url)
       .map(item => ({
         id:          'wellcome_' + item.id,
-        url:         item.thumbnail.url + '/full/400,/0/default.jpg',
+        url:         item.thumbnail.url + '/full/max/0/default.jpg',
         thumb:       item.thumbnail.url + '/full/400,/0/default.jpg',
         title:       item.title || 'Wellcome Item',
         description: item.contributors?.[0]?.agent?.label || '',
@@ -2116,7 +2126,7 @@ export async function fetchPrinceton(keyword, limit, signal) {
         const base = item._source.images[0].iiifbaseuri;
         return {
           id:          'princeton_' + item._id,
-          url:         base + '/full/!800,800/0/default.jpg',
+          url:         base + '/full/max/0/default.jpg',
           thumb:       base + '/full/!400,400/0/default.jpg',
           title:       item._source.title || 'Princeton Object',
           description: item._source.displaymaker || '',
@@ -3411,6 +3421,7 @@ export async function fetchUnsplash(keyword, limit, signal) {
         id:          `unsplash_${p.id}`,
         url:         p.urls.regular,
         thumb:       p.urls.small || p.urls.regular,
+        fullUrl:     p.urls.full || p.urls.regular,
         title:       p.description || p.alt_description || 'Unsplash Photo',
         description: p.user?.name ? `Photo by ${p.user.name}` : '',
         source:      'unsplash',
