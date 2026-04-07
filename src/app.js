@@ -167,7 +167,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('met',          fetchMet(keywords.join(' '),                  limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
     skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
     skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
-    callIfHealthy('loc',          fetchLOC(keyword,                             limitFor('loc'), signal)).then(onSourceResult('loc')).catch(() => {}),
     callIfHealthy('openlibrary',  fetchOpenLibrary(keyword,                     fetchBatch, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
     callIfHealthy('chicago',      fetchChicagoArt(keyword,                      limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
     callIfHealthy('cleveland',    fetchCleveland(keyword,                       limitFor('cleveland'), signal)).then(onSourceResult('cleveland')).catch(() => {}),
@@ -223,10 +222,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('maas',         fetchMAAS(keyword,                            fetchBatch, signal)).then(onSourceResult('maas')).catch(() => {}),
     callIfHealthy('smk',          fetchSMK(keyword,                             fetchBatch, signal)).then(onSourceResult('smk')).catch(() => {}),
     callIfHealthy('thyssen',      fetchThyssen(keyword,                         fetchBatch, signal)).then(onSourceResult('thyssen')).catch(() => {}),
-    // ── C17: WDL (extra LOC call) ──────────────────────────
-    callIfHealthy('wdl',          fetchLOC('wdl ' + keyword,                   fetchBatch, signal)
-      .then(r => r.map(i => ({ ...i, source: 'wdl', id: i.id.replace('loc_', 'wdl_') }))))
-      .then(onSourceResult('wdl')).catch(() => {}),
     // ── Batch 4 — new sources ──────────────────────────────
     callIfHealthy('walters',      fetchWalters(keyword,                         perSource+4, signal)).then(onSourceResult('walters')).catch(() => {}),
     callIfHealthy('princeton',    fetchPrinceton(keyword,                       perSource+4, signal)).then(onSourceResult('princeton')).catch(() => {}),
@@ -1911,7 +1906,6 @@ export async function refreshSource(sourceName) {
     smithsonian:  () => fetchSmithsonian(kw, lim, signal),
     pexels:       () => fetchPexels(kw, lim, signal),
     inaturalist:  () => fetchINaturalist(kw, lim, signal),
-    loc:          () => fetchLOC(kw, lim, signal),
     openlibrary:  () => fetchOpenLibrary(kw, lim, signal),
     chicago:      () => fetchChicagoArt(kw, lim, signal),
     cleveland:    () => fetchCleveland(kw, lim, signal),
@@ -2016,7 +2010,6 @@ export async function fetchMoreResults() {
     callIfHealthy('europeana',   fetchEuropeana(kw, perSource, signal, offset + 1)),
     callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
     callIfHealthy('openverse',   fetchOpenverse(kw, perSource, signal, page)),
-    callIfHealthy('loc',         fetchLOC(kw, perSource, signal, page)),
 
     callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
     callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
@@ -2204,7 +2197,7 @@ export async function runSearch(query, forceRefresh = false) {
     const lq = STATE.query.toLowerCase();
     // 3. Discard results from rogue sources that don't contain the exact query
     //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
-    const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage']);
+    const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage', 'openverse']);
     STATE.results = STATE.results.filter(r => {
       if (!ROGUE_SOURCES.has(r.source)) return true;
       return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
