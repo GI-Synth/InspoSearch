@@ -5396,6 +5396,21 @@ document.getElementById('settings-panel-close')?.addEventListener('click', () =>
 (function () {
   var langSel = document.getElementById('settings-language');
   if (!langSel) return;
+
+  // Populate all supported locales dynamically (HTML only has the 6 base options)
+  const currentOptions = new Set(Array.from(langSel.options).map(o => o.value));
+  const displayNames = typeof Intl !== 'undefined' && Intl.DisplayNames
+    ? new Intl.DisplayNames([], { type: 'language' })
+    : null;
+  SUPPORTED_LOCALES.forEach(function (code) {
+    if (currentOptions.has(code)) return; // skip already present
+    const opt = document.createElement('option');
+    opt.value = code;
+    try { opt.textContent = displayNames ? displayNames.of(code) : code; }
+    catch (e) { opt.textContent = code; }
+    langSel.appendChild(opt);
+  });
+
   // Restore current locale in selector
   langSel.value = getLocale();
   langSel.addEventListener('change', function () {
