@@ -683,7 +683,7 @@ export let getDisplayResults = function getDisplayResults(items, query) {
     const terms = (query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
     const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference|book review|isbn|pp\.|vol\.|volume \d|pages \d|edited by|proceedings of)\b/i;
     const GENERIC_TITLE_RE = /^(photograph|image|picture|photo|file|img[_\s]?\d|dsc[_\s]?\d|untitled|no title|\d{4}-\d{2})/i;
-    const BOOK_RE = /\b(hardcover|paperback|kindle edition|ebook|audiobook|publisher|isbn|\d+ pages|table of contents|bibliography|index\.?$)\b/i;
+    const BOOK_RE = /\b(hardcover|paperback|kindle edition|ebook|audiobook|publisher|isbn|\d+ pages|table of contents|bibliography|price guide|index\.?$)\b/i;
     const ranked = base
       .filter(item => {
         if (!terms.length) return true;
@@ -692,7 +692,10 @@ export let getDisplayResults = function getDisplayResults(items, query) {
         if (JUNK_TITLE_RE.test(item.title || '')) return false;
         if (BOOK_RE.test(`${item.title || ''} ${item.description || ''}`)) return false;
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.every(t => hay.includes(t));
+        // 2-word queries: require both terms; 3+ words: require at least 2
+        const minMatch = terms.length <= 2 ? terms.length : 2;
+        const matched = terms.filter(t => hay.includes(t)).length;
+        return matched >= minMatch;
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
       .filter(x => x.score > 0)
