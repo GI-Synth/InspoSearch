@@ -642,6 +642,21 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
       }
     }
   }
+
+  if (STATE.searchMode === 'exact') {
+    // Boost items with identifiable art-medium metadata
+    const mediumText = `${item.title || ''} ${item.description || ''}`.toLowerCase();
+    for (const variants of Object.values(_MEDIUM_TERMS)) {
+      if (variants.some(v => mediumText.includes(v))) { score += 4; break; }
+    }
+
+    // Penalise modern items (year > 1900) when query is a historical era term
+    if (_ERA_REGEX.test(q)) {
+      const yr = item.year ? parseInt(item.year, 10) : null;
+      if (yr !== null && !isNaN(yr) && yr > 1900) score -= 6;
+    }
+  }
+
   return score;
 }
 

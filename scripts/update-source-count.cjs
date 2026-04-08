@@ -159,4 +159,45 @@ let filesChanged = 0;
   if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
 }
 
+// --- README.md ---
+{
+  const file = 'README.md';
+  let c = read(file);
+  const before = c;
+
+  // Headline: "500+ sources, 3B+ images" → current totals
+  c = replaceAll(c,
+    /\*\*The world's open cultural image search[^*]*\*\*/g,
+    `**The world's open cultural image search \u2014 ${srcLabel} sources, ${imgLabel} images, one search.**`,
+    'README headline');
+
+  // Shields.io badge URLs: sources-500%2B → sources-2496%2B etc.
+  c = replaceAll(c,
+    /sources-[\d.BMK%2+]+\+-brightgreen/g,
+    `sources-${encodeURIComponent(srcLabel)}-brightgreen`,
+    'README badge: sources');
+  c = replaceAll(c,
+    /images-[\d.BMK%2+]+\+-brightgreen/g,
+    `images-${encodeURIComponent(imgLabel)}-brightgreen`,
+    'README badge: images');
+
+  // Feature table rows
+  c = replaceAll(c,
+    /\| \*\*[\d,.]+\+? sources\*\* \|/g,
+    `| **${srcLabel} sources** |`,
+    'README table: sources');
+  c = replaceAll(c,
+    /\| \*\*[\d,.B]+\+? images\*\* \|([^\n]*)\d+\+? more/g,
+    `| **${imgLabel} images** |$1${totalSources - 10}+ more`,
+    'README table: images');
+
+  // "480+ more" / "490+ more" in "What it is"
+  c = replaceAll(c,
+    /and \d+\+ more \u2014 \*\*all at once\*\*/g,
+    `and ${totalSources - 10}+ more \u2014 **all at once**`,
+    'README what-it-is count');
+
+  if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
+}
+
 console.log(`\nDone. ${filesChanged} file(s) updated.`);

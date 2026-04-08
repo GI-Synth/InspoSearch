@@ -1,11 +1,11 @@
 # InspoSearch
 
-**The world's open cultural image search — 500+ sources, 3B+ images, one search.**
+**The world's open cultural image search — 2496+ sources, 2.5B+ images, one search.**
 
 [![Live](https://img.shields.io/badge/live-insposearch.pages.dev-000?style=flat&logo=cloudflare)](https://insposearch.pages.dev)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
-[![Sources](https://img.shields.io/badge/sources-500%2B-brightgreen?style=flat)](SOURCES.md)
-[![Images](https://img.shields.io/badge/images-3B%2B-brightgreen?style=flat)](SOURCES.md)
+[![Sources](https://img.shields.io/badge/sources-2496%2B-brightgreen?style=flat)](SOURCES.md)
+[![Images](https://img.shields.io/badge/images-2.5B%2B-brightgreen?style=flat)](SOURCES.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-purple?style=flat)](CODE_OF_CONDUCT.md)
 
@@ -19,7 +19,7 @@ Free forever. No accounts. No signups. No paywalls. No server.
 
 InspoSearch is not an image search engine. It is a **multi-source visual research engine** — a creative and scholarly tool that aggregates the open cultural web and makes it explorable, connectable, and inspiring.
 
-Search once and get results from the Met, Rijksmuseum, V&A, NASA, iNaturalist, Library of Congress, Gallica, museum-digital, DigitalCommonwealth, and 480+ more — **all at once**, in a unified dark grid. Sources are chosen for depth and diversity, not traffic. You will find things here that do not exist on Google Images.
+Search once and get results from the Met, Rijksmuseum, V&A, NASA, iNaturalist, Europeana, Gallica, museum-digital, DigitalCommonwealth, and 2486+ more — **all at once**, in a unified dark grid. Sources are chosen for depth and diversity, not traffic. You will find things here that do not exist on Google Images.
 
 The magic works without AI. AI amplifies it when you want to go deeper.
 
@@ -43,8 +43,8 @@ No build step. No dependencies. No server. Opens by double-click.
 
 | Feature | Description |
 |---|---|
-| **500+ sources** | World museums, archives, nature databases, libraries, photography |
-| **3B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Wikimedia · LOC · 490+ more |
+| **2496+ sources** | World museums, archives, nature databases, libraries, photography |
+| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482486+ more |
 | **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
 | **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
 | **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |
@@ -85,7 +85,7 @@ Keys are stored in your browser's `localStorage` only — never sent to InspoSea
 | Category | Count | Examples |
 |---|---|---|
 | 🏛️ Museums | 212 | Met · Rijksmuseum · V&A · Louvre · Prado · 200+ more |
-| 📷 Photography | 22 | Flickr Commons · Openverse · Unsplash · FSA/OWI |
+| 📷 Photography | 22 | Flickr Commons · Unsplash · Pexels · FSA/OWI |
 | 🌿 Nature | 20 | iNaturalist · GBIF · EOL · BHL · Naturalis |
 | 📜 Historical | 75 | LOC · Chronicling America · Gallica · Trove |
 | 🎨 Art & Design | 58 | WikiArt · Cooper Hewitt · Artsy · museum-digital |

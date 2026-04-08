@@ -272,6 +272,71 @@ export async function fetchEuropeana(keyword, limit, signal, start = 1) {
   }
 }
 
+/* ── Deep pagination variants for exact mode ──────────────────────── */
+
+/** Fetch up to `pages` pages from Met (each page = `pageSize` detail objects) */
+export async function fetchMetDeep(keyword, pageSize, signal, pages = 4) {
+  try {
+    const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword)}&hasImages=true`;
+    const res = await sourceFetch(searchUrl, { signal }, 'met');
+    if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal?.aborted) return []; }
+    const data = await res.json();
+    const allIds = data.objectIDs || [];
+    if (!allIds.length) return [];
+    const totalIds = allIds.slice(0, pageSize * pages);
+    // Fetch details in batches of pageSize to avoid overwhelming the API
+    const results = [];
+    for (let i = 0; i < totalIds.length; i += pageSize) {
+      if (signal?.aborted) break;
+      const batch = totalIds.slice(i, i + pageSize);
+      const fetches = batch.map(id =>
+        fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal })
+          .then(r => r.json()).catch(() => null)
+      );
+      const objects = await Promise.all(fetches);
+      results.push(...objects.filter(Boolean).map(normalizeMet).filter(Boolean).filter(isLikelyReal)
+        .map(item => { item.tags = extractTags(item); return item; }));
+      // Small delay between batches to respect rate limits
+      if (i + pageSize < totalIds.length) await sleep(200);
+    }
+    return results;
+  } catch (err) {
+    if (err.name === 'AbortError') return [];
+    console.warn('Met deep failed:', err.message);
+    return [];
+  }
+}
+
+/** Fetch multiple pages from Europeana (each page = `rows` items) */
+export async function fetchEuropeanaDeep(keyword, rows, signal, pages = 3) {
+  if (!STATE.europeanaKey) return [];
+  const results = [];
+  for (let page = 0; page < pages; page++) {
+    if (signal?.aborted) break;
+    const start = page * rows + 1;
+    try {
+      const items = await fetchEuropeana(keyword, rows, signal, start);
+      results.push(...items);
+      if (items.length < rows) break; // no more pages
+    } catch { break; }
+  }
+  return results;
+}
+
+/** Fetch multiple pages from Chicago Art Institute */
+export async function fetchChicagoArtDeep(keyword, limit, signal, pages = 3) {
+  const results = [];
+  for (let page = 1; page <= pages; page++) {
+    if (signal?.aborted) break;
+    try {
+      const items = await fetchChicagoArt(keyword, limit, signal, page);
+      results.push(...items);
+      if (items.length < limit) break;
+    } catch { break; }
+  }
+  return results;
+}
+
 export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, limit, signal, extraQf = '') {
   if (!STATE.europeanaKey) return [];
   try {

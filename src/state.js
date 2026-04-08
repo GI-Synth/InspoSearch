@@ -4,16 +4,16 @@
 export const CONSTANTS = {
   IMAGE_COUNT_DEFAULT:  24,
   IMAGE_COUNT_MIN:       6,
-  IMAGE_COUNT_MAX:      150,
+  IMAGE_COUNT_MAX:      300,
   GEMINI_KEY_STORAGE:   'inspo_gemini_key',
   CLAUDE_KEY_STORAGE:   'inspo_claude_key',
   OPENAI_KEY_STORAGE:   'inspo_openai_key',
   DATAMUSE_MAX:          8,
   MET_LIMIT:            20,
-  MET_DETAIL_LIMIT:     15,
+  MET_DETAIL_LIMIT:     40,
   DEBOUNCE_SLIDER:     200,
   RETRY_DELAY:        2000,
-  MAX_RESULTS:        2000,
+  MAX_RESULTS:        5000,
   MAX_CHAT_HISTORY:     20,
   HEALTH_MISS_LIMIT:     5,   // consecutive misses before disabling a source
   FETCH_TIMEOUT:      5000,   // default safeFetch timeout (ms)
@@ -374,19 +374,40 @@ export function classifyQuery(q) {
 const SCIENCE_ONLY_SOURCES = new Set(['usgs', 'photogrammar', 'nasa', 'nasa_images']);
 // Sources that return too much noise (boats, random buildings) for art queries
 const NOISY_FOR_ART = new Set(['finna', 'wikidata']);
+// Sources that pollute art/design/history queries in explore mode
+const SKIP_FOR_ART = new Set([
+  'nasa','nasa_images','apod','hubble','noaa',
+  'inaturalist','gbif','eol','naturalis','nationalzoo','gbiflit','idigbio','ala',
+  'usgs','photogrammar',
+]);
+// Sources that pollute nature queries in explore mode
+const SKIP_FOR_NATURE = new Set([
+  'wikiart','prado','munch','tate','artsy','nga','lacma','whitney',
+  'ago','npg','staedel','belvedere','rmfab',
+]);
 
 /* Returns true when sourceId should be skipped for this query.
-   Saves bandwidth by not querying irrelevant sources. */
-export function skipInExactMode(sourceId, queryClass) {
-  if (STATE.searchMode !== 'exact') return false;
-  // Skip domain-locked sources when query doesn't match their domain
+   Works in BOTH modes — saves bandwidth by not querying irrelevant sources. */
+export function skipIrrelevantSource(sourceId, queryClass) {
+  // ── Always skip domain-locked mismatches (both modes) ──
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
   if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
   if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
-  // Skip noisy sources for art queries
-  if (queryClass.isArt && NOISY_FOR_ART.has(sourceId)) return true;
+  // ── Exact mode: also skip noisy sources for art ──
+  if (STATE.searchMode === 'exact') {
+    if (queryClass.isArt && NOISY_FOR_ART.has(sourceId)) return true;
+  }
+  // ── Explore mode: skip cross-domain noise ──
+  if (STATE.searchMode !== 'exact') {
+    const isArtish = queryClass.isArt || queryClass.isDesign || queryClass.isHistory || queryClass.isArch;
+    if (isArtish && SKIP_FOR_ART.has(sourceId)) return true;
+    if (queryClass.isNature && SKIP_FOR_NATURE.has(sourceId)) return true;
+    if (queryClass.isArt && NOISY_FOR_ART.has(sourceId)) return true;
+  }
   return false;
 }
+// Keep old name as alias for backward compatibility
+export const skipInExactMode = skipIrrelevantSource;
 
 export const SOURCE_DOMAINS = {
   met: 'metmuseum.org',
@@ -1133,6 +1154,11 @@ export const ART_QUERY_TERMS = [
   'art nouveau','art deco','pop art','minimalism','expressionism','fauvism',
   'romanticism','neoclassicism','gothic','mannerism','futurism','constructivism',
   'dada','pointillism','symbolism','realism','modernism','contemporary art',
+  'ceramic','pottery','vase','tile','mosaic','terracotta','stoneware','earthenware',
+  'porcelain','figurine','bust','relief','icon','altar','crucifix','triptych',
+  'illuminat','miniature','tapestry','textile','embroidery','lacquer','enamel',
+  'metalwork','goldsmith','silversmith','bronze','marble','jade','ivory',
+  'calligraphy','woodblock','ukiyo','print','mask','carving','totem',
 ];
 export const HISTORY_QUERY_TERMS = [
   'ancient','medieval','victorian','colonial','empire','dynasty','civilization',

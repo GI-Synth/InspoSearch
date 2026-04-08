@@ -7,7 +7,7 @@ import {
   EUROPEANA_PROVIDERS, KEY_SOURCES, SI_UNITS, SOURCE_DOMAINS, SOURCE_GROUPS,
   SOURCE_META, STATE, WD_PHASE_H, _isBoardPopup,
   _realRenderGrid, _secondaryControllers, classifyQuery, filterNegativeTerms,
-  filterPhrases, parseNegativeTerms, skipInExactMode, ONBOARDING_TERMS,
+  filterPhrases, parseNegativeTerms, skipInExactMode, skipIrrelevantSource, ONBOARDING_TERMS,
   NATURE_QUERY_TERMS, SPACE_QUERY_TERMS, SEED_MAP,
   ART_QUERY_TERMS,
   classifyQueryExtended, classifyQueryV2,
@@ -65,6 +65,9 @@ import {
   fetchVanGoghMuseum, fetchWallaceCollection, fetchWalters, fetchWellcome,
   fetchWereldculturen, fetchWhitney, fetchWikiArt, fetchWikidata,
   fetchYale
+} from './fetchers.js';
+import {
+  fetchMetDeep, fetchEuropeanaDeep, fetchChicagoArtDeep
 } from './fetchers.js';
 
 // ── i18n: detect/restore locale and apply translations to DOM ──────────────
@@ -174,23 +177,27 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     all.push(...fresh);
     const preview = STATE.searchMode === 'exact'
       ? getDisplayResults(fresh, STATE.query)
-      : shuffle(fresh.slice(0, perSource));
+      : (() => {
+          // Explore relevance gate: drop items with zero keyword relevance
+          const scored = fresh.filter(item => scoreItemRelevance(item, keyword) > 0);
+          return shuffle((scored.length ? scored : fresh).slice(0, perSource));
+        })();
     renderGrid(preview);
   };
 
   await Promise.allSettled([
     // ── Batch 1 ────────────────────────────────────────────
-    callIfHealthy('met',          fetchMet(keywords.join(' '),                  limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
+    callIfHealthy('met',          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 4) : fetchMet(keywords.join(' '), limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
     skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
     skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
     callIfHealthy('openlibrary',  fetchOpenLibrary(keyword,                     fetchBatch, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
-    callIfHealthy('chicago',      fetchChicagoArt(keyword,                      limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
+    callIfHealthy('chicago',      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 3) : fetchChicagoArt(keyword, limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
     callIfHealthy('cleveland',    fetchCleveland(keyword,                       limitFor('cleveland'), signal)).then(onSourceResult('cleveland')).catch(() => {}),
     callIfHealthy('va',           fetchVA(keyword,                              limitFor('va'), signal)).then(onSourceResult('va')).catch(() => {}),
     callIfHealthy('wikiart',      fetchWikiArt(keyword,                         fetchBatch, signal)).then(onSourceResult('wikiart')).catch(() => {}),
     callIfHealthy('nordic',       fetchNordicMuseum(keyword,                    fetchBatch, signal)).then(onSourceResult('nordic')).catch(() => {}),
     callIfHealthy('flickr',       fetchFlickrCommons(keyword,                   fetchBatch, signal)).then(onSourceResult('flickr')).catch(() => {}),
-    callIfHealthy('europeana',    fetchEuropeana(keyword,                       fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('europeana',    STATE.searchMode === 'exact' ? fetchEuropeanaDeep(keyword, 60, signal, 3) : fetchEuropeana(keyword, fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
     callIfHealthy('europeana',    fetchEuropeana(alt2,                          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
     ...(STATE.searchMode === 'exact' ? [] : [
       callIfHealthy('europeana',    fetchEuropeana(keyword + ' fashion',          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
@@ -588,12 +595,15 @@ export function renderGrid(items) {
   function flush() {
     const frag = document.createDocumentFragment();
     const end = Math.min(cursor + CHUNK, items.length);
+    let localIdx = 0;
     for (; cursor < end; cursor++) {
       const item = items[cursor];
       if (renderedIds.has(item.id)) continue; // skip duplicate
       renderedIds.add(item.id);
     const card = document.createElement('div');
     card.className = 'image-card';
+    card.style.animationDelay = `${localIdx * 25}ms`;
+    localIdx++;
     card.id = 'card-' + item.id;
     card.dataset.id = item.id;
     card.setAttribute('data-source', item.source);
