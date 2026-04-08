@@ -1,7 +1,7 @@
 /**
  * update-source-count.cjs — Prebuild script
- * Reads ALL_SOURCES, manifest, and dynamic registry counts from source files,
- * then updates static source/image counts in HTML, meta, and manifest files.
+ * Single source of truth for all source/image counts across the project.
+ * Reads ALL_SOURCES + manifest, computes totals, updates every file.
  *
  * Usage: node scripts/update-source-count.cjs
  * Wire as "prebuild" in package.json.
@@ -10,105 +10,153 @@
 const fs = require('fs');
 const path = require('path');
 
-const stateFile = path.join(__dirname, '..', 'src', 'state.js');
-const manifestFile = path.join(__dirname, '..', 'insposearch', 'sources.manifest.json');
+const root = path.join(__dirname, '..');
+const read = f => fs.readFileSync(path.join(root, f), 'utf8');
+const write = (f, c) => fs.writeFileSync(path.join(root, f), c, 'utf8');
 
-const state = fs.readFileSync(stateFile, 'utf8');
+const state = read('src/state.js');
 
-// 1. Count ALL_SOURCES entries
+// ── Count sources ──────────────────────────────────────────────
 const allSrcMatch = state.match(/export const ALL_SOURCES\s*=\s*\[([\s\S]*?)\];/);
 const allSourcesCount = allSrcMatch ? (allSrcMatch[1].match(/'[^']+'/g) || []).length : 0;
 
-// 2. Count manifest sources
 let manifestCount = 0;
 try {
-  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  const manifest = JSON.parse(read('insposearch/sources.manifest.json'));
   manifestCount = (manifest.sources || []).length;
 } catch {}
 
-// 3. Dynamic registry count (no longer includes Wikimedia cats or Archive collections)
-const dynamicCount = 0;
+const staticSources = allSourcesCount + manifestCount;
 
-const totalSources = allSourcesCount + manifestCount + dynamicCount;
+// ── Dynamic discovery estimate ─────────────────────────────────
+// At runtime, discoverEuropeanaProviders() + discoverDPLAProviders() add
+// ~2300 sources from Europeana DATA_PROVIDER facets (~2250) and DPLA hubs (~50).
+// This number changes slowly (Europeana grows ~100/year). We store the last
+// known count so marketing copy reflects what users actually see.
+// Update this after verifying with: connect Europeana key → check console log.
+const LAST_KNOWN_DYNAMIC = 2300;
 
-// 4. Compute total image count from KEY_SOURCES imageCount fields
+const totalSources = staticSources + LAST_KNOWN_DYNAMIC;
+
+// ── Count images from KEY_SOURCES imageCount fields ────────────
 const imageCountMatches = state.match(/imageCount:\s*(\d[\d_]*)/g) || [];
 let totalImages = 0;
 for (const m of imageCountMatches) {
-  const num = Number(m.match(/(\d[\d_]*)/)[1].replace(/_/g, ''));
-  totalImages += num;
+  totalImages += Number(m.match(/(\d[\d_]*)/)[1].replace(/_/g, ''));
 }
 
-// Format counts
+// ── Count no-key sources (in ALL_SOURCES but not in KEY_SOURCES with stateKey) ──
+const keySourceIds = [];
+const keySourceRe = /id:\s*'([^']+)'[\s\S]*?stateKey:\s*'([^']*)'/g;
+let km;
+while ((km = keySourceRe.exec(state)) !== null) {
+  if (km[2]) keySourceIds.push(km[1]); // has a stateKey → needs a key
+}
+const noKeyCount = staticSources - keySourceIds.length;
+
+// ── Format labels ──────────────────────────────────────────────
 const srcLabel = totalSources + '+';
-const imgBillions = totalImages >= 1e9
+const imgLabel = totalImages >= 1e9
   ? (totalImages / 1e9).toFixed(1).replace(/\.0$/, '') + 'B+'
   : totalImages >= 1e6
     ? (totalImages / 1e6).toFixed(0) + 'M+'
     : totalImages.toLocaleString();
+const imgBillionNum = totalImages >= 1e9
+  ? (totalImages / 1e9).toFixed(1).replace(/\.0$/, '')
+  : '0';
 
-console.log(`Sources: ${totalSources} (ALL_SOURCES=${allSourcesCount} + manifest=${manifestCount} + dynamic=${dynamicCount})`);
-console.log(`Images: ${totalImages} → "${imgBillions}"`);
-console.log(`Labels: "${srcLabel}" sources, "${imgBillions}" images`);
+console.log(`Sources: ${totalSources} (static=${staticSources} [ALL_SOURCES=${allSourcesCount} + manifest=${manifestCount}] + dynamic≈${LAST_KNOWN_DYNAMIC})`);
+console.log(`Images:  ${totalImages.toLocaleString()} → "${imgLabel}"`);
+console.log(`No-key:  ${noKeyCount} (static only — dynamic sources require keys)`);
+console.log(`Labels:  "${srcLabel}" sources, "${imgLabel}" images`);
 
-// 5. Replace in files
-const replacements = [
-  {
-    file: 'insposearch/index.html',
-    patterns: [
-      // og:description
-      [/Search \d+\+? museum/g, `Search ${srcLabel} museum`],
-      // structured data description
-      [/Search \d+\+? museum, archive, and photo sources[^"]*\d+\.?\d*\s*billion images/g,
-       `Search ${srcLabel} museum, archive, and photo sources for creative inspiration — ${imgBillions.replace('B+', '')} billion images`],
-      // twitter description
-      [/Search \d+\+? museum, archive, and photo sources[^"]*\d+\.?\d*\s*billion/g,
-       `Search ${srcLabel} museum, archive, and photo sources for creative inspiration — ${imgBillions.replace('B+', '')} billion`],
-    ],
-  },
-  {
-    file: 'insposearch/institutions.html',
-    patterns: [
-      [/<div class="stat-num">\d+\+?<\/div>\s*\n\s*<div class="stat-label">sources/g,
-       `<div class="stat-num">${srcLabel}</div>\n        <div class="stat-label">sources`],
-      [/<div class="stat-num">[\d.]+[BMK]\+?<\/div>\s*\n\s*<div class="stat-label">images/g,
-       `<div class="stat-num">${imgBillions}</div>\n        <div class="stat-label">images`],
-      [/<strong>\d+\+?<\/strong> active sources/g, `<strong>${srcLabel}</strong> active sources`],
-      [/<strong>[\d.]+[BMK]\+?<\/strong> searchable images/g, `<strong>${imgBillions}</strong> searchable images`],
-    ],
-  },
-  {
-    file: 'insposearch/manifest.json',
-    patterns: [
-      [/Search [\d.]+ billion images across \d+ museums/g,
-       `Search ${imgBillions.replace('B+', '')} billion images across ${totalSources} museums`],
-    ],
-  },
-  {
-    file: 'src/app.js',
-    patterns: [
-      [/Search \d+\+? museum, archive, and photo sources/g, `Search ${srcLabel} museum, archive, and photo sources`],
-      [/across \d+\+? cultural heritage sources/g, `across ${srcLabel} cultural heritage sources`],
-    ],
-  },
-];
+// ── Helper: replace all occurrences, report count ──────────────
+function replaceAll(content, regex, replacement, label) {
+  let count = 0;
+  const result = content.replace(regex, (...args) => {
+    count++;
+    // Support $1, $2, etc. backreferences in replacement string
+    let out = replacement;
+    for (let i = 1; i < args.length - 2; i++) {
+      out = out.replace('$' + i, args[i] || '');
+    }
+    return out;
+  });
+  if (count) console.log(`    ${label}: ${count} replacement(s)`);
+  return result;
+}
 
+// ── Update files ───────────────────────────────────────────────
 let filesChanged = 0;
-for (const { file, patterns } of replacements) {
-  const fullPath = path.join(__dirname, '..', file);
-  if (!fs.existsSync(fullPath)) { console.warn(`  SKIP: ${file} not found`); continue; }
-  let content = fs.readFileSync(fullPath, 'utf8');
-  let changed = false;
-  for (const [regex, replacement] of patterns) {
-    const before = content;
-    content = content.replace(regex, replacement);
-    if (content !== before) changed = true;
-  }
-  if (changed) {
-    fs.writeFileSync(fullPath, content, 'utf8');
-    console.log(`  Updated: ${file}`);
-    filesChanged++;
-  }
+
+// --- insposearch/index.html ---
+{
+  const file = 'insposearch/index.html';
+  let c = read(file);
+  const before = c;
+
+  // All meta descriptions & JSON-LD: "Search N+ museum, archive, and photo sources ... X billion images"
+  // Catches: 10,000+, 196+, 500+, any number with optional commas and +
+  c = replaceAll(c,
+    /Search [\d,]+\+? museum, archive, and photo sources[^"]*?(?:[\d.]+ billion images|zero storage|infinite images)[^"]*/g,
+    `Search ${srcLabel} museum, archive, and photo sources for creative inspiration — ${imgBillionNum} billion images, zero storage`,
+    'meta/JSON-LD descriptions');
+
+  if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
+}
+
+// --- insposearch/institutions.html ---
+{
+  const file = 'insposearch/institutions.html';
+  let c = read(file);
+  const before = c;
+
+  // Stat boxes: replace any number in stat-num followed by stat-label containing "sources", "images", or "no-setup"
+  c = replaceAll(c,
+    /(<div class="stat-num">)[\d,.]+[BMK]?\+?(<\/div>\s*\n\s*<div class="stat-label">active sources)/g,
+    `$1${srcLabel}$2`, 'stat: active sources');
+  c = replaceAll(c,
+    /(<div class="stat-num">)[\d,.]+[BMK]?\+?(<\/div>\s*\n\s*<div class="stat-label">searchable images)/g,
+    `$1${imgLabel}$2`, 'stat: searchable images');
+  c = replaceAll(c,
+    /(<div class="stat-num">)[\d,.]+\+?(<\/div>\s*\n\s*<div class="stat-label">no-setup sources)/g,
+    `$1${noKeyCount}$2`, 'stat: no-setup sources');
+
+  // <strong>N+</strong> active sources / searchable images in partner section
+  c = replaceAll(c, /<strong>[\d,.]+\+?<\/strong> active sources/g,
+    `<strong>${srcLabel}</strong> active sources`, 'partner: sources');
+  c = replaceAll(c, /<strong>[\d,.]+[BMK]?\+?<\/strong> searchable images/g,
+    `<strong>${imgLabel}</strong> searchable images`, 'partner: images');
+
+  if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
+}
+
+// --- insposearch/manifest.json ---
+{
+  const file = 'insposearch/manifest.json';
+  let c = read(file);
+  const before = c;
+  c = replaceAll(c,
+    /Search [\d.]+ billion images across [\d,]+ museums/g,
+    `Search ${imgBillionNum} billion images across ${totalSources} museums`,
+    'PWA manifest description');
+  if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
+}
+
+// --- src/app.js ---
+{
+  const file = 'src/app.js';
+  let c = read(file);
+  const before = c;
+  c = replaceAll(c,
+    /Search [\d,]+\+? museum, archive, and photo sources/g,
+    `Search ${srcLabel} museum, archive, and photo sources`,
+    'app.js search text');
+  c = replaceAll(c,
+    /across [\d,]+\+? cultural heritage sources/g,
+    `across ${srcLabel} cultural heritage sources`,
+    'app.js cultural heritage');
+  if (c !== before) { write(file, c); filesChanged++; console.log(`  Updated: ${file}`); }
 }
 
 console.log(`\nDone. ${filesChanged} file(s) updated.`);

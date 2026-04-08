@@ -66,7 +66,7 @@ export const BADGE_META = {
   nga:              ['nga','nga'],         gbif:             ['gbif','gbif'],
   eol:              ['eol','eol'],         apod:             ['apod','apod'],
   gallica:          ['gallica','gallica'], chronicling:      ['chronicling','chronicle'],
-  openverse:        ['openverse','openverse'], trove:        ['trove','trove'],
+  trove:            ['trove','trove'],
   digitalnz:        ['digitalnz','nz'],    bhl:              ['bhl','bhl'],
   carnegie:         ['carnegie','carnegie'], prado:          ['prado','prado'],
   parismusees:      ['parismusees','paris'], yale:           ['yale','yale'],
@@ -371,6 +371,8 @@ export function classifyQuery(q) {
   return { isNature, isSpace };
 }
 
+const SCIENCE_ONLY_SOURCES = new Set(['usgs', 'photogrammar']);
+
 /* Returns true when sourceId should be skipped in exact mode for this query.
    Saves bandwidth by not querying nature-only or space-only sources when
    the query clearly doesn't match those domains. */
@@ -378,6 +380,7 @@ export function skipInExactMode(sourceId, queryClass) {
   if (STATE.searchMode !== 'exact') return false;
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
   if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+  if (!queryClass.isScience && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
   return false;
 }
 
@@ -406,7 +409,6 @@ export const SOURCE_DOMAINS = {
   apod: 'apod.nasa.gov',
   gallica: 'gallica.bnf.fr',
   chronicling: 'chroniclingamerica.loc.gov',
-  openverse: 'openverse.org',
   trove: 'trove.nla.gov.au',
   digitalnz: 'digitalnz.org',
   bhl: 'biodiversitylibrary.org',
@@ -777,7 +779,7 @@ export const ALL_SOURCES = [
   'met','nasa','inaturalist','loc','openlibrary',
   'chicago','cleveland','va','wikiart','nordic','flickr','europeana',
   'rijksmuseum','harvard','smithsonian','pexels','pixabay','getty','nga',
-  'gbif','eol','apod','gallica','chronicling','openverse','trove','digitalnz',
+  'gbif','eol','apod','gallica','chronicling','trove','digitalnz',
   'bhl','carnegie','prado','parismusees','yale','picsum','usgs','cooperhewitt',
   'tate','finna','soch','joconde','mnw','tepapa','dpla','artsy','pas','smg',
   'auckland','photogrammar','wellcome','maas','smk','thyssen','wdl','walters',
@@ -834,7 +836,7 @@ export const SOURCE_GROUPS = {
                'ago','pem','nmaahc','nasm','whitney','freersackler',
                'npg','louvread'],
   photography: ['flickr','pexels','pixabay','noaa','nasa','apod','hubble',
-               'loc','nypl','chronicling','openverse','trove',
+               'loc','nypl','chronicling','trove',
                'digitalnz','wikidata','inaturalist','usgs','finna',
                'mia','lacma','whitney','unsplash'],
   nature:      ['inaturalist','gbif','eol','bhl','noaa','hubble','apod',
@@ -842,7 +844,7 @@ export const SOURCE_GROUPS = {
   historical:  ['chronicling','gallica','loc','trove','digitalnz',
                'wdl','bhl','folger','onb','nypl','soch','nordic',
                'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb','ddb'],
-  artdesign:   ['wikiart','wikidata','openverse','cooperhewitt','tate','va',
+  artdesign:   ['wikiart','wikidata','cooperhewitt','tate','va',
                'artsy','dpla','europeana','getty','nga','carnegie','maas',
                'smk','thyssen','wellcome','rijksmuseum','parismusees',
                'chicago','cleveland',
@@ -852,7 +854,7 @@ export const SOURCE_GROUPS = {
   science:     ['nasa','apod','hubble','noaa','usgs','gbif','eol',
                'inaturalist','smg','naturalis','nasm','nationalzoo','gbiflit'],
   botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
-  archives:    ['loc','gallica','chronicling','openverse','bhl',
+  archives:    ['loc','gallica','chronicling','bhl',
                'trove','digitalnz','nypl','folger','onb','soch','finna',
                'wdl','photogrammar','wikidata','bodleian','cudl','bsb','ddb'],
 };
@@ -883,7 +885,6 @@ export const SOURCE_META = {
   apod:             { category: ['science','photos'],               region: 'global',   access: 'no_key' },
   gallica:          { category: ['archives','art','historical'],    region: 'europe',   access: 'no_key' },
   chronicling:      { category: ['archives','historical'],          region: 'americas', access: 'no_key' },
-  openverse:        { category: ['photos','art'],                   region: 'global',   access: 'no_key' },
   trove:            { category: ['archives','historical','photos'], region: 'oceania',  access: 'free_key' },
   digitalnz:        { category: ['archives','historical'],          region: 'oceania',  access: 'free_key' },
   bhl:              { category: ['botanical','nature','archives'],  region: 'global',   access: 'no_key' },
@@ -1417,16 +1418,6 @@ export const KEY_SOURCES = [
     name:      'Chronicling America',
     desc:      'historic US newspapers 1770–1963, Library of Congress',
     imageCount: 16000000,
-    alwaysOn:  true,
-    stateKey:  null,
-    storageKey: null,
-    getKeyUrl: null,
-  },
-  {
-    id:        'openverse',
-    name:      'Openverse',
-    desc:      '800M+ openly-licensed images & audio',
-    imageCount: 800000000,
     alwaysOn:  true,
     stateKey:  null,
     storageKey: null,

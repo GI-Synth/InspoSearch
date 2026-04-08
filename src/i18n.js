@@ -1,6 +1,6 @@
 /**
  * i18n.js — Lightweight internationalisation for InspoSearch
- * Supports: en (default), fr, de, es, nl, it
+ * Supports: en (default), fr, de, es, nl, it, + 95 generated locales
  *
  * Usage:
  *   import { t, setLocale, getLocale, applyI18n } from './i18n.js';
@@ -9,7 +9,7 @@
  *   applyI18n()          → scans DOM for data-i18n / data-i18n-placeholder attrs
  */
 
-export const SUPPORTED_LOCALES = ['en', 'fr', 'de', 'es', 'nl', 'it'];
+import generatedLocales from './i18n-generated.json';
 
 const STRINGS = {
   en: {
@@ -417,6 +417,10 @@ const STRINGS = {
     viewOnEuropeana:    'vedi su Europeana',
   },
 };
+
+Object.assign(STRINGS, generatedLocales);
+
+export const SUPPORTED_LOCALES = ['en', 'fr', 'de', 'es', 'nl', 'it', ...Object.keys(generatedLocales)];
 
 let _locale = 'en';
 

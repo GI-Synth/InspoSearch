@@ -614,24 +614,27 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
   const terms = q.split(/\s+/).filter(Boolean);
   const title = (item.title || '').toLowerCase();
   const desc = (item.description || '').toLowerCase();
+  const artist = (item.artist || '').toLowerCase();
   const tags = (item.tags || []).join(' ').toLowerCase();
-  const text = `${title} ${desc} ${tags}`;
+  const text = `${title} ${desc} ${artist} ${tags}`;
 
   let score = 0;
   if (title.includes(q)) score += 15;
   if (desc.includes(q)) score += 4;
+  if (artist.includes(q)) score += 6;
   if (text.includes(q)) score += 5;
 
   let termMatches = 0;
   terms.forEach(t => {
     if (title.includes(t)) { score += 6; termMatches++; }
+    else if (artist.includes(t)) { score += 4; termMatches++; }
     else if (desc.includes(t)) { score += 2; termMatches++; }
     else if (tags.includes(t)) { score += 2; termMatches++; }
   });
 
   if (terms.length > 1 && termMatches === terms.length) score += 4;
   if (score === 0 && query) {
-    const hay = `${title} ${desc} ${tags}`;
+    const hay = `${title} ${desc} ${artist} ${tags}`;
     const words = hay.split(/\s+/);
     for (const term of terms) {
       for (const word of words) {
@@ -682,8 +685,8 @@ export let getDisplayResults = function getDisplayResults(items, query) {
       // Layer 2 gate: at least one query term must appear in the item's text
       .filter(item => {
         if (!terms.length) return true;
-        const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.some(t => hay.includes(t));
+        const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        return terms.every(t => hay.includes(t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
       .filter(x => x.score > 0)

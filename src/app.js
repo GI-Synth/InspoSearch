@@ -49,13 +49,13 @@ import {
   fetchGetty, fetchGroeninge, fetchGroninger, fetchGuimet, fetchHarvard,
   fetchHerzogAntonUlrich, fetchHubble, fetchIDigBio, fetchIIIFCollection,
   fetchIIIFSearch, fetchINaturalist, fetchJoconde, fetchKHM, fetchKMSKA,
-  fetchLACMA, fetchLOC, fetchLakenhal, fetchLouvreAD, fetchMAAS, fetchMAK,
+  fetchLACMA, fetchLakenhal, fetchLouvreAD, fetchMAAS, fetchMAK,
   fetchMNA, fetchMNW, fetchMauritshuis, fetchMet, fetchMia, fetchMoMAWD,
   fetchMunch, fetchMuseeOrsay, fetchMuseuTraje, fetchNASA, fetchNASAImages,
   fetchNASM, fetchNGA, fetchNGI, fetchNHMLondon, fetchNMAAHC, fetchNOAA,
   fetchNPG, fetchNPMTaipei, fetchNYPL, fetchNationalGalleryLondon,
   fetchNationalZoo, fetchNationalmuseumSE, fetchNaturalis, fetchNordicMuseum,
-  fetchONB, fetchOpenLibrary, fetchOpenLibrarySubjects, fetchOpenverse,
+  fetchONB, fetchOpenLibrary, fetchOpenLibrarySubjects,
   fetchPAS, fetchPEM, fetchParisMusees, fetchPexels, fetchPhotogrammar,
   fetchPicsum, fetchPixabay, fetchPrado, fetchPrinceton, fetchQuaiBranly,
   fetchRMFAB, fetchRijksmuseum, fetchRijksmuseumTwenthe, fetchSMG, fetchSMK,
@@ -105,7 +105,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   const seenIds  = new Set();
   const seenUrls = new Set(); // URL-level dedup: same image from multiple sources counted once
   const all = [];
-  const exactQueryClass = classifyQuery(keyword);
+  const exactQueryClass = classifyQueryExtended(keyword);
 
   // Reset failed-fetch counter for offline detection
   _fetchSemaphore._totalFailed = 0;
@@ -148,8 +148,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         if (isSingleWord) {
           return (item.title || '').toLowerCase().includes(terms[0]);
         }
-        const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.some(t => hay.includes(t));
+        const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        return terms.every(t => hay.includes(t));
       });
     }
     if (!items || !items.length) return;
@@ -193,7 +193,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     skipInExactMode('apod',  exactQueryClass) ? Promise.resolve() : callIfHealthy('apod',  fetchAPOD(keyword,  fetchBatch, signal)).then(onSourceResult('apod')).catch(() => {}),
     callIfHealthy('gallica',      fetchGallica(keyword,                         fetchBatch, signal)).then(onSourceResult('gallica')).catch(() => {}),
     callIfHealthy('chronicling',  fetchChroniclingAmerica(keyword,              fetchBatch, signal)).then(onSourceResult('chronicling')).catch(() => {}),
-    callIfHealthy('openverse',    fetchOpenverse(keyword,                       fetchBatch, signal)).then(onSourceResult('openverse')).catch(() => {}),
     callIfHealthy('trove',        fetchTrove(keyword,                           fetchBatch, signal)).then(onSourceResult('trove')).catch(() => {}),
     callIfHealthy('digitalnz',    fetchDigitalNZ(keyword,                       fetchBatch, signal)).then(onSourceResult('digitalnz')).catch(() => {}),
     callIfHealthy('bhl',          fetchBHL(keyword,                             fetchBatch, signal)).then(onSourceResult('bhl')).catch(() => {}),
@@ -202,7 +201,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('parismusees',  fetchParisMusees(keyword,                     fetchBatch, signal)).then(onSourceResult('parismusees')).catch(() => {}),
     callIfHealthy('yale',         fetchYale(keyword,                            fetchBatch, signal)).then(onSourceResult('yale')).catch(() => {}),
     callIfHealthy('picsum',       fetchPicsum(keyword,                          fetchBatch, signal)).then(onSourceResult('picsum')).catch(() => {}),
-    callIfHealthy('usgs',         fetchUSGS(keyword,                            fetchBatch, signal)).then(onSourceResult('usgs')).catch(() => {}),
+    skipInExactMode('usgs', exactQueryClass) ? Promise.resolve() : callIfHealthy('usgs', fetchUSGS(keyword, fetchBatch, signal)).then(onSourceResult('usgs')).catch(() => {}),
     callIfHealthy('cooperhewitt', fetchCooperHewitt(keyword,                    fetchBatch, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
     // ── Batch 3 ────────────────────────────────────────────
     callIfHealthy('tate',         fetchTate(keyword,                            fetchBatch, signal)).then(onSourceResult('tate')).catch(() => {}),
@@ -217,7 +216,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('pas',          fetchPAS(keyword,                             fetchBatch, signal)).then(onSourceResult('pas')).catch(() => {}),
     callIfHealthy('smg',          fetchSMG(keyword,                             fetchBatch, signal)).then(onSourceResult('smg')).catch(() => {}),
     callIfHealthy('auckland',     fetchAuckland(keyword,                        fetchBatch, signal)).then(onSourceResult('auckland')).catch(() => {}),
-    callIfHealthy('photogrammar', fetchPhotogrammar(keyword,                    fetchBatch, signal)).then(onSourceResult('photogrammar')).catch(() => {}),
+    skipInExactMode('photogrammar', exactQueryClass) ? Promise.resolve() : callIfHealthy('photogrammar', fetchPhotogrammar(keyword, fetchBatch, signal)).then(onSourceResult('photogrammar')).catch(() => {}),
     callIfHealthy('wellcome',     fetchWellcome(keyword,                        fetchBatch, signal)).then(onSourceResult('wellcome')).catch(() => {}),
     callIfHealthy('maas',         fetchMAAS(keyword,                            fetchBatch, signal)).then(onSourceResult('maas')).catch(() => {}),
     callIfHealthy('smk',          fetchSMK(keyword,                             fetchBatch, signal)).then(onSourceResult('smk')).catch(() => {}),
@@ -308,7 +307,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
     skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
     // ── Phase D — niche & specialized ──────────────────────────────────
-    callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
+    skipInExactMode('nasa_images', exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
     // ── Phase E — CORS-blocked, cache-first ─────────────────────────────
     callIfHealthy('nhm_london',              fetchNHMLondon(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('nhm_london')).catch(() => {}),
     callIfHealthy('wallace_collection',      fetchWallaceCollection(keyword,      Math.max(3, perSource), signal)).then(onSourceResult('wallace_collection')).catch(() => {}),
@@ -554,7 +553,7 @@ export const _gridItemMap = new Map();
 
 // Phase 5.1+5.2 — Sources excluded from "verified cultural institution" badge
 const _NON_VERIFIED = new Set([
-  'flickr','pexels','pixabay','picsum','unsplash','openverse','artsy',
+  'flickr','pexels','pixabay','picsum','unsplash','artsy',
   'wikiart','eol','gbif','gbiflit','inaturalist','naturalis',
 ]);
 
@@ -1920,7 +1919,6 @@ export async function refreshSource(sourceName) {
     eol:          () => fetchEOL(kw, lim, signal),
     gallica:      () => fetchGallica(kw, lim, signal),
     chronicling:  () => fetchChroniclingAmerica(kw, lim, signal),
-    openverse:    () => fetchOpenverse(kw, lim, signal),
     trove:        () => fetchTrove(kw, lim, signal),
     digitalnz:    () => fetchDigitalNZ(kw, lim, signal),
     bhl:          () => fetchBHL(kw, lim, signal),
@@ -2009,7 +2007,6 @@ export async function fetchMoreResults() {
     callIfHealthy('chicago',     fetchChicagoArt(kw, perSource, signal, page)),
     callIfHealthy('europeana',   fetchEuropeana(kw, perSource, signal, offset + 1)),
     callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
-    callIfHealthy('openverse',   fetchOpenverse(kw, perSource, signal, page)),
 
     callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
     callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
@@ -2197,7 +2194,7 @@ export async function runSearch(query, forceRefresh = false) {
     const lq = STATE.query.toLowerCase();
     // 3. Discard results from rogue sources that don't contain the exact query
     //    (Wikimedia srsearch and Flickr both do internal fuzzy/relevance ranking)
-    const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage', 'openverse']);
+    const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage']);
     STATE.results = STATE.results.filter(r => {
       if (!ROGUE_SOURCES.has(r.source)) return true;
       return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
@@ -6014,7 +6011,7 @@ export const SOURCE_AUTHORITY = {
   cleveland: 8, harvard: 8, yale: 8, tate: 8, prado: 8, mia: 8,
   lacma: 8, smithsonian: 8, europeana: 7, loc: 7, gallica: 7,
   nasa: 7, inaturalist: 7, gbif: 6, flickr: 5,
-  openverse: 5, unsplash: 5, pixabay: 4, pexels: 4,
+  unsplash: 5, pixabay: 4, pexels: 4,
 };
 
 (function upgradeScoreItemRelevance() {
@@ -8116,7 +8113,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 197+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 2496+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8126,7 +8123,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 197+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 2496+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);

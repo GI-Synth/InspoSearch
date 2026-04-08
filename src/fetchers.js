@@ -1072,39 +1072,6 @@ export async function fetchChroniclingAmerica(keyword, limit, signal) {
   }
 }
 
-export async function fetchOpenverse(keyword, limit, signal, page = 1) {
-  try {
-
-    const res = await safeFetch(
-      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(keyword)}&license_type=commercial&page_size=${limit}&page=${page}`,
-      { signal }
-    );
-    if (!res.ok) throw new Error('Openverse failed');
-    const data = await res.json();
-    const GROUP_TITLE_RE = /^group\s+of\s+(images?|files?|photos?|pictures?)/i;
-    return (data.results || [])
-      .filter(item => item.url && !GROUP_TITLE_RE.test((item.title || '').trim()))
-      .map(item => ({
-        id:          `openverse_${item.id}`,
-        url:         item.url,
-        thumb:       item.thumbnail || item.url,
-        title:       item.title || 'Openverse Image',
-        description: item.creator ? `by ${item.creator}` : '',
-        source:      'openverse',
-        sourceUrl:   item.foreign_landing_url || item.url,
-        year:        null,
-        tags:        (item.tags || []).map(t => t.name?.toLowerCase()).filter(Boolean),
-        colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    if (e.name === 'AbortError') return [];
-    console.warn('Openverse failed:', e.message);
-    return [];
-  }
-}
-
 export async function fetchTrove(keyword, limit, signal) {
   if (!STATE.troveKey) return [];
   try {
