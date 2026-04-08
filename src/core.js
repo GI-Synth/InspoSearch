@@ -692,10 +692,7 @@ export let getDisplayResults = function getDisplayResults(items, query) {
         if (JUNK_TITLE_RE.test(item.title || '')) return false;
         if (BOOK_RE.test(`${item.title || ''} ${item.description || ''}`)) return false;
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        // 2-word queries: require both terms; 3+ words: require at least 2
-        const minMatch = terms.length <= 2 ? terms.length : 2;
-        const matched = terms.filter(t => hay.includes(t)).length;
-        return matched >= minMatch;
+        return terms.some(t => hay.includes(t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
       .filter(x => x.score > 0)

@@ -162,11 +162,10 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         if (isSingleWord) {
           return title.includes(terms[0]);
         }
+        // Multi-word: require at least 1 term in title/description/artist/tags
+        // Scoring in getDisplayResults ranks items with more matches higher
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        // 2-word queries: require both terms; 3+ words: require at least 2
-        const minMatch = terms.length <= 2 ? terms.length : 2;
-        const matched = terms.filter(t => hay.includes(t)).length;
-        return matched >= minMatch;
+        return terms.some(t => hay.includes(t));
       });
     }
     if (!items || !items.length) return;
