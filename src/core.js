@@ -681,11 +681,15 @@ export let getDisplayResults = function getDisplayResults(items, query) {
 
   if (STATE.searchMode === 'exact') {
     const terms = (query || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference)\b/i;
+    const GENERIC_TITLE_RE = /^(photograph|image|picture|photo|file|img[_\s]?\d|dsc[_\s]?\d|untitled|no title|\d{4}-\d{2})/i;
     const ranked = base
-      // Layer 2 gate: at least one query term must appear in the item's text
       .filter(item => {
         if (!terms.length) return true;
-        const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        const title = (item.title || '').toLowerCase();
+        if (GENERIC_TITLE_RE.test(title) || title.length < 3) return false;
+        if (JUNK_TITLE_RE.test(item.title || '')) return false;
+        const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
         return terms.every(t => hay.includes(t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))

@@ -736,7 +736,7 @@ export function parseNegativeTerms(query) {
 export function filterNegativeTerms(items, negatives) {
   if (!negatives.length) return items;
   return items.filter(item => {
-    const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+    const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
     return !negatives.some(neg => hay.includes(neg));
   });
 }
@@ -744,7 +744,7 @@ export function filterNegativeTerms(items, negatives) {
 export function filterPhrases(items, phrases) {
   if (!phrases.length) return items;
   return items.filter(item => {
-    const hay = `${item.title || ''} ${item.description || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+    const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
     return phrases.every(phrase => hay.includes(phrase));
   });
 }

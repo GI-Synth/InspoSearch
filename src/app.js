@@ -143,12 +143,23 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     if (STATE.searchMode === 'exact' && items && items.length) {
       const terms = keyword.toLowerCase().trim().split(/\s+/).filter(Boolean);
       const isSingleWord = terms.length === 1;
+
+      // Junk title patterns — conference photos, headshots, lectures, book covers, generic filenames
+      const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference)\b/i;
+      const GENERIC_TITLE_RE = /^(photograph|image|picture|photo|file|img[_\s]?\d|dsc[_\s]?\d|untitled|no title|\d{4}-\d{2})/i;
+
       items = items.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        // Drop items with generic/meaningless titles
+        if (GENERIC_TITLE_RE.test(title) || title.length < 3) return false;
+        // Drop conference/lecture items in exact mode
+        if (JUNK_TITLE_RE.test(item.title || '')) return false;
+
         // Single-word queries: require the term in the title specifically
         if (isSingleWord) {
-          return (item.title || '').toLowerCase().includes(terms[0]);
+          return title.includes(terms[0]);
         }
-        const hay = `${item.title || ''} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
+        const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
         return terms.every(t => hay.includes(t));
       });
     }
