@@ -361,7 +361,7 @@ export const NATURE_ONLY_SOURCES = new Set([
 ]);
 // Source IDs that are domain-locked to space/astronomy
 export const SPACE_ONLY_SOURCES = new Set([
-  'nasa','apod','hubble','noaa',
+  'nasa','nasa_images','apod','hubble','noaa',
 ]);
 
 export function classifyQuery(q) {
@@ -377,10 +377,17 @@ const SCIENCE_ONLY_SOURCES = new Set(['usgs', 'photogrammar', 'nasa', 'nasa_imag
    Saves bandwidth by not querying nature-only or space-only sources when
    the query clearly doesn't match those domains. */
 export function skipInExactMode(sourceId, queryClass) {
-  if (STATE.searchMode !== 'exact') return false;
-  if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
-  if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
-  if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
+  const exact = STATE.searchMode === 'exact';
+  // In exact mode, skip domain-locked sources when query doesn't match their domain
+  if (exact) {
+    if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
+    if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+    if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
+  }
+  // In ANY mode, skip nature/space/science sources when query is clearly art
+  if (queryClass.isArt && !queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
+  if (queryClass.isArt && !queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+  if (queryClass.isArt && !queryClass.isScience && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
   return false;
 }
 
