@@ -145,8 +145,9 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
       const isSingleWord = terms.length === 1;
 
       // Junk title patterns — conference photos, headshots, lectures, book covers, generic filenames
-      const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference)\b/i;
+      const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference|book review|isbn|pp\.|vol\.|volume \d|pages \d|edited by|proceedings of)\b/i;
       const GENERIC_TITLE_RE = /^(photograph|image|picture|photo|file|img[_\s]?\d|dsc[_\s]?\d|untitled|no title|\d{4}-\d{2})/i;
+      const BOOK_RE = /\b(hardcover|paperback|kindle edition|ebook|audiobook|publisher|isbn|\d+ pages|table of contents|bibliography|index\.?$)\b/i;
 
       items = items.filter(item => {
         const title = (item.title || '').toLowerCase();
@@ -154,6 +155,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         if (GENERIC_TITLE_RE.test(title) || title.length < 3) return false;
         // Drop conference/lecture items in exact mode
         if (JUNK_TITLE_RE.test(item.title || '')) return false;
+        // Drop book metadata items
+        if (BOOK_RE.test(`${item.title || ''} ${item.description || ''}`)) return false;
 
         // Single-word queries: require the term in the title specifically
         if (isSingleWord) {

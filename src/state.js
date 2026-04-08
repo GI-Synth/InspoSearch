@@ -371,7 +371,7 @@ export function classifyQuery(q) {
   return { isNature, isSpace };
 }
 
-const SCIENCE_ONLY_SOURCES = new Set(['usgs', 'photogrammar']);
+const SCIENCE_ONLY_SOURCES = new Set(['usgs', 'photogrammar', 'nasa', 'nasa_images']);
 
 /* Returns true when sourceId should be skipped in exact mode for this query.
    Saves bandwidth by not querying nature-only or space-only sources when
@@ -380,7 +380,7 @@ export function skipInExactMode(sourceId, queryClass) {
   if (STATE.searchMode !== 'exact') return false;
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
   if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
-  if (!queryClass.isScience && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
+  if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
   return false;
 }
 
