@@ -616,30 +616,54 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
   const desc = (item.description || '').toLowerCase();
   const artist = (item.artist || '').toLowerCase();
   const tags = (item.tags || []).join(' ').toLowerCase();
-  const text = `${title} ${desc} ${artist} ${tags}`;
+
+  // Field lengths for BM25-like normalization (shorter fields = more specific matches)
+  const titleLen = title.split(/\s+/).length || 1;
+  const descLen = desc.split(/\s+/).length || 1;
 
   let score = 0;
-  if (title.includes(q)) score += 15;
-  if (desc.includes(q)) score += 4;
-  if (artist.includes(q)) score += 6;
-  if (text.includes(q)) score += 5;
 
+  // ── Exact full-query matches (highest signal) ──
+  if (title.includes(q)) score += Math.max(12, Math.round(20 / Math.sqrt(titleLen)));
+  if (artist.includes(q)) score += 10;
+  if (desc.includes(q)) score += Math.max(3, Math.round(6 / Math.sqrt(descLen)));
+
+  // ── Per-term scoring with field-length normalization ──
   let termMatches = 0;
-  terms.forEach(t => {
-    if (title.includes(t)) { score += 6; termMatches++; }
-    else if (artist.includes(t)) { score += 4; termMatches++; }
-    else if (desc.includes(t)) { score += 2; termMatches++; }
-    else if (tags.includes(t)) { score += 2; termMatches++; }
-  });
+  for (const t of terms) {
+    if (title.includes(t)) {
+      score += Math.max(4, Math.round(8 / Math.sqrt(titleLen)));
+      termMatches++;
+    } else if (artist.includes(t)) {
+      score += 5;
+      termMatches++;
+    } else if (tags.includes(t)) {
+      score += 3;
+      termMatches++;
+    } else if (desc.includes(t)) {
+      score += Math.max(1, Math.round(3 / Math.sqrt(descLen)));
+      termMatches++;
+    }
+  }
 
-  if (terms.length > 1 && termMatches === terms.length) score += 4;
+  // All terms present bonus (conjunction)
+  if (terms.length > 1 && termMatches === terms.length) score += 6;
+  // Partial match — proportional credit
+  if (terms.length > 1 && termMatches > 0 && termMatches < terms.length) {
+    score += Math.round((termMatches / terms.length) * 3);
+  }
+
+  // ── Fuzzy fallback — trigram similarity with graduated scoring ──
   if (score === 0 && query) {
     const hay = `${title} ${desc} ${artist} ${tags}`;
     const words = hay.split(/\s+/);
     for (const term of terms) {
+      let bestSim = 0;
       for (const word of words) {
-        if (trigramSimilarity(term, word) > 0.55) { score += 1; break; }
+        const sim = trigramSimilarity(term, word);
+        if (sim > bestSim) bestSim = sim;
       }
+      if (bestSim > 0.55) score += Math.max(1, Math.round(bestSim * 3));
     }
   }
 

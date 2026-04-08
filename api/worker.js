@@ -140,35 +140,95 @@ async function handleSearch(url, env) {
   if (!q) return json({ error: 'Missing required parameter: q' }, 400, env);
 
   const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit')) || 24, 1), 100);
+  const perSource = Math.ceil(limit / 4);
 
-  // Proxy to a few fast, CORS-friendly sources for the API
-  const results = [];
+  // Fan out to multiple CORS-friendly sources in parallel
+  const [chicagoRes, metRes, clevelandRes, harvardRes] = await Promise.allSettled([
+    // Art Institute of Chicago
+    fetch(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(q)}&limit=${perSource}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles`)
+      .then(r => r.json())
+      .then(data => (data.data || []).filter(obj => obj.image_id).map(obj => ({
+        id: `artic_${obj.id}`,
+        title: obj.title || 'Untitled',
+        artist: obj.artist_display || '',
+        date: obj.date_display || '',
+        medium: obj.medium_display || '',
+        tags: obj.subject_titles || [],
+        thumbnail: `https://www.artic.edu/iiif/2/${obj.image_id}/full/400,/0/default.jpg`,
+        image: `https://www.artic.edu/iiif/2/${obj.image_id}/full/max/0/default.jpg`,
+        source: 'Art Institute of Chicago',
+        sourceUrl: `https://www.artic.edu/artworks/${obj.id}`,
+      }))),
+    // Met Museum — search IDs then fetch details
+    fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(q)}&hasImages=true`)
+      .then(r => r.json())
+      .then(async data => {
+        const ids = (data.objectIDs || []).slice(0, perSource);
+        if (!ids.length) return [];
+        const details = await Promise.allSettled(
+          ids.map(id => fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`).then(r => r.json()))
+        );
+        return details
+          .filter(r => r.status === 'fulfilled' && r.value.primaryImageSmall)
+          .map(r => r.value)
+          .map(obj => ({
+            id: `met_${obj.objectID}`,
+            title: obj.title || 'Untitled',
+            artist: obj.artistDisplayName || '',
+            date: obj.objectDate || '',
+            medium: obj.medium || '',
+            tags: (obj.tags || []).map(t => t.term),
+            thumbnail: obj.primaryImageSmall,
+            image: obj.primaryImage || obj.primaryImageSmall,
+            source: 'The Met Museum',
+            sourceUrl: obj.objectURL || '',
+          }));
+      }),
+    // Cleveland Museum of Art
+    fetch(`https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(q)}&has_image=1&limit=${perSource}`)
+      .then(r => r.json())
+      .then(data => (data.data || []).filter(obj => obj.images?.web?.url).map(obj => ({
+        id: `cle_${obj.id}`,
+        title: obj.title || 'Untitled',
+        artist: obj.creators?.[0]?.description || '',
+        date: obj.creation_date || '',
+        medium: obj.technique || '',
+        tags: [],
+        thumbnail: obj.images.web.url,
+        image: obj.images.print?.url || obj.images.web.url,
+        source: 'Cleveland Museum of Art',
+        sourceUrl: obj.url || `https://www.clevelandart.org/art/${obj.id}`,
+      }))),
+    // Harvard Art Museums
+    env.HARVARD_KEY
+      ? fetch(`https://api.harvardartmuseums.org/object?q=${encodeURIComponent(q)}&hasimage=1&size=${perSource}&apikey=${env.HARVARD_KEY}`)
+          .then(r => r.json())
+          .then(data => (data.records || []).filter(obj => obj.primaryimageurl).map(obj => ({
+            id: `harvard_${obj.id}`,
+            title: obj.title || 'Untitled',
+            artist: obj.people?.[0]?.name || '',
+            date: obj.dated || '',
+            medium: obj.medium || '',
+            tags: [],
+            thumbnail: obj.primaryimageurl + '?width=400',
+            image: obj.primaryimageurl,
+            source: 'Harvard Art Museums',
+            sourceUrl: obj.url || '',
+          })))
+      : Promise.resolve([]),
+  ]);
 
-  // Art Institute of Chicago (fast, reliable, free)
-  try {
-    const artic = await fetch(
-      `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(q)}&limit=${limit}&fields=id,title,image_id,artist_display,date_display`
-    );
-    const data = await artic.json();
-    if (data.data) {
-      for (const obj of data.data) {
-        if (!obj.image_id) continue;
-        results.push({
-          id: `artic_${obj.id}`,
-          title: obj.title || 'Untitled',
-          artist: obj.artist_display || '',
-          date: obj.date_display || '',
-          thumbnail: `https://www.artic.edu/iiif/2/${obj.image_id}/full/400,/0/default.jpg`,
-          source: 'Art Institute of Chicago',
-          sourceUrl: `https://www.artic.edu/artworks/${obj.id}`,
-        });
-      }
-    }
-  } catch { /* skip */ }
+  const results = [
+    ...(chicagoRes.status === 'fulfilled' ? chicagoRes.value : []),
+    ...(metRes.status === 'fulfilled' ? metRes.value : []),
+    ...(clevelandRes.status === 'fulfilled' ? clevelandRes.value : []),
+    ...(harvardRes.status === 'fulfilled' ? harvardRes.value : []),
+  ];
 
   return json({
     query: q,
     count: results.length,
+    sources: ['Art Institute of Chicago', 'The Met Museum', 'Cleveland Museum of Art', 'Harvard Art Museums'],
     results: results.slice(0, limit),
   }, 200, env);
 }

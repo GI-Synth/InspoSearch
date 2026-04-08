@@ -3,7 +3,7 @@
    ============================================================ */
 import {
   CONSTANTS, MOVEMENT_SYNONYMS, MULTILINGUAL_ART_MAP, PERIOD_ALIASES,
-  SEED_MAP, SPECIES_SYNONYMS, STATE, WD_PHASE_H, classifyQueryV2, ADAPTERS,
+  SEED_MAP, SPECIES_SYNONYMS, STATE, WD_PHASE_H, classifyQueryV2, classifyQueryExtended, ADAPTERS,
   _ERA_REGEX, _MEDIUM_TERMS, _MOVEMENT_SEEDS, _MOVEMENT_TERMS, _SPECIES_PATTERN,
   SOURCE_DOMAINS
 } from './state.js';
@@ -29,37 +29,109 @@ const _MEDIUM_TO_EUROPEANA_TYPE = {
   manuscript:  'TEXT',
 };
 
+/* ── Wikidata SPARQL concept expansion for art/design queries ── */
+async function expandWithWikidata(keyword, signal) {
+  // Find the Wikidata item for this keyword, then get parent/child concepts + translations
+  const sparql = `
+    SELECT DISTINCT ?label WHERE {
+      ?item rdfs:label "${keyword.replace(/"/g, '')}"@en .
+      {
+        ?item wdt:P279 ?parent .
+        ?parent rdfs:label ?label .
+        FILTER(LANG(?label) = "en")
+      } UNION {
+        ?sub wdt:P279 ?item .
+        ?sub rdfs:label ?label .
+        FILTER(LANG(?label) = "en")
+      }
+    } LIMIT 15
+  `.trim();
+  try {
+    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
+    const res = await fetch(url, {
+      signal,
+      headers: { 'Accept': 'application/sparql-results+json', 'User-Agent': 'InspoSearch/1.0 (https://insposearch.org)' }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results?.bindings || [])
+      .map(b => b.label?.value?.toLowerCase())
+      .filter(Boolean)
+      .filter(w => w.length > 2 && w.length < 40 && !w.includes('wikimedia'));
+  } catch {
+    return [];
+  }
+}
+
+/* ── Wikidata multilingual labels for art terms ── */
+async function expandMultilingualWikidata(keyword, signal) {
+  const sparql = `
+    SELECT ?label WHERE {
+      ?item rdfs:label "${keyword.replace(/"/g, '')}"@en .
+      ?item rdfs:label ?label .
+      FILTER(LANG(?label) IN ("fr","de","es","it","nl","sv","da","pt","ja","zh"))
+    } LIMIT 10
+  `.trim();
+  try {
+    const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
+    const res = await fetch(url, {
+      signal,
+      headers: { 'Accept': 'application/sparql-results+json', 'User-Agent': 'InspoSearch/1.0 (https://insposearch.org)' }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results?.bindings || [])
+      .map(b => b.label?.value?.toLowerCase())
+      .filter(Boolean)
+      .filter(w => w.length > 1 && w.length < 40);
+  } catch {
+    return [];
+  }
+}
+
 export async function expandKeywords(keyword) {
   if (!STATE.keywordExpansion) return [keyword];
   try {
     const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), 3000);
-    const [trg, ml] = await Promise.allSettled([
+    const timer = setTimeout(() => ac.abort(), 4000);
+
+    // Classify query to decide expansion strategy
+    const qc = classifyQueryExtended(keyword);
+    const isArtDomain = qc.isArt || qc.isDesign || qc.isHistory || qc.isArch;
+
+    // Launch all expansion sources in parallel
+    const [trg, ml, wikiConcepts, wikiTranslations] = await Promise.allSettled([
       fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`, { signal: ac.signal })
         .then(r => r.json()),
       fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(keyword)}&max=${CONSTANTS.DATAMUSE_MAX}`, { signal: ac.signal })
         .then(r => r.json()),
+      isArtDomain ? expandWithWikidata(keyword, ac.signal) : Promise.resolve([]),
+      isArtDomain ? expandMultilingualWikidata(keyword, ac.signal) : Promise.resolve([]),
     ]);
     clearTimeout(timer);
-    const words = [
+
+    const datamuseWords = [
       ...(trg.status === 'fulfilled' ? trg.value : []),
       ...(ml.status  === 'fulfilled' ? ml.value  : []),
     ].map(w => w.word);
+    const wikiTerms = wikiConcepts.status === 'fulfilled' ? wikiConcepts.value : [];
+    const wikiTranslated = wikiTranslations.status === 'fulfilled' ? wikiTranslations.value : [];
+
     const seeds = SEED_MAP[keyword.toLowerCase()] || [];
-
-    // Multilingual translations for known art vocabulary (helps multilingual sources)
     const translations = (MULTILINGUAL_ART_MAP[keyword.toLowerCase()] || []).slice(0, 3);
-
-    // Query classification v2 — add movement/era seeds
     const v2 = classifyQueryV2(keyword);
     const v2seeds = [...(v2.movementSeeds || [])].slice(0, 4);
-
-    // Synonym expansion v2: art movements, species, historical periods
     const movSyns = (MOVEMENT_SYNONYMS[keyword.toLowerCase()] || []).slice(0, 4);
     const specSyns = (SPECIES_SYNONYMS[keyword.toLowerCase()] || []).slice(0, 3);
     const periodSyns = (PERIOD_ALIASES[keyword.toLowerCase()] || []).slice(0, 3);
 
-    return [...new Set([keyword, ...seeds, ...v2seeds, ...translations, ...movSyns, ...specSyns, ...periodSyns, ...words])].slice(0, 20);
+    // Art domain: prioritize Wikidata concepts + translations, limit Datamuse (avoids "ceramic → heat")
+    // Other domains: prioritize Datamuse, add Wikidata as supplement
+    const expansions = isArtDomain
+      ? [keyword, ...seeds, ...v2seeds, ...wikiTerms.slice(0, 8), ...wikiTranslated.slice(0, 4), ...translations, ...movSyns, ...periodSyns, ...datamuseWords.slice(0, 3)]
+      : [keyword, ...seeds, ...v2seeds, ...translations, ...movSyns, ...specSyns, ...periodSyns, ...datamuseWords, ...wikiTerms.slice(0, 3)];
+
+    return [...new Set(expansions)].slice(0, 20);
   } catch (err) {
     console.warn('expandKeywords failed:', err.message);
     return [keyword];
