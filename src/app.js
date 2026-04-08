@@ -319,12 +319,16 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         .then(r => r.map(i => ({ ...i, source: id }))))
         .then(onSourceResult(id)).catch(() => {})
     ),
-    // ── Phase A — Smithsonian sub-museums (15) ──────────────────────────
-    ...Object.entries(SI_UNITS).map(([id, cfg]) =>
-      callIfHealthy(id, fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
-        .then(r => r.map(i => ({ ...i, source: id }))))
-        .then(onSourceResult(id)).catch(() => {})
-    ),
+    // ── Phase A — Smithsonian sub-museums (staggered to avoid 429) ────
+    (async () => {
+      const siEntries = Object.entries(SI_UNITS);
+      const siTasks = siEntries.map(([id, cfg]) => () =>
+        callIfHealthy(id, fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+          .then(r => r.map(i => ({ ...i, source: id }))))
+          .then(onSourceResult(id)).catch(() => {})
+      );
+      await promisePool(siTasks, 3);
+    })(),
 
     // ── Phase B — zero-auth free APIs ────────────────────────────────────
     skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
