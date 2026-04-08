@@ -378,7 +378,7 @@ const NOISY_FOR_ART = new Set(['finna', 'wikidata']);
 const SKIP_FOR_ART = new Set([
   'nasa','nasa_images','apod','hubble','noaa',
   'inaturalist','gbif','eol','naturalis','nationalzoo','gbiflit','idigbio','ala',
-  'usgs','photogrammar',
+  'usgs','photogrammar','openlibrary',
 ]);
 // Sources that pollute nature queries in explore mode
 const SKIP_FOR_NATURE = new Set([
