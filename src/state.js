@@ -378,17 +378,12 @@ const NOISY_FOR_ART = new Set(['finna', 'wikidata']);
 /* Returns true when sourceId should be skipped for this query.
    Saves bandwidth by not querying irrelevant sources. */
 export function skipInExactMode(sourceId, queryClass) {
-  const exact = STATE.searchMode === 'exact';
-  // In exact mode, skip domain-locked sources when query doesn't match their domain
-  if (exact) {
-    if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
-    if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
-    if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
-  }
-  // In ANY mode, skip nature/space/science/noisy sources when query is clearly art
-  if (queryClass.isArt && !queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
-  if (queryClass.isArt && !queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
-  if (queryClass.isArt && !queryClass.isScience && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
+  if (STATE.searchMode !== 'exact') return false;
+  // Skip domain-locked sources when query doesn't match their domain
+  if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
+  if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+  if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
+  // Skip noisy sources for art queries
   if (queryClass.isArt && NOISY_FOR_ART.has(sourceId)) return true;
   return false;
 }
