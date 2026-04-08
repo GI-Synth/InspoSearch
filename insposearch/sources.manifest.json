@@ -411,29 +411,6 @@
     },
 
     {
-      "id": "sketchfab_heritage",
-      "name": "Sketchfab Cultural Heritage",
-      "description": "3D cultural heritage models and preview renders from museums, archaeologists, and preservation teams",
-      "domain": "api.sketchfab.com",
-      "category": ["architecture", "design", "historical", "science"],
-      "region": "global",
-      "keyRequired": false,
-      "endpoint": "https://api.sketchfab.com/v3/models",
-      "adapter": "simple_rest",
-      "queryParam": "q",
-      "extraParams": "categories=cultural-heritage-history",
-      "resultsPath": "results",
-      "imageField": "thumbnails.images.0.url",
-      "titleField": "name",
-      "descField": "description",
-      "sourceUrlField": "viewerUrl",
-      "imageCount": 500000,
-      "active": true,
-      "_testNote": "Node.js 3-term test passed (portrait, landscape, flower) with preview images on all terms",
-      "tags": ["3d", "heritage", "architecture", "models", "archaeology"]
-    },
-
-    {
       "id": "wellcome_iiif",
       "name": "Wellcome Collection (IIIF)",
       "description": "Wellcome Institute — 1M+ historical medical images, manuscripts, artworks via IIIF Content Search adapter",
