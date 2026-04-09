@@ -11,7 +11,7 @@
 
 Free forever. No accounts. No signups. No paywalls. No server.
 
-→ **[Open InspoSearch](https://insposearch.pages.dev)**
+→ **[Open InspoSearch](https://insposearch.org)**
 
 ---
 
