@@ -1,6 +1,6 @@
 # InspoSearch
 
-**The world's open cultural image search — 2495+ sources, 2.5B+ images, one search.**
+**The world's open cultural image search — 2494+ sources, 2.5B+ images, one search.**
 
 [![Live](https://img.shields.io/badge/live-insposearch.pages.dev-000?style=flat&logo=cloudflare)](https://insposearch.pages.dev)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
@@ -19,7 +19,7 @@ Free forever. No accounts. No signups. No paywalls. No server.
 
 InspoSearch is not an image search engine. It is a **multi-source visual research engine** — a creative and scholarly tool that aggregates the open cultural web and makes it explorable, connectable, and inspiring.
 
-Search once and get results from the Met, Rijksmuseum, V&A, NASA, iNaturalist, Europeana, Gallica, museum-digital, DigitalCommonwealth, and 2485+ more — **all at once**, in a unified dark grid. Sources are chosen for depth and diversity, not traffic. You will find things here that do not exist on Google Images.
+Search once and get results from the Met, Rijksmuseum, V&A, NASA, iNaturalist, Europeana, Gallica, museum-digital, DigitalCommonwealth, and 2484+ more — **all at once**, in a unified dark grid. Sources are chosen for depth and diversity, not traffic. You will find things here that do not exist on Google Images.
 
 The magic works without AI. AI amplifies it when you want to go deeper.
 
@@ -43,8 +43,8 @@ No build step. No dependencies. No server. Opens by double-click.
 
 | Feature | Description |
 |---|---|
-| **2495+ sources** | World museums, archives, nature databases, libraries, photography |
-| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482485+ more |
+| **2494+ sources** | World museums, archives, nature databases, libraries, photography |
+| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482482484+ more |
 | **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
 | **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
 | **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |

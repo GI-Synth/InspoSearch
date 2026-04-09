@@ -690,38 +690,6 @@ export async function fetchLOC(keyword, limit, signal, sp = 1) {
   }
 }
 
-export async function fetchOpenLibrary(keyword, limit, signal) {
-
-  try {
-    const res = await safeFetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(keyword)}&fields=cover_i,title,author_name,subject,first_publish_year&limit=${limit}`,
-      { signal }
-    );
-    if (!res.ok) throw new Error('OpenLibrary fetch failed');
-    const data = await res.json();
-    return (data.docs || [])
-      .filter(doc => doc.cover_i)
-      .map(doc => ({
-        id:          `openlibrary_${doc.cover_i}`,
-        url:         `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`,
-        thumb:       `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`,
-        title:       doc.title || 'Book Cover',
-        description: (doc.author_name || [])[0] || '',
-        source:      'openlibrary',
-        sourceUrl:   `https://openlibrary.org/search?q=${encodeURIComponent(doc.title || '')}`,
-        year:        doc.first_publish_year ? String(doc.first_publish_year) : null,
-        tags:        (doc.subject || []).slice(0, 5).map(t => t.toLowerCase()),
-        colors:      [],
-        aiTags:      [],
-      }))
-      .slice(0, limit);
-  } catch (e) {
-    if (e.name === 'AbortError') return [];
-    console.warn('OpenLibrary failed:', e.message);
-    return [];
-  }
-}
-
 export async function fetchChicagoArt(keyword, limit, signal, page = 1) {
   try {
 
@@ -3357,37 +3325,6 @@ WD_PHASE_H.forEach(s => {
     return [];
   };
 });
-
-export async function fetchOpenLibrarySubjects(keyword, limit, signal) {
-  if (keyword.length < 4) return [];
-  try {
-    const slug = keyword.toLowerCase().replace(/\s+/g, '_');
-    const res = await safeFetch(
-      `https://openlibrary.org/subjects/${encodeURIComponent(slug)}.json?limit=${limit}`,
-      { signal }
-    );
-    if (!res.ok) throw new Error('OL subjects failed');
-    const data = await res.json();
-    return (data.works || [])
-      .filter(w => w.cover_id)
-      .map(w => ({
-        id:          `olsubj_${w.cover_id}`,
-        url:         `https://covers.openlibrary.org/b/id/${w.cover_id}-L.jpg`,
-        thumb:       `https://covers.openlibrary.org/b/id/${w.cover_id}-M.jpg`,
-        title:       w.title || 'Book',
-        description: w.authors?.[0]?.name || '',
-        year:        w.first_publish_year?.toString() || null,
-        source:      'openlibrary',
-        sourceUrl:   `https://openlibrary.org${w.key}`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    console.warn('OL Subjects failed:', e.message);
-    return [];
-  }
-}
 
 export async function fetchAGO(keyword, limit, signal) {
   try {

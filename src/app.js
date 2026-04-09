@@ -55,7 +55,7 @@ import {
   fetchNASM, fetchNGA, fetchNGI, fetchNHMLondon, fetchNMAAHC, fetchNOAA,
   fetchNPG, fetchNPMTaipei, fetchNYPL, fetchNationalGalleryLondon,
   fetchNationalZoo, fetchNationalmuseumSE, fetchNaturalis, fetchNordicMuseum,
-  fetchONB, fetchOpenLibrary, fetchOpenLibrarySubjects,
+  fetchONB,
   fetchPAS, fetchPEM, fetchParisMusees, fetchPexels, fetchPhotogrammar,
   fetchPicsum, fetchPixabay, fetchPrado, fetchPrinceton, fetchQuaiBranly,
   fetchRMFAB, fetchRijksmuseum, fetchRijksmuseumTwenthe, fetchSMG, fetchSMK,
@@ -190,7 +190,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('met',          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 4) : fetchMet(keywords.join(' '), limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
     skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
     skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
-    skipIrrelevantSource('openlibrary', exactQueryClass) ? Promise.resolve() : callIfHealthy('openlibrary',  fetchOpenLibrary(keyword,                     fetchBatch, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
     callIfHealthy('chicago',      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 3) : fetchChicagoArt(keyword, limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
     callIfHealthy('cleveland',    fetchCleveland(keyword,                       limitFor('cleveland'), signal)).then(onSourceResult('cleveland')).catch(() => {}),
     callIfHealthy('va',           fetchVA(keyword,                              limitFor('va'), signal)).then(onSourceResult('va')).catch(() => {}),
@@ -283,7 +282,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     skipInExactMode('gbiflit',     exactQueryClass) ? Promise.resolve() : callIfHealthy('gbiflit',     fetchGBIFLiterature(keyword,  perSource+2, signal)).then(onSourceResult('gbiflit')).catch(() => {}),
     callIfHealthy('freersackler',     fetchFreerSackler(keyword,                   perSource+2, signal)).then(onSourceResult('freersackler')).catch(() => {}),
 
-    skipIrrelevantSource('openlibrary', exactQueryClass) ? Promise.resolve() : callIfHealthy('openlibrary',      fetchOpenLibrarySubjects(keyword,            perSource+2, signal)).then(onSourceResult('openlibrary')).catch(() => {}),
     callIfHealthy('ago',              fetchAGO(keyword,                            perSource+2, signal)).then(onSourceResult('ago')).catch(() => {}),
     callIfHealthy('pem',              fetchPEM(keyword,                            perSource+2, signal)).then(onSourceResult('pem')).catch(() => {}),
     callIfHealthy('npg',              fetchNPG(keyword,                            perSource+2, signal)).then(onSourceResult('npg')).catch(() => {}),
@@ -1935,7 +1933,6 @@ export async function refreshSource(sourceName) {
     smithsonian:  () => fetchSmithsonian(kw, lim, signal),
     pexels:       () => fetchPexels(kw, lim, signal),
     inaturalist:  () => fetchINaturalist(kw, lim, signal),
-    openlibrary:  () => fetchOpenLibrary(kw, lim, signal),
     chicago:      () => fetchChicagoArt(kw, lim, signal),
     cleveland:    () => fetchCleveland(kw, lim, signal),
     va:           () => fetchVA(kw, lim, signal),
@@ -8158,7 +8155,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 2495+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 2494+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8168,7 +8165,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 2495+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 2494+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);

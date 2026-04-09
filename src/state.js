@@ -58,7 +58,7 @@ export const BADGE_META = {
   euro_romanian:    ['euro','rom·euro'],   euro_bulgarian:   ['euro','bulg·euro'],
   harvard:          ['harvard','harvard'], smithsonian:      ['smithsonian','si'],
   pexels:           ['pexels','pexels'],   inaturalist:      ['inaturalist','nature'],
-  loc:              ['loc','loc'],         openlibrary:      ['openlibrary','books'],
+  loc:              ['loc','loc'],
   chicago:          ['chicago','chicago'], cleveland:        ['cleveland','cleveland'],
   va:               ['va','v&a'],          flickr:           ['flickr','flickr'],
   pixabay:          ['pixabay','pixabay'], wikiart:          ['wikiart','wikiart'],
@@ -378,7 +378,7 @@ const NOISY_FOR_ART = new Set(['finna', 'wikidata']);
 const SKIP_FOR_ART = new Set([
   'nasa','nasa_images','apod','hubble','noaa',
   'inaturalist','gbif','eol','naturalis','nationalzoo','gbiflit','idigbio','ala',
-  'usgs','photogrammar','openlibrary',
+  'usgs','photogrammar',
 ]);
 // Sources that pollute nature queries in explore mode
 const SKIP_FOR_NATURE = new Set([
@@ -414,7 +414,7 @@ export const SOURCE_DOMAINS = {
   nasa: 'images.nasa.gov',
   inaturalist: 'inaturalist.org',
   loc: 'loc.gov',
-  openlibrary: 'openlibrary.org',
+
   chicago: 'artic.edu',
   cleveland: 'clevelandart.org',
   va: 'vam.ac.uk',
@@ -801,7 +801,7 @@ STATE.unsplashKey    = localStorage.getItem('inspo_unsplash_key')     || null;
    66 unique source IDs used by callIfHealthy (all fetchAll calls)
 ============================================================ */
 export const ALL_SOURCES = [
-  'met','nasa','inaturalist','loc','openlibrary',
+  'met','nasa','inaturalist','loc',
   'chicago','cleveland','va','wikiart','nordic','flickr','europeana',
   'rijksmuseum','harvard','smithsonian','pexels','pixabay','getty','nga',
   'gbif','eol','apod','gallica','chronicling','trove','digitalnz',
@@ -890,7 +890,7 @@ export const SOURCE_META = {
   nasa:             { category: ['science','photos'],               region: 'global',   access: 'no_key' },
   inaturalist:      { category: ['nature','science'],               region: 'global',   access: 'no_key' },
   loc:              { category: ['archives','historical','maps'],   region: 'americas', access: 'no_key' },
-  openlibrary:      { category: ['archives'],                       region: 'global',   access: 'no_key' },
+
   chicago:          { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
   cleveland:        { category: ['museums','art'],                  region: 'americas', access: 'no_key' },
   va:               { category: ['museums','art','fashion'],        region: 'uk',       access: 'no_key' },
@@ -1245,16 +1245,6 @@ export const KEY_SOURCES = [
     name:      'Library of Congress',
     desc:      'US historical images & documents',
     imageCount: 3000000,
-    alwaysOn:  true,
-    stateKey:  null,
-    storageKey: null,
-    getKeyUrl: null,
-  },
-  {
-    id:        'openlibrary',
-    name:      'Open Library',
-    desc:      'book covers — millions of editions',
-    imageCount: 10000000,
     alwaysOn:  true,
     stateKey:  null,
     storageKey: null,
