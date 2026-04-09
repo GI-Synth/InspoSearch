@@ -29,7 +29,7 @@ The magic works without AI. AI amplifies it when you want to go deeper.
 
 ```bash
 # Option 1: Open directly (no install)
-# Just open https://insposearch.org/ in any browser
+# Just open https://insposearch.pages.dev/ in any browser
 
 # Option 2: Serve locally
 npm start       # → http://localhost:3000
@@ -44,7 +44,7 @@ No build step. No dependencies. No server. Opens by double-click.
 | Feature | Description |
 |---|---|
 | **2494+ sources** | World museums, archives, nature databases, libraries, photography |
-| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Harvard · + more |
+| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482482482482482482482484+ more |
 | **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
 | **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
 | **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |
