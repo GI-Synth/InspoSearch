@@ -353,6 +353,7 @@ export const SPACE_QUERY_TERMS = [
   'milky way','constellation','hubble','voyager','iss','astronaut','lunar',
   'mercury','neptune','uranus','pluto','kepler','cassini','gemini mission',
   'apollo mission','space station','rocket','crater','magnetosphere',
+  'moon','star','stars','planet','sun','eclipse','solar system','earth',
 ];
 // Source IDs that are domain-locked to nature biology
 export const NATURE_ONLY_SOURCES = new Set([
