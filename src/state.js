@@ -389,9 +389,13 @@ const SKIP_FOR_NATURE = new Set([
 /* Returns true when sourceId should be skipped for this query.
    Works in BOTH modes — saves bandwidth by not querying irrelevant sources. */
 export function skipIrrelevantSource(sourceId, queryClass) {
-  // ── Always skip domain-locked mismatches (both modes) ──
+  const hasAnyIntent = queryClass.isNature || queryClass.isSpace || queryClass.isArt ||
+                       queryClass.isHistory || queryClass.isArch || queryClass.isDesign ||
+                       queryClass.isPhoto || queryClass.isScience;
+  // ── Always skip nature-only sources for non-nature queries ──
   if (!queryClass.isNature && NATURE_ONLY_SOURCES.has(sourceId)) return true;
-  if (!queryClass.isSpace && SPACE_ONLY_SOURCES.has(sourceId)) return true;
+  // ── Space sources: allow for space queries AND generic (no-intent) queries, skip for everything else ──
+  if (SPACE_ONLY_SOURCES.has(sourceId) && !queryClass.isSpace && hasAnyIntent) return true;
   if (!queryClass.isScience && !queryClass.isSpace && SCIENCE_ONLY_SOURCES.has(sourceId)) return true;
   // ── Exact mode: also skip noisy sources for art ──
   if (STATE.searchMode === 'exact') {
