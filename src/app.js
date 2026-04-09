@@ -98,7 +98,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   // ~60 sources reliably return results on any query.
   // This ensures the slider value matches actual images shown.
   // Dynamic registry can push active sources well beyond 155 → scale distribution
-  const dynamicActive = selectDynamicSources(keyword, 150).length;
+  const dynamicActive = selectDynamicSources(keyword, 40).length;
   const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
   const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const fetchBatch = perSource + 4;
@@ -372,10 +372,9 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('teylers',                 fetchTeylers(keyword,                Math.max(3, perSource), signal)).then(onSourceResult('teylers')).catch(() => {}),
     callIfHealthy('alte_pinakothek',         fetchAltePinakothek(keyword,         Math.max(3, perSource), signal)).then(onSourceResult('alte_pinakothek')).catch(() => {}),
     callIfHealthy('quai_branly',             fetchQuaiBranly(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('quai_branly')).catch(() => {}),
-    // Phase H — 113 World Museum sources
-    ...WD_PHASE_H.map(s => callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal)).then(onSourceResult(s.id)).catch(() => {})),
+    // Phase H — 113 World Museum sources (deferred to wave 2 below)
     // ── DYNAMIC REGISTRY — Europeana providers, DPLA hubs (when keys set) ──
-    ...selectDynamicSources(keyword, 150).map(entry => {
+    ...selectDynamicSources(keyword, 40).map(entry => {
       const adapter = ADAPTERS[entry.adapter];
       if (!adapter) return Promise.resolve();
       return adapter(entry.config, keyword, Math.max(2, Math.ceil(perSource / 3)), signal)
@@ -384,6 +383,16 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         .catch(() => {});
     }),
   ]);
+
+  // ── Wave 2: Phase H world museums (deferred so main results land fast) ──
+  if (!signal.aborted) {
+    Promise.allSettled(
+      WD_PHASE_H.map(s =>
+        callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal))
+          .then(onSourceResult(s.id)).catch(() => {})
+      )
+    ).catch(() => {});
+  }
 
   if (!isSilent && !all.length) {
     // Distinguish between "no results" and "all sources failed"
@@ -4744,13 +4753,9 @@ buildKeyRows();
 updateKeysDot();
 updatePresetButtons();
 
-/* Show onboarding on first visit */
+/* Show onboarding on first visit — no auto-search, just show the homepage */
 if (!localStorage.getItem('inspo_onboarding_seen')) {
-  const firstTerm = pickOnboardingTerm();
-  const input = document.getElementById('search-input');
-  if (input) input.value = firstTerm;
-  runSearch(firstTerm).catch(() => {});
-  window._showOnboarding(firstTerm, true);
+  window._showOnboarding(undefined, true);
 }
 
 /* Preset buttons event delegation */
