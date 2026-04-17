@@ -494,11 +494,24 @@ export function checkFailedImages() {
 export const renderedIds = new Set();
 // pHash seen set — reset on each new search, checked as each image loads
 export const _pHashSeen = new Set();
+
+// ── Preload-then-append render queue ──────────────────────────────────
+// Images are validated off-DOM before any card is created. This prevents
+// "black squares" (empty card shells) and "disappearing images" (cards
+// removed after their image fails to load).
+const _renderQueue = [];
+let _renderActive = 0;
+let _renderGen = 0;           // generation counter — clearGrid invalidates in-flight loads
+const _RENDER_CONCURRENCY = 12;
+
 export function clearGrid() {
   document.getElementById('image-grid').innerHTML = '';
   renderedIds.clear();
   _gridItemMap.clear();
   _pHashSeen.clear();
+  _renderQueue.length = 0;
+  _renderActive = 0;
+  _renderGen++;
 }
 
 /* -- IntersectionObserver for lazy image loading -- */
@@ -650,131 +663,148 @@ const _NON_VERIFIED = new Set([
 
 export function renderGrid(items) {
   const grid = document.getElementById('image-grid');
-  // Remove empty-state placeholder once real cards arrive
   if (items.length) {
     const emptyState = grid.querySelector('.empty-state');
     if (emptyState) emptyState.remove();
   }
   if (!items.length) return;
 
-  const CHUNK = 12;
-  let cursor = 0;
-
-  function flush() {
-    const frag = document.createDocumentFragment();
-    const end = Math.min(cursor + CHUNK, items.length);
-    let localIdx = 0;
-    for (; cursor < end; cursor++) {
-      const item = items[cursor];
-      if (renderedIds.has(item.id)) continue; // skip duplicate
-      renderedIds.add(item.id);
-    const card = document.createElement('div');
-    card.className = 'image-card';
-    card.style.animationDelay = `${localIdx * 25}ms`;
-    localIdx++;
-    card.id = 'card-' + item.id;
-    card.dataset.id = item.id;
-    card.setAttribute('data-source', item.source);
-    card.tabIndex = 0;
-    card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', (item.title || 'image') + ' — ' + (item.source || 'source'));
-
-    const img = document.createElement('img');
-    img.dataset.src = item.thumb;  // deferred — loaded by IntersectionObserver
-    img.alt = [item.title, item.artist].filter(Boolean).join(' — ') || '';
-    img.loading = 'lazy';
-    img.crossOrigin = 'anonymous';
-    img.onload  = () => {
-      if (img.naturalWidth <= 1 || img.naturalHeight <= 1) {
-        card.remove();
-        return;
-      }
-      img.classList.add('loaded');
-      if (STATE.sketchMode) applySketchToCard(card, img);
-      // Track aspect ratio for aspect filter
-      const ratio = img.naturalWidth / img.naturalHeight;
-      item._aspect = ratio > 1.15 ? 'landscape' : ratio < 0.85 ? 'portrait' : 'square';
-      // Sample dominant color for color filter
-      if (!item._colorData) {
-        item._colorData = sampleImageColors(img);
-        if (item._colorData) {
-          item._dominantColor = item._colorData.dominant;
-          item._avgRGB = item._colorData.avgRGB;
-          item._colorNames = item._colorData.colorNames;
-          item._topColors = item._colorData.topColors;
-        }
-      }
-      // Named-color filter: match if ANY of the image's colors match
-      if (STATE._colorFilter && STATE._colorFilter !== 'all') {
-        var names = item._colorNames || (item._dominantColor ? [item._dominantColor] : []);
-        if (names.length && !names.includes(STATE._colorFilter)) card.style.display = 'none';
-      }
-      if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length && !window._hexPaletteMatch(item)) {
-        card.style.display = 'none';
-      }
-      // pHash dedup: hide this card if it's visually identical to an already-rendered image
-      if (!item._phash) {
-        item._phash = computePHash(img);
-      }
-      if (item._phash && _pHashSeen.size > 0) {
-        for (const seen of _pHashSeen) {
-          if (pHashDistance(item._phash, seen) < PHASH_THRESHOLD) {
-            card.style.display = 'none';
-            break;
-          }
-        }
-      }
-      if (item._phash) _pHashSeen.add(item._phash);
-    };
-    img.onerror = () => {
-      // CORS blocked — retry without crossOrigin (image displays but no color sampling)
-      if (!img._corsRetry && img.crossOrigin) {
-        img._corsRetry = true;
-        img.crossOrigin = null;
-        img.src = img.dataset.src || img.src;
-        return;
-      }
-      STATE._failedImages = (STATE._failedImages || 0) + 1;
-      card.remove();
-    };
-    _lazyObserver.observe(img);
-
-    const badge = document.createElement('span');
-    const _sm = BADGE_META[item.source];
-    badge.className = 'source-badge badge-' + (_sm ? _sm[0] : 'wiki');
-    const sourceLabel = _sm ? _sm[1] : item.source;
-    const _srcMeta = SOURCE_META[item.source];
-    const _isVerified = _srcMeta && !_NON_VERIFIED.has(item.source) &&
-      (_srcMeta.category?.includes('museums') || _srcMeta.category?.includes('archives') || _srcMeta.category?.includes('historical'));
-    badge.innerHTML = `<span class="badge-label">${sourceLabel}</span>${_isVerified ? '<span class="badge-verified" title="Verified cultural institution \u00b7 Human-curated collection">\u2713</span>' : ''}<span class="badge-refresh" title="Refresh ${sourceLabel}">\u21BA</span>`;
-
-    card.appendChild(img);
-    card.appendChild(badge);
-
-    // Deep-zoom button
-    const zoomBtn = document.createElement('button');
-    zoomBtn.className = 'zoom-btn';
-    zoomBtn.innerHTML = '⤢';
-    zoomBtn.title = 'Deep zoom';
-    card.appendChild(zoomBtn);
-
-    // Similar button
-    const simBtn = document.createElement('button');
-    simBtn.className = 'sim-btn';
-    simBtn.innerHTML = '≈';
-    simBtn.title = 'More like this';
-    card.appendChild(simBtn);
-
-    card.draggable = true;
-
-    _gridItemMap.set(item.id, item);
-
-      frag.appendChild(card);
-    }
-    grid.appendChild(frag);
-    if (cursor < items.length) requestAnimationFrame(flush);
+  for (const item of items) {
+    if (renderedIds.has(item.id)) continue;
+    renderedIds.add(item.id);
+    _renderQueue.push(item);
   }
-  flush();
+  _processRenderQueue();
+}
+
+function _processRenderQueue() {
+  const grid = document.getElementById('image-grid');
+  const gen = _renderGen;
+  while (_renderActive < _RENDER_CONCURRENCY && _renderQueue.length > 0) {
+    const item = _renderQueue.shift();
+    _renderActive++;
+
+    const testImg = new Image();
+    testImg.crossOrigin = 'anonymous';
+
+    testImg.onload = () => {
+      _renderActive--;
+      if (gen !== _renderGen) return;                       // search changed — discard
+      if (testImg.naturalWidth <= 1 || testImg.naturalHeight <= 1) {
+        renderedIds.delete(item.id);
+        _backfillOne();
+        _processRenderQueue();
+        return;
+      }
+      _appendValidCard(item, grid, testImg);
+      _processRenderQueue();
+    };
+
+    testImg.onerror = () => {
+      if (!testImg._corsRetry && testImg.crossOrigin) {
+        testImg._corsRetry = true;
+        testImg.crossOrigin = null;
+        testImg.src = item.thumb;
+        return;
+      }
+      _renderActive--;
+      if (gen !== _renderGen) return;
+      renderedIds.delete(item.id);
+      STATE._failedImages = (STATE._failedImages || 0) + 1;
+      _backfillOne();
+      _processRenderQueue();
+    };
+
+    testImg.src = item.thumb;
+  }
+}
+
+function _backfillOne() {
+  if (!STATE._reservePool || !STATE._reservePool.length) return;
+  while (STATE._reservePool.length) {
+    const next = STATE._reservePool.shift();
+    if (!renderedIds.has(next.id)) {
+      renderedIds.add(next.id);
+      _renderQueue.push(next);
+      return;
+    }
+  }
+}
+
+function _appendValidCard(item, grid, preloadedImg) {
+  const card = document.createElement('div');
+  card.className = 'image-card';
+  card.id = 'card-' + item.id;
+  card.dataset.id = item.id;
+  card.setAttribute('data-source', item.source);
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  card.setAttribute('aria-label', (item.title || 'image') + ' — ' + (item.source || 'source'));
+
+  // Reuse the preloaded image element — it already has pixel data in memory
+  const img = preloadedImg;
+  img.alt = [item.title, item.artist].filter(Boolean).join(' — ') || '';
+  img.classList.add('loaded');
+
+  // ── Post-load processing (image is already decoded) ──
+  if (STATE.sketchMode) applySketchToCard(card, img);
+  const ratio = img.naturalWidth / img.naturalHeight;
+  item._aspect = ratio > 1.15 ? 'landscape' : ratio < 0.85 ? 'portrait' : 'square';
+  if (!item._colorData) {
+    item._colorData = sampleImageColors(img);
+    if (item._colorData) {
+      item._dominantColor = item._colorData.dominant;
+      item._avgRGB       = item._colorData.avgRGB;
+      item._colorNames   = item._colorData.colorNames;
+      item._topColors    = item._colorData.topColors;
+    }
+  }
+  if (STATE._colorFilter && STATE._colorFilter !== 'all') {
+    var names = item._colorNames || (item._dominantColor ? [item._dominantColor] : []);
+    if (names.length && !names.includes(STATE._colorFilter)) { renderedIds.delete(item.id); _backfillOne(); return; }
+  }
+  if (typeof window._hexPaletteMatch === 'function' && STATE._hexPalette && STATE._hexPalette.length && !window._hexPaletteMatch(item)) {
+    renderedIds.delete(item.id); _backfillOne(); return;
+  }
+  if (!item._phash) item._phash = computePHash(img);
+  if (item._phash && _pHashSeen.size > 0) {
+    for (const seen of _pHashSeen) {
+      if (pHashDistance(item._phash, seen) < PHASH_THRESHOLD) {
+        renderedIds.delete(item.id); _backfillOne(); return;
+      }
+    }
+  }
+  if (item._phash) _pHashSeen.add(item._phash);
+
+  // ── Badge ──
+  const badge = document.createElement('span');
+  const _sm = BADGE_META[item.source];
+  badge.className = 'source-badge badge-' + (_sm ? _sm[0] : 'wiki');
+  const sourceLabel = _sm ? _sm[1] : item.source;
+  const _srcMeta = SOURCE_META[item.source];
+  const _isVerified = _srcMeta && !_NON_VERIFIED.has(item.source) &&
+    (_srcMeta.category?.includes('museums') || _srcMeta.category?.includes('archives') || _srcMeta.category?.includes('historical'));
+  badge.innerHTML = `<span class="badge-label">${sourceLabel}</span>${_isVerified ? '<span class="badge-verified" title="Verified cultural institution \u00b7 Human-curated collection">\u2713</span>' : ''}<span class="badge-refresh" title="Refresh ${sourceLabel}">\u21BA</span>`;
+
+  card.appendChild(img);
+  card.appendChild(badge);
+
+  const zoomBtn = document.createElement('button');
+  zoomBtn.className = 'zoom-btn';
+  zoomBtn.innerHTML = '⤢';
+  zoomBtn.title = 'Deep zoom';
+  card.appendChild(zoomBtn);
+
+  const simBtn = document.createElement('button');
+  simBtn.className = 'sim-btn';
+  simBtn.innerHTML = '≈';
+  simBtn.title = 'More like this';
+  card.appendChild(simBtn);
+
+  card.draggable = true;
+  _gridItemMap.set(item.id, item);
+
+  grid.appendChild(card);
 }
 set_realRenderGrid(renderGrid);
 
@@ -2103,13 +2133,13 @@ export async function fetchMoreResults() {
     callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
 
     callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
-    callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal)),
-    callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal)),
-    callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal)),
-    callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal)),
+    callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal, offset)),
+    callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal, page)),
+    callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal, page)),
+    callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal, page)),
     callIfHealthy('ddb',         fetchDDB(kw, perSource, signal)),
-    callIfHealthy('gallica',     fetchGallica(kw, perSource, signal)),
-    callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal)),
+    callIfHealthy('gallica',     fetchGallica(kw, perSource, signal, offset + 1)),
+    callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal, page)),
     callIfHealthy('trove',       fetchTrove(kw, perSource, signal)),
     callIfHealthy('digitalnz',   fetchDigitalNZ(kw, perSource, signal)),
     callIfHealthy('nypl',        fetchNYPL(kw, perSource, signal)),
@@ -2119,7 +2149,12 @@ export async function fetchMoreResults() {
   ];
   const settled = await Promise.allSettled(fetches);
   if (STATE.query !== startQuery) { STATE.loading = false; _secondaryControllers.delete(ac); updateLoadMoreLabel(); return; }
-  const items   = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  let items = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  // Apply exact-mode word-boundary filter to load-more results
+  if (STATE.searchMode === 'exact') {
+    const lq = STATE.query.toLowerCase();
+    items = items.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''} ${r.artist || ''}`.toLowerCase(), lq));
+  }
   const existingIds = new Set(STATE.results.map(r => r.id));
   const novel = items.filter(r => !existingIds.has(r.id));
   if (novel.length > 0 && STATE.results.length < CONSTANTS.MAX_RESULTS) {
@@ -2321,13 +2356,31 @@ export async function runSearch(query, forceRefresh = false) {
 
   const visible = getDisplayResults(STATE.results, effectiveQuery);
   if (visible.length) {
-    // Clear the grid and re-render from the authoritative final result set.
-    // During streaming, onSourceResult appended preview cards incrementally —
-    // some of those may not survive post-fetch filtering (rogue-source removal,
-    // scoring, word-boundary matching). Without clearing, orphaned cards linger
-    // in the DOM and gradually disappear as lazy-load handlers remove them.
-    clearGrid();
-    renderGrid(visible);
+    // ── Sync grid: remove orphaned streaming cards, append missing ones ──
+    // During streaming, onSourceResult appended preview cards. Some may not
+    // survive post-fetch filtering. Remove those orphans, then render any
+    // new items from the authoritative ranked set.
+    const visibleIds = new Set(visible.map(i => i.id));
+    const grid = document.getElementById('image-grid');
+    for (const card of [...grid.querySelectorAll('.image-card')]) {
+      const id = card.dataset.id;
+      if (id && !visibleIds.has(id)) {
+        renderedIds.delete(id);
+        _gridItemMap.delete(id);
+        card.remove();
+      }
+    }
+    // Queue items from the final set that weren't rendered during streaming
+    const novel = visible.filter(item => !renderedIds.has(item.id));
+    if (novel.length) renderGrid(novel);
+
+    // Set up reserve pool from lower-ranked candidates for backfill
+    // when image loads fail (CORS, 404, 1×1px).
+    const renderedOrQueued = new Set([...renderedIds]);
+    STATE._reservePool = _lastDisplayOrder
+      .filter(it => !renderedOrQueued.has(it.id))
+      .slice(0, 500);
+
     // "Did you mean?" — check spelling in background if few results
     if (visible.length < 4 && STATE.searchMode !== 'exact') {
       spellCheck(effectiveQuery).then(suggestion => {
@@ -2338,7 +2391,6 @@ export async function runSearch(query, forceRefresh = false) {
     }
   } else {
     showEmptyState();
-    // "Did you mean?" on zero results
     spellCheck(effectiveQuery).then(suggestion => {
       if (suggestion) showDidYouMean(suggestion);
     }).catch(() => {});
@@ -2575,22 +2627,29 @@ countSlider.addEventListener('input', () => {
 export const debouncedRerender = debounce(() => {
   if (STATE.results.length <= 0 || !_lastDisplayOrder.length) return;
   const target = _lastDisplayOrder.slice(0, STATE.imageCount);
+  const targetIds = new Set(target.map(i => i.id));
   const grid = document.getElementById('image-grid');
-  const currentCards = grid.querySelectorAll('.image-card');
-  const currentCount = currentCards.length;
-  const targetCount = target.length;
 
-  if (targetCount > currentCount) {
-    const toAdd = target.slice(currentCount);
-    (_realRenderGrid || renderGrid)(toAdd);
-  } else if (targetCount < currentCount) {
-    for (let i = currentCount - 1; i >= targetCount; i--) {
-      const card = currentCards[i];
-      const itemId = card?.dataset?.id;
-      if (itemId) { renderedIds.delete(itemId); _gridItemMap.delete(itemId); }
-      card?.remove();
+  // Remove cards that exceed the new target count
+  for (const card of [...grid.querySelectorAll('.image-card')]) {
+    const id = card.dataset.id;
+    if (id && !targetIds.has(id)) {
+      renderedIds.delete(id);
+      _gridItemMap.delete(id);
+      card.remove();
     }
   }
+
+  // Add cards that are in the target but not yet rendered
+  const novel = target.filter(item => !renderedIds.has(item.id));
+  if (novel.length) (_realRenderGrid || renderGrid)(novel);
+
+  // Refresh reserve pool
+  const renderedOrQueued = new Set([...renderedIds]);
+  STATE._reservePool = _lastDisplayOrder
+    .filter(it => !renderedOrQueued.has(it.id))
+    .slice(0, 500);
+
   updateLoadMoreLabel();
 }, CONSTANTS.DEBOUNCE_SLIDER);
 
