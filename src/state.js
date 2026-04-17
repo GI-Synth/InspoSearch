@@ -323,6 +323,7 @@ export const STATE = {
   _mediumFilter:       null,     // null | 'painting' | 'photograph' | ... (from advanced search)
   _didYouMeanBanner:   null,     // suggested spelling correction shown to user
   _nsfwFilter:         false,    // NSFW filter enabled (sampled Workers AI check)
+  _isLikelyArtistQuery: false,  // auto-detected: true when query matches many artist fields
 };
 
 // Secondary AbortControllers (refreshSource, fetchMoreResults) tracked for cleanup
@@ -412,7 +413,7 @@ export function skipIrrelevantSource(sourceId, queryClass) {
   return false;
 }
 // Keep old name as alias for backward compatibility
-export const skipInExactMode = skipIrrelevantSource;
+
 
 export const SOURCE_DOMAINS = {
   met: 'metmuseum.org',

@@ -188,7 +188,8 @@ export function normalizeMet(obj) {
 export async function fetchMet(keyword, limit, signal, offset = 0) {
 
   try {
-    const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword)}&hasImages=true&offset=${offset}`;
+    const mediumSuffix = STATE._mediumFilter ? ` ${STATE._mediumFilter}` : '';
+    const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword + mediumSuffix)}&hasImages=true&offset=${offset}`;
     const res = await sourceFetch(searchUrl, { signal }, 'met');
     if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; }
     const data = await res.json();
@@ -256,8 +257,9 @@ export async function fetchNASA(keyword, limit, signal) {
 export async function fetchRijksmuseum(keyword, limit, signal) {
   try {
 
+    const mediumSuffix = STATE._mediumFilter ? ` ${STATE._mediumFilter}` : '';
     const res = await safeFetch(
-      `https://data.rijksmuseum.nl/search/collection?description=${encodeURIComponent(keyword)}&imageAvailable=true`,
+      `https://data.rijksmuseum.nl/search/collection?description=${encodeURIComponent(keyword + mediumSuffix)}&imageAvailable=true`,
       { signal }
     );
     if (!res.ok) throw new Error('Rijks failed');
@@ -456,12 +458,12 @@ export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, 
 /* ============================================================
    10c. HARVARD / SMITHSONIAN / PEXELS
 ============================================================ */
-export async function fetchHarvard(keyword, limit, signal) {
+export async function fetchHarvard(keyword, limit, signal, page = 1) {
   if (!STATE.harvardKey) return [];
 
   try {
     const res = await safeFetch(
-      `https://api.harvardartmuseums.org/object?apikey=${STATE.harvardKey}&keyword=${encodeURIComponent(keyword)}&hasimage=1&size=${limit}&fields=objectid,title,description,dated,primaryimageurl,url,people,medium`,
+      `https://api.harvardartmuseums.org/object?apikey=${STATE.harvardKey}&keyword=${encodeURIComponent(keyword)}&hasimage=1&size=${limit}&page=${page}&fields=objectid,title,description,dated,primaryimageurl,url,people,medium`,
       { signal }
     );
     if (!res.ok) throw new Error('Harvard fetch failed');
@@ -490,12 +492,12 @@ export async function fetchHarvard(keyword, limit, signal) {
   }
 }
 
-export async function fetchSmithsonian(keyword, limit, signal) {
+export async function fetchSmithsonian(keyword, limit, signal, start = 0) {
   try {
 
     const key = STATE.smithsonianKey || 'DEMO_KEY';
     const res = await safeFetch(
-      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images`,
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&start=${start}&online_media_type=Images`,
       { signal }
     );
     if (!res.ok) throw new Error('Smithsonian fetch failed');
@@ -724,11 +726,11 @@ export async function fetchChicagoArt(keyword, limit, signal, page = 1) {
   }
 }
 
-export async function fetchCleveland(keyword, limit, signal) {
+export async function fetchCleveland(keyword, limit, signal, skip = 0) {
   try {
 
     const res = await sourceFetch(
-      `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(keyword)}&has_image=1&limit=${limit}&skip=0`,
+      `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(keyword)}&has_image=1&limit=${limit}&skip=${skip}`,
       { signal }, 'cleveland'
     );
     if (!res.ok) throw new Error('Cleveland failed');
@@ -757,11 +759,11 @@ export async function fetchCleveland(keyword, limit, signal) {
   }
 }
 
-export async function fetchVA(keyword, limit, signal) {
+export async function fetchVA(keyword, limit, signal, page = 1) {
   try {
 
     const res = await sourceFetch(
-      `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(keyword)}&images_exist=1&page_size=${limit}`,
+      `https://api.vam.ac.uk/v2/objects/search?q=${encodeURIComponent(keyword)}&images_exist=1&page_size=${limit}&page=${page}`,
       { signal }, 'va'
     );
     if (!res.ok) throw new Error('V&A failed');
@@ -791,11 +793,11 @@ export async function fetchVA(keyword, limit, signal) {
   }
 }
 
-export async function fetchFlickrCommons(keyword, limit, signal) {
+export async function fetchFlickrCommons(keyword, limit, signal, page = 1) {
   if (!STATE.flickrKey) return [];
   try {
     const res = await safeFetch(
-      `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${STATE.flickrKey}&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&sort=relevance`,
+      `https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${STATE.flickrKey}&text=${encodeURIComponent(keyword)}&license=7,8,9,10&content_type=1&media=photos&format=json&nojsoncallback=1&per_page=${limit}&page=${page}&sort=relevance`,
       { signal }
     );
     if (!res.ok) throw new Error('Flickr failed');
@@ -966,11 +968,11 @@ export async function fetchGetty(keyword, limit, signal) {
   }
 }
 
-export async function fetchNGA(keyword, limit, signal) {
+export async function fetchNGA(keyword, limit, signal, offset = 0) {
   try {
 
     const res = await sourceFetch(
-      `https://api.nga.gov/art/tms/objects?q=${encodeURIComponent(keyword)}&hasimages=1&limit=${limit}&offset=0`,
+      `https://api.nga.gov/art/tms/objects?q=${encodeURIComponent(keyword)}&hasimages=1&limit=${limit}&offset=${offset}`,
       { signal }, 'nga'
     );
     if (!res.ok) throw new Error('NGA failed');
@@ -1107,11 +1109,11 @@ export async function fetchAPOD(keyword, limit, signal) {
   }
 }
 
-export async function fetchGallica(keyword, limit, signal) {
+export async function fetchGallica(keyword, limit, signal, startRecord = 1) {
   try {
     const query = `dc.type+all+"image"+and+${encodeURIComponent(keyword)}`;
     const res = await safeFetch(
-      `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=${query}&maximumRecords=${limit}&startRecord=1&format=json`,
+      `https://gallica.bnf.fr/SRU?operation=searchRetrieve&version=1.2&query=${query}&maximumRecords=${limit}&startRecord=${startRecord}&format=json`,
       { signal }
     );
     if (!res.ok) throw new Error('Gallica failed');
@@ -1744,12 +1746,12 @@ export async function fetchTePapa(keyword, limit, signal) {
 }
 
 // C07 — DPLA (Digital Public Library of America)
-export async function fetchDPLA(keyword, limit, signal) {
+export async function fetchDPLA(keyword, limit, signal, page = 1) {
   if (!STATE.dplaKey) return [];
   try {
 
     const res = await safeFetch(
-      `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&fields=id,object,sourceResource`,
+      `https://api.dp.la/v2/items?q=${encodeURIComponent(keyword)}&api_key=${encodeURIComponent(STATE.dplaKey)}&page_size=${limit}&page=${page}&fields=id,object,sourceResource`,
       { signal }
     );
     if (!res.ok) throw new Error('DPLA failed');
@@ -2024,11 +2026,11 @@ export async function fetchPhotogrammar(keyword, limit, signal) {
 }
 
 // C13 — Wellcome Collection
-export async function fetchWellcome(keyword, limit, signal) {
+export async function fetchWellcome(keyword, limit, signal, page = 1) {
   try {
 
     const res = await safeFetch(
-      `https://api.wellcomecollection.org/catalogue/v2/works?query=${encodeURIComponent(keyword)}&workType=k&items.locations.locationType=iiif-image&pageSize=${limit}`,
+      `https://api.wellcomecollection.org/catalogue/v2/works?query=${encodeURIComponent(keyword)}&workType=k&items.locations.locationType=iiif-image&pageSize=${limit}&page=${page}`,
       { signal }
     );
     if (!res.ok) throw new Error('Wellcome failed');

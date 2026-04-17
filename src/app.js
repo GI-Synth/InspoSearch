@@ -7,7 +7,7 @@ import {
   EUROPEANA_PROVIDERS, KEY_SOURCES, SI_UNITS, SOURCE_DOMAINS, SOURCE_GROUPS,
   SOURCE_META, STATE, WD_PHASE_H, _isBoardPopup,
   _realRenderGrid, _secondaryControllers, classifyQuery, filterNegativeTerms,
-  filterPhrases, parseNegativeTerms, skipInExactMode, skipIrrelevantSource, ONBOARDING_TERMS,
+  filterPhrases, parseNegativeTerms, skipIrrelevantSource, ONBOARDING_TERMS,
   NATURE_QUERY_TERMS, SPACE_QUERY_TERMS, SEED_MAP,
   ART_QUERY_TERMS,
   classifyQueryExtended, classifyQueryV2,
@@ -32,7 +32,8 @@ import {
   disableGeminiButtons, SOURCE_VIEW_FILTER, sourceFetch, fetchFromDataCache,
   setScoreItemRelevance, setGetDisplayResults,
   set_updateSourcesActiveCounterImmediate,
-  spellCheck, computePHash, pHashDistance, PHASH_THRESHOLD
+  spellCheck, computePHash, pHashDistance, PHASH_THRESHOLD,
+  matchesAsWholeWord
 } from './core.js';
 import {
   WD_PHASE_H_FETCHERS, expandKeywords,
@@ -99,7 +100,9 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   // This ensures the slider value matches actual images shown.
   // Dynamic registry can push active sources well beyond 155 → scale distribution
   const dynamicActive = selectDynamicSources(keyword, 40).length;
-  const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
+  const PRODUCTIVE_SOURCE_ESTIMATE = STATE.searchMode === 'exact'
+    ? Math.max(30, 30 + Math.floor(dynamicActive * 0.3))
+    : Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
   const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const fetchBatch = perSource + 4;
   // Per-source limit overrides: high-inventory sources use the PER_SOURCE_LIMIT floor
@@ -127,6 +130,14 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   // Track which sources had at least one successful call this search,
   // so variant calls returning empty don't snowball misses.
   const sourceHitThisSearch = new Set();
+  const sourceYield = new Map(); // tracks how many items survived per source (for adaptive Phase 2)
+  let sourceSkipCount = 0;
+  let sourceCallCount = 0;
+  const isSourceSkipped = sourceId => {
+    const skipped = skipIrrelevantSource(sourceId, exactQueryClass);
+    if (skipped) sourceSkipCount++; else sourceCallCount++;
+    return skipped;
+  };
 
   const onSourceResult = sourceName => items => {
     if (signal.aborted) return;
@@ -163,15 +174,17 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
 
         // Single-word queries: require the term in the title specifically
         if (isSingleWord) {
-          return title.includes(terms[0]);
+          return matchesAsWholeWord(title, terms[0]);
         }
         // Multi-word: require at least 1 term in title/description/artist/tags
         // Scoring in getDisplayResults ranks items with more matches higher
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.some(t => hay.includes(t));
+        return terms.some(t => matchesAsWholeWord(hay, t));
       });
     }
     if (!items || !items.length) return;
+    // Track per-source yield for adaptive Phase 2 follow-up
+    sourceYield.set(sourceName, (sourceYield.get(sourceName) || 0) + items.length);
     const fresh = items.filter(item => !seenIds.has(item.id) && !seenUrls.has(item.url));
     fresh.forEach(item => { seenIds.add(item.id); if (item.url) seenUrls.add(item.url); });
     all.push(...fresh);
@@ -187,16 +200,16 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
 
   await Promise.allSettled([
     // ── Batch 1 ────────────────────────────────────────────
-    callIfHealthy('met',          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 4) : fetchMet(keywords.join(' '), limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
-    skipInExactMode('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
-    skipInExactMode('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
-    callIfHealthy('chicago',      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 3) : fetchChicagoArt(keyword, limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
+    callIfHealthy('met',          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 6) : fetchMet(keywords.join(' '), limitFor('met'), signal)).then(onSourceResult('met')).catch(() => {}),
+    isSourceSkipped('nasa',        exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal)).then(onSourceResult('nasa')).catch(() => {}),
+    isSourceSkipped('inaturalist', exactQueryClass) ? Promise.resolve() : callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal)).then(onSourceResult('inaturalist')).catch(() => {}),
+    callIfHealthy('chicago',      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 5) : fetchChicagoArt(keyword, limitFor('chicago'), signal)).then(onSourceResult('chicago')).catch(() => {}),
     callIfHealthy('cleveland',    fetchCleveland(keyword,                       limitFor('cleveland'), signal)).then(onSourceResult('cleveland')).catch(() => {}),
     callIfHealthy('va',           fetchVA(keyword,                              limitFor('va'), signal)).then(onSourceResult('va')).catch(() => {}),
     callIfHealthy('wikiart',      fetchWikiArt(keyword,                         fetchBatch, signal)).then(onSourceResult('wikiart')).catch(() => {}),
     callIfHealthy('nordic',       fetchNordicMuseum(keyword,                    fetchBatch, signal)).then(onSourceResult('nordic')).catch(() => {}),
     callIfHealthy('flickr',       fetchFlickrCommons(keyword,                   fetchBatch, signal)).then(onSourceResult('flickr')).catch(() => {}),
-    callIfHealthy('europeana',    STATE.searchMode === 'exact' ? fetchEuropeanaDeep(keyword, 60, signal, 3) : fetchEuropeana(keyword, fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
+    callIfHealthy('europeana',    STATE.searchMode === 'exact' ? fetchEuropeanaDeep(keyword, 60, signal, 5) : fetchEuropeana(keyword, fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
     callIfHealthy('europeana',    fetchEuropeana(alt2,                          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
     ...(STATE.searchMode === 'exact' ? [] : [
       callIfHealthy('europeana',    fetchEuropeana(keyword + ' fashion',          fetchBatch, signal)).then(onSourceResult('europeana')).catch(() => {}),
@@ -210,9 +223,9 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     // ── Batch 2 ────────────────────────────────────────────
     callIfHealthy('getty',        fetchGetty(keyword,                           fetchBatch, signal)).then(onSourceResult('getty')).catch(() => {}),
     callIfHealthy('nga',          fetchNGA(keyword,                             limitFor('nga'), signal)).then(onSourceResult('nga')).catch(() => {}),
-    skipInExactMode('gbif',  exactQueryClass) ? Promise.resolve() : callIfHealthy('gbif',  fetchGBIF(keyword,  limitFor('gbif'), signal)).then(onSourceResult('gbif')).catch(() => {}),
-    skipInExactMode('eol',   exactQueryClass) ? Promise.resolve() : callIfHealthy('eol',   fetchEOL(keyword,   fetchBatch, signal)).then(onSourceResult('eol')).catch(() => {}),
-    skipInExactMode('apod',  exactQueryClass) ? Promise.resolve() : callIfHealthy('apod',  fetchAPOD(keyword,  fetchBatch, signal)).then(onSourceResult('apod')).catch(() => {}),
+    isSourceSkipped('gbif',  exactQueryClass) ? Promise.resolve() : callIfHealthy('gbif',  fetchGBIF(keyword,  limitFor('gbif'), signal)).then(onSourceResult('gbif')).catch(() => {}),
+    isSourceSkipped('eol',   exactQueryClass) ? Promise.resolve() : callIfHealthy('eol',   fetchEOL(keyword,   fetchBatch, signal)).then(onSourceResult('eol')).catch(() => {}),
+    isSourceSkipped('apod',  exactQueryClass) ? Promise.resolve() : callIfHealthy('apod',  fetchAPOD(keyword,  fetchBatch, signal)).then(onSourceResult('apod')).catch(() => {}),
     callIfHealthy('gallica',      fetchGallica(keyword,                         fetchBatch, signal)).then(onSourceResult('gallica')).catch(() => {}),
     callIfHealthy('chronicling',  fetchChroniclingAmerica(keyword,              fetchBatch, signal)).then(onSourceResult('chronicling')).catch(() => {}),
     callIfHealthy('trove',        fetchTrove(keyword,                           fetchBatch, signal)).then(onSourceResult('trove')).catch(() => {}),
@@ -223,11 +236,11 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('parismusees',  fetchParisMusees(keyword,                     fetchBatch, signal)).then(onSourceResult('parismusees')).catch(() => {}),
     callIfHealthy('yale',         fetchYale(keyword,                            fetchBatch, signal)).then(onSourceResult('yale')).catch(() => {}),
     callIfHealthy('picsum',       fetchPicsum(keyword,                          fetchBatch, signal)).then(onSourceResult('picsum')).catch(() => {}),
-    skipInExactMode('usgs', exactQueryClass) ? Promise.resolve() : callIfHealthy('usgs', fetchUSGS(keyword, fetchBatch, signal)).then(onSourceResult('usgs')).catch(() => {}),
+    isSourceSkipped('usgs', exactQueryClass) ? Promise.resolve() : callIfHealthy('usgs', fetchUSGS(keyword, fetchBatch, signal)).then(onSourceResult('usgs')).catch(() => {}),
     callIfHealthy('cooperhewitt', fetchCooperHewitt(keyword,                    fetchBatch, signal)).then(onSourceResult('cooperhewitt')).catch(() => {}),
     // ── Batch 3 ────────────────────────────────────────────
     callIfHealthy('tate',         fetchTate(keyword,                            fetchBatch, signal)).then(onSourceResult('tate')).catch(() => {}),
-    skipInExactMode('finna', exactQueryClass) ? Promise.resolve() : callIfHealthy('finna',        fetchFinna(keyword,                           fetchBatch, signal)).then(onSourceResult('finna')).catch(() => {}),
+    isSourceSkipped('finna', exactQueryClass) ? Promise.resolve() : callIfHealthy('finna',        fetchFinna(keyword,                           fetchBatch, signal)).then(onSourceResult('finna')).catch(() => {}),
     callIfHealthy('soch',         fetchSOCH(keyword,                            fetchBatch, signal)).then(onSourceResult('soch')).catch(() => {}),
     callIfHealthy('joconde',      fetchJoconde(keyword,                         fetchBatch, signal)).then(onSourceResult('joconde')).catch(() => {}),
     callIfHealthy('mnw',          fetchMNW(keyword,                             fetchBatch, signal)).then(onSourceResult('mnw')).catch(() => {}),
@@ -238,7 +251,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('pas',          fetchPAS(keyword,                             fetchBatch, signal)).then(onSourceResult('pas')).catch(() => {}),
     callIfHealthy('smg',          fetchSMG(keyword,                             fetchBatch, signal)).then(onSourceResult('smg')).catch(() => {}),
     callIfHealthy('auckland',     fetchAuckland(keyword,                        fetchBatch, signal)).then(onSourceResult('auckland')).catch(() => {}),
-    skipInExactMode('photogrammar', exactQueryClass) ? Promise.resolve() : callIfHealthy('photogrammar', fetchPhotogrammar(keyword, fetchBatch, signal)).then(onSourceResult('photogrammar')).catch(() => {}),
+    isSourceSkipped('photogrammar', exactQueryClass) ? Promise.resolve() : callIfHealthy('photogrammar', fetchPhotogrammar(keyword, fetchBatch, signal)).then(onSourceResult('photogrammar')).catch(() => {}),
     callIfHealthy('wellcome',     fetchWellcome(keyword,                        fetchBatch, signal)).then(onSourceResult('wellcome')).catch(() => {}),
     callIfHealthy('maas',         fetchMAAS(keyword,                            fetchBatch, signal)).then(onSourceResult('maas')).catch(() => {}),
     callIfHealthy('smk',          fetchSMK(keyword,                             fetchBatch, signal)).then(onSourceResult('smk')).catch(() => {}),
@@ -246,9 +259,9 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     // ── Batch 4 — new sources ──────────────────────────────
     callIfHealthy('walters',      fetchWalters(keyword,                         perSource+4, signal)).then(onSourceResult('walters')).catch(() => {}),
     callIfHealthy('princeton',    fetchPrinceton(keyword,                       perSource+4, signal)).then(onSourceResult('princeton')).catch(() => {}),
-    skipInExactMode('wikidata', exactQueryClass) ? Promise.resolve() : callIfHealthy('wikidata',     fetchWikidata(keyword,                        perSource+4, signal)).then(onSourceResult('wikidata')).catch(() => {}),
-    skipInExactMode('noaa',   exactQueryClass) ? Promise.resolve() : callIfHealthy('noaa',   fetchNOAA(keyword,   perSource+4, signal)).then(onSourceResult('noaa')).catch(() => {}),
-    skipInExactMode('hubble', exactQueryClass) ? Promise.resolve() : callIfHealthy('hubble', fetchHubble(keyword, perSource+4, signal)).then(onSourceResult('hubble')).catch(() => {}),
+    isSourceSkipped('wikidata', exactQueryClass) ? Promise.resolve() : callIfHealthy('wikidata',     fetchWikidata(keyword,                        perSource+4, signal)).then(onSourceResult('wikidata')).catch(() => {}),
+    isSourceSkipped('noaa',   exactQueryClass) ? Promise.resolve() : callIfHealthy('noaa',   fetchNOAA(keyword,   perSource+4, signal)).then(onSourceResult('noaa')).catch(() => {}),
+    isSourceSkipped('hubble', exactQueryClass) ? Promise.resolve() : callIfHealthy('hubble', fetchHubble(keyword, perSource+4, signal)).then(onSourceResult('hubble')).catch(() => {}),
     callIfHealthy('cornell',      fetchCornell(keyword,                         perSource+4, signal)).then(onSourceResult('cornell')).catch(() => {}),
     callIfHealthy('folger',       fetchFolger(keyword,                          perSource+4, signal)).then(onSourceResult('folger')).catch(() => {}),
     callIfHealthy('onb',          fetchONB(keyword,                             perSource+4, signal)).then(onSourceResult('onb')).catch(() => {}),
@@ -274,12 +287,12 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('munch',            fetchMunch(keyword,                          perSource+2, signal)).then(onSourceResult('munch')).catch(() => {}),
     callIfHealthy('mauritshuis',      fetchMauritshuis(keyword,                    perSource+2, signal)).then(onSourceResult('mauritshuis')).catch(() => {}),
     callIfHealthy('nationalmuseumse', fetchNationalmuseumSE(keyword,               perSource+2, signal)).then(onSourceResult('nationalmuseumse')).catch(() => {}),
-    skipInExactMode('naturalis',   exactQueryClass) ? Promise.resolve() : callIfHealthy('naturalis',   fetchNaturalis(keyword,      perSource+2, signal)).then(onSourceResult('naturalis')).catch(() => {}),
+    isSourceSkipped('naturalis',   exactQueryClass) ? Promise.resolve() : callIfHealthy('naturalis',   fetchNaturalis(keyword,      perSource+2, signal)).then(onSourceResult('naturalis')).catch(() => {}),
     callIfHealthy('nmaahc',           fetchNMAAHC(keyword,                         perSource+2, signal)).then(onSourceResult('nmaahc')).catch(() => {}),
     callIfHealthy('nasm',             fetchNASM(keyword,                           perSource+2, signal)).then(onSourceResult('nasm')).catch(() => {}),
     callIfHealthy('whitney',          fetchWhitney(keyword,                        perSource+2, signal)).then(onSourceResult('whitney')).catch(() => {}),
-    skipInExactMode('nationalzoo', exactQueryClass) ? Promise.resolve() : callIfHealthy('nationalzoo', fetchNationalZoo(keyword,     perSource+2, signal)).then(onSourceResult('nationalzoo')).catch(() => {}),
-    skipInExactMode('gbiflit',     exactQueryClass) ? Promise.resolve() : callIfHealthy('gbiflit',     fetchGBIFLiterature(keyword,  perSource+2, signal)).then(onSourceResult('gbiflit')).catch(() => {}),
+    isSourceSkipped('nationalzoo', exactQueryClass) ? Promise.resolve() : callIfHealthy('nationalzoo', fetchNationalZoo(keyword,     perSource+2, signal)).then(onSourceResult('nationalzoo')).catch(() => {}),
+    isSourceSkipped('gbiflit',     exactQueryClass) ? Promise.resolve() : callIfHealthy('gbiflit',     fetchGBIFLiterature(keyword,  perSource+2, signal)).then(onSourceResult('gbiflit')).catch(() => {}),
     callIfHealthy('freersackler',     fetchFreerSackler(keyword,                   perSource+2, signal)).then(onSourceResult('freersackler')).catch(() => {}),
 
     callIfHealthy('ago',              fetchAGO(keyword,                            perSource+2, signal)).then(onSourceResult('ago')).catch(() => {}),
@@ -329,10 +342,10 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     })(),
 
     // ── Phase B — zero-auth free APIs ────────────────────────────────────
-    skipInExactMode('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
-    skipInExactMode('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
+    isSourceSkipped('idigbio', exactQueryClass) ? Promise.resolve() : callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal)).then(onSourceResult('idigbio')).catch(() => {}),
+    isSourceSkipped('ala',     exactQueryClass) ? Promise.resolve() : callIfHealthy('ala',     fetchALA(keyword,     Math.max(3, perSource), signal)).then(onSourceResult('ala')).catch(() => {}),
     // ── Phase D — niche & specialized ──────────────────────────────────
-    skipInExactMode('nasa_images', exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
+    isSourceSkipped('nasa_images', exactQueryClass) ? Promise.resolve() : callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal)).then(onSourceResult('nasa_images')).catch(() => {}),
     // ── Phase E — CORS-blocked, cache-first ─────────────────────────────
     callIfHealthy('nhm_london',              fetchNHMLondon(keyword,              Math.max(3, perSource), signal)).then(onSourceResult('nhm_london')).catch(() => {}),
     callIfHealthy('wallace_collection',      fetchWallaceCollection(keyword,      Math.max(3, perSource), signal)).then(onSourceResult('wallace_collection')).catch(() => {}),
@@ -383,10 +396,14 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         .catch(() => {});
     }),
   ]);
+  // sourceCallCount only covers the ~17 skip-gated science sources; museum/WD sources
+  // always fire unconditionally, so sourceCallCount === 0 does not mean all sources were skipped.
+  // The flag is only reliable when there are truly no fallback sources at all.
+  const sourceAllSkipped = sourceCallCount === 0 && sourceSkipCount > 0 && WD_PHASE_H.length === 0;
 
   // ── Wave 2: Phase H world museums (deferred so main results land fast) ──
   if (!signal.aborted) {
-    Promise.allSettled(
+    await Promise.allSettled(
       WD_PHASE_H.map(s =>
         callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal))
           .then(onSourceResult(s.id)).catch(() => {})
@@ -394,11 +411,51 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     ).catch(() => {});
   }
 
+  // ── Phase 2: Adaptive follow-up — fetch more pages from productive sources ──
+  if (STATE.searchMode === 'exact' && all.length < totalCount && !signal.aborted) {
+    const _PAGE2_FETCHERS = {
+      harvard:     (kw, lim, sig, pg) => fetchHarvard(kw, lim, sig, pg),
+      smithsonian: (kw, lim, sig, pg) => fetchSmithsonian(kw, lim, sig, pg * lim),
+      va:          (kw, lim, sig, pg) => fetchVA(kw, lim, sig, pg),
+      cleveland:   (kw, lim, sig, pg) => fetchCleveland(kw, lim, sig, (pg - 1) * lim),
+      flickr:      (kw, lim, sig, pg) => fetchFlickrCommons(kw, lim, sig, pg),
+      nga:         (kw, lim, sig, pg) => fetchNGA(kw, lim, sig, (pg - 1) * lim),
+      gallica:     (kw, lim, sig, pg) => fetchGallica(kw, lim, sig, (pg - 1) * lim + 1),
+      dpla:        (kw, lim, sig, pg) => fetchDPLA(kw, lim, sig, pg),
+      wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
+      europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
+      chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
+    };
+    const topSources = [...sourceYield.entries()]
+      .filter(([id]) => _PAGE2_FETCHERS[id])     // only sources with pagination support
+      .filter(([, count]) => count >= 3)          // yielded 3+ valid items
+      .sort((a, b) => b[1] - a[1])               // most productive first
+      .slice(0, 8);                               // top 8
+
+    if (topSources.length) {
+      const deficit = totalCount - all.length;
+      const perFollowUp = Math.max(10, Math.ceil(deficit / topSources.length));
+      await Promise.allSettled(
+        topSources.flatMap(([sourceId]) => {
+          const fetcher = _PAGE2_FETCHERS[sourceId];
+          // Fetch pages 2 and 3
+          return [2, 3].map(pg =>
+            fetcher(keyword, perFollowUp, signal, pg)
+              .then(onSourceResult(sourceId))
+              .catch(() => {})
+          );
+        })
+      );
+    }
+  }
+
   if (!isSilent && !all.length) {
     // Distinguish between "no results" and "all sources failed"
     const failedCount = _fetchSemaphore._totalFailed || 0;
     if (failedCount > 10 && !navigator.onLine) {
       showOfflineState();
+    } else if (sourceAllSkipped) {
+      showEmptyState('No sources were selected for this query because filters or exact mode excluded them. Try Explore mode or clear filters.');
     } else {
       showEmptyState();
     }
@@ -464,13 +521,13 @@ export function _resetLazyObserver() {
   _lazyObserver = _createLazyObserver();
 }
 
-export function showEmptyState() {
+export function showEmptyState(message) {
   const grid = document.getElementById('image-grid');
   if (!grid.querySelector('.empty-state')) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;min-height:calc(100vh - 4px);">
-        <p>nothing found — try different words</p>
-        <span>try: texture / light / form / shadow</span>
+        <p>${message || 'nothing found — try different words'}</p>
+        <span>${message ? '' : 'try: texture / light / form / shadow'}</span>
       </div>`;
   }
 }
@@ -1422,6 +1479,7 @@ export async function crossRefSearch(terms, mode) {
   );
 
   const settled = await Promise.allSettled(searchPromises);
+  const sourceAllSkipped = sourceCallCount === 0;
   // Collect results from each per-term fetchAll into STATE.results
   settled.forEach(r => {
     if (r.status === 'fulfilled' && Array.isArray(r.value) && r.value.length) {
@@ -2209,14 +2267,16 @@ export async function runSearch(query, forceRefresh = false) {
   }
 
   // Fetch all sources progressively — starts immediately with raw query
-  // Wall-clock safeguard: if fetchAll is still pending after 12 seconds, abort it and
+  // Wall-clock safeguard: if fetchAll is still pending, abort it and
   // restore the render pipeline so the UI never gets stuck in a loading state.
+  // Exact mode gets extra time for adaptive Phase 2 follow-up fetches.
+  const _wctTimeout = STATE.searchMode === 'exact' ? 18000 : 12000;
   const _wctTimer = setTimeout(() => {
     if (STATE.abortController && !STATE.abortController.signal.aborted) {
       STATE.abortController.abort();
     }
     _restore();
-  }, 12000);
+  }, _wctTimeout);
   const all = await fetchAll(STATE.keywords, STATE.imageCount);
   clearTimeout(_wctTimer);
   _restore();
@@ -2233,12 +2293,12 @@ export async function runSearch(query, forceRefresh = false) {
     const ROGUE_SOURCES = new Set(['flickr', 'wikimedia', 'pixabay', 'pexels', 'unsplash', 'sketchfab_heritage']);
     STATE.results = STATE.results.filter(r => {
       if (!ROGUE_SOURCES.has(r.source)) return true;
-      return `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq);
+      return matchesAsWholeWord(`${r.title || ''} ${r.description || ''}`.toLowerCase(), lq);
     });
     // 2. Promote results whose title/description contain the exact query phrase
     STATE.results = [
-      ...STATE.results.filter(r => `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq)),
-      ...STATE.results.filter(r => !`${r.title || ''} ${r.description || ''}`.toLowerCase().includes(lq)),
+      ...STATE.results.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''}`.toLowerCase(), lq)),
+      ...STATE.results.filter(r => !matchesAsWholeWord(`${r.title || ''} ${r.description || ''}`.toLowerCase(), lq)),
     ];
   }
   // ────────────────────────────────────────────────────────────────────
@@ -8160,7 +8220,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 2494+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 2487+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8170,7 +8230,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 2494+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 2487+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);

@@ -591,6 +591,15 @@ export function createSourceIdentity(sourceId, labelText) {
   return wrapper;
 }
 
+/* ── Word-boundary matching for exact mode ─────────────────────────── */
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+export function matchesAsWholeWord(hay, term) {
+  const re = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'i');
+  return re.test(hay);
+}
+
 /* Trigram similarity (0–1) for fuzzy matching */
 export function trigramSimilarity(a, b) {
   if (!a || !b) return 0;
@@ -617,30 +626,41 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
   const artist = (item.artist || '').toLowerCase();
   const tags = (item.tags || []).join(' ').toLowerCase();
 
+  // In exact mode, use word-boundary matching; in explore mode, use substring
+  const _match = STATE.searchMode === 'exact'
+    ? (hay, term) => matchesAsWholeWord(hay, term)
+    : (hay, term) => hay.includes(term);
+
   // Field lengths for BM25-like normalization (shorter fields = more specific matches)
   const titleLen = title.split(/\s+/).length || 1;
   const descLen = desc.split(/\s+/).length || 1;
 
   let score = 0;
 
+  // Penalise missing or generic titles
+  const titleValue = title.trim();
+  if (!titleValue || /^(photographs?|image|picture|photo|img[_\s]?\d+|dsc[_\s]?\d+|untitled|no title|file|img)\b/.test(titleValue)) {
+    score -= 3;
+  }
+
   // ── Exact full-query matches (highest signal) ──
-  if (title.includes(q)) score += Math.max(12, Math.round(20 / Math.sqrt(titleLen)));
-  if (artist.includes(q)) score += 10;
-  if (desc.includes(q)) score += Math.max(3, Math.round(6 / Math.sqrt(descLen)));
+  if (_match(title, q)) score += Math.max(12, Math.round(20 / Math.sqrt(titleLen)));
+  if (_match(artist, q)) score += 10;
+  if (_match(desc, q)) score += Math.max(3, Math.round(6 / Math.sqrt(descLen)));
 
   // ── Per-term scoring with field-length normalization ──
   let termMatches = 0;
   for (const t of terms) {
-    if (title.includes(t)) {
+    if (_match(title, t)) {
       score += Math.max(4, Math.round(8 / Math.sqrt(titleLen)));
       termMatches++;
-    } else if (artist.includes(t)) {
+    } else if (_match(artist, t)) {
       score += 5;
       termMatches++;
-    } else if (tags.includes(t)) {
+    } else if (_match(tags, t)) {
       score += 3;
       termMatches++;
-    } else if (desc.includes(t)) {
+    } else if (_match(desc, t)) {
       score += Math.max(1, Math.round(3 / Math.sqrt(descLen)));
       termMatches++;
     }
@@ -678,6 +698,16 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
     if (_ERA_REGEX.test(q)) {
       const yr = item.year ? parseInt(item.year, 10) : null;
       if (yr !== null && !isNaN(yr) && yr > 1900) score -= 6;
+    }
+
+    // Demote items where query matches ONLY in artist field (not title/desc/tags)
+    // unless the query is likely an artist-name search (detected in getDisplayResults)
+    const inTitle  = matchesAsWholeWord(title, q);
+    const inDesc   = matchesAsWholeWord(desc, q);
+    const inTags   = matchesAsWholeWord(tags, q);
+    const inArtist = matchesAsWholeWord(artist, q);
+    if (inArtist && !inTitle && !inDesc && !inTags && !STATE._isLikelyArtistQuery) {
+      score -= 8;
     }
   }
 
@@ -723,6 +753,18 @@ export let getDisplayResults = function getDisplayResults(items, query) {
     const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference|book review|isbn|pp\.|vol\.|volume \d|pages \d|edited by|proceedings of)\b/i;
     const GENERIC_TITLE_RE = /^(photograph|image|picture|photo|file|img[_\s]?\d|dsc[_\s]?\d|untitled|no title|\d{4}-\d{2})/i;
     const BOOK_RE = /\b(hardcover|paperback|kindle edition|ebook|audiobook|publisher|isbn|\d+ pages|table of contents|bibliography|price guide|index\.?$)\b/i;
+
+    // Detect if query is likely an artist name by checking how many items match in artist field
+    if (terms.length) {
+      const fullQ = terms.join(' ');
+      const artistMatchCount = base.filter(item =>
+        matchesAsWholeWord((item.artist || '').toLowerCase(), fullQ)
+      ).length;
+      STATE._isLikelyArtistQuery = artistMatchCount >= 3;
+    } else {
+      STATE._isLikelyArtistQuery = false;
+    }
+
     const ranked = base
       .filter(item => {
         if (!terms.length) return true;
@@ -731,7 +773,7 @@ export let getDisplayResults = function getDisplayResults(items, query) {
         if (JUNK_TITLE_RE.test(item.title || '')) return false;
         if (BOOK_RE.test(`${item.title || ''} ${item.description || ''}`)) return false;
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
-        return terms.some(t => hay.includes(t));
+        return terms.some(t => matchesAsWholeWord(hay, t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
       .filter(x => x.score > 0)

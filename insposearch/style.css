@@ -785,6 +785,13 @@ html, body {
 .image-card:hover .zoom-btn { opacity: 1; }
 .image-card .zoom-btn:hover { background: rgba(26,26,24,0.85); }
 
+@media (hover: none) {
+  .image-card .source-badge,
+  .image-card .zoom-btn {
+    opacity: 1 !important;
+  }
+}
+
 /* Similar button */
 .image-card .sim-btn {
   position: absolute; bottom: 8px; right: 36px;
@@ -2375,9 +2382,9 @@ html, body {
 }
 .filter-pill:hover { border-color: var(--line); color: var(--ink-2); }
 .filter-pill.active {
-  border-color: var(--line);
-  color: var(--ink-1);
-  background: #1a1a1a;
+  border-color: var(--accent);
+  color: var(--bg);
+  background: var(--accent);
 }
 .license-pill-row {
   display: flex;

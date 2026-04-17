@@ -1,58 +1,19 @@
 {
-  "_comment": "InspoSearch source manifest — community-contributed. See sources/ for individual files.",
+  "_comment": "InspoSearch source manifest \u2014 community-contributed. See sources/ for individual files.",
   "_version": "2.0.0",
   "_generated": "2026-03-22",
   "_totalSources": 17,
-
   "sources": [
-
-    {
-      "id": "bodleian",
-      "name": "Bodleian Libraries",
-      "description": "Oxford University digital collections — manuscripts, maps, rare books",
-      "domain": "digital.bodleian.ox.ac.uk",
-      "category": ["archives", "art", "maps", "historical"],
-      "region": "uk",
-      "keyRequired": false,
-      "endpoint": "https://digital.bodleian.ox.ac.uk/api/v1/search/",
-      "adapter": "bodleian",
-      "queryParam": "q",
-      "resultsPath": "objects",
-      "imageField": "thumbnail",
-      "thumbField": "thumbnail",
-      "titleField": "name",
-      "imageCount": 400000,
-      "active": false,
-      "_endpointStatus": "404 — /api/v1/search/ endpoint removed; Bodleian migrated to IIIF collection browsing only (no keyword search JSON API as of 2025)",
-      "tags": ["manuscripts", "maps", "oxford", "medieval"]
-    },
-
-    {
-      "id": "bsb",
-      "name": "BSB Munich",
-      "description": "Bayerische Staatsbibliothek — 15M+ pages, maps, illuminated manuscripts",
-      "domain": "digitale-sammlungen.de",
-      "category": ["archives", "maps", "historical"],
-      "region": "europe",
-      "keyRequired": false,
-      "endpoint": "https://api.digitale-sammlungen.de/search/v1/json",
-      "adapter": "bsb",
-      "queryParam": "q",
-      "resultsPath": "hits.items",
-      "imageField": "thumbnail_url",
-      "titleField": "title",
-      "imageCount": 1000000,
-      "active": false,
-      "_endpointStatus": "404 — api.digitale-sammlungen.de/search/v1/json endpoint returns 404; BSB search API endpoint has changed as of 2025",
-      "tags": ["manuscripts", "maps", "bavaria", "incunabula"]
-    },
-
     {
       "id": "cudl",
       "name": "Cambridge Digital Library",
-      "description": "Cambridge University — Newton papers, Darwin notebooks, medieval manuscripts",
+      "description": "Cambridge University \u2014 Newton papers, Darwin notebooks, medieval manuscripts",
       "domain": "cudl.lib.cam.ac.uk",
-      "category": ["archives", "historical", "science"],
+      "category": [
+        "archives",
+        "historical",
+        "science"
+      ],
       "region": "uk",
       "keyRequired": false,
       "endpoint": "https://services.cudl.lib.cam.ac.uk/v1/search",
@@ -63,15 +24,22 @@
       "titleField": "title",
       "imageCount": 200000,
       "active": true,
-      "tags": ["newton", "darwin", "cambridge", "science", "manuscripts"]
+      "tags": [
+        "newton",
+        "darwin",
+        "cambridge",
+        "science",
+        "manuscripts"
+      ]
     },
-
     {
       "id": "unsplash",
       "name": "Unsplash",
-      "description": "5M+ high-res contemporary photos — free key from unsplash.com/developers",
+      "description": "5M+ high-res contemporary photos \u2014 free key from unsplash.com/developers",
       "domain": "unsplash.com",
-      "category": ["photos"],
+      "category": [
+        "photos"
+      ],
       "region": "global",
       "keyRequired": true,
       "keyLabel": "Access Key",
@@ -84,104 +52,20 @@
       "titleField": "description",
       "imageCount": 5000000,
       "active": true,
-      "tags": ["photography", "contemporary", "cc0"]
+      "tags": [
+        "photography",
+        "contemporary",
+        "cc0"
+      ]
     },
-
-    {
-      "id": "heidelberg",
-      "name": "Heidelberg University",
-      "description": "UB Heidelberg — illuminated manuscripts, incunabula, historical photographs",
-      "domain": "digi.ub.uni-heidelberg.de",
-      "category": ["archives", "historical", "art"],
-      "region": "europe",
-      "keyRequired": false,
-      "endpoint": "https://digi.ub.uni-heidelberg.de/api/v1/items",
-      "adapter": "iiif_search",
-      "queryParam": "q",
-      "resultsPath": "items",
-      "imageField": "thumbnail",
-      "titleField": "label",
-      "imageCount": 150000,
-      "active": false,
-      "_endpointStatus": "404 — correct API path not verified; needs investigation before activation",
-      "tags": ["manuscripts", "illuminated", "germany", "university"]
-    },
-
-    {
-      "id": "kb_nl",
-      "name": "KB Netherlands",
-      "description": "Koninklijke Bibliotheek — Dutch national library, 70M+ pages digitized",
-      "domain": "www.kb.nl",
-      "category": ["archives", "historical"],
-      "region": "europe",
-      "keyRequired": false,
-      "endpoint": "https://data.bibliotheken.nl/api/v1/search",
-      "adapter": "iiif_search",
-      "queryParam": "query",
-      "resultsPath": "result.items",
-      "imageField": "image",
-      "titleField": "prefLabel",
-      "imageCount": 500000,
-      "active": false,
-      "_endpointStatus": "404 — data.bibliotheken.nl is Linked Data, not image search; needs correct KB collections API",
-      "tags": ["dutch", "netherlands", "historical", "newspapers"]
-    },
-
-    {
-      "id": "dpla_nypl",
-      "name": "DPLA / NYPL Hub",
-      "description": "New York Public Library digital collections via DPLA — photos, maps, posters",
-      "domain": "dp.la",
-      "category": ["archives", "photos", "maps"],
-      "region": "americas",
-      "keyRequired": true,
-      "adapter": "dpla_provider",
-      "dplaProvider": "New York Public Library",
-      "imageCount": 900000,
-      "active": false,
-      "_note": "Requires a free DPLA API key — get one at dp.la/info/developers/codex. Set inspo_dpla_key in localStorage to activate.",
-      "tags": ["new york", "photos", "maps", "posters", "ephemera"]
-    },
-
-    {
-      "id": "dpla_digital_commonwealth",
-      "name": "Digital Commonwealth (DPLA)",
-      "description": "Massachusetts cultural institutions via DPLA hub",
-      "domain": "dp.la",
-      "category": ["archives", "historical", "photos"],
-      "region": "americas",
-      "keyRequired": true,
-      "adapter": "dpla_provider",
-      "dplaProvider": "Digital Commonwealth",
-      "imageCount": 400000,
-      "active": false,
-      "_note": "Requires a free DPLA API key — get one at dp.la/info/developers/codex. Set inspo_dpla_key in localStorage to activate.",
-      "tags": ["massachusetts", "boston", "historical", "new england"]
-    },
-
-    {
-      "id": "botanicus",
-      "name": "Botanicus (MBG)",
-      "description": "Missouri Botanical Garden — historic botanical literature with illustrations",
-      "domain": "www.botanicus.org",
-      "category": ["botanical", "archives"],
-      "region": "americas",
-      "keyRequired": false,
-      "endpoint": "https://www.botanicus.org/search",
-      "adapter": "iiif_search",
-      "queryParam": "q",
-      "imageCount": 500000,
-      "active": false,
-      "_endpointStatus": "domain unreachable — botanicus.org connection refused; consider BHL API as fallback",
-      "tags": ["botanical", "plants", "illustrations", "missouri", "natural history"]
-    },
-
     {
       "id": "david_rumsey",
       "name": "David Rumsey Maps",
-      "description": "150k+ historical maps — 16th century to present, free for research",
+      "description": "150k+ historical maps \u2014 16th century to present, free for research",
       "domain": "www.davidrumsey.com",
-      "category": ["maps"],
+      "category": [
+        "maps"
+      ],
       "region": "global",
       "keyRequired": false,
       "endpoint": "https://www.davidrumsey.com/luna/servlet/as/search",
@@ -195,15 +79,23 @@
       "sourceUrlField": "relayButtonUrl",
       "imageCount": 150000,
       "active": true,
-      "tags": ["maps", "cartography", "historical", "geography"]
+      "tags": [
+        "maps",
+        "cartography",
+        "historical",
+        "geography"
+      ]
     },
-
     {
       "id": "museum_digital_smb",
       "name": "SMB Berlin (museum-digital)",
-      "description": "Staatliche Museen zu Berlin — Gemäldegalerie, Kunstgewerbemuseum, and 20+ collections via museum-digital",
+      "description": "Staatliche Museen zu Berlin \u2014 Gem\u00e4ldegalerie, Kunstgewerbemuseum, and 20+ collections via museum-digital",
       "domain": "smb.museum-digital.de",
-      "category": ["art", "archives", "decorative arts"],
+      "category": [
+        "art",
+        "archives",
+        "decorative arts"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://smb.museum-digital.de/json/objects",
@@ -216,15 +108,24 @@
       "descField": "institution_name",
       "imageCount": 200000,
       "active": true,
-      "tags": ["berlin", "museums", "paintings", "decorative arts", "sculptures"]
+      "tags": [
+        "berlin",
+        "museums",
+        "paintings",
+        "decorative arts",
+        "sculptures"
+      ]
     },
-
     {
       "id": "museum_digital_nat",
       "name": "museum-digital Deutschland",
-      "description": "National aggregator of German museums — 100k+ objects from hundreds of institutions",
+      "description": "National aggregator of German museums \u2014 100k+ objects from hundreds of institutions",
       "domain": "nat.museum-digital.de",
-      "category": ["art", "archives", "natural history"],
+      "category": [
+        "art",
+        "archives",
+        "natural history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://nat.museum-digital.de/json/objects",
@@ -237,15 +138,24 @@
       "descField": "institution_name",
       "imageCount": 500000,
       "active": true,
-      "tags": ["germany", "museums", "paintings", "natural history", "ethnography"]
+      "tags": [
+        "germany",
+        "museums",
+        "paintings",
+        "natural history",
+        "ethnography"
+      ]
     },
-
     {
       "id": "museum_digital_westfalen",
       "name": "museum-digital Westfalen",
-      "description": "Westphalian museums via museum-digital — regional German cultural heritage",
+      "description": "Westphalian museums via museum-digital \u2014 regional German cultural heritage",
       "domain": "westfalen.museum-digital.de",
-      "category": ["art", "archives", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://westfalen.museum-digital.de/json/objects",
@@ -258,15 +168,24 @@
       "descField": "institution_name",
       "imageCount": 50000,
       "active": true,
-      "tags": ["westphalia", "germany", "regional", "craft", "local history"]
+      "tags": [
+        "westphalia",
+        "germany",
+        "regional",
+        "craft",
+        "local history"
+      ]
     },
-
     {
       "id": "museum_digital_rhineland",
       "name": "museum-digital Rheinland",
-      "description": "Rhineland museums — hundreds of institutions across Germany's Rhine region via museum-digital",
+      "description": "Rhineland museums \u2014 hundreds of institutions across Germany's Rhine region via museum-digital",
       "domain": "rheinland.museum-digital.de",
-      "category": ["art", "archives", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://rheinland.museum-digital.de/json/objects",
@@ -279,15 +198,24 @@
       "descField": "institution_name",
       "imageCount": 80000,
       "active": true,
-      "tags": ["rhineland", "germany", "regional", "craft", "local history"]
+      "tags": [
+        "rhineland",
+        "germany",
+        "regional",
+        "craft",
+        "local history"
+      ]
     },
-
     {
       "id": "museum_digital_bawue",
-      "name": "museum-digital Baden-Württemberg",
-      "description": "Baden-Württemberg museums via museum-digital — diverse collections from Germany's southwest",
+      "name": "museum-digital Baden-W\u00fcrttemberg",
+      "description": "Baden-W\u00fcrttemberg museums via museum-digital \u2014 diverse collections from Germany's southwest",
       "domain": "bawue.museum-digital.de",
-      "category": ["art", "archives", "decorative arts"],
+      "category": [
+        "art",
+        "archives",
+        "decorative arts"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://bawue.museum-digital.de/json/objects",
@@ -300,15 +228,25 @@
       "descField": "institution_name",
       "imageCount": 100000,
       "active": true,
-      "tags": ["baden-württemberg", "germany", "regional", "art", "craft"]
+      "tags": [
+        "baden-w\u00fcrttemberg",
+        "germany",
+        "regional",
+        "art",
+        "craft"
+      ]
     },
-
     {
       "id": "museum_digital_hamburg",
       "name": "museum-digital Hamburg",
-      "description": "Hamburg museums via museum-digital — maritime, trade, and cultural collections",
+      "description": "Hamburg museums via museum-digital \u2014 maritime, trade, and cultural collections",
       "domain": "hamburg.museum-digital.de",
-      "category": ["art", "archives", "maritime", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "maritime",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://hamburg.museum-digital.de/json/objects",
@@ -321,15 +259,24 @@
       "descField": "institution_name",
       "imageCount": 50000,
       "active": true,
-      "tags": ["hamburg", "germany", "maritime", "trade", "local history"]
+      "tags": [
+        "hamburg",
+        "germany",
+        "maritime",
+        "trade",
+        "local history"
+      ]
     },
-
     {
       "id": "museum_digital_sachsen",
       "name": "museum-digital Sachsen",
-      "description": "Saxony museums via museum-digital — art, industry, and heritage collections",
+      "description": "Saxony museums via museum-digital \u2014 art, industry, and heritage collections",
       "domain": "sachsen.museum-digital.de",
-      "category": ["art", "archives", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://sachsen.museum-digital.de/json/objects",
@@ -342,15 +289,24 @@
       "descField": "institution_name",
       "imageCount": 70000,
       "active": true,
-      "tags": ["saxony", "germany", "regional", "art", "industry"]
+      "tags": [
+        "saxony",
+        "germany",
+        "regional",
+        "art",
+        "industry"
+      ]
     },
-
     {
       "id": "museum_digital_thueringen",
-      "name": "museum-digital Thüringen",
-      "description": "Thuringia museums via museum-digital — Goethe country, Bauhaus, Weimar collections",
+      "name": "museum-digital Th\u00fcringen",
+      "description": "Thuringia museums via museum-digital \u2014 Goethe country, Bauhaus, Weimar collections",
       "domain": "thueringen.museum-digital.de",
-      "category": ["art", "archives", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://thueringen.museum-digital.de/json/objects",
@@ -363,15 +319,24 @@
       "descField": "institution_name",
       "imageCount": 40000,
       "active": true,
-      "tags": ["thuringia", "germany", "bauhaus", "weimar", "goethe"]
+      "tags": [
+        "thuringia",
+        "germany",
+        "bauhaus",
+        "weimar",
+        "goethe"
+      ]
     },
-
     {
       "id": "museum_digital_hessen",
       "name": "museum-digital Hessen",
-      "description": "Hesse museums via museum-digital — Frankfurt region cultural collections",
+      "description": "Hesse museums via museum-digital \u2014 Frankfurt region cultural collections",
       "domain": "hessen.museum-digital.de",
-      "category": ["art", "archives", "local history"],
+      "category": [
+        "art",
+        "archives",
+        "local history"
+      ],
       "region": "europe",
       "keyRequired": false,
       "endpoint": "https://hessen.museum-digital.de/json/objects",
@@ -384,15 +349,25 @@
       "descField": "institution_name",
       "imageCount": 60000,
       "active": true,
-      "tags": ["hesse", "germany", "frankfurt", "regional", "art"]
+      "tags": [
+        "hesse",
+        "germany",
+        "frankfurt",
+        "regional",
+        "art"
+      ]
     },
-
     {
       "id": "digital_commonwealth",
       "name": "Digital Commonwealth",
-      "description": "Massachusetts cultural heritage — Boston Public Library, Harvard, state libraries — 1.5M+ digitized items including photos, maps, manuscripts",
+      "description": "Massachusetts cultural heritage \u2014 Boston Public Library, Harvard, state libraries \u2014 1.5M+ digitized items including photos, maps, manuscripts",
       "domain": "www.digitalcommonwealth.org",
-      "category": ["archives", "historical", "photos", "maps"],
+      "category": [
+        "archives",
+        "historical",
+        "photos",
+        "maps"
+      ],
       "region": "americas",
       "keyRequired": false,
       "endpoint": "https://www.digitalcommonwealth.org/search.json",
@@ -406,16 +381,27 @@
       "descField": "attributes.institution_name_ssi",
       "imageCount": 1500000,
       "active": true,
-      "_testNote": "API confirmed working in prior session; imageUrlTemplate adapter bug fixed this session — images were always available, URL construction was the blocker",
-      "tags": ["boston", "massachusetts", "photos", "maps", "historical", "archives"]
+      "_testNote": "API confirmed working in prior session; imageUrlTemplate adapter bug fixed this session \u2014 images were always available, URL construction was the blocker",
+      "tags": [
+        "boston",
+        "massachusetts",
+        "photos",
+        "maps",
+        "historical",
+        "archives"
+      ]
     },
-
     {
       "id": "wellcome_iiif",
       "name": "Wellcome Collection (IIIF)",
-      "description": "Wellcome Institute — 1M+ historical medical images, manuscripts, artworks via IIIF Content Search adapter",
+      "description": "Wellcome Institute \u2014 1M+ historical medical images, manuscripts, artworks via IIIF Content Search adapter",
       "domain": "api.wellcomecollection.org",
-      "category": ["archives", "historical", "science", "art"],
+      "category": [
+        "archives",
+        "historical",
+        "science",
+        "art"
+      ],
       "region": "uk",
       "keyRequired": false,
       "endpoint": "https://api.wellcomecollection.org/catalogue/v2/works",
@@ -427,16 +413,25 @@
       "descField": "description",
       "imageCount": 1000000,
       "active": true,
-      "_testNote": "Node.js 3-term test: portrait (3), landscape (3), flower (3) — all passed with image URLs",
-      "tags": ["wellcome", "medical history", "manuscripts", "artworks", "science"]
+      "_testNote": "Node.js 3-term test: portrait (3), landscape (3), flower (3) \u2014 all passed with image URLs",
+      "tags": [
+        "wellcome",
+        "medical history",
+        "manuscripts",
+        "artworks",
+        "science"
+      ]
     },
-
     {
       "id": "met_iiif",
       "name": "Metropolitan Museum (IIIF)",
-      "description": "The Met — 470k+ digitized artworks (paintings, sculptures, armaments, decorative arts) via IIIF search",
+      "description": "The Met \u2014 470k+ digitized artworks (paintings, sculptures, armaments, decorative arts) via IIIF search",
       "domain": "collectionapi.metmuseum.org",
-      "category": ["art", "paintings", "historical"],
+      "category": [
+        "art",
+        "paintings",
+        "historical"
+      ],
       "region": "americas",
       "keyRequired": false,
       "endpoint": "https://collectionapi.metmuseum.org/public/collection/v1/search",
@@ -448,11 +443,16 @@
       "descField": "classification",
       "imageCount": 470000,
       "active": true,
-      "_testNote": "Node.js 3-term test: portrait (6639), landscape (4325), flower (3827) — all passed with search results",
-      "tags": ["art", "paintings", "sculptures", "met", "new york", "decorative arts"]
+      "_testNote": "Node.js 3-term test: portrait (6639), landscape (4325), flower (3827) \u2014 all passed with search results",
+      "tags": [
+        "art",
+        "paintings",
+        "sculptures",
+        "met",
+        "new york",
+        "decorative arts"
+      ]
     }
-
   ],
-
   "_contributing": "To add a source: copy sources/_template.json, fill fields, submit a PR. See sources/README.md."
 }
