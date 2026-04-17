@@ -2321,9 +2321,13 @@ export async function runSearch(query, forceRefresh = false) {
 
   const visible = getDisplayResults(STATE.results, effectiveQuery);
   if (visible.length) {
-    // Only append items not yet in the DOM — preserves first-wave images already visible
-    const novel = visible.filter(item => !renderedIds.has(item.id));
-    if (novel.length) renderGrid(novel);
+    // Clear the grid and re-render from the authoritative final result set.
+    // During streaming, onSourceResult appended preview cards incrementally —
+    // some of those may not survive post-fetch filtering (rogue-source removal,
+    // scoring, word-boundary matching). Without clearing, orphaned cards linger
+    // in the DOM and gradually disappear as lazy-load handlers remove them.
+    clearGrid();
+    renderGrid(visible);
     // "Did you mean?" — check spelling in background if few results
     if (visible.length < 4 && STATE.searchMode !== 'exact') {
       spellCheck(effectiveQuery).then(suggestion => {
