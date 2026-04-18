@@ -146,21 +146,21 @@
 
       <div class="divider"></div>
 
-      <!-- Image count slider -->
-      <div class="sidebar-section">
+      <!-- Image count slider (advanced — hidden by default, shown via settings) -->
+      <div class="sidebar-section" id="count-slider-section" style="display:none;">
         <div class="slider-row">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="section-label">images</span>
-            <span class="slider-label" id="count-label">24 images</span>
+            <span class="section-label">images per wave</span>
+            <span class="slider-label" id="count-label">80 images</span>
           </div>
           <input
             type="range"
             id="count-slider"
             class="slider"
-            min="6"
+            min="24"
             max="300"
-            value="24"
-            aria-label="number of images to load"
+            value="80"
+            aria-label="number of images to load per wave"
           >
         </div>
       </div>

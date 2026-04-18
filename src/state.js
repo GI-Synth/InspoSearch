@@ -2,8 +2,8 @@
    1. CONSTANTS & CONFIG
 ============================================================ */
 export const CONSTANTS = {
-  IMAGE_COUNT_DEFAULT:  24,
-  IMAGE_COUNT_MIN:       6,
+  IMAGE_COUNT_DEFAULT:  80,
+  IMAGE_COUNT_MIN:      24,
   IMAGE_COUNT_MAX:      300,
   GEMINI_KEY_STORAGE:   'inspo_gemini_key',
   CLAUDE_KEY_STORAGE:   'inspo_claude_key',
@@ -22,19 +22,22 @@ export const CONSTANTS = {
   // Per-source fetch limit overrides — high-inventory sources get larger quotas,
   // low-inventory sources get smaller ones. Falls back to calculated fetchBatch if absent.
   PER_SOURCE_LIMIT: {
-    met:         25,
-    chicago:     25,
-    cleveland:   20,
-    va:          20,
-    nga:         20,
-    gbif:        20,
-    loc:         20,
-    inaturalist: 20,
-    carnegie:     8,
-    cudl:         8,
-    folger:       8,
-    hallwyl:      8,
-    nivaagaard:   8,
+    met:         40,
+    chicago:     40,
+    cleveland:   30,
+    va:          30,
+    nga:         30,
+    gbif:        30,
+    loc:         30,
+    inaturalist: 30,
+    rijksmuseum: 30,
+    europeana:   30,
+    flickr:      25,
+    carnegie:    12,
+    cudl:        12,
+    folger:      12,
+    hallwyl:     12,
+    nivaagaard:  12,
   },
 };
 
@@ -272,7 +275,7 @@ export const STATE = {
   selected:            [],      // selected ImageItem[]
   view:                'grid',  // 'grid' | 'board' | '3d'
   sketchMode:          false,   // boolean
-  imageCount:          24,      // slider value
+  imageCount:          80,      // images per wave (was slider, now auto-scroll)
   geminiKey:           null,    // string | null (localStorage)
   claudeKey:           null,    // string | null (localStorage)
   openaiKey:           null,    // string | null (localStorage)

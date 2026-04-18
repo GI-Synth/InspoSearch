@@ -95,15 +95,12 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   const alt2       = keywords[2] || altKeyword;
 
   // all slots always run — key-gated sources return [] when no key set
-  // Use realistic productive source count, not total registered count.
-  // ~60 sources reliably return results on any query.
-  // This ensures the slider value matches actual images shown.
-  // Dynamic registry can push active sources well beyond 155 → scale distribution
+  // Request generously from each source — user wants a flood of results
   const dynamicActive = selectDynamicSources(keyword, 120).length;
   const PRODUCTIVE_SOURCE_ESTIMATE = STATE.searchMode === 'exact'
     ? Math.max(30, 30 + Math.floor(dynamicActive * 0.3))
-    : Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
-  const perSource  = Math.max(2, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
+    : Math.max(40, 40 + Math.floor(dynamicActive * 0.3));
+  const perSource  = Math.max(6, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const fetchBatch = perSource + 4;
   // Per-source limit overrides: high-inventory sources use the PER_SOURCE_LIMIT floor
   const limitFor = id => Math.max(fetchBatch, CONSTANTS.PER_SOURCE_LIMIT[id] ?? 0);
@@ -183,6 +180,20 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
       });
     }
     if (!items || !items.length) return;
+    // ── Quality gate — skip low-quality items before they enter the grid ──
+    items = items.filter(item => {
+      // Must have an image
+      if (!item.thumbnail && !item.image) return false;
+      // Skip items with no title AND no artist (likely junk metadata)
+      const title = (item.title || '').trim();
+      const artist = (item.artist || '').trim();
+      if (title.length < 2 && !artist) return false;
+      // Skip tiny placeholder thumbnails (common museum "no image" placeholders)
+      const thumb = item.thumbnail || item.image || '';
+      if (/width=([1-9]\d?)(?:\D|$)/.test(thumb) && parseInt(RegExp.$1) < 80) return false;
+      return true;
+    });
+    if (!items.length) return;
     // Track per-source yield for adaptive Phase 2 follow-up
     sourceYield.set(sourceName, (sourceYield.get(sourceName) || 0) + items.length);
     const fresh = items.filter(item => !seenIds.has(item.id) && !seenUrls.has(item.url));
@@ -193,7 +204,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
       : (() => {
           // Explore relevance gate: drop items with zero keyword relevance
           const scored = fresh.filter(item => scoreItemRelevance(item, keyword) > 0);
-          return shuffle((scored.length ? scored : fresh).slice(0, perSource));
+          return shuffle(scored.length ? scored : fresh);
         })();
     renderGrid(preview);
   };
@@ -2110,6 +2121,11 @@ export function onSourceResultGlobal(items) {
 
 export async function fetchMoreResults() {
   if (STATE.loading || !STATE.query) return;
+  if (STATE.results.length >= CONSTANTS.MAX_RESULTS) {
+    const btn = document.getElementById('btn-load-more');
+    if (btn) btn.textContent = 'all results loaded';
+    return;
+  }
   const startQuery = STATE.query;
   STATE.loading = true;
   const btn = document.getElementById('btn-load-more');
@@ -2117,17 +2133,26 @@ export async function fetchMoreResults() {
   STATE.currentPage++;
   const page      = STATE.currentPage;
   const kw        = STATE.keywords[0] || STATE.query;
-  // Build a dynamic pool from all healthy sources + dynamic registry
+
+  // Smart pagination: prefer sources that returned results on earlier pages
+  const previousHits = new Set(STATE.results.map(r => r.source).filter(Boolean));
   const healthy = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id));
   const dyn     = selectDynamicSources(kw, 60).map(s => s.id || s);
-  const union   = [...new Set([...healthy, ...dyn])];
+  const allPool = [...new Set([...healthy, ...dyn])];
+  // Prioritize sources that already returned results, then add others
+  const productive = allPool.filter(id => previousHits.has(id));
+  const rest = allPool.filter(id => !previousHits.has(id));
+  // On page 2-3 try all; on page 4+ only paginate productive sources
+  const union = page <= 3 ? [...productive, ...rest] : productive;
+  if (!union.length) { STATE.loading = false; updateLoadMoreLabel(); return; }
+
   const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(30, union.length);
-  const perSource = Math.max(2, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
+  const perSource = Math.max(4, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const offset    = (page - 1) * STATE.imageCount;
   const ac        = new AbortController();
   _secondaryControllers.add(ac);
   const signal    = ac.signal;
-  // Fan out to all healthy sources that have adapters
+  // Fan out to selected sources
   const fetches = union.map(id => {
     const adapter = ADAPTERS[id];
     if (!adapter) return Promise.resolve([]);
@@ -2141,6 +2166,13 @@ export async function fetchMoreResults() {
     const lq = STATE.query.toLowerCase();
     items = items.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''} ${r.artist || ''}`.toLowerCase(), lq));
   }
+  // Quality gate: skip items with tiny thumbnails or empty metadata
+  items = items.filter(r => {
+    if (!r.thumbnail && !r.image) return false;
+    const title = (r.title || '').trim();
+    if (title.length < 2 && !(r.artist || '').trim()) return false;
+    return true;
+  });
   const existingIds = new Set(STATE.results.map(r => r.id));
   const novel = items.filter(r => !existingIds.has(r.id));
   if (novel.length > 0 && STATE.results.length < CONSTANTS.MAX_RESULTS) {
@@ -2157,7 +2189,11 @@ export async function fetchMoreResults() {
 export function updateLoadMoreLabel() {
   const btn = document.getElementById('btn-load-more');
   if (!btn) return;
-  btn.textContent = `load ${STATE.imageCount} more`;
+  if (STATE.results.length >= CONSTANTS.MAX_RESULTS) {
+    btn.textContent = 'all results loaded';
+  } else {
+    btn.textContent = `load more · ${STATE.results.length} shown`;
+  }
 }
 
 export async function runSearch(query, forceRefresh = false) {
@@ -2176,7 +2212,7 @@ export async function runSearch(query, forceRefresh = false) {
       </div>`;
     return;
   }
-  STATE.imageCount = parseInt(document.getElementById('count-slider').value) || 24;
+  STATE.imageCount = parseInt(document.getElementById('count-slider')?.value) || CONSTANTS.IMAGE_COUNT_DEFAULT;
   STATE.query = query.trim();
 
   // Parse operators: -word, NOT word, "exact phrase"
@@ -2589,6 +2625,24 @@ document.getElementById('btn-refresh-cache')?.addEventListener('click', () => {
 // Load more
 document.getElementById('btn-load-more')?.addEventListener('click', fetchMoreResults);
 
+// ── Infinite scroll — auto-load more when user nears bottom ──
+let _infiniteScrollObs = null;
+export function initInfiniteScroll() {
+  if (_infiniteScrollObs) _infiniteScrollObs.disconnect();
+  const sentinel = document.getElementById('more-container');
+  if (!sentinel) return;
+  _infiniteScrollObs = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting && !STATE.loading && STATE.query && STATE.results.length < CONSTANTS.MAX_RESULTS) {
+        fetchMoreResults();
+      }
+    }
+  }, { rootMargin: '800px' }); // trigger 800px before reaching the bottom
+  _infiniteScrollObs.observe(sentinel);
+}
+// Initialize on page load
+initInfiniteScroll();
+
 // Prefetch keywords while typing (400 ms debounce)
 export const debouncedPrefetch = debounce(async q => {
   if (!q.trim() || q.trim() === STATE.query || STATE.searchMode === 'exact') return;
@@ -2600,15 +2654,17 @@ document.getElementById('search-input')?.addEventListener('keyup', e => {
   if (e.key !== 'Enter') debouncedPrefetch(e.target.value);
 });
 
-// Image count slider
+// Image count slider (hidden by default, shown via advanced settings)
 export const countSlider = document.getElementById('count-slider');
 export const countLabel  = document.getElementById('count-label');
 
-countSlider.addEventListener('input', () => {
-  STATE.imageCount = parseInt(countSlider.value, 10);
-  countLabel.textContent = STATE.imageCount + ' ' + tr('images');
-  updateLoadMoreLabel();
-});
+if (countSlider) {
+  countSlider.addEventListener('input', () => {
+    STATE.imageCount = parseInt(countSlider.value, 10);
+    if (countLabel) countLabel.textContent = STATE.imageCount + ' ' + tr('images');
+    updateLoadMoreLabel();
+  });
+}
 
 export const debouncedRerender = debounce(() => {
   if (STATE.results.length <= 0 || !_lastDisplayOrder.length) return;
@@ -2639,7 +2695,7 @@ export const debouncedRerender = debounce(() => {
   updateLoadMoreLabel();
 }, CONSTANTS.DEBOUNCE_SLIDER);
 
-countSlider.addEventListener('input', debouncedRerender);
+if (countSlider) countSlider.addEventListener('input', debouncedRerender);
 
 // Dark mode toggle
 export const themeToggle = document.getElementById('theme-toggle');
