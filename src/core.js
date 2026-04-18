@@ -494,6 +494,43 @@ export async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIME
   }
 }
 
+// ── Image proxy helper — routes image URLs through Cloudflare worker for CORS ──
+export function proxyImageUrl(url) {
+  if (!url) return url;
+  // Already proxied or data URI — skip
+  if (url.startsWith(CONSTANTS.IMG_PROXY_URL) || url.startsWith('data:')) return url;
+  return `${CONSTANTS.IMG_PROXY_URL}/?url=${encodeURIComponent(url)}&w=800`;
+}
+
+// Domains whose APIs are CORS-blocked from the browser.
+// sourceFetch auto-retries these through the API proxy worker.
+const CORS_BLOCKED_API_DOMAINS = new Set([
+  'chroniclingamerica.loc.gov',
+  'api.tepapa.govt.nz',
+  'collection.maas.museum', 'api.maas.museum',
+  'api.nga.gov',
+  'art.thewalters.org', 'api.thewalters.org',
+  'collections.britishart.yale.edu',
+  'digital.library.cornell.edu',
+  'digitalcollections.nypl.org', 'api.repo.nypl.org',
+  'gallica.bnf.fr',
+  'munch.emuseum.com',
+  'collections.lacma.org',
+  'data.ago.ca', 'ago.ca',
+  'www.mauritshuis.nl',
+  'www.wikiart.org',
+  'sammlung.mak.at',
+  'www.npg.org.uk',
+  'opacplus.bsb-muenchen.de',
+  'www.tate.org.uk',
+  'rest.museum-digital.de',
+]);
+
+function _needsApiProxy(url) {
+  try { return CORS_BLOCKED_API_DOMAINS.has(new URL(url).hostname); }
+  catch { return false; }
+}
+
 /* Per-source adaptive timeout: tracks avg response time and tightens deadline */
 export const _sourceTimings = {};
 export function sourceFetch(url, opts = {}, sourceName) {
@@ -502,16 +539,30 @@ export function sourceFetch(url, opts = {}, sourceName) {
     ? Math.min(8000, Math.max(4000, Math.round(timing.avg * 2)))
     : CONSTANTS.FETCH_TIMEOUT;
   const start = performance.now();
-  return safeFetch(url, opts, timeout).then(res => {
-    const elapsed = performance.now() - start;
-    if (!_sourceTimings[sourceName]) _sourceTimings[sourceName] = { avg: elapsed, count: 1 };
-    else {
-      const t = _sourceTimings[sourceName];
-      t.avg = (t.avg * t.count + elapsed) / (t.count + 1);
-      t.count = Math.min(t.count + 1, 20);
-    }
-    return res;
-  });
+
+  // If the API domain is known to be CORS-blocked, go through the proxy immediately
+  const fetchUrl = _needsApiProxy(url)
+    ? `${CONSTANTS.API_PROXY_URL}/proxy?url=${encodeURIComponent(url)}`
+    : url;
+
+  return safeFetch(fetchUrl, opts, timeout)
+    .catch(err => {
+      // On TypeError (CORS / network failure), retry through API proxy if not already proxied
+      if (err instanceof TypeError && fetchUrl === url && CONSTANTS.API_PROXY_URL) {
+        return safeFetch(`${CONSTANTS.API_PROXY_URL}/proxy?url=${encodeURIComponent(url)}`, opts, timeout);
+      }
+      throw err;
+    })
+    .then(res => {
+      const elapsed = performance.now() - start;
+      if (!_sourceTimings[sourceName]) _sourceTimings[sourceName] = { avg: elapsed, count: 1 };
+      else {
+        const t = _sourceTimings[sourceName];
+        t.avg = (t.avg * t.count + elapsed) / (t.count + 1);
+        t.count = Math.min(t.count + 1, 20);
+      }
+      return res;
+    });
 }
 
 // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
@@ -538,7 +589,13 @@ export async function fetchFromDataCache(sourceId, keyword) {
     // If keyword filter returns nothing, return random sample
     const results = filtered.length > 0 ? filtered :
       data.items.sort(() => Math.random() - 0.5).slice(0, 20);
-    return results.slice(0, STATE.perSource || 20);
+    // Sanitize: upgrade HTTP→HTTPS to prevent mixed-content blocking (e.g. KHM Vienna)
+    return results.slice(0, STATE.perSource || 20).map(item => ({
+      ...item,
+      thumb: item.thumb?.replace(/^http:\/\//, 'https://'),
+      url:   item.url?.replace(/^http:\/\//, 'https://'),
+      image: item.image?.replace(/^http:\/\//, 'https://'),
+    }));
   } catch { return null; }
 }
 

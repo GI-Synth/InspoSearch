@@ -30,6 +30,7 @@ import {
   trigramSimilarity, withTimeout, promisePool, extractTags, isLikelyReal,
   interleave, shuffle, cacheKey, CACHE_TTL, CACHE_MAX_BYTES,
   disableGeminiButtons, SOURCE_VIEW_FILTER, sourceFetch, fetchFromDataCache,
+  proxyImageUrl,
   setScoreItemRelevance, setGetDisplayResults,
   set_updateSourcesActiveCounterImmediate,
   spellCheck, computePHash, pHashDistance, PHASH_THRESHOLD,
@@ -716,6 +717,13 @@ function _processRenderQueue() {
         testImg._corsRetry = true;
         testImg.crossOrigin = null;
         testImg.src = item.thumb;
+        return;
+      }
+      // Last resort: route through image proxy worker to bypass CORS
+      if (!testImg._proxyRetry) {
+        testImg._proxyRetry = true;
+        testImg.crossOrigin = 'anonymous';
+        testImg.src = proxyImageUrl(item.thumb);
         return;
       }
       _renderActive--;

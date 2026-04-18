@@ -496,9 +496,9 @@ export async function fetchSmithsonian(keyword, limit, signal, start = 0) {
   try {
 
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&start=${start}&online_media_type=Images`,
-      { signal }
+      { signal }, 'smithsonian'
     );
     if (!res.ok) throw new Error('Smithsonian fetch failed');
     const data = await res.json();
@@ -533,9 +533,9 @@ export async function fetchSmithsonian(keyword, limit, signal, start = 0) {
 export async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=${unitCode}`,
-      { signal }
+      { signal }, 'smithsonian'
     );
     if (!res.ok) throw new Error('Smithsonian unit fetch failed');
     const data = await res.json();
@@ -2706,9 +2706,9 @@ export async function fetchNaturalis(keyword, limit, signal) {
 export async function fetchNMAAHC(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NMAAHC`,
-      { signal }
+      { signal }, 'nmaahc'
     );
     if (!res.ok) throw new Error('NMAAHC failed');
     const data = await res.json();
@@ -2739,9 +2739,9 @@ export async function fetchNMAAHC(keyword, limit, signal) {
 export async function fetchNASM(keyword, limit, signal) {
   try {
     const key = STATE.smithsonianKey || 'DEMO_KEY';
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NASM`,
-      { signal }
+      { signal }, 'nasm'
     );
     if (!res.ok) throw new Error('NASM failed');
     const data = await res.json();

@@ -32,7 +32,7 @@ function checkRateLimit(ip) {
 
 function corsHeaders(env) {
   return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || 'https://insposearch.pages.dev',
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json; charset=utf-8',
@@ -102,6 +102,9 @@ export default {
       case '/search':
         return handleSearch(url, env);
 
+      case '/proxy':
+        return handleProxy(url, request, env);
+
       case '/random':
         return handleRandom(url, env);
 
@@ -128,6 +131,7 @@ export default {
             '/sources',
             '/random?count=6',
             '/health',
+            '/proxy?url=<encoded-api-url>',
             '/semantic?q=...',
             'POST /caption  { "url": "..." }',
             'POST /board    { "items": [...], "query": "..." }',
@@ -474,5 +478,83 @@ async function handleBoardGet(id, env) {
     return json(data, 200, env);
   } catch {
     return json({ error: 'Board data corrupted' }, 500, env);
+  }
+}
+
+// ── /proxy — CORS API proxy with strict domain allowlist ──────────────────
+// Forwards GET requests to CORS-blocked museum/library APIs.
+// Only allows requests to pre-approved domains to prevent abuse.
+const PROXY_ALLOWED_DOMAINS = new Set([
+  'chroniclingamerica.loc.gov',
+  'api.tepapa.govt.nz',
+  'collection.maas.museum', 'api.maas.museum',
+  'api.nga.gov',
+  'art.thewalters.org', 'api.thewalters.org',
+  'collections.britishart.yale.edu',
+  'digital.library.cornell.edu',
+  'digitalcollections.nypl.org', 'api.repo.nypl.org',
+  'gallica.bnf.fr',
+  'munch.emuseum.com',
+  'collections.lacma.org',
+  'data.ago.ca', 'ago.ca',
+  'www.mauritshuis.nl',
+  'www.wikiart.org',
+  'sammlung.mak.at',
+  'www.npg.org.uk',
+  'opacplus.bsb-muenchen.de',
+  'www.tate.org.uk',
+  'rest.museum-digital.de',
+  'www.artic.edu',
+  'api.artic.edu',
+  'openaccess-api.clevelandart.org',
+  'api.si.edu',
+  'imageapi.khm.at',
+]);
+
+async function handleProxy(url, request, env) {
+  if (request.method !== 'GET') {
+    return json({ error: 'Only GET requests are proxied' }, 405, env);
+  }
+
+  const targetUrl = url.searchParams.get('url');
+  if (!targetUrl) return json({ error: 'Missing ?url= parameter' }, 400, env);
+
+  let parsed;
+  try { parsed = new URL(targetUrl); } catch {
+    return json({ error: 'Invalid URL' }, 400, env);
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return json({ error: 'Only http/https URLs are supported' }, 400, env);
+  }
+
+  if (!PROXY_ALLOWED_DOMAINS.has(parsed.hostname)) {
+    return json({ error: 'Domain not in allowlist' }, 403, env);
+  }
+
+  try {
+    const upstream = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'application/json, application/ld+json, text/xml, */*;q=0.5',
+      },
+      cf: { cacheTtl: 300, cacheEverything: true },
+      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT),
+    });
+
+    // Pass through the response with CORS headers
+    const respHeaders = new Headers(upstream.headers);
+    respHeaders.set('Access-Control-Allow-Origin', env.ALLOWED_ORIGIN || '*');
+    respHeaders.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    respHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+    // Cache proxied API responses for 5 minutes at the edge
+    respHeaders.set('Cache-Control', 'public, max-age=300');
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: respHeaders,
+    });
+  } catch (e) {
+    return json({ error: 'Proxy fetch failed: ' + e.message }, 502, env);
   }
 }

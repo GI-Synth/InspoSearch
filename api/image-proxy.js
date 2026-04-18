@@ -20,7 +20,7 @@
  *   - Rate limit: 120 req/min per IP
  */
 
-const RATE_LIMIT  = 120;
+const RATE_LIMIT  = 600;
 const RATE_WINDOW = 60_000;
 const MAX_BYTES   = 10 * 1024 * 1024; // 10 MB
 const rateBuckets = new Map();
