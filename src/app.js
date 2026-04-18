@@ -99,7 +99,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   // ~60 sources reliably return results on any query.
   // This ensures the slider value matches actual images shown.
   // Dynamic registry can push active sources well beyond 155 → scale distribution
-  const dynamicActive = selectDynamicSources(keyword, 40).length;
+  const dynamicActive = selectDynamicSources(keyword, 120).length;
   const PRODUCTIVE_SOURCE_ESTIMATE = STATE.searchMode === 'exact'
     ? Math.max(30, 30 + Math.floor(dynamicActive * 0.3))
     : Math.max(60, 60 + Math.floor(dynamicActive * 0.4));
@@ -387,7 +387,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     callIfHealthy('quai_branly',             fetchQuaiBranly(keyword,             Math.max(3, perSource), signal)).then(onSourceResult('quai_branly')).catch(() => {}),
     // Phase H — 113 World Museum sources (deferred to wave 2 below)
     // ── DYNAMIC REGISTRY — Europeana providers, DPLA hubs (when keys set) ──
-    ...selectDynamicSources(keyword, 40).map(entry => {
+    ...selectDynamicSources(keyword, 120).map(entry => {
       const adapter = ADAPTERS[entry.adapter];
       if (!adapter) return Promise.resolve();
       return adapter(entry.config, keyword, Math.max(2, Math.ceil(perSource / 3)), signal)
@@ -2116,37 +2116,23 @@ export async function fetchMoreResults() {
   if (btn) btn.textContent = 'loading…';
   STATE.currentPage++;
   const page      = STATE.currentPage;
-  // Use realistic productive source count, not total registered count.
-  // ~60 sources reliably return results on any query.
-  const PRODUCTIVE_SOURCE_ESTIMATE = 60;
+  const kw        = STATE.keywords[0] || STATE.query;
+  // Build a dynamic pool from all healthy sources + dynamic registry
+  const healthy = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id));
+  const dyn     = selectDynamicSources(kw, 60).map(s => s.id || s);
+  const union   = [...new Set([...healthy, ...dyn])];
+  const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(30, union.length);
   const perSource = Math.max(2, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
   const offset    = (page - 1) * STATE.imageCount;
-  const kw        = STATE.keywords[0] || STATE.query;
   const ac        = new AbortController();
   _secondaryControllers.add(ac);
   const signal    = ac.signal;
-  // Use the same ALL_SOURCES pool as fetchAll, not a hardcoded list of 6.
-  const fetches = [
-    callIfHealthy('met',         fetchMet(kw, perSource, signal, offset)),
-    callIfHealthy('chicago',     fetchChicagoArt(kw, perSource, signal, page)),
-    callIfHealthy('europeana',   fetchEuropeana(kw, perSource, signal, offset + 1)),
-    callIfHealthy('gbif',        fetchGBIF(kw, perSource, signal, offset)),
-
-    callIfHealthy('rijksmuseum', fetchRijksmuseum(kw, perSource, signal)),
-    callIfHealthy('smithsonian', fetchSmithsonian(kw, perSource, signal, offset)),
-    callIfHealthy('flickr',      fetchFlickrCommons(kw, perSource, signal, page)),
-    callIfHealthy('harvard',     fetchHarvard(kw, perSource, signal, page)),
-    callIfHealthy('dpla',        fetchDPLA(kw, perSource, signal, page)),
-    callIfHealthy('ddb',         fetchDDB(kw, perSource, signal)),
-    callIfHealthy('gallica',     fetchGallica(kw, perSource, signal, offset + 1)),
-    callIfHealthy('wellcome',    fetchWellcome(kw, perSource, signal, page)),
-    callIfHealthy('trove',       fetchTrove(kw, perSource, signal)),
-    callIfHealthy('digitalnz',   fetchDigitalNZ(kw, perSource, signal)),
-    callIfHealthy('nypl',        fetchNYPL(kw, perSource, signal)),
-    callIfHealthy('walters',     fetchWalters(kw, perSource, signal)),
-    callIfHealthy('tate',        fetchTate(kw, perSource, signal)),
-    callIfHealthy('bhl',         fetchBHL(kw, perSource, signal)),
-  ];
+  // Fan out to all healthy sources that have adapters
+  const fetches = union.map(id => {
+    const adapter = ADAPTERS[id];
+    if (!adapter) return Promise.resolve([]);
+    return callIfHealthy(id, adapter(kw, perSource, signal, offset).catch(() => []));
+  });
   const settled = await Promise.allSettled(fetches);
   if (STATE.query !== startQuery) { STATE.loading = false; _secondaryControllers.delete(ac); updateLoadMoreLabel(); return; }
   let items = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);

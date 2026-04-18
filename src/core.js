@@ -132,6 +132,9 @@ export function recordSourceResult(sourceName, resultCount) {
     }
   } else {
     h[sourceName].misses++;
+    if (h[sourceName].misses === CONSTANTS.HEALTH_MISS_LIMIT) {
+      h[sourceName].pausedAt = Date.now();
+    }
   }
   if (!_healthWriteTimer) _healthWriteTimer = setTimeout(_flushSourceHealth, 2000);
 }
@@ -140,6 +143,13 @@ export function isSourceHealthy(sourceName) {
   const h = STATE.sourceHealth[sourceName];
   if (!h) return true;           // never tried — always allow
   if (h.misses >= CONSTANTS.HEALTH_MISS_LIMIT) {
+    // Auto-recover after HEALTH_RECOVERY_MS — half-decay misses so source gets another chance
+    if (h.pausedAt && Date.now() - h.pausedAt > CONSTANTS.HEALTH_RECOVERY_MS) {
+      h.misses = Math.floor(h.misses / 2);
+      h.pausedAt = 0;
+      h._notified = false;
+      return true;
+    }
     if (!h._notified) {
       h._notified = true;
       if (hooks.showToast) hooks.showToast(`source "${sourceName}" paused — no results after ${CONSTANTS.HEALTH_MISS_LIMIT} tries`, 3000);
@@ -151,6 +161,7 @@ export function isSourceHealthy(sourceName) {
 
 export function callIfHealthy(sourceName, fetchPromise) {
   if (STATE.disabledSources.has(sourceName)) return Promise.resolve([]);
+  if (_unavailableSources.has(sourceName)) return Promise.resolve([]);
   if (!isSourceHealthy(sourceName)) return Promise.resolve([]);
   return fetchPromise;
 }
@@ -488,7 +499,7 @@ export const _sourceTimings = {};
 export function sourceFetch(url, opts = {}, sourceName) {
   const timing = _sourceTimings[sourceName];
   const timeout = timing
-    ? Math.min(5000, Math.max(2000, Math.round(timing.avg * 2)))
+    ? Math.min(8000, Math.max(4000, Math.round(timing.avg * 2)))
     : CONSTANTS.FETCH_TIMEOUT;
   const start = performance.now();
   return safeFetch(url, opts, timeout).then(res => {
@@ -504,9 +515,17 @@ export function sourceFetch(url, opts = {}, sourceName) {
 }
 
 // ── Data cache helper — reads pre-fetched data from /data/{sourceId}.json ──
+// Sources with missing data files are tracked in _unavailableSources to avoid
+// repeated 404s and to prevent health-miss penalties for missing cache files.
+export const _unavailableSources = new Set();
 export async function fetchFromDataCache(sourceId, keyword) {
+  if (_unavailableSources.has(sourceId)) return [];  // skip silently, no miss penalty
   try {
     const res = await fetch(`/data/${sourceId}.json`);
+    if (res.status === 404) {
+      _unavailableSources.add(sourceId);
+      return [];  // return [] (not null) so caller doesn't record a miss
+    }
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.items || !data.items.length) return null;

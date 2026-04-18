@@ -46,6 +46,28 @@ function json(data, status, env) {
   });
 }
 
+// ── Safe upstream fetching — prevents WAF/HTML errors from crashing .json() ──
+const UA = 'InspoSearch/1.1 (+https://insposearch.pages.dev)';
+const UPSTREAM_TIMEOUT = 12_000;
+
+function fetchUA(url) {
+  return fetch(url, {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    cf: { cacheTtl: 60 },
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT),
+  });
+}
+
+function safeJson(promise) {
+  return promise
+    .then(async r => {
+      if (!r.ok) return null;
+      if (!(r.headers.get('content-type') || '').includes('application/json')) return null;
+      return r.json().catch(() => null);
+    })
+    .catch(() => null);
+}
+
 // Minimal source list (mirrors sources.manifest.json structure)
 const SOURCES_URL = 'https://insposearch.pages.dev/sources.manifest.json';
 
@@ -143,11 +165,10 @@ async function handleSearch(url, env) {
   const perSource = Math.ceil(limit / 4);
 
   // Fan out to multiple CORS-friendly sources in parallel
-  const [chicagoRes, metRes, clevelandRes, harvardRes] = await Promise.allSettled([
+  const [chicagoRes, metRes, clevelandRes, harvardRes, rijksRes, flickrRes] = await Promise.allSettled([
     // Art Institute of Chicago
-    fetch(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(q)}&limit=${perSource}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles`)
-      .then(r => r.json())
-      .then(data => (data.data || []).filter(obj => obj.image_id).map(obj => ({
+    safeJson(fetchUA(`https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(q)}&limit=${perSource}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles`))
+      .then(data => (data?.data || []).filter(obj => obj.image_id).map(obj => ({
         id: `artic_${obj.id}`,
         title: obj.title || 'Untitled',
         artist: obj.artist_display || '',
@@ -160,16 +181,15 @@ async function handleSearch(url, env) {
         sourceUrl: `https://www.artic.edu/artworks/${obj.id}`,
       }))),
     // Met Museum — search IDs then fetch details
-    fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(q)}&hasImages=true`)
-      .then(r => r.json())
+    safeJson(fetchUA(`https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(q)}&hasImages=true`))
       .then(async data => {
-        const ids = (data.objectIDs || []).slice(0, perSource);
+        const ids = (data?.objectIDs || []).slice(0, perSource);
         if (!ids.length) return [];
         const details = await Promise.allSettled(
-          ids.map(id => fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`).then(r => r.json()))
+          ids.map(id => safeJson(fetchUA(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`)))
         );
         return details
-          .filter(r => r.status === 'fulfilled' && r.value.primaryImageSmall)
+          .filter(r => r.status === 'fulfilled' && r.value?.primaryImageSmall)
           .map(r => r.value)
           .map(obj => ({
             id: `met_${obj.objectID}`,
@@ -185,9 +205,8 @@ async function handleSearch(url, env) {
           }));
       }),
     // Cleveland Museum of Art
-    fetch(`https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(q)}&has_image=1&limit=${perSource}`)
-      .then(r => r.json())
-      .then(data => (data.data || []).filter(obj => obj.images?.web?.url).map(obj => ({
+    safeJson(fetchUA(`https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(q)}&has_image=1&limit=${perSource}`))
+      .then(data => (data?.data || []).filter(obj => obj.images?.web?.url).map(obj => ({
         id: `cle_${obj.id}`,
         title: obj.title || 'Untitled',
         artist: obj.creators?.[0]?.description || '',
@@ -201,9 +220,8 @@ async function handleSearch(url, env) {
       }))),
     // Harvard Art Museums
     env.HARVARD_KEY
-      ? fetch(`https://api.harvardartmuseums.org/object?q=${encodeURIComponent(q)}&hasimage=1&size=${perSource}&apikey=${env.HARVARD_KEY}`)
-          .then(r => r.json())
-          .then(data => (data.records || []).filter(obj => obj.primaryimageurl).map(obj => ({
+      ? safeJson(fetchUA(`https://api.harvardartmuseums.org/object?q=${encodeURIComponent(q)}&hasimage=1&size=${perSource}&apikey=${env.HARVARD_KEY}`))
+          .then(data => (data?.records || []).filter(obj => obj.primaryimageurl).map(obj => ({
             id: `harvard_${obj.id}`,
             title: obj.title || 'Untitled',
             artist: obj.people?.[0]?.name || '',
@@ -216,19 +234,46 @@ async function handleSearch(url, env) {
             sourceUrl: obj.url || '',
           })))
       : Promise.resolve([]),
+    // Rijksmuseum (keyless public API)
+    safeJson(fetchUA(`https://www.rijksmuseum.nl/api/en/collection?key=0fiuZFh4&ps=${perSource}&q=${encodeURIComponent(q)}&imgonly=True`))
+      .then(data => (data?.artObjects || []).filter(obj => obj.webImage?.url).map(obj => ({
+        id: `rijks_${obj.objectNumber}`,
+        title: obj.title || 'Untitled',
+        artist: obj.principalOrFirstMaker || '',
+        date: obj.longTitle || '',
+        tags: [],
+        thumbnail: obj.webImage.url.replace('=s0', '=s400'),
+        image: obj.webImage.url,
+        source: 'Rijksmuseum',
+        sourceUrl: obj.links?.web || `https://www.rijksmuseum.nl/en/collection/${obj.objectNumber}`,
+      }))),
+    // Flickr Commons (keyless)
+    safeJson(fetchUA(`https://www.flickr.com/services/rest/?method=flickr.photos.search&is_commons=1&text=${encodeURIComponent(q)}&per_page=${perSource}&format=json&nojsoncallback=1`))
+      .then(data => (data?.photos?.photo || []).map(p => ({
+        id: `flickr_${p.id}`,
+        title: p.title || 'Untitled',
+        artist: '',
+        tags: [],
+        thumbnail: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_z.jpg`,
+        image: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
+        source: 'Flickr Commons',
+        sourceUrl: `https://www.flickr.com/photos/${p.owner}/${p.id}`,
+      }))),
   ]);
 
   const results = [
-    ...(chicagoRes.status === 'fulfilled' ? chicagoRes.value : []),
-    ...(metRes.status === 'fulfilled' ? metRes.value : []),
-    ...(clevelandRes.status === 'fulfilled' ? clevelandRes.value : []),
-    ...(harvardRes.status === 'fulfilled' ? harvardRes.value : []),
+    ...(chicagoRes.status === 'fulfilled' ? chicagoRes.value || [] : []),
+    ...(metRes.status === 'fulfilled' ? metRes.value || [] : []),
+    ...(clevelandRes.status === 'fulfilled' ? clevelandRes.value || [] : []),
+    ...(harvardRes.status === 'fulfilled' ? harvardRes.value || [] : []),
+    ...(rijksRes.status === 'fulfilled' ? rijksRes.value || [] : []),
+    ...(flickrRes.status === 'fulfilled' ? flickrRes.value || [] : []),
   ];
 
   return json({
     query: q,
     count: results.length,
-    sources: ['Art Institute of Chicago', 'The Met Museum', 'Cleveland Museum of Art', 'Harvard Art Museums'],
+    sources: ['Art Institute of Chicago', 'The Met Museum', 'Cleveland Museum of Art', 'Harvard Art Museums', 'Rijksmuseum', 'Flickr Commons'],
     results: results.slice(0, limit),
   }, 200, env);
 }
@@ -238,15 +283,13 @@ async function handleRandom(url, env) {
   const randomTerms = ['landscape', 'portrait', 'still life', 'botanical', 'architecture',
     'sculpture', 'textile', 'manuscript', 'ceramic', 'mythology'];
   const term = randomTerms[Math.floor(Math.random() * randomTerms.length)];
+  const perSource = Math.ceil(count / 3);
 
   try {
-    const artic = await fetch(
-      `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(term)}&limit=${count}&fields=id,title,image_id,artist_display,date_display`
-    );
-    const data = await artic.json();
-    const results = (data.data || [])
-      .filter(obj => obj.image_id)
-      .map(obj => ({
+    const [articRes, clevelandRes, rijksRes] = await Promise.allSettled([
+      safeJson(fetchUA(
+        `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(term)}&limit=${perSource}&fields=id,title,image_id,artist_display,date_display`
+      )).then(data => (data?.data || []).filter(obj => obj.image_id).map(obj => ({
         id: `artic_${obj.id}`,
         title: obj.title || 'Untitled',
         artist: obj.artist_display || '',
@@ -254,7 +297,34 @@ async function handleRandom(url, env) {
         thumbnail: `https://www.artic.edu/iiif/2/${obj.image_id}/full/400,/0/default.jpg`,
         source: 'Art Institute of Chicago',
         sourceUrl: `https://www.artic.edu/artworks/${obj.id}`,
-      }));
+      }))),
+      safeJson(fetchUA(
+        `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(term)}&has_image=1&limit=${perSource}`
+      )).then(data => (data?.data || []).filter(obj => obj.images?.web?.url).map(obj => ({
+        id: `cle_${obj.id}`,
+        title: obj.title || 'Untitled',
+        artist: obj.creators?.[0]?.description || '',
+        date: obj.creation_date || '',
+        thumbnail: obj.images.web.url,
+        source: 'Cleveland Museum of Art',
+        sourceUrl: obj.url || `https://www.clevelandart.org/art/${obj.id}`,
+      }))),
+      safeJson(fetchUA(
+        `https://www.rijksmuseum.nl/api/en/collection?key=0fiuZFh4&ps=${perSource}&q=${encodeURIComponent(term)}&imgonly=True`
+      )).then(data => (data?.artObjects || []).filter(obj => obj.webImage?.url).map(obj => ({
+        id: `rijks_${obj.objectNumber}`,
+        title: obj.title || 'Untitled',
+        artist: obj.principalOrFirstMaker || '',
+        thumbnail: obj.webImage.url.replace('=s0', '=s400'),
+        source: 'Rijksmuseum',
+        sourceUrl: obj.links?.web || `https://www.rijksmuseum.nl/en/collection/${obj.objectNumber}`,
+      }))),
+    ]);
+    const results = [
+      ...(articRes.status === 'fulfilled' ? articRes.value || [] : []),
+      ...(clevelandRes.status === 'fulfilled' ? clevelandRes.value || [] : []),
+      ...(rijksRes.status === 'fulfilled' ? rijksRes.value || [] : []),
+    ].slice(0, count);
     return json({ term, count: results.length, results }, 200, env);
   } catch {
     return json({ error: 'Failed to fetch random items' }, 502, env);

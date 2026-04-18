@@ -15,7 +15,8 @@ export const CONSTANTS = {
   RETRY_DELAY:        2000,
   MAX_RESULTS:        5000,
   MAX_CHAT_HISTORY:     20,
-  HEALTH_MISS_LIMIT:     5,   // consecutive misses before disabling a source
+  HEALTH_MISS_LIMIT:    10,   // consecutive misses before disabling a source (was 5)
+  HEALTH_RECOVERY_MS: 5 * 60 * 1000, // auto-recover paused sources after 5 min
   FETCH_TIMEOUT:      5000,   // default safeFetch timeout (ms)
   COUNTER_DEBOUNCE:    300,   // updateSourcesActiveCounter debounce (ms)
   // Per-source fetch limit overrides — high-inventory sources get larger quotas,
