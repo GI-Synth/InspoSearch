@@ -101,8 +101,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   const PRODUCTIVE_SOURCE_ESTIMATE = STATE.searchMode === 'exact'
     ? Math.max(30, 30 + Math.floor(dynamicActive * 0.3))
     : Math.max(40, 40 + Math.floor(dynamicActive * 0.3));
-  const perSource  = Math.max(6, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
-  const fetchBatch = perSource + 4;
+  const perSource  = Math.max(12, Math.ceil(totalCount / PRODUCTIVE_SOURCE_ESTIMATE));
+  const fetchBatch = perSource + 6;
   // Per-source limit overrides: high-inventory sources use the PER_SOURCE_LIMIT floor
   const limitFor = id => Math.max(fetchBatch, CONSTANTS.PER_SOURCE_LIMIT[id] ?? 0);
 
@@ -2176,7 +2176,7 @@ export async function fetchMoreResults() {
   }
   // Quality gate: skip items with tiny thumbnails or empty metadata
   items = items.filter(r => {
-    if (!r.thumbnail && !r.image) return false;
+    if (!r.thumb && !r.url) return false;
     const title = (r.title || '').trim();
     if (title.length < 2 && !(r.artist || '').trim()) return false;
     return true;
@@ -7404,16 +7404,16 @@ export function applyBoardTemplate(template) {
   ];
 
   const CATEGORIES = [
-    { name: 'paintings',      query: 'painting oil canvas' },
-    { name: 'photography',    query: 'photograph vintage' },
-    { name: 'sculpture',      query: 'sculpture marble bronze' },
-    { name: 'architecture',   query: 'architecture building cathedral' },
-    { name: 'manuscripts',    query: 'manuscript illuminated medieval' },
-    { name: 'maps & charts',  query: 'map cartography atlas' },
-    { name: 'textiles',       query: 'textile tapestry embroidery' },
-    { name: 'prints',         query: 'print etching engraving woodcut' },
-    { name: 'ceramics',       query: 'ceramic pottery porcelain' },
-    { name: 'natural history', query: 'botanical flora fauna specimen' },
+    { name: 'paintings',      query: 'painting' },
+    { name: 'photography',    query: 'photography' },
+    { name: 'sculpture',      query: 'sculpture' },
+    { name: 'architecture',   query: 'architecture' },
+    { name: 'manuscripts',    query: 'manuscript' },
+    { name: 'maps & charts',  query: 'map' },
+    { name: 'textiles',       query: 'textile' },
+    { name: 'prints',         query: 'print' },
+    { name: 'ceramics',       query: 'ceramic' },
+    { name: 'natural history', query: 'botanical' },
   ];
 
   const HEROES = [
