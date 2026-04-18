@@ -9,7 +9,7 @@ import {
 } from './state.js';
 import {
   cacheGet, cacheSet, extractTags, fetchFromDataCache, isLikelyReal,
-  safeFetch, sleep, sourceFetch, stripHtml
+  safeFetch, shuffle, sleep, sourceFetch, stripHtml
 } from './core.js';
 
 /* Map UI medium values → Europeana TYPE facet values */
@@ -935,6 +935,8 @@ export async function fetchNordicMuseum(keyword, limit, signal) {
 }
 
 export async function fetchGetty(keyword, limit, signal) {
+  // API retired — data.getty.edu returns 404 as of 2026-04
+  return [];
   try {
 
     const res = await safeFetch(
@@ -971,6 +973,8 @@ export async function fetchGetty(keyword, limit, signal) {
 }
 
 export async function fetchNGA(keyword, limit, signal, offset = 0) {
+  // API retired — api.nga.gov returns 404 as of 2026-04
+  return [];
   try {
 
     const res = await sourceFetch(
@@ -1414,6 +1418,8 @@ export async function fetchParisMusees(keyword, limit, signal) {
 }
 
 export async function fetchYale(keyword, limit, signal) {
+  // API returns 403 as of 2026-04
+  return [];
   try {
 
     const res = await safeFetch(
@@ -1560,6 +1566,8 @@ export async function fetchCooperHewitt(keyword, limit, signal) {
 
 // C01 — Tate Collection
 export async function fetchTate(keyword, limit, signal) {
+  // API retired — tate.org.uk/api/v1 returns 404 as of 2026-04
+  return [];
   try {
 
     const res = await safeFetch(
@@ -1906,6 +1914,8 @@ export async function fetchArtsy(keyword, limit, signal) {
 
 // C09 — Portable Antiquities Scheme (UK finds)
 export async function fetchPAS(keyword, limit, signal) {
+  // API now requires authentication (403) as of 2026-04
+  return [];
   try {
 
     const res = await safeFetch(
@@ -1946,6 +1956,8 @@ export async function fetchSMG(keyword, limit, signal) {
       { signal, headers: { 'Accept': 'application/json' } }
     );
     if (!res.ok) throw new Error('SMG failed');
+    const ct = (res.headers.get('content-type') || '');
+    if (!ct.includes('json')) throw new Error('SMG returned non-JSON: ' + ct);
     const data = await res.json();
     return (data.data || [])
       .filter(item => item.attributes?.images?.[0]?.processed?.medium?.location)
@@ -2177,6 +2189,8 @@ export async function fetchThyssen(keyword, limit, signal) {
 // ── BATCH 4 FETCH FUNCTIONS ──────────────────────────────────
 
 export async function fetchWalters(keyword, limit, signal) {
+  // API now requires authentication (403) as of 2026-04
+  return [];
   try {
     const res = await safeFetch(
       `https://api.thewalters.org/v1/objects.json?keyword=${encodeURIComponent(keyword)}&orderBy=relevance&page=1&pageSize=${limit}&apikey=`,
@@ -3541,6 +3555,8 @@ export async function fetchBodleian(keyword, limit, signal) {
 
 /* Bayerische Staatsbibliothek / BSB Munich — no key, best-effort CORS */
 export async function fetchBSB(keyword, limit, signal) {
+  // API endpoint gone (404) as of 2026-04
+  return [];
   try {
     const res = await safeFetch(
       `https://api.digitale-sammlungen.de/search/v1/json?q=${encodeURIComponent(keyword)}&size=${limit}&page=0`,
