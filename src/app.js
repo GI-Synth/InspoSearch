@@ -183,14 +183,14 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     if (!items || !items.length) return;
     // ── Quality gate — skip low-quality items before they enter the grid ──
     items = items.filter(item => {
-      // Must have an image
-      if (!item.thumbnail && !item.image) return false;
+      // Must have an image (fetchers use `thumb` and `url`, not `thumbnail`/`image`)
+      if (!item.thumb && !item.url) return false;
       // Skip items with no title AND no artist (likely junk metadata)
       const title = (item.title || '').trim();
       const artist = (item.artist || '').trim();
       if (title.length < 2 && !artist) return false;
       // Skip tiny placeholder thumbnails (common museum "no image" placeholders)
-      const thumb = item.thumbnail || item.image || '';
+      const thumb = item.thumb || item.url || '';
       if (/width=([1-9]\d?)(?:\D|$)/.test(thumb) && parseInt(RegExp.$1) < 80) return false;
       return true;
     });

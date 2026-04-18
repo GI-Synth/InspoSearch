@@ -617,7 +617,7 @@ export function getSourceDomain(sourceId) {
     try { return new URL(fromConfig).hostname; } catch {}
   }
   if (sourceId?.startsWith('euro_')) return 'europeana.eu';
-  return SOURCE_DOMAINS[sourceId] || (sourceId + '.org');
+  return SOURCE_DOMAINS[sourceId] || '';
 }
 
 export function getSourceMonogram(label) {
@@ -643,16 +643,21 @@ export function createSourceIdentity(sourceId, labelText) {
   const icon = document.createElement('img');
   icon.className = 'source-icon';
   icon.alt = sourceLabel + ' icon';
-  icon.src = 'https://' + domain + '/favicon.ico';
 
   const mono = document.createElement('span');
   mono.className = 'source-mono';
   mono.textContent = getSourceMonogram(sourceLabel);
 
-  icon.onerror = () => {
+  if (domain) {
+    icon.src = 'https://' + domain + '/favicon.ico';
+    icon.onerror = () => {
+      icon.style.display = 'none';
+      mono.style.display = 'inline-flex';
+    };
+  } else {
     icon.style.display = 'none';
     mono.style.display = 'inline-flex';
-  };
+  }
 
   iconWrap.appendChild(icon);
   iconWrap.appendChild(mono);

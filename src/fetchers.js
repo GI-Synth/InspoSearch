@@ -192,12 +192,14 @@ export async function fetchMet(keyword, limit, signal, offset = 0) {
     const searchUrl = `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(keyword + mediumSuffix)}&hasImages=true&offset=${offset}`;
     const res = await sourceFetch(searchUrl, { signal }, 'met');
     if (res.status === 429) { await sleep(CONSTANTS.RETRY_DELAY); if (signal && signal.aborted) return []; }
+    const ct = (res.headers.get('content-type') || '');
+    if (!ct.includes('json')) throw new Error('Met returned non-JSON');
     const data = await res.json();
     const ids = (data.objectIDs || []).slice(0, limit);
     if (!ids.length) return [];
     const fetches = ids.slice(0, CONSTANTS.MET_DETAIL_LIMIT).map(id =>
       fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal })
-        .then(r => r.json())
+        .then(r => { if (!(r.headers.get('content-type') || '').includes('json')) return null; return r.json(); })
         .catch(() => null)
     );
     const objects = await Promise.all(fetches);
@@ -936,12 +938,12 @@ export async function fetchGetty(keyword, limit, signal) {
   try {
 
     const res = await safeFetch(
-      `https://data.getty.edu/museum/collection/object?q=${encodeURIComponent(keyword)}&limit=${limit}`,
+      `https://data.getty.edu/museum/collection/object/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
       { signal }
     );
     if (!res.ok) throw new Error('Getty failed');
     const data = await res.json();
-    return (data.items || [])
+    return (data.orderedItems || data.items || [])
       .map(item => {
         const imgUrl = item.subject_of?.[0]?.digitally_shown_by?.[0]?.access_point?.[0]?.id;
         if (!imgUrl) return null;
@@ -1258,7 +1260,11 @@ export async function fetchBHL(keyword, limit, signal) {
       { signal }
     );
     if (!res.ok) throw new Error('BHL failed');
-    const data = await res.json();
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('BHL returned non-JSON');
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error('BHL returned invalid JSON'); }
     const titles = (data.Result || []).slice(0, 3);
     if (!titles.length) return [];
     const itemID = titles[0].Items?.[0]?.ItemID;
@@ -1268,7 +1274,11 @@ export async function fetchBHL(keyword, limit, signal) {
       { signal }
     );
     if (!res2.ok) throw new Error('BHL pages failed');
-    const data2 = await res2.json();
+    const ct2 = res2.headers.get('content-type') || '';
+    if (!ct2.includes('json')) throw new Error('BHL pages returned non-JSON');
+    const text2 = await res2.text();
+    let data2;
+    try { data2 = JSON.parse(text2); } catch { throw new Error('BHL pages returned invalid JSON'); }
     const titleFull = data2.Result?.[0]?.FullTitle || 'BHL Title';
     const pages = (data2.Result?.[0]?.Pages || []).filter(p => p.PageID).slice(0, limit);
     return pages
@@ -1510,12 +1520,16 @@ export async function fetchUSGS(keyword, limit, signal) {
 export async function fetchCooperHewitt(keyword, limit, signal) {
   try {
 
-    const CH_TOKEN = '4d47366a4e7f1abe2bd9d882dc86e0b5';
+    const CH_TOKEN = STATE.cooperHewittKey || '4d47366a4e7f1abe2bd9d882dc86e0b5';
     const res = await safeFetch(
       `https://collection.cooperhewitt.org/api/rest/?method=cooperhewitt.search.objects&query=${encodeURIComponent(keyword)}&has_images=1&per_page=${limit}&access_token=${CH_TOKEN}`,
       { signal }
     );
-    if (!res.ok) throw new Error('CooperHewitt failed');
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (body.includes('Invalid access token')) throw new Error('CooperHewitt: invalid access token');
+      throw new Error('CooperHewitt failed');
+    }
     const data = await res.json();
     return (data.objects || [])
       .filter(item => item.images?.[0]?.b?.url)
@@ -1652,24 +1666,24 @@ export async function fetchSOCH(keyword, limit, signal) {
 export async function fetchJoconde(keyword, limit, signal) {
   try {
     const res = await safeFetch(
-      `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?where=search(title%2C%22${encodeURIComponent(keyword)}%22)&limit=${limit}&select=ref,title,auteur,datation,domaine,lien`,
+      `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?q=${encodeURIComponent(keyword)}&limit=${limit}&select=reference,titre,auteur,presence_image,domaine,periode_de_creation`,
       { signal },
       8000
     );
     if (!res.ok) throw new Error('Joconde failed');
     const data = await res.json();
     return (data.results || [])
-      .filter(item => item.ref)
+      .filter(item => item.reference && item.presence_image === 'oui')
       .map(item => ({
-        id:          'joconde_' + item.ref,
-        url:         `https://www.pop.culture.gouv.fr/medias/cible/${item.ref}.jpg`,
-        thumb:       `https://www.pop.culture.gouv.fr/medias/cible/${item.ref}.jpg`,
-        title:       item.title || 'French Museum Object',
+        id:          'joconde_' + item.reference,
+        url:         `https://www.pop.culture.gouv.fr/notice/joconde/${item.reference}`,
+        thumb:       `https://www.pop.culture.gouv.fr/medias/joconde/${item.reference}/img0.jpg`,
+        title:       item.titre || 'French Museum Object',
         description: item.auteur || '',
         source:      'joconde',
-        sourceUrl:   item.lien || '',
-        year:        (item.datation || '').match(/\d{4}/)?.[0] || null,
-        tags:        [item.domaine].filter(Boolean).map(t => t.toLowerCase()),
+        sourceUrl:   `https://www.pop.culture.gouv.fr/notice/joconde/${item.reference}`,
+        year:        (item.periode_de_creation || '').match(/\d{4}/)?.[0] || null,
+        tags:        (Array.isArray(item.domaine) ? item.domaine : [item.domaine]).filter(Boolean).map(t => t.toLowerCase()),
         colors: [], aiTags: [],
       }))
       .filter(isLikelyReal)
@@ -1929,7 +1943,7 @@ export async function fetchSMG(keyword, limit, signal) {
 
     const res = await safeFetch(
       `https://collection.sciencemuseumgroup.org.uk/search/objects?q=${encodeURIComponent(keyword)}&has_image=1&page[number]=1&page[size]=${limit}`,
-      { signal }
+      { signal, headers: { 'Accept': 'application/json' } }
     );
     if (!res.ok) throw new Error('SMG failed');
     const data = await res.json();
@@ -1961,9 +1975,11 @@ export async function fetchAuckland(keyword, limit, signal) {
 
     const res = await safeFetch(
       `https://api.aucklandmuseum.com/id/media/v2/mediaartifact/?q=${encodeURIComponent(keyword)}&size=${limit}`,
-      { signal }
+      { signal, headers: { 'Accept': 'application/json' } }
     );
     if (!res.ok) throw new Error('Auckland failed');
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('Auckland returned non-JSON: ' + ct);
     const data = await res.json();
     return (data.hits?.hits || [])
       .filter(item => item._source?.media_id?.[0])
@@ -2037,17 +2053,20 @@ export async function fetchWellcome(keyword, limit, signal, page = 1) {
     const data = await res.json();
     return (data.results || [])
       .filter(item => item.thumbnail?.url)
-      .map(item => ({
+      .map(item => {
+        const base = item.thumbnail.url.replace(/\/full\/[^/]+\/\d+\/default\.\w+$/, '');
+        return {
         id:          'wellcome_' + item.id,
-        url:         item.thumbnail.url + '/full/max/0/default.jpg',
-        thumb:       item.thumbnail.url + '/full/400,/0/default.jpg',
+        url:         base + '/full/max/0/default.jpg',
+        thumb:       base + '/full/400,/0/default.jpg',
         title:       item.title || 'Wellcome Item',
         description: item.contributors?.[0]?.agent?.label || '',
         source:      'wellcome',
         sourceUrl:   `https://wellcomecollection.org/works/${item.id}`,
         year:        item.production?.[0]?.dates?.[0]?.label?.match(/\d{4}/)?.[0] || null,
         tags: [], colors: [], aiTags: [],
-      }))
+      };
+      })
       .filter(isLikelyReal)
       .slice(0, limit);
   } catch (e) {
@@ -2525,6 +2544,8 @@ export async function fetchMia(keyword, limit, signal) {
       { signal }
     );
     if (!res.ok) throw new Error('Mia failed');
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('Mia returned non-JSON: ' + ct);
     const data = await res.json();
     return (data.hits?.hits || [])
       .filter(hit => hit._source?.image === 'valid' && hit._source?.restricted === 0)
@@ -2844,7 +2865,7 @@ export async function fetchWhitney(keyword, limit, signal) {
     if (!STATE.whitneyCache.length ||
         cacheAge > 24 * 60 * 60 * 1000) {
       const res = await safeFetch(
-        'https://raw.githubusercontent.com/whitneymuseum/open-access/master/collection/artworks.csv',
+        'https://raw.githubusercontent.com/whitneymuseum/open-access/main/artworks.csv',
         { signal }
       );
       if (!res.ok) throw new Error('Whitney failed');
@@ -3483,14 +3504,16 @@ export async function fetchUnsplash(keyword, limit, signal) {
   }
 }
 
-/* Bodleian Libraries (Oxford) — no key, best-effort CORS */
+/* Bodleian Libraries (Oxford) — IIIF-based search, no key */
 export async function fetchBodleian(keyword, limit, signal) {
   try {
     const res = await safeFetch(
-      `https://digital.bodleian.ox.ac.uk/api/v1/search/?q=${encodeURIComponent(keyword)}&rows=${limit}&start=0&t=image`,
-      { signal }
+      `https://digital.bodleian.ox.ac.uk/search/?q=${encodeURIComponent(keyword)}&rows=${limit}&start=0`,
+      { signal, headers: { 'Accept': 'application/json' } }
     );
     if (!res.ok) throw new Error('Bodleian failed');
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('json')) throw new Error('Bodleian returned non-JSON');
     const data = await res.json();
     return (data.objects || [])
       .filter(obj => obj.thumbnail || obj.thumbnail_url)
