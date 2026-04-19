@@ -734,6 +734,9 @@ function _processRenderQueue() {
       _processRenderQueue();
     };
 
+    // Upgrade http:// → https:// to avoid mixed-content warnings
+    if (item.thumb && item.thumb.startsWith('http://')) item.thumb = item.thumb.replace('http://', 'https://');
+    if (item.url && item.url.startsWith('http://')) item.url = item.url.replace('http://', 'https://');
     testImg.src = item.thumb;
   }
 }
@@ -4729,6 +4732,7 @@ export function buildSourceRow(container, src) {
         const epInput = document.createElement('input');
         epInput.type = 'text';
         epInput.className = 'key-source-input';
+        epInput.name = src.id + '-endpoint';
         epInput.placeholder = 'endpoint — default: http://localhost:11434';
         epInput.autocomplete = 'off';
         epInput.value = STATE.ollamaEndpoint !== 'http://localhost:11434' ? STATE.ollamaEndpoint : '';
@@ -4737,6 +4741,7 @@ export function buildSourceRow(container, src) {
         const modelInput = document.createElement('input');
         modelInput.type = 'text';
         modelInput.className = 'key-source-input';
+        modelInput.name = src.id + '-model';
         modelInput.placeholder = 'model name — default: llava (vision-enabled)';
         modelInput.autocomplete = 'off';
         modelInput.value = STATE.ollamaModel !== 'llava' ? STATE.ollamaModel : '';
@@ -4771,6 +4776,7 @@ export function buildSourceRow(container, src) {
         const idInput = document.createElement('input');
         idInput.type = 'password';
         idInput.className = 'key-source-input';
+        idInput.name = src.id + '-client-id';
         idInput.placeholder = 'client_id — press enter';
         idInput.autocomplete = 'off';
         idInput.style.marginBottom = '4px';
@@ -4778,6 +4784,7 @@ export function buildSourceRow(container, src) {
         const secretInput = document.createElement('input');
         secretInput.type = 'password';
         secretInput.className = 'key-source-input';
+        secretInput.name = src.id + '-client-secret';
         secretInput.placeholder = 'client_secret — press enter';
         secretInput.autocomplete = 'off';
 
@@ -4827,6 +4834,7 @@ export function buildSourceRow(container, src) {
         inputEl = document.createElement('input');
         inputEl.type = 'password';
         inputEl.className = 'key-source-input';
+        inputEl.name = src.id + '-key';
         inputEl.placeholder = src.placeholder || 'paste key and press enter';
         inputEl.autocomplete = 'off';
 
@@ -4837,6 +4845,7 @@ export function buildSourceRow(container, src) {
           const epInput = document.createElement('input');
           epInput.type = 'text';
           epInput.className = 'key-source-input';
+          epInput.name = src.id + '-endpoint';
           epInput.placeholder = 'endpoint url (optional — for self-hosted / Ollama)';
           epInput.autocomplete = 'off';
           epInput.style.marginTop = '4px';
