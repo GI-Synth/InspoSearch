@@ -505,6 +505,7 @@ export function proxyImageUrl(url) {
 // Domains whose APIs are CORS-blocked from the browser.
 // sourceFetch auto-retries these through the API proxy worker.
 const CORS_BLOCKED_API_DOMAINS = new Set([
+  'collectionapi.metmuseum.org',
   'chroniclingamerica.loc.gov',
   'api.tepapa.govt.nz',
   'collection.maas.museum', 'api.maas.museum',

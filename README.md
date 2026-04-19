@@ -44,7 +44,7 @@ No build step. No dependencies. No server. Opens by double-click.
 | Feature | Description |
 |---|---|
 | **2487+ sources** | World museums, archives, nature databases, libraries, photography |
-| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482482482482482482482482482482472472472472472472472472472472472472472472472472472472472472472472477+ more |
+| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482482482482482482482482482482472472472472472472472472472472472472472472472472472472472472472472472472477+ more |
 | **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
 | **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
 | **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |

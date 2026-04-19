@@ -198,7 +198,7 @@ export async function fetchMet(keyword, limit, signal, offset = 0) {
     const ids = (data.objectIDs || []).slice(0, limit);
     if (!ids.length) return [];
     const fetches = ids.slice(0, CONSTANTS.MET_DETAIL_LIMIT).map(id =>
-      fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal })
+      sourceFetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal }, 'met')
         .then(r => { if (!(r.headers.get('content-type') || '').includes('json')) return null; return r.json(); })
         .catch(() => null)
     );

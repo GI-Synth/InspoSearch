@@ -485,6 +485,7 @@ async function handleBoardGet(id, env) {
 // Forwards GET requests to CORS-blocked museum/library APIs.
 // Only allows requests to pre-approved domains to prevent abuse.
 const PROXY_ALLOWED_DOMAINS = new Set([
+  'collectionapi.metmuseum.org',
   'chroniclingamerica.loc.gov',
   'api.tepapa.govt.nz',
   'collection.maas.museum', 'api.maas.museum',
