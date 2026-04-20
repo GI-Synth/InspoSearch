@@ -172,6 +172,7 @@ export function normalizeMet(obj) {
     thumb:       thumb,
     title:       obj.title || 'Untitled',
     description: [obj.artistDisplayName, obj.medium, obj.culture].filter(Boolean).join(' — '),
+    artist:      obj.artistDisplayName || '',
     source:      'met',
     sourceUrl:   obj.objectURL || '',
     year:        (obj.objectDate || '').match(/\d{4}/)?.[0] || null,
@@ -288,6 +289,7 @@ export async function fetchRijksmuseum(keyword, limit, signal) {
         thumb:       obj.representation[0].id,
         title:       obj._label || 'Rijksmuseum Object',
         description: '',
+        artist:      obj.produced_by?.carried_out_by?.[0]?._label || '',
         source:      'rijksmuseum',
         sourceUrl:   obj.id || '',
         year:        null,
@@ -329,6 +331,7 @@ export async function fetchEuropeana(keyword, limit, signal, start = 1) {
         thumb:       item.edmPreview?.[0] || item.edmIsShownBy?.[0],
         title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Untitled'),
         description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
+        artist:      Array.isArray(item.dcCreator) ? item.dcCreator[0] : (item.dcCreator || ''),
         source:      'europeana',
         sourceUrl:   item.guid || '',
         dataProvider: item.dataProvider || [],
@@ -366,7 +369,7 @@ export async function fetchMetDeep(keyword, pageSize, signal, pages = 4) {
       if (signal?.aborted) break;
       const batch = totalIds.slice(i, i + pageSize);
       const fetches = batch.map(id =>
-        fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal })
+        sourceFetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`, { signal }, 'met')
           .then(r => r.json()).catch(() => null)
       );
       const objects = await Promise.all(fetches);
@@ -439,6 +442,7 @@ export async function fetchEuropeanaFiltered(filterParam, filterValue, keyword, 
         thumb:       item.edmPreview?.[0] || item.edmIsShownBy?.[0],
         title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Untitled'),
         description: Array.isArray(item.dcDescription) ? item.dcDescription[0] : (item.dcDescription || ''),
+        artist:      Array.isArray(item.dcCreator) ? item.dcCreator[0] : (item.dcCreator || ''),
         source:      'europeana',
         sourceUrl:   item.guid || '',
         dataProvider: item.dataProvider || [],

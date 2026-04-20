@@ -678,8 +678,9 @@ function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 export function matchesAsWholeWord(hay, term) {
-  const re = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'i');
-  return re.test(hay);
+  const strip = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const re = new RegExp(`\\b${escapeRegExp(strip(term))}\\b`, 'i');
+  return re.test(strip(hay));
 }
 
 /* Trigram similarity (0–1) for fuzzy matching */
