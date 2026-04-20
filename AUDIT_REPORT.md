@@ -8,6 +8,22 @@
 
 ---
 
+## Status Update — 2026-04-20
+
+| Item | Was | Now |
+|---|---|---|
+| Worker `/search` + `/random` failures | 🔴 Critical | ✅ Fixed (commit `22ded03`) — safeJson guards, User-Agent, content-type checks |
+| `HEALTH_MISS_LIMIT=5` + session-persistent misses | 🔴 Critical | ✅ Fixed (commit `22ded03`) — limit raised to 10, 5-min auto-recovery |
+| `selectDynamicSources` cap at 40 | 🟡 Warning | ✅ Fixed (commit `f0cda32`) — raised to 120 |
+| Nightly CORS fetch push failure | 🔴 Critical | ✅ Fixed (commit `2a69db8`) — added `permissions: contents: write`; new run dispatched |
+| Van Gogh exact mode (Met/Rijks/Europeana zero results) | 🟡 Open | ✅ Fixed (commit `8623f92`) — fetchMetDeep uses sourceFetch proxy; artist fields populated for Rijks/Europeana/Met; diacritic normalization in matchesAsWholeWord |
+| CORS live-fetch sources not health-tracked (Tate, WikiArt, etc.) | 🟡 Open | Still open |
+| Cleveland Museum image CORS | 🟡 Open | Still open |
+| Bundle size 678KB vs 420KB target | — | Still open |
+| Data files for ~149 Phase E/F/G/H sources | 🔴 Critical | Pending nightly run completing (dispatched 2026-04-20) |
+
+---
+
 ## Mission
 
 Unified, zero-barrier access to **every open-access cultural heritage image archive in the world**.
