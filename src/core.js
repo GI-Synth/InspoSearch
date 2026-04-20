@@ -600,7 +600,13 @@ function _needsApiProxy(url) {
 /* Per-source adaptive timeout: tracks avg response time and tightens deadline */
 export const _sourceTimings = {};
 // Known-slow sources need a higher ceiling so a 9-11s response isn't aborted as a miss.
-const _SLOW_SOURCES = new Set(['gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana']);
+const _SLOW_SOURCES = new Set([
+  // Original (national libraries + aggregators with historically 8-11s p95):
+  'gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana',
+  // Step 6b — Wave A: additional slow infrastructure (national libraries, aggregators, SRU endpoints):
+  'trove', 'chronicling', 'dpla', 'digitalnz', 'ddb', 'finna',
+  'joconde', 'bodleian', 'bsb', 'cudl', 'onb', 'mnw',
+]);
 export function sourceFetch(url, opts = {}, sourceName) {
   const timing = _sourceTimings[sourceName];
   const ceiling = _SLOW_SOURCES.has(sourceName) ? 12000 : 8000;

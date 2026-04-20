@@ -20,6 +20,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
 - [x] **Step 5** — Scope health misses by intent-tag instead of globally.
 - [x] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
+- [x] **Step 6b** — Extend 12s slow-source ceiling to 12 more known-slow adapters (Wave A).
 
 ---
 
@@ -272,3 +273,52 @@ export function sourceFetch(url, opts = {}, sourceName) {
 **How to test:**
 - Search a term that hits Gallica/BHL (e.g. `botanical illustration`) — they should contribute results more often than before.
 - Watch the Network panel during search — you should see up to ~40 concurrent in-flight requests.
+
+---
+
+## Step 6b — Extend slow-source ceiling to 12 more adapters ✅
+
+**Date:** 2026-04-20
+**File:** `src/core.js` — `_SLOW_SOURCES` set
+
+**Motivation:** After Step 6, only 6 adapters (Gallica, BHL, LoC, BnF, Internet Archive, Europeana) got the 12s ceiling. A broader audit identified 12 more adapters that are structurally slow: national libraries with SRU/OAI endpoints, large aggregators, and regional databases that routinely respond in 7-11s on cold cache and were silently timing out at 8s.
+
+**Before:**
+```js
+const _SLOW_SOURCES = new Set(['gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana']);
+```
+
+**After (Wave A additions):**
+```js
+const _SLOW_SOURCES = new Set([
+  'gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana',
+  'trove', 'chronicling', 'dpla', 'digitalnz', 'ddb', 'finna',
+  'joconde', 'bodleian', 'bsb', 'cudl', 'onb', 'mnw',
+]);
+```
+
+**Wave A rationale (by source):**
+- `trove` — National Library of Australia; API often 8-10s.
+- `chronicling` — Chronicling America (LoC newspaper archive); full-text search latency.
+- `dpla` — Digital Public Library of America aggregator; multi-provider fan-out.
+- `digitalnz` — National Library of New Zealand aggregator.
+- `ddb` — Deutsche Digitale Bibliothek; national aggregator, heavy SPARQL backend.
+- `finna` — Finnish Heritage Agency aggregator.
+- `joconde` — French national museum database (data.culture.gouv.fr); OpenData platform adds latency.
+- `bodleian`, `bsb`, `cudl`, `onb` — University / national library SRU endpoints; SRU is inherently slow.
+- `mnw` — Muzeum Narodowe w Warszawie; slow cold-cache.
+
+**Wave B (deferred, measure first):** smithsonian, harvard, wellcome, nypl, soch, parismusees, folger — borderline; will add only if observed timings justify it.
+
+**Expected effect:**
+- These 12 sources should contribute results on queries where they were previously dropped at the 8s mark.
+- Non-Western and non-English coverage improves meaningfully (Joconde, MNW, ONB, DDB, Finna, Trove).
+- Risk: if one of these is actually broken (returning 200 slowly forever), the 12s wait adds up; existing health-miss tracking + per-intent scoping (Step 5) should contain that.
+
+**Rollback:** Remove the Wave A additions from the set. `npm run build`.
+
+**How to test:**
+- Query a French term ("impressionnisme") and confirm Joconde contributes.
+- Query a German term ("Bauhaus") and confirm DDB / ONB contribute.
+- Query something with clear Australian relevance ("indigenous art") and confirm Trove contributes.
+- Watch DevTools Network panel — requests to these domains should now have ~12s timeouts instead of ~8s.
