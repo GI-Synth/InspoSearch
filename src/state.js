@@ -315,6 +315,8 @@ export const STATE = {
   prefetchedQuery:     '',      // last query prefetched
   prefetchedKeywords:  [],      // keywords for prefetchedQuery
   currentPage:         1,        // current load-more page
+  exhausted:           false,    // load-more has stopped yielding novel items
+  emptyStreak:         0,        // consecutive load-more pages that returned 0 novel items
   hubbleCache:         [],      // cached Hubble images (refreshed every 6h)
   hubbleCacheTimestamp: null,   // Date.now() of last Hubble fetch
   crossRefMode:        null,    // null | 'connect' | 'interpret'

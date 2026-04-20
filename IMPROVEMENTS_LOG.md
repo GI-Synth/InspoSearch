@@ -21,6 +21,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 5** — Scope health misses by intent-tag instead of globally.
 - [x] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
 - [x] **Step 6b** — Extend 12s slow-source ceiling to 12 more known-slow adapters (Wave A).
+- [x] **Step 7** — Fix load-more / infinite-scroll: paginated-only fan-out + synonym variety + exhausted-state guard.
 
 ---
 
@@ -322,3 +323,42 @@ const _SLOW_SOURCES = new Set([
 - Query a German term ("Bauhaus") and confirm DDB / ONB contribute.
 - Query something with clear Australian relevance ("indigenous art") and confirm Trove contributes.
 - Watch DevTools Network panel — requests to these domains should now have ~12s timeouts instead of ~8s.
+
+---
+
+## Step 7 — Fix load-more / infinite-scroll ✅
+
+**Date:** 2026-04-20
+**Files:** `src/app.js` (hoisted `PAGE2_FETCHERS`, rewrote `fetchMoreResults`, `updateLoadMoreLabel`, added `initInfiniteScroll()` calls), `src/state.js` (added `exhausted` + `emptyStreak`).
+
+**Root cause:**
+The old `fetchMoreResults` fanned out to **every** source in the pool with `adapter(kw, perSource, signal, offset)`. Only ~11 adapters actually honor the `offset`/`page` argument — the other 2,800+ ignored it and returned their page-1 results, which were then dedup-filtered into oblivion. On many queries this meant load-more fired ~2,000 wasteful requests and added zero new items to the grid.
+
+The infinite-scroll observer then had no way to stop: sentinel stays intersected, but `IntersectionObserver` doesn't refire without a state change, so the UI silently froze in "nothing happens when I scroll" mode.
+
+**Fix summary:**
+1. **Hoisted `PAGE2_FETCHERS` to module scope** (was a local `const` inside `fetchAll`). This is the canonical set of adapters that support offset/page pagination: `harvard, smithsonian, va, cleveland, flickr, nga, gallica, dpla, wellcome, europeana, chicago`.
+2. **Rewrote `fetchMoreResults` with two strategies:**
+   - **Strategy A** — call only `PAGE2_FETCHERS` with the primary keyword at the incremented page. Real pagination, real new items.
+   - **Strategy B** — in explore mode only, fan out a *synonym* (cycling through `STATE.keywords` per page) to the top ~10 non-paginated sources that already contributed. This pulls in fresh results from adapters that don't paginate but do respond to different query terms.
+3. **Added exhausted-state guard:** after 2 consecutive load-more calls that yield zero novel items, set `STATE.exhausted = true`, disconnect the infinite-scroll observer, and update the button label to `no more results`. Prevents the silent spin and the "infinite scroll is doing nothing" feeling.
+4. **Re-initialize the infinite-scroll observer on each new search** (`initInfiniteScroll()` now also called when `more-container` becomes visible), so a previously-exhausted query doesn't disable scroll on the next one.
+5. **Reset `exhausted` and `emptyStreak` at the top of every `runSearch`.**
+
+**Expected effect:**
+- Load-more actually adds items on most queries (previously: silent no-op on many).
+- Infinite scroll triggers cleanly and stops cleanly when the paginated pool is drained.
+- Network tab shows ~11 requests per load-more instead of ~2,000.
+- Explore mode benefits most — synonym cycling pulls variety from non-paginated adapters.
+
+**Rollback:**
+- `src/app.js`: revert `fetchMoreResults` to the pre-Step-7 version (fan-out to all sources with naive offset), move `PAGE2_FETCHERS` back into `fetchAll` as `_PAGE2_FETCHERS`, remove `initInfiniteScroll()` calls from the two `more-container` display-flex spots, revert `updateLoadMoreLabel` to drop the exhausted branch.
+- `src/state.js`: remove `exhausted` and `emptyStreak` fields.
+- `npm run build`.
+
+**How to test:**
+- Broad query (`castle`, `portrait`) — scroll to bottom, button should go from `load more · N shown` → `loading…` → `load more · M shown` with M > N.
+- Run a narrow query with few paginated sources hitting — after 2 empty pages the button should say `no more results` and auto-scroll triggering should stop.
+- Switch queries — load-more/infinite-scroll should work again on the new query (observer reattached).
+- Exact mode: load-more only uses paginated adapters (no synonym fan-out); should still yield items for queries that have depth in Met/Harvard/Europeana.
+- DevTools Network panel: confirm load-more fires ~11 paginated requests + up to ~10 synonym requests (explore mode), not thousands.

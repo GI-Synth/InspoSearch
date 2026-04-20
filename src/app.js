@@ -76,6 +76,26 @@ import {
 initLocale();
 applyI18n();
 
+// ── Paginated adapter registry ──
+// Only these adapters honor a page/offset argument. Load-more and the
+// Phase 2 / synonym waves must stick to this set — calling a non-paginated
+// adapter with an offset just re-fetches page 1, which gets dedup-filtered
+// into oblivion and wastes the round trip. This was the root cause of
+// load-more / infinite-scroll appearing to "do nothing" on many queries.
+export const PAGE2_FETCHERS = {
+  harvard:     (kw, lim, sig, pg) => fetchHarvard(kw, lim, sig, pg),
+  smithsonian: (kw, lim, sig, pg) => fetchSmithsonian(kw, lim, sig, pg * lim),
+  va:          (kw, lim, sig, pg) => fetchVA(kw, lim, sig, pg),
+  cleveland:   (kw, lim, sig, pg) => fetchCleveland(kw, lim, sig, (pg - 1) * lim),
+  flickr:      (kw, lim, sig, pg) => fetchFlickrCommons(kw, lim, sig, pg),
+  nga:         (kw, lim, sig, pg) => fetchNGA(kw, lim, sig, (pg - 1) * lim),
+  gallica:     (kw, lim, sig, pg) => fetchGallica(kw, lim, sig, (pg - 1) * lim + 1),
+  dpla:        (kw, lim, sig, pg) => fetchDPLA(kw, lim, sig, pg),
+  wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
+  europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
+  chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
+};
+
 export async function fetchAll(keywords, totalCount, isSilent = false) {
   // isSilent = true means background/cross-ref call — don't cancel existing requests
   // Use a local abort controller so parallel cross-ref calls don't cancel each other
@@ -416,21 +436,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     ).catch(() => {});
   }
 
-  // Shared paginated fetchers — used by both Phase 2 (more pages, same keyword)
-  // and the synonym wave (page 1 with expanded keyword variants).
-  const _PAGE2_FETCHERS = {
-    harvard:     (kw, lim, sig, pg) => fetchHarvard(kw, lim, sig, pg),
-    smithsonian: (kw, lim, sig, pg) => fetchSmithsonian(kw, lim, sig, pg * lim),
-    va:          (kw, lim, sig, pg) => fetchVA(kw, lim, sig, pg),
-    cleveland:   (kw, lim, sig, pg) => fetchCleveland(kw, lim, sig, (pg - 1) * lim),
-    flickr:      (kw, lim, sig, pg) => fetchFlickrCommons(kw, lim, sig, pg),
-    nga:         (kw, lim, sig, pg) => fetchNGA(kw, lim, sig, (pg - 1) * lim),
-    gallica:     (kw, lim, sig, pg) => fetchGallica(kw, lim, sig, (pg - 1) * lim + 1),
-    dpla:        (kw, lim, sig, pg) => fetchDPLA(kw, lim, sig, pg),
-    wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
-    europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
-    chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
-  };
+  // Shared paginated fetchers — module-scope `PAGE2_FETCHERS` above.
+  const _PAGE2_FETCHERS = PAGE2_FETCHERS;
 
   // ── Phase 2: Adaptive follow-up — fetch more pages from productive sources ──
   if (STATE.searchMode === 'exact' && all.length < totalCount && !signal.aborted) {
@@ -2151,52 +2158,72 @@ export function onSourceResultGlobal(items) {
 
 export async function fetchMoreResults() {
   if (STATE.loading || !STATE.query) return;
+  const btn = document.getElementById('btn-load-more');
+  if (STATE.exhausted) {
+    if (btn) btn.textContent = 'no more results';
+    return;
+  }
   if (STATE.results.length >= CONSTANTS.MAX_RESULTS) {
-    const btn = document.getElementById('btn-load-more');
     if (btn) btn.textContent = 'all results loaded';
     return;
   }
   const startQuery = STATE.query;
+  const startGen   = STATE._searchGen;
   STATE.loading = true;
-  const btn = document.getElementById('btn-load-more');
   if (btn) btn.textContent = 'loading…';
   STATE.currentPage++;
   const page      = STATE.currentPage;
-  const kw        = STATE.keywords[0] || STATE.query;
+  const keywords  = STATE.keywords.length ? STATE.keywords : [STATE.query];
+  const primaryKw = keywords[0];
+  // Cycle through expanded keywords so later pages diversify (explore mode only —
+  // in exact mode STATE.keywords has length 1, so synKw === primaryKw and the
+  // synonym fan-out below is skipped.)
+  const synKw = keywords[(page - 1) % keywords.length];
 
-  // Smart pagination: prefer sources that returned results on earlier pages
-  const previousHits = new Set(STATE.results.map(r => r.source).filter(Boolean));
-  const healthy = ALL_SOURCES.filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id));
-  const dyn     = selectDynamicSources(kw, 60).map(s => s.id || s);
-  const allPool = [...new Set([...healthy, ...dyn])];
-  // Prioritize sources that already returned results, then add others
-  const productive = allPool.filter(id => previousHits.has(id));
-  const rest = allPool.filter(id => !previousHits.has(id));
-  // On page 2-3 try all; on page 4+ only paginate productive sources
-  const union = page <= 3 ? [...productive, ...rest] : productive;
-  if (!union.length) { STATE.loading = false; updateLoadMoreLabel(); return; }
-
-  const PRODUCTIVE_SOURCE_ESTIMATE = Math.max(30, union.length);
-  const perSource = Math.max(4, Math.ceil(STATE.imageCount / PRODUCTIVE_SOURCE_ESTIMATE));
-  const offset    = (page - 1) * STATE.imageCount;
-  const ac        = new AbortController();
+  const ac     = new AbortController();
   _secondaryControllers.add(ac);
-  const signal    = ac.signal;
-  // Fan out to selected sources
-  const fetches = union.map(id => {
-    const adapter = ADAPTERS[id];
-    if (!adapter) return Promise.resolve([]);
-    return callIfHealthy(id, adapter(kw, perSource, signal, offset).catch(() => []));
-  });
-  const settled = await Promise.allSettled(fetches);
-  if (STATE.query !== startQuery) { STATE.loading = false; _secondaryControllers.delete(ac); updateLoadMoreLabel(); return; }
+  const signal = ac.signal;
+
+  // Strategy A — paginated adapters advance to the next page with the primary keyword.
+  // Only these adapters honor a page/offset argument; fanning out to the full 2,800+
+  // source pool would just re-fetch page 1 from adapters that ignore the offset and
+  // the results would all be dedup-filtered out.
+  const paginatedIds = Object.keys(PAGE2_FETCHERS).filter(id =>
+    !STATE.disabledSources.has(id) && isSourceHealthy(id)
+  );
+  const perPaginated = Math.max(8, Math.ceil(STATE.imageCount / Math.max(6, paginatedIds.length)));
+  const paginatedCalls = paginatedIds.map(id =>
+    callIfHealthy(id, PAGE2_FETCHERS[id](primaryKw, perPaginated, signal, page).catch(() => []))
+  );
+
+  // Strategy B — non-paginated productive sources get a synonym fan-out for variety.
+  // No-op in exact mode (synKw === primaryKw).
+  const synonymCalls = [];
+  if (STATE.searchMode !== 'exact' && synKw && synKw !== primaryKw) {
+    const previousHits = new Set(STATE.results.map(r => r.source).filter(Boolean));
+    const topNonPaginated = [...previousHits]
+      .filter(id => !PAGE2_FETCHERS[id] && ADAPTERS[id] &&
+                    !STATE.disabledSources.has(id) && isSourceHealthy(id))
+      .slice(0, 10);
+    const perSyn = Math.max(6, Math.ceil(STATE.imageCount / Math.max(6, topNonPaginated.length || 1)));
+    for (const id of topNonPaginated) {
+      synonymCalls.push(callIfHealthy(id, ADAPTERS[id](synKw, perSyn, signal).catch(() => [])));
+    }
+  }
+
+  const settled = await Promise.allSettled([...paginatedCalls, ...synonymCalls]);
+  // Abandon if the user started a new search while we were fetching.
+  if (STATE._searchGen !== startGen || STATE.query !== startQuery) {
+    STATE.loading = false;
+    _secondaryControllers.delete(ac);
+    return;
+  }
+
   let items = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
-  // Apply exact-mode word-boundary filter to load-more results
   if (STATE.searchMode === 'exact') {
     const lq = STATE.query.toLowerCase();
     items = items.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''} ${r.artist || ''}`.toLowerCase(), lq));
   }
-  // Quality gate: skip items with tiny thumbnails or empty metadata
   items = items.filter(r => {
     if (!r.thumb && !r.url) return false;
     const title = (r.title || '').trim();
@@ -2210,6 +2237,15 @@ export async function fetchMoreResults() {
     const batch = novel.slice(0, room);
     STATE.results.push(...batch);
     renderGrid(batch);
+    STATE.emptyStreak = 0;
+  } else {
+    // Zero novel items — either everything was a duplicate or the paginated
+    // sources have nothing left. Two consecutive empty pages → call it done.
+    STATE.emptyStreak = (STATE.emptyStreak || 0) + 1;
+    if (STATE.emptyStreak >= 2) {
+      STATE.exhausted = true;
+      if (_infiniteScrollObs) { _infiniteScrollObs.disconnect(); _infiniteScrollObs = null; }
+    }
   }
   STATE.loading = false;
   _secondaryControllers.delete(ac);
@@ -2221,6 +2257,8 @@ export function updateLoadMoreLabel() {
   if (!btn) return;
   if (STATE.results.length >= CONSTANTS.MAX_RESULTS) {
     btn.textContent = 'all results loaded';
+  } else if (STATE.exhausted) {
+    btn.textContent = 'no more results';
   } else {
     btn.textContent = `load more · ${STATE.results.length} shown`;
   }
@@ -2269,6 +2307,8 @@ export async function runSearch(query, forceRefresh = false) {
 
   STATE.loading = true;
   STATE.currentPage = 1;
+  STATE.exhausted = false;     // reset load-more exhaustion for new query
+  STATE.emptyStreak = 0;       // reset zero-yield counter
   STATE._searchGen++;
   const gen = STATE._searchGen;
   STATE.results = [];          // immediately clear stale results (race-condition fix)
@@ -2338,6 +2378,7 @@ export async function runSearch(query, forceRefresh = false) {
       hideLoading();
       showCacheIndicator(STATE.query);
       document.getElementById('more-container').style.display = 'flex';
+      initInfiniteScroll();
       // Build Fuse.js index for local filtering
       loadFuse(() => buildFuseIndex());
       // Background refresh — silently append any newly discovered items
@@ -2456,6 +2497,7 @@ export async function runSearch(query, forceRefresh = false) {
   hideLoading();
   showCacheIndicator(STATE.query);
   document.getElementById('more-container').style.display = 'flex';
+  initInfiniteScroll();
   updateLoadMoreLabel();
   // Build Fuse.js index for local filtering
   loadFuse(() => buildFuseIndex());
