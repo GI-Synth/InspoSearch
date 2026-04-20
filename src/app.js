@@ -154,7 +154,6 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     // Layer 2: hard gate in exact mode — discard items with zero keyword presence
     if (STATE.searchMode === 'exact' && items && items.length) {
       const terms = keyword.toLowerCase().trim().split(/\s+/).filter(Boolean);
-      const isSingleWord = terms.length === 1;
 
       // Junk title patterns — conference photos, headshots, lectures, book covers, generic filenames
       const JUNK_TITLE_RE = /\b(conference|symposium|lecture|seminar|keynote|workshop|panel discussion|webinar|testimony|hearing|meeting|remarks by|speech by|statement of|briefing|press conference|book review|isbn|pp\.|vol\.|volume \d|pages \d|edited by|proceedings of)\b/i;
@@ -170,12 +169,10 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
         // Drop book metadata items
         if (BOOK_RE.test(`${item.title || ''} ${item.description || ''}`)) return false;
 
-        // Single-word queries: require the term in the title specifically
-        if (isSingleWord) {
-          return matchesAsWholeWord(title, terms[0]);
-        }
-        // Multi-word: require at least 1 term in title/description/artist/tags
-        // Scoring in getDisplayResults ranks items with more matches higher
+        // Match across title/desc/artist/tags for both single- and multi-word
+        // queries. scoreItemRelevance still boosts title hits so title-matched
+        // items rank first; previously-discarded off-title matches now appear
+        // further down instead of vanishing entirely.
         const hay = `${title} ${item.description || ''} ${item.artist || ''} ${(item.tags || []).join(' ')}`.toLowerCase();
         return terms.some(t => matchesAsWholeWord(hay, t));
       });
