@@ -26,7 +26,7 @@ async function fetchWikidataSparql(sparqlTemplate, term, source) {
   const res    = await fetchWithTimeout(url, {
     headers: {
       'Accept':     'application/sparql-results+json',
-      'User-Agent': 'InspoSearch/1.0 (https://github.com/GI-Synth/InspoSearch)',
+      'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)',
     },
   });
   if (!res.ok) throw new Error(`Wikidata HTTP ${res.status}`);
@@ -137,7 +137,7 @@ async function fetchSOCH(term) {
   const res = await fetchWithTimeout(url, {
     headers: {
       'Accept': 'application/json',
-      'User-Agent': 'InspoSearch/1.0',
+      'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)',
     },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -202,7 +202,7 @@ async function fetchCUDL(term) {
 async function fetchNHMLondon(term) {
   const url = `https://data.nhm.ac.uk/api/3/action/datastore_search?resource_id=e4e0a710-2400-4e5f-a569-87dbab23d1d2&q=${encodeURIComponent(term)}&limit=25`;
   const res = await fetchWithTimeout(url, {
-    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+    headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
@@ -223,7 +223,7 @@ async function fetchNHMLondon(term) {
 async function fetchWallaceCollection(term) {
   const url = `https://wallacelive.wallacecollection.org/emuseum/api/search?q=${encodeURIComponent(term)}&rows=25&type=objects`;
   const res = await fetchWithTimeout(url, {
-    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+    headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
@@ -244,7 +244,7 @@ async function fetchWallaceCollection(term) {
 async function fetchFitzwilliam(term) {
   const url = `https://data.fitzmuseum.cam.ac.uk/api/v1/objects?q=${encodeURIComponent(term)}&limit=25`;
   const res = await fetchWithTimeout(url, {
-    headers: { 'User-Agent': 'InspoSearch/1.0', 'Accept': 'application/json' },
+    headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
