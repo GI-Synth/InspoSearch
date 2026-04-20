@@ -41,6 +41,12 @@ export function selectDynamicSources(keyword, maxCount = 150) {
   if (qcv2.medium === 'Ceramic') intentTags.push('design');
   if (qcv2.isSpecies) intentTags.push('nature');
 
+  // High-confidence classification: qcv2 has a concrete signal (artist name,
+  // era match, known movement, species pattern, medium). Without that, the
+  // intent flags are keyword-heuristic only and shouldn't exclude sources.
+  const isHighConfidence = !!(qcv2.isArtist || qcv2.era || qcv2.movement ||
+                              qcv2.isSpecies || qcv2.medium);
+
   const scored = DYNAMIC_REGISTRY
     .filter(s => {
       // Skip if key required but not set
@@ -54,8 +60,9 @@ export function selectDynamicSources(keyword, maxCount = 150) {
       if (hasAnyIntent && s.tags && s.tags.length) {
         const overlap = s.tags.filter(t => intentTags.includes(t)).length;
         score += overlap * 5;
-        // Slightly penalize sources with zero overlap on a focused query
-        if (overlap === 0 && intentTags.length >= 2) score -= 1;
+        // Only penalize zero-overlap when classification is high-confidence.
+        // Weakly-classified queries must not exclude the long tail of sources.
+        if (overlap === 0 && isHighConfidence && intentTags.length >= 2) score -= 1;
       }
       // v2 boosts: artist queries → prioritise large museum collections
       if (qcv2.isArtist && s.tags && s.tags.includes('art')) score += 3;

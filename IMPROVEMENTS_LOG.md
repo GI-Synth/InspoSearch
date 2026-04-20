@@ -17,7 +17,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 1** — Relax exact-mode single-word filter from title-only to title/tags/artist/desc.
 - [x] **Step 2** — Multi-wave fetching with synonym expansion (reuse existing Datamuse/Wikidata expansion already in fetchers.js).
 - [x] **Step 3** — Raise per-source floors + add pagination on "load more".
-- [ ] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
+- [x] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
 - [ ] **Step 5** — Scope health misses by intent-tag instead of globally.
 - [ ] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
 
@@ -136,3 +136,34 @@ if (keywords.length > 1 && all.length < totalCount && !signal.aborted) {
 - Search a broad term (`castle`, `flower`, `portrait`). Count should be substantially higher on first wave.
 - Scroll to bottom — load-more should still work identically, appending more results.
 - Niche term — should still return results; no regression.
+
+---
+
+## Step 4 — Fix intent penalty for weakly-classified queries ✅
+
+**Date:** 2026-04-20
+**File:** `src/core.js` — `selectDynamicSources` (around lines 44-60).
+
+**Change:** The zero-overlap penalty (`score -= 1`) now only fires when the query has **high-confidence classification** from `classifyQueryV2` — i.e. when one of `{isArtist, era, movement, isSpecies, medium}` is truthy. Weakly-classified queries (relying on keyword-heuristic `classifyQueryExtended` intent flags alone) no longer exclude the long tail of sources.
+
+**Before:**
+```js
+if (overlap === 0 && intentTags.length >= 2) score -= 1;
+```
+
+**After:**
+```js
+const isHighConfidence = !!(qcv2.isArtist || qcv2.era || qcv2.movement ||
+                            qcv2.isSpecies || qcv2.medium);
+// ...
+if (overlap === 0 && isHighConfidence && intentTags.length >= 2) score -= 1;
+```
+
+**Expected effect:** Ambiguous queries (e.g. `blue`, `pattern`, `morning`, `sketch`) will now reach 2300+ sources that were previously down-ranked out of the top-N. Focused queries (`van gogh`, `1920s`, `baroque`, `Panthera leo`) still get the penalty so their ranking stays tight.
+
+**Rollback:** In `src/core.js`, remove the `isHighConfidence` block and revert the penalty line to `if (overlap === 0 && intentTags.length >= 2) score -= 1;`. Then `npm run build`.
+
+**How to test:**
+- Search an ambiguous term (`blue`, `pattern`, `morning`) — result count should be higher than before.
+- Search a focused term (`van gogh`, `baroque`, `1920s`) — ranking should still be tight and relevance-ordered.
+- No regression on explore vs exact mode behavior.
