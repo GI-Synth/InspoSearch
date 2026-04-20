@@ -19,7 +19,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 3** — Raise per-source floors + add pagination on "load more".
 - [x] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
 - [x] **Step 5** — Scope health misses by intent-tag instead of globally.
-- [ ] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
+- [x] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
 
 ---
 
@@ -228,3 +228,47 @@ if (STATE.query && STATE.query !== _priorQuery) resetHealthForNewQuery();
 **How to test:**
 - Run a query that pauses several sources (a niche term producing many empty sources).
 - Immediately run a different query — previously-paused sources should be retried straight away (no "paused" toast carrying over).
+
+---
+
+## Step 6 — Raise concurrency + slow-source timeout ceiling ✅
+
+**Date:** 2026-04-20
+**File:** `src/core.js`
+
+**Change 1 — Fetch concurrency semaphore 25 → 40.** More sources can fly in parallel, so the long tail of slow-but-valid responses no longer gets queued behind the fastest 25.
+
+**Change 2 — Adaptive timeout ceiling is per-source.** Known-slow sources (Gallica, BHL, LoC, BnF, Internet Archive, Europeana) now get a 12s ceiling instead of 8s. Other sources keep 8s. First request with no timing history: slow sources start at 12s (not the 5s default) so cold-start responses aren't aborted.
+
+**Before:**
+```js
+export const _fetchSemaphore = { running: 0, queue: [], limit: 25, _totalFailed: 0 };
+// …
+const timeout = timing
+  ? Math.min(8000, Math.max(4000, Math.round(timing.avg * 2)))
+  : CONSTANTS.FETCH_TIMEOUT;
+```
+
+**After:**
+```js
+export const _fetchSemaphore = { running: 0, queue: [], limit: 40, _totalFailed: 0 };
+// …
+const _SLOW_SOURCES = new Set(['gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana']);
+export function sourceFetch(url, opts = {}, sourceName) {
+  const timing = _sourceTimings[sourceName];
+  const ceiling = _SLOW_SOURCES.has(sourceName) ? 12000 : 8000;
+  const timeout = timing
+    ? Math.min(ceiling, Math.max(4000, Math.round(timing.avg * 2)))
+    : (_SLOW_SOURCES.has(sourceName) ? ceiling : CONSTANTS.FETCH_TIMEOUT);
+```
+
+**Expected effect:**
+- More parallel fetches → more sources contribute per wave.
+- Slow-source first-hit success rate rises (Gallica/BHL commonly return in 6-10s on cold cache).
+- Small risk of more memory pressure / more 429s; mitigated by existing per-source backoff + health tracking.
+
+**Rollback:** Revert `limit: 40` to `25` and remove the `_SLOW_SOURCES` set + ceiling logic. `npm run build`.
+
+**How to test:**
+- Search a term that hits Gallica/BHL (e.g. `botanical illustration`) — they should contribute results more often than before.
+- Watch the Network panel during search — you should see up to ~40 concurrent in-flight requests.

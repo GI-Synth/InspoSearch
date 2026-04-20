@@ -515,8 +515,8 @@ export function withTimeout(signal, ms = 3000) {
   return controller.signal;
 }
 
-// ── Fetch concurrency limiter — max 25 in-flight network requests ──
-export const _fetchSemaphore = { running: 0, queue: [], limit: 25, _totalFailed: 0 };
+// ── Fetch concurrency limiter — max 40 in-flight network requests ──
+export const _fetchSemaphore = { running: 0, queue: [], limit: 40, _totalFailed: 0 };
 export function _acquireFetchSlot() {
   return new Promise(resolve => {
     if (_fetchSemaphore.running < _fetchSemaphore.limit) {
@@ -599,11 +599,14 @@ function _needsApiProxy(url) {
 
 /* Per-source adaptive timeout: tracks avg response time and tightens deadline */
 export const _sourceTimings = {};
+// Known-slow sources need a higher ceiling so a 9-11s response isn't aborted as a miss.
+const _SLOW_SOURCES = new Set(['gallica', 'bhl', 'loc', 'bnf', 'internetarchive', 'europeana']);
 export function sourceFetch(url, opts = {}, sourceName) {
   const timing = _sourceTimings[sourceName];
+  const ceiling = _SLOW_SOURCES.has(sourceName) ? 12000 : 8000;
   const timeout = timing
-    ? Math.min(8000, Math.max(4000, Math.round(timing.avg * 2)))
-    : CONSTANTS.FETCH_TIMEOUT;
+    ? Math.min(ceiling, Math.max(4000, Math.round(timing.avg * 2)))
+    : (_SLOW_SOURCES.has(sourceName) ? ceiling : CONSTANTS.FETCH_TIMEOUT);
   const start = performance.now();
 
   // If the API domain is known to be CORS-blocked, go through the proxy immediately
