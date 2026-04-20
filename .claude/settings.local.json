@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh run *)",
+      "Bash(node -e \"import\\('./src/fetchers.js'\\).then\\(m => console.log\\('adapters:', m.ADAPTERS ? m.ADAPTERS.size : 'N/A'\\)\\).catch\\(e => console.log\\('error:', e.message\\)\\)\")",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}

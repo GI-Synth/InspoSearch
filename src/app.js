@@ -416,21 +416,24 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     ).catch(() => {});
   }
 
+  // Shared paginated fetchers — used by both Phase 2 (more pages, same keyword)
+  // and the synonym wave (page 1 with expanded keyword variants).
+  const _PAGE2_FETCHERS = {
+    harvard:     (kw, lim, sig, pg) => fetchHarvard(kw, lim, sig, pg),
+    smithsonian: (kw, lim, sig, pg) => fetchSmithsonian(kw, lim, sig, pg * lim),
+    va:          (kw, lim, sig, pg) => fetchVA(kw, lim, sig, pg),
+    cleveland:   (kw, lim, sig, pg) => fetchCleveland(kw, lim, sig, (pg - 1) * lim),
+    flickr:      (kw, lim, sig, pg) => fetchFlickrCommons(kw, lim, sig, pg),
+    nga:         (kw, lim, sig, pg) => fetchNGA(kw, lim, sig, (pg - 1) * lim),
+    gallica:     (kw, lim, sig, pg) => fetchGallica(kw, lim, sig, (pg - 1) * lim + 1),
+    dpla:        (kw, lim, sig, pg) => fetchDPLA(kw, lim, sig, pg),
+    wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
+    europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
+    chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
+  };
+
   // ── Phase 2: Adaptive follow-up — fetch more pages from productive sources ──
   if (STATE.searchMode === 'exact' && all.length < totalCount && !signal.aborted) {
-    const _PAGE2_FETCHERS = {
-      harvard:     (kw, lim, sig, pg) => fetchHarvard(kw, lim, sig, pg),
-      smithsonian: (kw, lim, sig, pg) => fetchSmithsonian(kw, lim, sig, pg * lim),
-      va:          (kw, lim, sig, pg) => fetchVA(kw, lim, sig, pg),
-      cleveland:   (kw, lim, sig, pg) => fetchCleveland(kw, lim, sig, (pg - 1) * lim),
-      flickr:      (kw, lim, sig, pg) => fetchFlickrCommons(kw, lim, sig, pg),
-      nga:         (kw, lim, sig, pg) => fetchNGA(kw, lim, sig, (pg - 1) * lim),
-      gallica:     (kw, lim, sig, pg) => fetchGallica(kw, lim, sig, (pg - 1) * lim + 1),
-      dpla:        (kw, lim, sig, pg) => fetchDPLA(kw, lim, sig, pg),
-      wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
-      europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
-      chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
-    };
     const topSources = [...sourceYield.entries()]
       .filter(([id]) => _PAGE2_FETCHERS[id])     // only sources with pagination support
       .filter(([, count]) => count >= 3)          // yielded 3+ valid items
@@ -449,6 +452,31 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
           );
         })
       );
+    }
+  }
+
+  // ── Wave 2: Synonym expansion — fire expanded keywords against top productive sources.
+  // In exact mode STATE.keywords is always [raw], so keywords.length===1 → no-op (safe).
+  // In explore mode, Datamuse/Wikidata expansions fire here when available.
+  if (keywords.length > 1 && all.length < totalCount && !signal.aborted) {
+    const synTerms = keywords.slice(1, 4).filter(k => k && k !== keyword);
+    if (synTerms.length) {
+      const topSources = [...sourceYield.entries()]
+        .filter(([id]) => _PAGE2_FETCHERS[id])
+        .filter(([, count]) => count >= 2)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6);
+      if (topSources.length) {
+        const deficit = totalCount - all.length;
+        const perCall = Math.max(8, Math.ceil(deficit / (topSources.length * synTerms.length)));
+        await Promise.allSettled(
+          topSources.flatMap(([sourceId]) =>
+            synTerms.map(term =>
+              trackSource(sourceId, _PAGE2_FETCHERS[sourceId](term, perCall, signal, 1))
+            )
+          )
+        );
+      }
     }
   }
 
