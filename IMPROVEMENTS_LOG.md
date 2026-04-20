@@ -203,3 +203,28 @@ Added `_currentIntentKey()` helper that reads `STATE.query`, runs `classifyQuery
 - Run several unrelated queries in one session (e.g. `brutalism`, `hummingbird`, `van gogh`, `quilt`, `galaxy`). A source that gets paused on one intent should still be tried on the next intent.
 - Reload the page — stored health should still load without error (legacy shape migrated silently).
 - Active-sources counter should still update normally.
+
+---
+
+## Step 5b — Reset health on every new query ✅
+
+**Date:** 2026-04-20
+**Files:** `src/core.js` (new `resetHealthForNewQuery`), `src/app.js` (call it on search).
+
+**Change:** Every distinct new query clears miss counters and pause timers across all sources. Hits / lastSeen are preserved. Previously, a paused source had to wait out `HEALTH_RECOVERY_MS` (5 min) before retrying — too long when the user changes topic and the block was from an unrelated query.
+
+```js
+// core.js
+export function resetHealthForNewQuery() { /* zeroes misses + pauses, keeps hits */ }
+
+// app.js — in the search entry, right after STATE.query is set
+if (STATE.query && STATE.query !== _priorQuery) resetHealthForNewQuery();
+```
+
+**Expected effect:** Changing query instantly gives every source another chance — no 5-minute penalty carrying over. Combined with Step 5 (intent-scoped pauses), sources are now only paused *within* a single active search.
+
+**Rollback:** Remove `resetHealthForNewQuery` from `src/core.js`, remove the import and the call site in `src/app.js`. `npm run build`.
+
+**How to test:**
+- Run a query that pauses several sources (a niche term producing many empty sources).
+- Immediately run a different query — previously-paused sources should be retried straight away (no "paused" toast carrying over).

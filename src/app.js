@@ -21,7 +21,7 @@ import {
   hooks, incrementGeminiCounter, isAIProviderRateLimited,
   isGeminiRateLimited, isSourceHealthy, loadDisabledSources,
   loadGeminiCounter, loadSourceHealth, pickOnboardingTerm, pruneCache,
-  queryToSeed, recordSourceResult, safeFetch, scoreItemRelevance,
+  queryToSeed, recordSourceResult, resetHealthForNewQuery, safeFetch, scoreItemRelevance,
   selectDynamicSources, seededShuffle, setAITagsCache, setSourceViewFilter,
   showQuietTip, sleep, stripHtml, toggleSource, trackAIProviderCall,
   updateGeminiCounterUI, updatePresetButtons, updateSourcesActiveCounter,
@@ -2243,7 +2243,11 @@ export async function runSearch(query, forceRefresh = false) {
     return;
   }
   STATE.imageCount = parseInt(document.getElementById('count-slider')?.value) || CONSTANTS.IMAGE_COUNT_DEFAULT;
+  const _priorQuery = STATE.query;
   STATE.query = query.trim();
+  // New-query reset: every distinct search gives every source a fresh chance,
+  // rather than waiting 5 min for HEALTH_RECOVERY_MS auto-recovery.
+  if (STATE.query && STATE.query !== _priorQuery) resetHealthForNewQuery();
 
   // Parse operators: -word, NOT word, "exact phrase"
   const { positive: _posQuery, negatives: _negTerms, phrases: _phrases } = parseNegativeTerms(STATE.query);

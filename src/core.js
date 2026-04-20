@@ -179,6 +179,27 @@ export function recordSourceResult(sourceName, resultCount) {
   if (!_healthWriteTimer) _healthWriteTimer = setTimeout(_flushSourceHealth, 2000);
 }
 
+// Called at the start of every new search — gives every source a fresh
+// chance, instead of waiting HEALTH_RECOVERY_MS (5 min) for auto-recovery.
+// Preserves hits/lastSeen (useful signal), clears miss counters + pauses.
+export function resetHealthForNewQuery() {
+  const h = STATE.sourceHealth;
+  for (const name in h) {
+    const entry = h[name];
+    if (!entry) continue;
+    entry.misses = 0;
+    entry._notified = false;
+    if (entry.intent) {
+      for (const key in entry.intent) {
+        entry.intent[key].misses = 0;
+        entry.intent[key].pausedAt = 0;
+        entry.intent[key].notified = false;
+      }
+    }
+  }
+  if (!_healthWriteTimer) _healthWriteTimer = setTimeout(_flushSourceHealth, 2000);
+}
+
 export function isSourceHealthy(sourceName) {
   const entry = STATE.sourceHealth[sourceName];
   if (!entry) return true;           // never tried — always allow
