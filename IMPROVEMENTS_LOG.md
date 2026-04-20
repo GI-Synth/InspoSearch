@@ -16,7 +16,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 
 - [x] **Step 1** — Relax exact-mode single-word filter from title-only to title/tags/artist/desc.
 - [x] **Step 2** — Multi-wave fetching with synonym expansion (reuse existing Datamuse/Wikidata expansion already in fetchers.js).
-- [ ] **Step 3** — Raise per-source floors + add pagination on "load more".
+- [x] **Step 3** — Raise per-source floors + add pagination on "load more".
 - [ ] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
 - [ ] **Step 5** — Scope health misses by intent-tag instead of globally.
 - [ ] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
@@ -102,3 +102,37 @@ if (keywords.length > 1 && all.length < totalCount && !signal.aborted) {
 - Explore mode: search niche term like `wabi sabi`, `bauhaus`, or `art nouveau`. Should load more results over ~2-3 seconds as synonym wave fires. Check Network tab for second burst of requests to Harvard/Smithsonian/Europeana/etc with different query params (synonyms).
 - Exact mode: same queries should behave identically to Step 1 — no change, no extra requests.
 - Multi-word (e.g. `van gogh`) — should still work, relevance-ranked normally.
+
+---
+
+## Step 3 — Raise per-source floors + pagination ✅
+
+**Date:** 2026-04-20
+**Files:** `src/state.js` (PER_SOURCE_LIMIT map), `src/app.js` (base floor + limitFor switches).
+
+**Changes:**
+1. **`src/state.js` — expanded `PER_SOURCE_LIMIT`:**
+   - Bumped existing: met 40→60, chicago/cleveland/va/rijks/loc 30→50, europeana 30→60, flickr 25→50, nga/gbif/inat 30→40, carnegie/cudl/folger/hallwyl/nivaagaard 12→20.
+   - Added new: harvard 40, smithsonian 40, dpla 50, wellcome 40, gallica 40, bhl 30, yale 30, getty 30, nypl 30.
+
+2. **`src/app.js` line 104 — raised base floor:**
+   ```js
+   // Before: Math.max(12, …) / perSource+6
+   // After:  Math.max(20, …) / perSource+8
+   ```
+
+3. **`src/app.js` — switched proven-capacity sources from `fetchBatch` to `limitFor(id)`:**
+   flickr, rijksmuseum, harvard, smithsonian, gallica, bhl, dpla, wellcome, getty, yale, nypl.
+
+**Expected effect:** Sources with proper search APIs now pull 30-60 items per call instead of ~18. Should significantly increase initial result volume on popular queries. Pagination (load-more / infinite scroll) was already in place at `fetchMoreResults()` — untouched.
+
+**Safety:**
+- Load-more path (`fetchMoreResults`) uses its own offset-based perSource calculation; unaffected by these floor changes.
+- Sources not in PER_SOURCE_LIMIT still get `fetchBatch` (now 28), so small-catalog sources aren't over-asked.
+
+**Rollback:** Revert `PER_SOURCE_LIMIT` entries in `src/state.js` to previous values, revert `Math.max(20,…)`→`Math.max(12,…)` and `perSource+8`→`perSource+6` in `src/app.js`, and switch the limitFor() calls back to `fetchBatch`. Then `npm run build`.
+
+**How to test:**
+- Search a broad term (`castle`, `flower`, `portrait`). Count should be substantially higher on first wave.
+- Scroll to bottom — load-more should still work identically, appending more results.
+- Niche term — should still return results; no regression.
