@@ -125,41 +125,78 @@ export function _flushSourceHealth() {
   _healthWriteTimer = null;
 }
 
-export function recordSourceResult(sourceName, resultCount) {
+// Intent-scoped health: a source that misses on "art" queries shouldn't be
+// paused for "nature" queries. Derive a stable key from the active query's
+// intent flags; fall back to "generic" when nothing classifies.
+export function _currentIntentKey() {
+  const q = STATE.query || '';
+  if (!q) return 'generic';
+  const qc = classifyQueryExtended(q);
+  const tags = [];
+  if (qc.isNature)  tags.push('nature');
+  if (qc.isSpace)   tags.push('space');
+  if (qc.isArt)     tags.push('art');
+  if (qc.isHistory) tags.push('history');
+  if (qc.isArch)    tags.push('arch');
+  if (qc.isDesign)  tags.push('design');
+  if (qc.isPhoto)   tags.push('photo');
+  if (qc.isScience) tags.push('science');
+  return tags.length ? tags.sort().join('+') : 'generic';
+}
+
+function _ensureHealthEntry(sourceName) {
   const h = STATE.sourceHealth;
-  if (!h[sourceName]) h[sourceName] = { hits: 0, misses: 0, lastSeen: 0 };
+  if (!h[sourceName]) h[sourceName] = { hits: 0, misses: 0, lastSeen: 0, intent: {} };
+  if (!h[sourceName].intent) h[sourceName].intent = {};
+  return h[sourceName];
+}
+
+export function recordSourceResult(sourceName, resultCount) {
+  const entry = _ensureHealthEntry(sourceName);
+  const key = _currentIntentKey();
+  if (!entry.intent[key]) entry.intent[key] = { misses: 0, pausedAt: 0, notified: false };
+  const slot = entry.intent[key];
   if (resultCount > 0) {
-    const wasPaused = h[sourceName].misses >= CONSTANTS.HEALTH_MISS_LIMIT;
-    h[sourceName].hits++;
-    h[sourceName].misses  = 0;
-    h[sourceName].lastSeen = Date.now();
-    h[sourceName]._notified = false;
+    const wasPaused = slot.misses >= CONSTANTS.HEALTH_MISS_LIMIT;
+    entry.hits++;
+    entry.lastSeen = Date.now();
+    slot.misses = 0;
+    slot.pausedAt = 0;
+    slot.notified = false;
+    // Mirror legacy global misses=0 so the active-counter UI reflects recovery
+    entry.misses = 0;
+    entry._notified = false;
     if (wasPaused && hooks.showToast) {
       hooks.showToast(`source "${sourceName}" recovered`, 2000);
     }
   } else {
-    h[sourceName].misses++;
-    if (h[sourceName].misses === CONSTANTS.HEALTH_MISS_LIMIT) {
-      h[sourceName].pausedAt = Date.now();
+    slot.misses++;
+    entry.misses = slot.misses; // keep legacy field in sync for UI
+    if (slot.misses === CONSTANTS.HEALTH_MISS_LIMIT) {
+      slot.pausedAt = Date.now();
     }
   }
   if (!_healthWriteTimer) _healthWriteTimer = setTimeout(_flushSourceHealth, 2000);
 }
 
 export function isSourceHealthy(sourceName) {
-  const h = STATE.sourceHealth[sourceName];
-  if (!h) return true;           // never tried — always allow
-  if (h.misses >= CONSTANTS.HEALTH_MISS_LIMIT) {
+  const entry = STATE.sourceHealth[sourceName];
+  if (!entry) return true;           // never tried — always allow
+  if (!entry.intent) entry.intent = {};
+  const key = _currentIntentKey();
+  const slot = entry.intent[key];
+  if (!slot) return true;            // never tried for this intent — allow
+  if (slot.misses >= CONSTANTS.HEALTH_MISS_LIMIT) {
     // Auto-recover after HEALTH_RECOVERY_MS — half-decay misses so source gets another chance
-    if (h.pausedAt && Date.now() - h.pausedAt > CONSTANTS.HEALTH_RECOVERY_MS) {
-      h.misses = Math.floor(h.misses / 2);
-      h.pausedAt = 0;
-      h._notified = false;
+    if (slot.pausedAt && Date.now() - slot.pausedAt > CONSTANTS.HEALTH_RECOVERY_MS) {
+      slot.misses = Math.floor(slot.misses / 2);
+      slot.pausedAt = 0;
+      slot.notified = false;
       return true;
     }
-    if (!h._notified) {
-      h._notified = true;
-      if (hooks.showToast) hooks.showToast(`source "${sourceName}" paused — no results after ${CONSTANTS.HEALTH_MISS_LIMIT} tries`, 3000);
+    if (!slot.notified) {
+      slot.notified = true;
+      if (hooks.showToast) hooks.showToast(`source "${sourceName}" paused for "${key}" — no results after ${CONSTANTS.HEALTH_MISS_LIMIT} tries`, 3000);
     }
     return false;
   }

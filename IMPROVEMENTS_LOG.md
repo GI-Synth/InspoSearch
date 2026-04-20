@@ -18,7 +18,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 2** — Multi-wave fetching with synonym expansion (reuse existing Datamuse/Wikidata expansion already in fetchers.js).
 - [x] **Step 3** — Raise per-source floors + add pagination on "load more".
 - [x] **Step 4** — Fix intent penalty for unclassified/weakly-classified queries.
-- [ ] **Step 5** — Scope health misses by intent-tag instead of globally.
+- [x] **Step 5** — Scope health misses by intent-tag instead of globally.
 - [ ] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
 
 ---
@@ -167,3 +167,39 @@ if (overlap === 0 && isHighConfidence && intentTags.length >= 2) score -= 1;
 - Search an ambiguous term (`blue`, `pattern`, `morning`) — result count should be higher than before.
 - Search a focused term (`van gogh`, `baroque`, `1920s`) — ranking should still be tight and relevance-ordered.
 - No regression on explore vs exact mode behavior.
+
+---
+
+## Step 5 — Scope health misses by intent-tag ✅
+
+**Date:** 2026-04-20
+**File:** `src/core.js` — `recordSourceResult` and `isSourceHealthy` rewritten.
+
+**Change:** Source health miss counters are now tracked **per intent key** derived from the current query's classification (e.g. `art+history`, `nature`, `generic`). A source that fails on "baroque" (intent: art+history) no longer gets paused for "hummingbird" (intent: nature). New nested shape:
+
+```js
+sourceHealth[sourceName] = {
+  hits, misses (legacy mirror), lastSeen,
+  intent: {
+    'art+history': { misses, pausedAt, notified },
+    'nature':      { misses, pausedAt, notified },
+    'generic':     { misses, pausedAt, notified },
+  }
+}
+```
+
+Added `_currentIntentKey()` helper that reads `STATE.query`, runs `classifyQueryExtended`, and joins the matched intent tags (sorted) or returns `'generic'`. `isSourceHealthy` gates on the current intent's slot only. `recordSourceResult` increments/clears the current intent's slot. Auto-recovery via `HEALTH_RECOVERY_MS` is now also per-intent.
+
+**Expected effect:** Sources no longer get globally paused by a failing query on an unrelated topic. The long tail of niche sources stays available across diverse searches within a session. Legacy global `misses` field mirrored so the active-counter UI still works.
+
+**Safety:**
+- Old `sourceHealth` entries without `.intent` get migrated lazily on first access via `_ensureHealthEntry`.
+- Legacy `entry.misses` kept in sync for any UI code reading it.
+- Same `HEALTH_MISS_LIMIT` / `HEALTH_RECOVERY_MS` constants — just scoped differently.
+
+**Rollback:** In `src/core.js`, revert `recordSourceResult` and `isSourceHealthy` to the previous shape (single global `h.misses`). Remove `_currentIntentKey` and `_ensureHealthEntry`. Then `npm run build`.
+
+**How to test:**
+- Run several unrelated queries in one session (e.g. `brutalism`, `hummingbird`, `van gogh`, `quilt`, `galaxy`). A source that gets paused on one intent should still be tried on the next intent.
+- Reload the page — stored health should still load without error (legacy shape migrated silently).
+- Active-sources counter should still update normally.
