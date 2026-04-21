@@ -783,9 +783,27 @@ export function trigramSimilarity(a, b) {
   return matches / Math.max(tA.size, tB.size);
 }
 
+// Per-query memoization for scoreItemRelevance. The function is called 4–5×
+// per item across bucket sort, global sort, RRF, and MMR — on 500+ items
+// that's tens of thousands of redundant string scans. Cache resets when
+// the query string changes, and also when search mode flips (exact vs
+// explore use different match predicates).
+let _scoreCache = new Map();
+let _scoreCacheQ = '';
+let _scoreCacheMode = '';
+export function _resetScoreCache() { _scoreCache = new Map(); _scoreCacheQ = ''; _scoreCacheMode = ''; }
+
 export let scoreItemRelevance = function scoreItemRelevance(item, query) {
   const q = (query || '').toLowerCase().trim();
   if (!q) return 0;
+  const mode = STATE.searchMode;
+  if (q !== _scoreCacheQ || mode !== _scoreCacheMode) {
+    _scoreCache = new Map();
+    _scoreCacheQ = q;
+    _scoreCacheMode = mode;
+  }
+  const ck = item && (item.id || item.url);
+  if (ck && _scoreCache.has(ck)) return _scoreCache.get(ck);
   const terms = q.split(/\s+/).filter(Boolean);
   const title = (item.title || '').toLowerCase();
   const desc = (item.description || '').toLowerCase();
@@ -877,6 +895,7 @@ export let scoreItemRelevance = function scoreItemRelevance(item, query) {
     }
   }
 
+  if (ck) _scoreCache.set(ck, score);
   return score;
 }
 
@@ -1066,15 +1085,18 @@ export let getDisplayResults = function getDisplayResults(items, query) {
         return terms.some(t => matchesAsWholeWord(hay, t));
       })
       .map(item => ({ item, score: scoreItemRelevance(item, query) }))
-      .filter(x => x.score > 0)
+      // Was: `score > 0`. Zero-score items still passed the word-boundary
+      // whole-word check above, so dropping them nuked half the pool for
+      // rare/niche queries. Keep them; sort puts them at the bottom anyway.
+      .filter(x => x.score >= 0)
       .sort((a, b) => b.score - a.score)
       .map(x => x.item);
     _lastDisplayOrder = ranked;
-    // Bounded cap (4× imageCount) — high enough that orphan cleanup in
-    // runSearch keeps streaming cards ranked beyond #80, but low enough
-    // that initial render doesn't block the main thread with 500+ DOM
-    // insertions. Remainder lives in _lastDisplayOrder for reserve pool.
-    return ranked.slice(0, STATE.imageCount * 4);
+    // Return only the initial render window; the full ranked pool stays in
+    // _lastDisplayOrder so fetchMoreResults can drain it before hitting the
+    // network. Keeps initial DOM insert snappy and gives infinite scroll a
+    // local reserve to expand into.
+    return ranked.slice(0, STATE.imageCount);
   }
 
   // Explore mode: group by source, sort within each bucket by relevance,
@@ -1121,14 +1143,17 @@ export let getDisplayResults = function getDisplayResults(items, query) {
   }
 
   // MMR diversification — breaks clumping (7 Van Goghs in a row, 9 Met in a row)
+  // Window bounded to STATE.imageCount: MMR is O(n²), no value in reranking
+  // items beyond the initial viewport — load-more will refill below anyway.
   if (STATE.mmr && query && STATE.searchMode !== 'legacy') {
-    const window = Math.min(merged.length, Math.max(STATE.imageCount * 2, 120));
+    const window = Math.min(merged.length, STATE.imageCount);
     merged = mmrRerank(merged, STATE.mmrLambda ?? 0.5, window);
   }
 
   _lastDisplayOrder = merged;
-  // See exact-mode note above — bounded cap instead of unlimited.
-  return merged.slice(0, STATE.imageCount * 4);
+  // See exact-mode note above — initial render window only; pool drains
+  // via fetchMoreResults.
+  return merged.slice(0, STATE.imageCount);
 }
 
 export function showQuietTip(targetId, text, tipKey) {

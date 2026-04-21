@@ -485,7 +485,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     trackSource('quai_branly', callIfHealthy('quai_branly', () => fetchQuaiBranly(keyword,             Math.max(3, perSource), signal))),
     // Phase H — 113 World Museum sources (deferred to wave 2 below)
     // ── DYNAMIC REGISTRY — Europeana providers, DPLA hubs (when keys set) ──
-    ...selectDynamicSources(keyword, 120).map(entry => {
+    ...selectDynamicSources(keyword, 200).map(entry => {
       const adapter = ADAPTERS[entry.adapter];
       if (!adapter) return Promise.resolve();
       return trackSource(entry.id, adapter(entry.config, keyword, Math.max(2, Math.ceil(perSource / 3)), signal)
@@ -2339,6 +2339,34 @@ export async function fetchMoreResults() {
     if (btn) btn.textContent = 'all results loaded';
     return;
   }
+
+  // ── Phase 2.1 — drain the display pool before hitting the network ──
+  // getDisplayResults only renders the first STATE.imageCount items of
+  // _lastDisplayOrder to keep initial DOM insert snappy. Each load-more
+  // first expands that window by `DRAIN_BATCH` items from the already-
+  // fetched pool — zero network, instant response. Only when the pool is
+  // nearly drained do we do the real network fan-out below.
+  const DRAIN_BATCH = 40;
+  const unrendered = _lastDisplayOrder.filter(it => !renderedIds.has(it.id));
+  if (unrendered.length >= 20) {
+    renderGrid(unrendered.slice(0, DRAIN_BATCH));
+    STATE.emptyStreak = 0;
+    updateLoadMoreLabel();
+    // Auto-chain if still in view — pool drain is cheap enough to keep going.
+    if (unrendered.length > DRAIN_BATCH) {
+      setTimeout(() => {
+        if (STATE.loading || STATE.exhausted) return;
+        const sentinel = document.getElementById('more-container');
+        if (!sentinel) return;
+        const rect = sentinel.getBoundingClientRect();
+        if (rect.top < window.innerHeight + 800 && rect.bottom > 0) {
+          fetchMoreResults();
+        }
+      }, 150);
+    }
+    return;
+  }
+
   const startQuery = STATE.query;
   const startGen   = STATE._searchGen;
   STATE.loading = true;
@@ -2419,15 +2447,15 @@ export async function fetchMoreResults() {
   // Widened pool 400→800 so wave expansion has enough runway for deep scroll.
   // Most registries top out far below 800, so asking for more is free.
   const ranked = selectDynamicSources(primaryKw, 800);
-  const initialCut = new Set(ranked.slice(0, 120).map(e => e.id));
+  const initialCut = new Set(ranked.slice(0, 200).map(e => e.id));
   const waveCandidates = ranked
     .filter(e => !initialCut.has(e.id))
     .filter(e => !previousHitIds.has(e.id))
     .filter(e => !STATE.disabledSources.has(e.id) && isSourceHealthy(e.id))
     .filter(e => ADAPTERS[e.adapter]);
-  // 6→10: each load-more activates more fresh sources, raising novel-item
+  // 10→20: each load-more activates more fresh sources, raising novel-item
   // yield and delaying the 5-empty-streak exhaustion trigger.
-  const WAVE_BATCH = 10;
+  const WAVE_BATCH = 20;
   const waveSlice = waveCandidates.slice(_loadMoreWaveCursor, _loadMoreWaveCursor + WAVE_BATCH);
   _loadMoreWaveCursor += waveSlice.length;
   const perC = Math.max(6, Math.ceil(STATE.imageCount / Math.max(4, waveSlice.length || 1)));
