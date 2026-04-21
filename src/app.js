@@ -5413,6 +5413,7 @@ export async function urlToBase64(url) {
 export async function _callWorkersAITags(item, query = '') {
   const url = item.image || item.thumb || item.url;
   if (!url || !/^https?:\/\//.test(url)) throw new Error('no image url');
+  const t0 = performance.now();
   const res = await fetch(`${_API_BASE}/tags`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -5424,11 +5425,11 @@ export async function _callWorkersAITags(item, query = '') {
     throw new Error('workers-ai: ' + (msg.error || res.status));
   }
   const data = await res.json();
-  return {
-    tags: Array.isArray(data.tags) ? data.tags : [],
-    description: data.description || '',
-    model: data.model || 'workers-ai',
-  };
+  const tags = Array.isArray(data.tags) ? data.tags : [];
+  const model = data.model || 'workers-ai';
+  const ms = Math.round(performance.now() - t0);
+  console.info(`%c[ai] workers-ai ok  model=${model}  tags=${tags.length}  ${ms}ms`, 'color:#7cf');
+  return { tags, description: data.description || '', model };
 }
 
 /* -- AI consent popup — shown once on first use of free Workers AI analysis.

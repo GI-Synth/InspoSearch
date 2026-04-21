@@ -16,3 +16,10 @@ binding = "AI"
 [[kv_namespaces]]
 binding = "BOARDS"
 id = "cae86ef085bd4f6fb1cf9d44f7bc7079"
+
+# D1 Database — community-contributed metadata (consent-gated)
+# Created with: wrangler d1 create inspo-metadata
+[[d1_databases]]
+binding = "METADATA_DB"
+database_name = "inspo-metadata"
+database_id = "48837c1e-53d5-46ad-a548-e7f0f2b63c27"

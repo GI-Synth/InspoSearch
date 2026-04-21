@@ -495,7 +495,8 @@ async function handleTags(request, env) {
         .filter(s => s.length > 1 && s.length < 40)
         .slice(0, 8);
     }
-    tags = tags.filter(t => typeof t === 'string').map(t => t.toLowerCase().trim()).filter(Boolean).slice(0, 8);
+    tags = tags.filter(t => typeof t === 'string').map(t => t.toLowerCase().trim()).filter(Boolean);
+    tags = [...new Set(tags)].slice(0, 8);
     if (!tags.length) return json({ error: 'Model returned no parseable tags', raw: text }, 502, env);
 
     return json({ tags, description: text, model: modelUsed, primaryError }, 200, env);
