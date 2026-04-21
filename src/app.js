@@ -51,7 +51,7 @@ import {
   fetchGetty, fetchGroeninge, fetchGroninger, fetchGuimet, fetchHarvard,
   fetchHerzogAntonUlrich, fetchHubble, fetchIDigBio, fetchIIIFCollection,
   fetchIIIFSearch, fetchINaturalist, fetchJoconde, fetchKHM, fetchKMSKA,
-  fetchLACMA, fetchLakenhal, fetchLouvreAD, fetchMAAS, fetchMAK,
+  fetchLACMA, fetchLOC, fetchLakenhal, fetchLouvreAD, fetchMAAS, fetchMAK,
   fetchMNA, fetchMNW, fetchMauritshuis, fetchMet, fetchMia, fetchMoMAWD,
   fetchMunch, fetchMuseeOrsay, fetchMuseuTraje, fetchNASA, fetchNASAImages,
   fetchNASM, fetchNGA, fetchNGI, fetchNHMLondon, fetchNMAAHC, fetchNOAA,

@@ -30,19 +30,39 @@ function checkRateLimit(ip) {
   return bucket.count <= RATE_LIMIT;
 }
 
-function corsHeaders(env) {
+// Reflect a request's Origin if it matches our allowlist; fall back to '*' for
+// server-to-server / CLI callers. Keeping the client-visible ACAO dynamic lets
+// the site work from insposearch.org, insposearch.pages.dev, and localhost.
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/insposearch\.org$/,
+  /^https:\/\/([a-z0-9-]+\.)*insposearch\.pages\.dev$/,
+  /^https:\/\/insposearch\.official-ndsclsd\.workers\.dev$/,
+  /^http:\/\/localhost(:\d+)?$/,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+];
+
+function resolveAllowedOrigin(request, env) {
+  const origin = request?.headers?.get?.('Origin') || '';
+  if (origin && ALLOWED_ORIGIN_PATTERNS.some(rx => rx.test(origin))) return origin;
+  // Legacy env var fallback
+  if (env?.ALLOWED_ORIGIN && origin === env.ALLOWED_ORIGIN) return origin;
+  return '*';
+}
+
+function corsHeaders(env, request) {
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': resolveAllowedOrigin(request, env),
+    'Vary': 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json; charset=utf-8',
   };
 }
 
-function json(data, status, env) {
+function json(data, status, env, request) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: corsHeaders(env),
+    headers: corsHeaders(env, request),
   });
 }
 
@@ -77,17 +97,17 @@ export default {
 
     // CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(env) });
+      return new Response(null, { status: 204, headers: corsHeaders(env, request) });
     }
 
     if (request.method !== 'GET' && request.method !== 'POST') {
-      return json({ error: 'Method not allowed' }, 405, env);
+      return json({ error: 'Method not allowed' }, 405, env, request);
     }
 
     // Rate limiting
     const ip = request.headers.get('cf-connecting-ip') || 'unknown';
     if (!checkRateLimit(ip)) {
-      return json({ error: 'Rate limit exceeded. Max 60 requests/min.' }, 429, env);
+      return json({ error: 'Rate limit exceeded. Max 60 requests/min.' }, 429, env, request);
     }
 
     const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -638,7 +658,7 @@ const PROXY_ALLOWED_DOMAINS = new Set([
   'gallica.bnf.fr',
   'munch.emuseum.com',
   'collections.lacma.org',
-  'data.ago.ca', 'ago.ca',
+  'data.ago.ca', 'ago.ca', 'www.ago.ca',
   'www.mauritshuis.nl',
   'www.wikiart.org',
   'sammlung.mak.at',
@@ -651,6 +671,12 @@ const PROXY_ALLOWED_DOMAINS = new Set([
   'openaccess-api.clevelandart.org',
   'api.si.edu',
   'imageapi.khm.at',
+  // Added 2026-04-21 sweep.
+  'www.pem.org',
+  'mna.inah.gob.mx',
+  'www.munchmuseet.no',
+  'digital.bodleian.ox.ac.uk',
+  'search.artsmia.org',
 ]);
 
 async function handleProxy(url, request, env) {
@@ -686,7 +712,8 @@ async function handleProxy(url, request, env) {
 
     // Pass through the response with CORS headers
     const respHeaders = new Headers(upstream.headers);
-    respHeaders.set('Access-Control-Allow-Origin', env.ALLOWED_ORIGIN || '*');
+    respHeaders.set('Access-Control-Allow-Origin', resolveAllowedOrigin(request, env));
+    respHeaders.set('Vary', 'Origin');
     respHeaders.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
     respHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
     // Cache proxied API responses for 5 minutes at the edge

@@ -590,7 +590,7 @@ const CORS_BLOCKED_API_DOMAINS = new Set([
   'gallica.bnf.fr',
   'munch.emuseum.com',
   'collections.lacma.org',
-  'data.ago.ca', 'ago.ca',
+  'data.ago.ca', 'ago.ca', 'www.ago.ca',
   'www.mauritshuis.nl',
   'www.wikiart.org',
   'sammlung.mak.at',
@@ -598,6 +598,12 @@ const CORS_BLOCKED_API_DOMAINS = new Set([
   'opacplus.bsb-muenchen.de',
   'www.tate.org.uk',
   'rest.museum-digital.de',
+  // Added 2026-04-21 sweep — adapters were calling safeFetch directly and failing CORS.
+  'www.pem.org',
+  'mna.inah.gob.mx',
+  'www.munchmuseet.no',
+  'digital.bodleian.ox.ac.uk',
+  'search.artsmia.org',
 ]);
 
 function _needsApiProxy(url) {
@@ -1219,6 +1225,10 @@ export function extractTags(item) {
    6. ANTI-AI FILTER
 ============================================================ */
 export function isLikelyReal(item) {
+  // Reject non-browser-fetchable schemes (ftp://, file://, etc.) — CSP blocks them
+  // and they pollute the console with security violations.
+  const primary = item.url || item.thumb || '';
+  if (primary && !/^(https?:|data:)/i.test(primary)) return false;
   const banned = [
     'midjourney', 'stable diffusion', 'dall-e', 'dall e',
     'ai generated', 'ai-generated', 'artificial intelligence generated',

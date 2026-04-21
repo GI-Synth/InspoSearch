@@ -529,9 +529,11 @@ export async function fetchHarvard(keyword, limit, signal, page = 1) {
 }
 
 export async function fetchSmithsonian(keyword, limit, signal, start = 0) {
+  // DEMO_KEY hits a shared global quota that's always exhausted → 429 on every call.
+  // Skip entirely unless the user has provided their own key.
+  if (!STATE.smithsonianKey) return [];
   try {
-
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&start=${start}&online_media_type=Images`,
       { signal }, 'smithsonian'
@@ -567,8 +569,9 @@ export async function fetchSmithsonian(keyword, limit, signal, start = 0) {
 }
 
 export async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
+  if (!STATE.smithsonianKey) return [];
   try {
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=${unitCode}`,
       { signal }, 'smithsonian'
@@ -729,8 +732,13 @@ export async function fetchLOC(keyword, limit, signal, sp = 1) {
 }
 
 export async function fetchChicagoArt(keyword, limit, signal, page = 1) {
+  // 2026-04: ArtIC IIIF image host (www.artic.edu/iiif/2/...) is now behind a
+  // Cloudflare bot challenge that returns 403 to any non-browser fetch, including
+  // our image proxy. The API still responds but every rendered image 403s,
+  // polluting the console with CORP/CORS errors. Skip until they re-open IIIF
+  // or offer signed URLs.
+  return [];
   try {
-
     const res = await sourceFetch(
       `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(keyword)}&limit=${limit}&fields=id,title,image_id,artist_display,date_display,medium_display,subject_titles&page=${page}`,
       { signal }, 'chicago'
@@ -935,6 +943,9 @@ export async function fetchWikiArt(keyword, limit, signal, page = 1) {
 }
 
 export async function fetchNordicMuseum(keyword, limit, signal) {
+  // 2026-04: api.nordiskamuseet.se resolves to NXDOMAIN — the public API is gone.
+  // TODO: replace with Wikimedia Commons incategory:Nordiska_museet pattern.
+  return [];
   try {
     const res = await safeFetch(
       `https://api.nordiskamuseet.se/v1/objects?search=${encodeURIComponent(keyword)}&mediaLicense=*&page_size=${limit}`,
@@ -1190,9 +1201,9 @@ export async function fetchGallica(keyword, limit, signal, startRecord = 1) {
 export async function fetchChroniclingAmerica(keyword, limit, signal) {
   try {
 
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://chroniclingamerica.loc.gov/search/pages/results/?andtext=${encodeURIComponent(keyword)}&format=json&rows=${limit}`,
-      { signal }
+      { signal }, 'chronicling'
     );
     if (!res.ok) throw new Error('ChronAm failed');
     const data = await res.json();
@@ -1289,20 +1300,20 @@ export async function fetchDigitalNZ(keyword, limit, signal) {
 }
 
 export async function fetchBHL(keyword, limit, signal) {
+  // BHL requires a real API key. If the user hasn't supplied one, skip silently
+  // rather than hammering them with the placeholder (which just returns empty).
+  if (!STATE.bhlKey) return [];
   try {
-
-    // BHL uses a public/anonymous placeholder key — no secret
-    const BHL_KEY = '00000000-0000-0000-0000-000000000000';
+    const BHL_KEY = STATE.bhlKey;
     const res = await safeFetch(
       `https://www.biodiversitylibrary.org/api3?op=GetTitleSearchSimple&title=${encodeURIComponent(keyword)}&apikey=${BHL_KEY}&format=json`,
       { signal }
     );
     if (!res.ok) throw new Error('BHL failed');
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('json')) throw new Error('BHL returned non-JSON');
     const text = await res.text();
+    if (!text) return [];
     let data;
-    try { data = JSON.parse(text); } catch { throw new Error('BHL returned invalid JSON'); }
+    try { data = JSON.parse(text); } catch { return []; }
     const titles = (data.Result || []).slice(0, 3);
     if (!titles.length) return [];
     const itemID = titles[0].Items?.[0]?.ItemID;
@@ -1312,11 +1323,10 @@ export async function fetchBHL(keyword, limit, signal) {
       { signal }
     );
     if (!res2.ok) throw new Error('BHL pages failed');
-    const ct2 = res2.headers.get('content-type') || '';
-    if (!ct2.includes('json')) throw new Error('BHL pages returned non-JSON');
     const text2 = await res2.text();
+    if (!text2) return [];
     let data2;
-    try { data2 = JSON.parse(text2); } catch { throw new Error('BHL pages returned invalid JSON'); }
+    try { data2 = JSON.parse(text2); } catch { return []; }
     const titleFull = data2.Result?.[0]?.FullTitle || 'BHL Title';
     const pages = (data2.Result?.[0]?.Pages || []).filter(p => p.PageID).slice(0, limit);
     return pages
@@ -2526,10 +2536,9 @@ export async function fetchNYPL(keyword, limit, signal, page = 1) {
 
 export async function fetchMAK(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://sammlung.mak.at/api/v1/search?q=${encodeURIComponent(keyword)}&has_image=true&per_page=${limit}`,
-      { signal },
-      6000
+      { signal }, 'mak'
     );
     if (!res.ok) throw new Error('MAK failed');
     const data = await res.json();
@@ -2555,10 +2564,9 @@ export async function fetchMAK(keyword, limit, signal) {
 
 export async function fetchMNA(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://mna.inah.gob.mx/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
-      { signal },
-      6000
+      { signal }, 'mna'
     );
     if (!res.ok) throw new Error('MNA failed');
     const data = await res.json();
@@ -2587,14 +2595,17 @@ export async function fetchMNA(keyword, limit, signal) {
 
 export async function fetchMia(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://search.artsmia.org/?q=${encodeURIComponent(keyword)}&size=${limit}`,
-      { signal }
+      { signal }, 'mia'
     );
     if (!res.ok) throw new Error('Mia failed');
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('json')) throw new Error('Mia returned non-JSON: ' + ct);
-    const data = await res.json();
+    // Mia's search endpoint returns application/json content with text/plain CT.
+    // Parse as JSON from text regardless of the advertised content-type.
+    const text = await res.text();
+    if (!text) return [];
+    let data;
+    try { data = JSON.parse(text); } catch { return []; }
     return (data.hits?.hits || [])
       .filter(hit => hit._source?.image === 'valid' && hit._source?.restricted === 0)
       .map(hit => ({
@@ -2618,9 +2629,9 @@ export async function fetchMia(keyword, limit, signal) {
 
 export async function fetchLACMA(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://collections.lacma.org/api/search?q=${encodeURIComponent(keyword)}&f[]=has_image:true&f[]=public_domain:true&rows=${limit}&start=0`,
-      { signal }
+      { signal }, 'lacma'
     );
     if (!res.ok) throw new Error('LACMA failed');
     const data = await res.json();
@@ -2646,9 +2657,9 @@ export async function fetchLACMA(keyword, limit, signal) {
 
 export async function fetchMunch(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://www.munchmuseet.no/api/v1/works?q=${encodeURIComponent(keyword)}&limit=${limit}&hasImage=true`,
-      { signal }
+      { signal }, 'munch'
     );
     if (!res.ok) throw new Error('Munch failed');
     const data = await res.json();
@@ -2674,9 +2685,9 @@ export async function fetchMunch(keyword, limit, signal) {
 
 export async function fetchMauritshuis(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://www.mauritshuis.nl/api/collection/search?query=${encodeURIComponent(keyword)}&limit=${limit}&imageAvailable=true`,
-      { signal }
+      { signal }, 'mauritshuis'
     );
     if (!res.ok) throw new Error('Mauritshuis failed');
     const data = await res.json();
@@ -2773,8 +2784,9 @@ export async function fetchNaturalis(keyword, limit, signal) {
 }
 
 export async function fetchNMAAHC(keyword, limit, signal) {
+  if (!STATE.smithsonianKey) return [];
   try {
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NMAAHC`,
       { signal }, 'nmaahc'
@@ -2806,8 +2818,9 @@ export async function fetchNMAAHC(keyword, limit, signal) {
 }
 
 export async function fetchNASM(keyword, limit, signal) {
+  if (!STATE.smithsonianKey) return [];
   try {
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await sourceFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NASM`,
       { signal }, 'nasm'
@@ -2839,8 +2852,9 @@ export async function fetchNASM(keyword, limit, signal) {
 }
 
 export async function fetchNationalZoo(keyword, limit, signal) {
+  if (!STATE.smithsonianKey) return [];
   try {
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=NZP`,
       { signal }
@@ -2872,8 +2886,9 @@ export async function fetchNationalZoo(keyword, limit, signal) {
 }
 
 export async function fetchFreerSackler(keyword, limit, signal) {
+  if (!STATE.smithsonianKey) return [];
   try {
-    const key = STATE.smithsonianKey || 'DEMO_KEY';
+    const key = STATE.smithsonianKey;
     const res = await safeFetch(
       `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(keyword)}&api_key=${key}&rows=${limit}&online_media_type=Images&unit_code=FSG`,
       { signal }
@@ -3399,9 +3414,9 @@ WD_PHASE_H.forEach(s => {
 
 export async function fetchAGO(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://www.ago.ca/api/collection/search?q=${encodeURIComponent(keyword)}&limit=${limit}&type=artwork`,
-      { signal }
+      { signal }, 'ago'
     );
     if (!res.ok) throw new Error('AGO failed');
     const data = await res.json();
@@ -3428,9 +3443,9 @@ export async function fetchAGO(keyword, limit, signal) {
 
 export async function fetchPEM(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://www.pem.org/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
-      { signal }
+      { signal }, 'pem'
     );
     if (!res.ok) throw new Error('PEM failed');
     const data = await res.json();
@@ -3457,9 +3472,9 @@ export async function fetchPEM(keyword, limit, signal) {
 
 export async function fetchNPG(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
+    const res = await sourceFetch(
       `https://www.npg.org.uk/api/search?query=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
-      { signal }
+      { signal }, 'npg'
     );
     if (!res.ok) throw new Error('NPG failed');
     const data = await res.json();
@@ -3555,14 +3570,14 @@ export async function fetchUnsplash(keyword, limit, signal, page = 1) {
 /* Bodleian Libraries (Oxford) — IIIF-based search, no key */
 export async function fetchBodleian(keyword, limit, signal) {
   try {
-    const res = await safeFetch(
-      `https://digital.bodleian.ox.ac.uk/search/?q=${encodeURIComponent(keyword)}&rows=${limit}&start=0`,
-      { signal, headers: { 'Accept': 'application/json' } }
+    const res = await sourceFetch(
+      `https://digital.bodleian.ox.ac.uk/search/?q=${encodeURIComponent(keyword)}&format=json&limit=${limit}&start=0`,
+      { signal, headers: { 'Accept': 'application/json' } },
+      'bodleian'
     );
     if (!res.ok) throw new Error('Bodleian failed');
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('json')) throw new Error('Bodleian returned non-JSON');
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!data) return [];
     return (data.objects || [])
       .filter(obj => obj.thumbnail || obj.thumbnail_url)
       .map(obj => ({
@@ -3682,8 +3697,11 @@ export async function fetchIIIFCollection(config, keyword, limit, signal) {
     const limitParam = hasPerPage ? '' : `&limit=${limit}`;
     const url = `${config.endpoint}?${qp}=${encodeURIComponent(keyword)}${limitParam}${extra}`;
     const res = await safeFetch(url, { signal });
+    // museum-digital returns 404 with a JSON body when a query has zero results.
+    if (res.status === 404) return [];
     if (!res.ok) throw new Error(`IIIF ${config.id} failed`);
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!data) return [];
 
     // Walk resultsPath (dot-notation) to get items array.
     // Use '$' as resultsPath to indicate the root response is already the array.

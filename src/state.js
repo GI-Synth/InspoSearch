@@ -306,6 +306,7 @@ export const STATE = {
   pixabayKey:          null,    // string | null (localStorage)
   flickrKey:           null,    // string | null (localStorage)
   troveKey:            null,    // string | null (localStorage)
+  bhlKey:              null,    // string | null (localStorage) — BHL requires a real key; demo/placeholder returns empty
   digitalnzKey:        null,    // string | null (localStorage)
   dplaKey:             null,    // string | null (localStorage)
   ddbKey:              null,    // string | null (localStorage)
