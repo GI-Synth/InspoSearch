@@ -4635,9 +4635,8 @@ export function getSourceStats() {
     if (heroSrcEl) heroSrcEl.textContent = s.totalFetchSources.toLocaleString();
     if (heroImgEl) heroImgEl.textContent = formatCount(s.totalImagesNoKey);
 
-    // Persistent top info bar
-    const sibEl = document.getElementById('sib-text');
-    if (sibEl) sibEl.textContent = `${s.totalFetchSources.toLocaleString()} sources · ${formatCount(s.totalImagesNoKey)} images available — add api keys to unlock ${formatCount(s.totalImagesWithKey)}`;
+    // Persistent top info bar — delegate to updateInfoBar (single source of truth)
+    try { updateInfoBar(); } catch {}
 
     // stats row (step 4)
     const statsRow = document.getElementById('ob-stats-row');
@@ -4869,14 +4868,33 @@ function startGuidedTour() {
   showStep(0);
 }
 
-/* Persistent top info bar — updated on load & after dynamic discovery */
+/* Persistent top info bar — updated on load, after dynamic discovery, and
+   whenever a key is added/cleared (source-count-changed event). Sources +
+   reachable-institution counts come from sourceCount.js (single source of
+   truth); image counts come from getSourceStats (unchanged). */
 export function updateInfoBar() {
   const sibEl = document.getElementById('sib-text');
   if (!sibEl) return;
   const s = getSourceStats();
-  sibEl.textContent = `${s.totalFetchSources.toLocaleString()} sources · ${formatCount(s.totalImagesNoKey)} images available`;
+  const c = (typeof window !== 'undefined' && window.InspoCount)
+    ? window.InspoCount.computeSourceCount()
+    : null;
+  const srcStr = c
+    ? `${c.active}/${c.total} sources`
+    : `${s.totalFetchSources.toLocaleString()} sources`;
+  const instStr = c
+    ? ` · ${c.federatedActive.toLocaleString()}/${c.federatedMax.toLocaleString()} institutions`
+    : '';
+  const imgStr = ` · ${formatCount(s.totalImagesNoKey)} images`;
+  const unlockStr = (c && c.keysMissing.length)
+    ? ` — add api keys to unlock ${formatCount(s.totalImagesWithKey)}`
+    : '';
+  sibEl.textContent = `${srcStr}${instStr}${imgStr}${unlockStr}`;
 }
 updateInfoBar();
+if (typeof window !== 'undefined') {
+  window.addEventListener('source-count-changed', updateInfoBar);
+}
 
 /* API status badge + dropdown on info bar */
 export function updateApiStatus() {
