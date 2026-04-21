@@ -1,6 +1,6 @@
 /* InspoSearch Service Worker — static asset cache + stale-while-revalidate */
 /* Cache version — update on each deploy (build script or manual) */
-const CACHE_VERSION = '20260421e';
+const CACHE_VERSION = '20260421i';
 const CACHE_NAME = 'inspo-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   './',
@@ -60,16 +60,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // For API calls (external), use network-only — localStorage handles TTL/LRU caching.
-  // Caching API responses in the SW cache here caused unbounded growth with no TTL/eviction.
-  if (url.origin !== location.origin) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => caches.match(event.request))
-        .then(r => r || new Response('', { status: 504, statusText: 'Offline' }))
-    );
-    return;
-  }
+  // For cross-origin requests (APIs, images), let the browser handle natively.
+  // Synthesizing a 504 here swallowed CORS/network TypeErrors and prevented the
+  // client from falling back to the API proxy worker.
+  if (url.origin !== location.origin) return;
 
   // For static assets, use stale-while-revalidate
   event.respondWith(

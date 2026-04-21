@@ -68,11 +68,31 @@ export default {
     // Desired width (optional, Cloudflare Image Resizing if plan supports it)
     const width = parseInt(url.searchParams.get('w') || '0', 10);
 
-    // Fetch options — strip Referer, add neutral UA
+    // Some museum CDNs block hot-linking unless Referer matches their own origin.
+    // Set a matching Referer so origin-level ACLs treat us like a first-party request.
+    const host = parsed.hostname;
+    const hostRefererMap = {
+      'artic.edu':              'https://www.artic.edu/',
+      'www.artic.edu':          'https://www.artic.edu/',
+      'lake.artic.edu':         'https://www.artic.edu/',
+      'prb-secure.asset.artic.edu': 'https://www.artic.edu/',
+      'media.nga.gov':          'https://www.nga.gov/',
+      'collectionapi.metmuseum.org': 'https://www.metmuseum.org/',
+      'images.metmuseum.org':   'https://www.metmuseum.org/',
+    };
+    let referer = null;
+    for (const [h, ref] of Object.entries(hostRefererMap)) {
+      if (host === h || host.endsWith('.' + h)) { referer = ref; break; }
+    }
+    // Default: use the image's own origin as Referer (works for most strict CDNs).
+    if (!referer) referer = parsed.origin + '/';
+
+    // Fetch options — set matching Referer, neutral browser-like UA
     const fetchOpts = {
       headers: {
-        'User-Agent': 'InspoSearch Image Proxy/1.0',
-        'Accept': 'image/*,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (InspoSearchBot/1.0; +https://insposearch.org)',
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'Referer': referer,
       },
       cf: {
         cacheTtl: 86400,

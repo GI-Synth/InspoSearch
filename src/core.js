@@ -629,6 +629,15 @@ export function sourceFetch(url, opts = {}, sourceName) {
     : url;
 
   return safeFetch(fetchUrl, opts, timeout)
+    .then(res => {
+      // Old service workers synthesized `504 Offline` on cross-origin fetch failure
+      // (swallowing the TypeError). Treat that sentinel as a trigger to retry via proxy.
+      if (res && res.status === 504 && res.statusText === 'Offline'
+          && fetchUrl === url && CONSTANTS.API_PROXY_URL) {
+        return safeFetch(`${CONSTANTS.API_PROXY_URL}/proxy?url=${encodeURIComponent(url)}`, opts, timeout);
+      }
+      return res;
+    })
     .catch(err => {
       // On TypeError (CORS / network failure), retry through API proxy if not already proxied
       if (err instanceof TypeError && fetchUrl === url && CONSTANTS.API_PROXY_URL) {
