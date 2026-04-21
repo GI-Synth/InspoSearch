@@ -37,7 +37,7 @@ import {
   matchesAsWholeWord
 } from './core.js';
 import {
-  WD_PHASE_H_FETCHERS, expandKeywords,
+  WD_PHASE_H_FETCHERS, expandKeywords, fetchExactModeQualifiers,
   fetchAGO, fetchALA, fetchAPOD, fetchAltePinakothek, fetchAmsterdamMuseum,
   fetchArtsDecoratifs,
   fetchArtsy, fetchAuckland, fetchBHL, fetchBSB, fetchBelvedere,
@@ -2329,8 +2329,14 @@ export async function fetchMoreResults() {
   // call. Without variation Lane B returns the same items each load-more →
   // 100% dupes. Rotate through a neutral modifier list; exact-mode filter at
   // line 2359 still enforces word-boundary match on the original query.
+  // Exact mode: prefer Datamuse-derived qualifiers for this specific query
+  // when prefetch populated them; fall back to the hardcoded qualifier list
+  // (art mediums) which is sensible for art queries but not for non-art.
+  const exactPool = (STATE._exactQualifiers && STATE._exactQualifiers.length)
+    ? STATE._exactQualifiers.map(q => ' ' + q)
+    : _EXACT_LANE_B_MODIFIERS;
   const laneBKw = (STATE.searchMode === 'exact')
-    ? (primaryKw + _EXACT_LANE_B_MODIFIERS[(page - 1) % _EXACT_LANE_B_MODIFIERS.length]).trim()
+    ? (primaryKw + exactPool[(page - 1) % exactPool.length]).trim()
     : synKw;
   const laneB = [];
   const previousHitIds = new Set(STATE.results.map(r => r.source).filter(Boolean));
@@ -2508,6 +2514,18 @@ export async function runSearch(query, forceRefresh = false) {
     expandKeywords(effectiveQuery).then(kws => {
       STATE.keywords = kws;
       renderKeywordPills(kws);
+    }).catch(() => {});
+  }
+
+  // Exact-mode only: prefetch topically-related qualifiers for Lane B rotation.
+  // These are not synonyms (substituting would break the word-boundary filter)
+  // but neighbour concepts — they stay paired with the original query ("van gogh
+  // painter", "van gogh dutch") so the API returns a different slice each
+  // load-more while the filter still passes on the original query.
+  STATE._exactQualifiers = null;
+  if (STATE.searchMode === 'exact') {
+    fetchExactModeQualifiers(effectiveQuery).then(qs => {
+      if (STATE._searchGen === gen) STATE._exactQualifiers = qs;
     }).catch(() => {});
   }
 

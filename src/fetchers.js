@@ -89,6 +89,36 @@ async function expandMultilingualWikidata(keyword, signal) {
   }
 }
 
+// Exact-mode load-more qualifier pool. Fetches Datamuse `rel_trg`
+// (topically-triggered words) and `ml` (means-like) for the query and
+// keeps only single-word results that act as safe qualifiers when
+// appended to the query. Falls back to [] on failure; Lane B then uses
+// its hardcoded modifier list. Not synonyms — synonyms substituted into
+// the query would break the exact-mode word-boundary filter.
+export async function fetchExactModeQualifiers(keyword) {
+  try {
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), 3000);
+    const [trg, ml] = await Promise.allSettled([
+      fetch(`https://api.datamuse.com/words?rel_trg=${encodeURIComponent(keyword)}&max=20`, { signal: ac.signal }).then(r => r.json()),
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(keyword)}&max=20`,     { signal: ac.signal }).then(r => r.json()),
+    ]);
+    clearTimeout(timer);
+    const kwLower = keyword.toLowerCase();
+    const kwTokens = new Set(kwLower.split(/\s+/));
+    const words = [
+      ...(trg.status === 'fulfilled' ? trg.value : []),
+      ...(ml.status  === 'fulfilled' ? ml.value  : []),
+    ]
+      .map(w => (w.word || '').toLowerCase().trim())
+      .filter(w => w && !w.includes(' ') && w.length > 2 && w.length < 20)
+      .filter(w => !kwTokens.has(w));                    // don't re-add the query tokens
+    return [...new Set(words)].slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
 export async function expandKeywords(keyword) {
   if (!STATE.keywordExpansion) return [keyword];
   try {
