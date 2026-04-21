@@ -8867,3 +8867,88 @@ export function applyBoardTemplate(template) {
   update();
 })();
 
+/* ============================================================
+   DEEP-LINKABLE QUERY STATE
+   Serializes query + mode + filters into ?q=&mode=&aspect=&license=&medium=&years=
+   so researchers can cite, bookmark and share exact searches.
+   Pattern mirrors the existing ?palette= URL writer (line ~7860).
+============================================================ */
+(function initDeepLinkURL() {
+  if (!window.history || !window.history.replaceState) return;
+
+  var WRITE_KEYS = ['q', 'mode', 'aspect', 'license', 'medium', 'years'];
+
+  function writeURL() {
+    try {
+      var url = new URL(window.location);
+      WRITE_KEYS.forEach(function (k) { url.searchParams.delete(k); });
+      if (STATE.query) url.searchParams.set('q', STATE.query);
+      if (STATE.searchMode && STATE.searchMode !== 'explore') url.searchParams.set('mode', STATE.searchMode);
+      if (STATE._aspectFilter && STATE._aspectFilter !== 'all') url.searchParams.set('aspect', STATE._aspectFilter);
+      if (STATE._licenseFilter) url.searchParams.set('license', STATE._licenseFilter);
+      if (STATE._mediumFilter) url.searchParams.set('medium', STATE._mediumFilter);
+      if (STATE._dateFilter) {
+        var f = STATE._dateFilter.from || '';
+        var t = STATE._dateFilter.to   || '';
+        url.searchParams.set('years', f + '-' + t);
+      }
+      window.history.replaceState(null, '', url);
+    } catch (_) {}
+  }
+
+  // Wrap runSearch so every explicit search refreshes the URL
+  var origRunSearch = window.runSearch;
+  if (typeof origRunSearch === 'function') {
+    window.runSearch = function (q, forceRefresh) {
+      var ret = origRunSearch(q, forceRefresh);
+      Promise.resolve(ret).finally(writeURL);
+      return ret;
+    };
+  }
+
+  // Filter-change hooks: piggy-back on the same refilterResults signal
+  var origRefilter = window.refilterResults;
+  if (typeof origRefilter === 'function') {
+    window.refilterResults = function () {
+      var ret = origRefilter.apply(this, arguments);
+      writeURL();
+      return ret;
+    };
+  }
+
+  // On first load, if URL has ?q=, replay the state and fire the search
+  function loadFromURL() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var q = params.get('q');
+      if (!q) return;
+      var mode = params.get('mode');
+      if (mode === 'exact' || mode === 'explore') {
+        STATE.searchMode = mode;
+        var modeToggle = document.getElementById('mode-toggle');
+        if (modeToggle) modeToggle.value = mode;
+      }
+      var aspect = params.get('aspect');
+      if (aspect) STATE._aspectFilter = aspect;
+      var license = params.get('license');
+      if (license) STATE._licenseFilter = license;
+      var medium = params.get('medium');
+      if (medium) STATE._mediumFilter = medium;
+      var years = params.get('years');
+      if (years && /^\d{0,4}-\d{0,4}$/.test(years)) {
+        var parts = years.split('-');
+        STATE._dateFilter = {
+          from: parseInt(parts[0], 10) || 0,
+          to:   parseInt(parts[1], 10) || 9999,
+        };
+      }
+      var input = document.getElementById('search-input');
+      if (input) input.value = q;
+      if (typeof window.runSearch === 'function') window.runSearch(q);
+    } catch (_) {}
+  }
+
+  // Wait one tick so runSearch has been assigned by the module
+  setTimeout(loadFromURL, 0);
+})();
+

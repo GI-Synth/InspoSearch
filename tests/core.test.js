@@ -204,3 +204,171 @@ describe('normalizeTitle', () => {
     expect(normalizeTitle(null)).toBe('');
   });
 });
+
+// ── Reciprocal Rank Fusion (RRF) ──
+// Kept pure / STATE-free, mirrors src/core.js:rrfFuse
+function rrfFuse(rankings, k = 60, keyFn = (x) => x && (x.url || x.id)) {
+  const scores = new Map();
+  const seen = new Map();
+  for (const ranking of rankings) {
+    if (!Array.isArray(ranking)) continue;
+    for (let i = 0; i < ranking.length; i++) {
+      const item = ranking[i];
+      const key = keyFn(item);
+      if (!key) continue;
+      scores.set(key, (scores.get(key) || 0) + 1 / (k + i + 1));
+      if (!seen.has(key)) seen.set(key, item);
+    }
+  }
+  const merged = [];
+  for (const [key, item] of seen) merged.push({ item, score: scores.get(key) });
+  merged.sort((a, b) => b.score - a.score);
+  return merged.map(x => x.item);
+}
+
+describe('rrfFuse', () => {
+  it('returns empty for empty input', () => {
+    expect(rrfFuse([])).toEqual([]);
+    expect(rrfFuse([[]])).toEqual([]);
+  });
+  it('boosts items appearing in multiple rankings', () => {
+    const A = [{url:'a'}, {url:'b'}, {url:'c'}];
+    const B = [{url:'c'}, {url:'a'}, {url:'d'}];
+    // 'a' is rank 0 in A, rank 1 in B → strong; 'c' rank 0 in B rank 2 in A → strong
+    // 'b' and 'd' each appear once
+    const out = rrfFuse([A, B]).map(x => x.url);
+    expect(out[0]).toMatch(/^(a|c)$/);
+    expect(out[1]).toMatch(/^(a|c)$/);
+    expect(out.indexOf('b')).toBeGreaterThan(out.indexOf('a'));
+    expect(out.indexOf('d')).toBeGreaterThan(out.indexOf('c'));
+  });
+  it('deduplicates across rankings', () => {
+    const A = [{url:'a'}, {url:'b'}];
+    const B = [{url:'a'}, {url:'b'}];
+    expect(rrfFuse([A, B]).length).toBe(2);
+  });
+  it('item without url or id is dropped', () => {
+    const A = [{url:'a'}, {title:'no-key'}];
+    expect(rrfFuse([A]).length).toBe(1);
+  });
+});
+
+// ── MMR diversification ──
+function trigramSim(a, b) {
+  if (!a || !b) return 0;
+  a = a.toLowerCase(); b = b.toLowerCase();
+  if (a === b) return 1;
+  const tri = s => {
+    const t = new Set();
+    const p = '  ' + s + ' ';
+    for (let i = 0; i < p.length - 2; i++) t.add(p.slice(i, i + 3));
+    return t;
+  };
+  const tA = tri(a), tB = tri(b);
+  let m = 0;
+  for (const t of tA) if (tB.has(t)) m++;
+  return m / Math.max(tA.size, tB.size);
+}
+function itemSimilarity(a, b) {
+  if (!a || !b) return 0;
+  let sim = 0;
+  const aa = (a.artist || '').toLowerCase();
+  const ab = (b.artist || '').toLowerCase();
+  if (aa && aa === ab) sim += 0.5;
+  if (a.source && a.source === b.source) sim += 0.15;
+  const ya = a.year ? parseInt(a.year, 10) : null;
+  const yb = b.year ? parseInt(b.year, 10) : null;
+  if (ya !== null && yb !== null && !isNaN(ya) && !isNaN(yb) && Math.abs(ya - yb) < 25) sim += 0.1;
+  const ta = (a.title || '').toLowerCase();
+  const tb = (b.title || '').toLowerCase();
+  if (ta && tb) sim += trigramSim(ta, tb) * 0.4;
+  return Math.min(1, sim);
+}
+function mmrRerank(ranked, lambda = 0.5, limit = Infinity) {
+  if (!Array.isArray(ranked) || ranked.length < 2) return ranked;
+  const remaining = ranked.slice();
+  const selected = [];
+  const n = Math.min(limit, remaining.length);
+  const relOf = (item) => {
+    const idx = remaining.indexOf(item);
+    return idx === -1 ? 0 : 1 - idx / ranked.length;
+  };
+  selected.push(remaining.shift());
+  while (selected.length < n && remaining.length) {
+    let bestIdx = 0, bestScore = -Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const cand = remaining[i];
+      const rel = relOf(cand);
+      let maxSim = 0;
+      for (const s of selected) {
+        const sim = itemSimilarity(cand, s);
+        if (sim > maxSim) maxSim = sim;
+      }
+      const mmr = lambda * rel - (1 - lambda) * maxSim;
+      if (mmr > bestScore) { bestScore = mmr; bestIdx = i; }
+    }
+    selected.push(remaining.splice(bestIdx, 1)[0]);
+  }
+  return selected.concat(remaining);
+}
+
+describe('mmrRerank', () => {
+  it('returns short arrays unchanged', () => {
+    expect(mmrRerank([])).toEqual([]);
+    const one = [{url:'a'}];
+    expect(mmrRerank(one)).toBe(one);
+  });
+  it('keeps the top-ranked item first', () => {
+    const ranked = [
+      {url:'1', artist:'van gogh'},
+      {url:'2', artist:'van gogh'},
+      {url:'3', artist:'monet'},
+    ];
+    expect(mmrRerank(ranked)[0].url).toBe('1');
+  });
+  it('breaks clumping of same-artist items', () => {
+    const ranked = [
+      {url:'1', artist:'van gogh', title:'starry night'},
+      {url:'2', artist:'van gogh', title:'sunflowers'},
+      {url:'3', artist:'van gogh', title:'self portrait'},
+      {url:'4', artist:'monet',    title:'water lilies'},
+      {url:'5', artist:'picasso',  title:'guernica'},
+    ];
+    const out = mmrRerank(ranked, 0.5).map(x => x.url);
+    // After the first Van Gogh, the next pick should NOT be another Van Gogh
+    expect(['4','5']).toContain(out[1]);
+  });
+});
+
+// ── Orientation detection ──
+function orientationOf(item) {
+  const w = +item.width || 0;
+  const h = +item.height || 0;
+  if (w && h) {
+    const r = w / h;
+    if (r > 1.15) return 'landscape';
+    if (r < 1 / 1.15) return 'portrait';
+    return 'square';
+  }
+  return item._aspect || null;
+}
+
+describe('orientationOf', () => {
+  it('returns null when no dimensions and no fallback', () => {
+    expect(orientationOf({})).toBe(null);
+  });
+  it('falls back to item._aspect if no dimensions', () => {
+    expect(orientationOf({_aspect: 'portrait'})).toBe('portrait');
+  });
+  it('detects square within tolerance', () => {
+    expect(orientationOf({width: 1000, height: 1000})).toBe('square');
+    expect(orientationOf({width: 1000, height: 950})).toBe('square');
+  });
+  it('detects landscape / portrait', () => {
+    expect(orientationOf({width: 1600, height: 900})).toBe('landscape');
+    expect(orientationOf({width: 600, height: 900})).toBe('portrait');
+  });
+  it('API dimensions win over _aspect fallback', () => {
+    expect(orientationOf({width: 1600, height: 900, _aspect: 'portrait'})).toBe('landscape');
+  });
+});

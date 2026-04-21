@@ -333,6 +333,9 @@ export const STATE = {
   whitneyCache:        [],      // cached Whitney artworks (refreshed every 24h)
   whitneyCacheTimestamp: null,  // Date.now() of last Whitney fetch
   searchMode:          'explore', // 'explore' | 'exact'
+  ranker:              'rrf',    // 'rrf' | 'legacy' — ranking algorithm for explore-mode merge
+  mmr:                 true,     // Maximal Marginal Relevance diversification after RRF
+  mmrLambda:           0.5,      // MMR trade-off: 0=pure relevance, 1=pure diversity
   keywordExpansion:    true,     // enable Datamuse keyword expansion (toggled from settings)
   pendingOnboardingSearch: false, // first-visit guided search
   _searchGen:          0,        // monotonic counter to detect stale results

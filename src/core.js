@@ -909,8 +909,132 @@ export function queryToSeed(query) {
 /* Cache of last shuffled display order so slider re-slicing doesn't reshuffle */
 export let _lastDisplayOrder = [];
 
+/* ============================================================
+   Reciprocal Rank Fusion (RRF)
+   RRF(doc) = Σ 1/(k + rank_i(doc)) over every ranked list i
+   k=60 is the standard from Cormack et al. 2009 and what Elastic /
+   OpenSearch / Azure AI Search ship as default for hybrid retrieval.
+============================================================ */
+export function rrfFuse(rankings, k = 60, keyFn = (x) => x && (x.url || x.id)) {
+  const scores = new Map();
+  const seen = new Map();
+  for (const ranking of rankings) {
+    if (!Array.isArray(ranking)) continue;
+    for (let i = 0; i < ranking.length; i++) {
+      const item = ranking[i];
+      const key = keyFn(item);
+      if (!key) continue;
+      scores.set(key, (scores.get(key) || 0) + 1 / (k + i + 1));
+      if (!seen.has(key)) seen.set(key, item);
+    }
+  }
+  const merged = [];
+  for (const [key, item] of seen) {
+    merged.push({ item, score: scores.get(key) || 0 });
+  }
+  merged.sort((a, b) => b.score - a.score);
+  return merged.map(x => x.item);
+}
+
+/* ============================================================
+   Maximal Marginal Relevance (MMR) diversification
+   MMR(d) = λ·rel(d) − (1−λ)·max_{s∈selected} sim(d, s)
+   With λ=0.5 we trade relevance equally against diversity.
+   Similarity falls back through a ladder (pHash → artist/source/year →
+   trigram on title+artist) because CLIP embeddings aren't in yet.
+============================================================ */
+export function itemSimilarity(a, b) {
+  if (!a || !b) return 0;
+  // pHash Hamming (already computed at render time for dedup) — best signal
+  if (a._phash && b._phash && a._phash.length === b._phash.length) {
+    let diff = 0;
+    for (let i = 0; i < a._phash.length; i++) {
+      if (a._phash[i] !== b._phash[i]) diff++;
+    }
+    return 1 - diff / a._phash.length;
+  }
+  let sim = 0;
+  const ta = (a.title || '').toLowerCase();
+  const tb = (b.title || '').toLowerCase();
+  const aa = (a.artist || '').toLowerCase();
+  const ab = (b.artist || '').toLowerCase();
+  // same artist → very similar
+  if (aa && aa === ab) sim += 0.5;
+  // same source → slightly similar (institutional clumping to break)
+  if (a.source && a.source === b.source) sim += 0.15;
+  // close in time (within 25 years)
+  const ya = a.year ? parseInt(a.year, 10) : null;
+  const yb = b.year ? parseInt(b.year, 10) : null;
+  if (ya !== null && yb !== null && !isNaN(ya) && !isNaN(yb) && Math.abs(ya - yb) < 25) {
+    sim += 0.1;
+  }
+  // trigram similarity on titles (fast, ok proxy)
+  if (ta && tb) sim += trigramSimilarity(ta, tb) * 0.4;
+  return Math.min(1, sim);
+}
+
+export function mmrRerank(ranked, lambda = 0.5, limit = Infinity) {
+  if (!Array.isArray(ranked) || ranked.length < 2) return ranked;
+  const remaining = ranked.slice();
+  const selected = [];
+  const n = Math.min(limit, remaining.length);
+  // Relevance = rank position (descending). Convert to [0,1]: 1 for top, 0 for bottom.
+  const relOf = (item) => {
+    const idx = remaining.indexOf(item);
+    return idx === -1 ? 0 : 1 - idx / ranked.length;
+  };
+  // Seed with the top-ranked item (pure relevance pick)
+  selected.push(remaining.shift());
+  while (selected.length < n && remaining.length) {
+    let bestIdx = 0;
+    let bestScore = -Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const cand = remaining[i];
+      const rel = relOf(cand);
+      let maxSim = 0;
+      for (const s of selected) {
+        const sim = itemSimilarity(cand, s);
+        if (sim > maxSim) maxSim = sim;
+      }
+      const mmr = lambda * rel - (1 - lambda) * maxSim;
+      if (mmr > bestScore) {
+        bestScore = mmr;
+        bestIdx = i;
+      }
+    }
+    selected.push(remaining.splice(bestIdx, 1)[0]);
+  }
+  // Anything past the MMR window keeps its original order
+  return selected.concat(remaining);
+}
+
+/* Orientation derived from API-provided dimensions when available,
+   falls back to item._aspect set at image-load time (src/app.js). */
+export function orientationOf(item) {
+  const w = +item.width || 0;
+  const h = +item.height || 0;
+  if (w && h) {
+    const r = w / h;
+    if (r > 1.15) return 'landscape';
+    if (r < 1 / 1.15) return 'portrait';
+    return 'square';
+  }
+  return item._aspect || null;
+}
+
+function _applyOrientationFilter(base) {
+  const f = STATE._aspectFilter;
+  if (!f || f === 'all') return base;
+  return base.filter(item => {
+    const o = orientationOf(item);
+    if (!o) return true; // unknown — keep rather than drop
+    return o === f;
+  });
+}
+
 export let getDisplayResults = function getDisplayResults(items, query) {
-  const base = Array.isArray(items) ? [...items] : [];
+  let base = Array.isArray(items) ? [...items] : [];
+  base = _applyOrientationFilter(base);
   if (!base.length) { _lastDisplayOrder = []; return []; }
 
   if (STATE.searchMode === 'exact') {
@@ -949,7 +1073,8 @@ export let getDisplayResults = function getDisplayResults(items, query) {
   }
 
   // Explore mode: group by source, sort within each bucket by relevance,
-  // then interleave so every source contributes but best matches come first.
+  // then fuse via RRF (default) or interleave (legacy) so every source
+  // contributes but best matches come first.
   const buckets = {};
   for (const item of base) {
     const s = item.source || 'unknown';
@@ -975,7 +1100,28 @@ export let getDisplayResults = function getDisplayResults(items, query) {
     }
     return seededShuffle(arr, rng);
   });
-  _lastDisplayOrder = interleave(arrays);
+
+  let merged;
+  if (STATE.ranker === 'legacy' || !query) {
+    // Legacy: naive round-robin interleave across source buckets
+    merged = interleave(arrays);
+  } else {
+    // RRF: fuse two rankings — (a) per-source rank, (b) global score rank
+    // Both reward the same items, but (a) enforces source diversity
+    // and (b) lets the strongest absolute matches rise to the top.
+    const globalRanked = base.slice().sort(
+      (a, b) => scoreItemRelevance(b, query) - scoreItemRelevance(a, query)
+    );
+    merged = rrfFuse([...arrays, globalRanked], 60);
+  }
+
+  // MMR diversification — breaks clumping (7 Van Goghs in a row, 9 Met in a row)
+  if (STATE.mmr && query && STATE.searchMode !== 'legacy') {
+    const window = Math.min(merged.length, Math.max(STATE.imageCount * 2, 120));
+    merged = mmrRerank(merged, STATE.mmrLambda ?? 0.5, window);
+  }
+
+  _lastDisplayOrder = merged;
   return _lastDisplayOrder.slice(0, STATE.imageCount);
 }
 

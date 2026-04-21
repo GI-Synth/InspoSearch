@@ -362,3 +362,124 @@ The infinite-scroll observer then had no way to stop: sentinel stays intersected
 - Switch queries — load-more/infinite-scroll should work again on the new query (observer reattached).
 - Exact mode: load-more only uses paginated adapters (no synonym fan-out); should still yield items for queries that have depth in Met/Harvard/Europeana.
 - DevTools Network panel: confirm load-more fires ~11 paginated requests + up to ~10 synonym requests (explore mode), not thousands.
+
+---
+
+# From RECOMMENDATIONS.md — implementation series
+
+The steps below implement items from `RECOMMENDATIONS.md` (search quality, source utilization, UX), one at a time, under the same Step format. Each entry includes a "For partners" line written to be shareable with the institutions whose APIs we integrate.
+
+---
+
+## Step 8 — Reciprocal Rank Fusion (RRF) ranking ✅
+
+**Date:** 2026-04-20
+**Files:** `src/core.js` (new `rrfFuse`, wired into `getDisplayResults`), `src/state.js` (`ranker: 'rrf' | 'legacy'` flag), `tests/core.test.js` (+4 tests).
+
+**Motivation (from `RECOMMENDATIONS.md` §0 item 3, §1.2):** relevance scores from different source adapters aren't comparable — Chicago's "15" and Europeana's "15" mean different things. The old explore-mode merge leaned on bucket interleave + seeded-shuffle inside same-score groups, which is an ad-hoc workaround for the calibration problem. RRF is the standard fusion used by OpenSearch 2.19+, Elasticsearch, Azure AI Search.
+
+**Formula:** `RRF(doc) = Σ 1/(k + rank_i(doc))` with k=60. Sum the reciprocal ranks across every ranked list the doc appears in.
+
+**What ships:**
+```js
+// core.js — pure helper, no STATE deps, reusable
+export function rrfFuse(rankings, k = 60, keyFn = x => x && (x.url || x.id)) { … }
+
+// getDisplayResults explore branch now fuses two rankings:
+//   A) per-source rank  (source diversity; top-of-each-source rises)
+//   B) global score rank (quality; strongest absolute matches rise)
+merged = rrfFuse([...perSourceArrays, globalRanked], 60);
+```
+
+**Rollback:** `STATE.ranker = 'legacy'` → restores the previous interleave path at runtime, no build needed. Permanent rollback: revert `src/core.js` explore branch and remove `rrfFuse`.
+
+**How to test:**
+- Explore mode, broad query like `landscape` or `portrait` — top results should mix sources (Met, Europeana, Rijks, Smithsonian) rather than first-page-all-Met.
+- Exact mode untouched (single-list scoring, no fusion).
+- Flip `STATE.ranker = 'legacy'` in devtools → order shifts to the old round-robin interleave.
+
+**For partners:** results that appear in multiple APIs' relevance lists now surface higher. Your collection's distinctive matches ride on top of the fusion rather than being averaged against sources with calibrated-differently scores.
+
+---
+
+## Step 9 — Maximal Marginal Relevance (MMR) diversification ✅
+
+**Date:** 2026-04-20
+**Files:** `src/core.js` (new `itemSimilarity`, `mmrRerank`, wired after RRF in `getDisplayResults`), `src/state.js` (`mmr: true`, `mmrLambda: 0.5`), `tests/core.test.js` (+3 tests).
+
+**Motivation (§0 item 4, §1.3):** results clump — 7 Van Goghs in a row, 9 items from the same museum, same medium all concentrated in one band of the grid. The previous fix (seeded-shuffle within tied-score groups) doesn't address clumping between different scores.
+
+**Formula:** `MMR(d) = λ·rel(d) − (1−λ)·max_{s∈selected} sim(d, s)` with λ=0.5 (equal trade-off). Greedy top-window selection.
+
+**Similarity ladder (fallbacks because CLIP isn't in yet):**
+1. pHash Hamming distance (populated at image-load time for dedup — repurposed)
+2. Artist name equality (strong signal — stops artist clumping)
+3. Source equality (weak — stops institutional clumping)
+4. Year proximity within 25 years
+5. Title trigram similarity (last-resort proxy)
+
+**What ships:**
+```js
+if (STATE.mmr && query) {
+  const window = Math.min(merged.length, Math.max(STATE.imageCount * 2, 120));
+  merged = mmrRerank(merged, STATE.mmrLambda ?? 0.5, window);
+}
+```
+
+Top item is always the pure-relevance pick (MMR seed). Items past the window keep their original order — no unnecessary churn on tail results.
+
+**Rollback:** `STATE.mmr = false` at runtime, or remove the block in `getDisplayResults`.
+
+**How to test:**
+- Query `van gogh` in explore mode — top of grid should mix Van Gogh with related impressionists, not stack 7 self-portraits in a row.
+- Query `flower` — top 20 should span watercolor + oil + photo + illustration rather than 15 Dutch still-lifes clumped.
+- Unit test covers: `mmrRerank` breaks clumping of same-artist items while keeping the top-ranked item first.
+
+**For partners:** your high-relevance items still surface, but we don't stack 8 of yours in a row and drown out other partner collections. This is a net positive for every provider — diversity in the top-N means more of each partner's work gets seen.
+
+---
+
+## Step 10 — Aspect ratio / orientation filter (unified through core) ✅
+
+**Date:** 2026-04-20
+**Files:** `src/core.js` (new `orientationOf`, `_applyOrientationFilter`), `tests/core.test.js` (+5 tests).
+
+**Motivation (§1.9):** `STATE._aspectFilter` existed in the UI (advanced panel) and was applied in `refilterResults`, but only on items already rendered (those with `item._aspect` populated after image load). Anything still loading was ignored by the filter.
+
+**Fix:** `orientationOf(item)` now derives orientation from API-provided `width`/`height` first, falls back to `item._aspect` only when dimensions aren't known. The filter is applied inside `getDisplayResults` so every code path — initial render, load-more, refilter — gets identical behaviour.
+
+**Rollback:** remove `_applyOrientationFilter` call from `getDisplayResults`. Advanced panel still works via the existing path.
+
+**How to test:**
+- Advanced search → set orientation to `landscape` → run a query. Grid should only show landscape items, even before thumbnails finish decoding.
+- Orientation filter survives query changes.
+
+**For partners:** APIs that return `width`/`height` in their response (Met, Rijks, Chicago, Harvard, Cleveland, Europeana `edmPreview` metadata, Flickr `o_height`/`o_width`) now feed directly into UI filters without waiting for a client-side decode pass. If your adapter can expose dimensions at fetch time, please do — it unlocks instant filter response.
+
+---
+
+## Step 11 — Deep-linkable URL query state ✅
+
+**Date:** 2026-04-20
+**File:** `src/app.js` — new `initDeepLinkURL` IIFE appended at end of file. Mirrors the existing `?palette=` writer pattern (~line 7860).
+
+**Motivation (§0 item 9, §5.1):** researchers and educators want to cite and share exact searches. Before this, opening the site always started from a blank query, even if the URL was shared from a filtered state.
+
+**URL shape:**
+```
+?q=<query>&mode=<explore|exact>&aspect=<square|portrait|landscape>
+&license=<cc0|cc-by|open>&medium=<painting|photo|...>&years=<from>-<to>
+```
+
+**Writer:** wraps `window.runSearch` and `window.refilterResults` so every user-visible state change updates the URL via `history.replaceState` — no new history entries piling up. Writes only non-default values, so the URL stays short.
+
+**Reader:** on page load, if `?q=` is present, replay `STATE` fields (mode, filters), set the search input, and fire `runSearch`.
+
+**Rollback:** delete the `initDeepLinkURL` IIFE at the end of `src/app.js`. Existing `?palette=` and `?board=` / `?share=` handlers are independent and unaffected.
+
+**How to test:**
+- Run a search, add filters — URL should live-update. Copy/paste in a new tab → same state loads automatically.
+- `?q=kandinsky&mode=exact&aspect=portrait` in an address bar on cold load → opens with that query and filters applied.
+- Back button doesn't spin through intermediate filter states (replaceState, not pushState).
+
+**For partners:** every share of a search is now a stable, citable URL pointing at a filtered view of our aggregated results. Citations in academic papers and lesson plans finally work without screenshots — a searchable path to any result set that includes your collection.
