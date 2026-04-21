@@ -57,6 +57,29 @@ describe('cacheKey', () => {
 // ── classifyQuery — import the real implementation from src/state.js
 // so regressions in the term lists or matcher are caught here.
 import { classifyQuery, classifyQueryExtended } from '../src/state.js';
+import { matchesAsWholeWord } from '../src/core.js';
+
+describe('matchesAsWholeWord (diacritic-safe exact-mode filter)', () => {
+  it('matches plain ASCII word boundary', () => {
+    expect(matchesAsWholeWord('vincent van gogh self-portrait', 'gogh')).toBe(true);
+    expect(matchesAsWholeWord('antique vase', 'ant')).toBe(false);
+  });
+  it('strips NFD combining diacritics from hay', () => {
+    // "Gögh" / "Gógh" → NFD strip → "Gogh" → matches "gogh"
+    expect(matchesAsWholeWord('vincent van gögh', 'gogh')).toBe(true);
+    expect(matchesAsWholeWord('café de flore', 'cafe')).toBe(true);
+  });
+  it('strips diacritics from the query term too', () => {
+    expect(matchesAsWholeWord('vincent van gogh', 'gögh')).toBe(true);
+  });
+  it('treats hyphens as word boundaries (Van-Gogh variants)', () => {
+    expect(matchesAsWholeWord('van-gogh museum', 'gogh')).toBe(true);
+    expect(matchesAsWholeWord('van-gogh museum', 'van')).toBe(true);
+  });
+  it('is case-insensitive', () => {
+    expect(matchesAsWholeWord('VINCENT VAN GOGH', 'gogh')).toBe(true);
+  });
+});
 
 describe('classifyQuery', () => {
   it('detects nature queries', () => {

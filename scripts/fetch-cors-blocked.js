@@ -867,5 +867,13 @@ async function main() {
 
 main().catch(e => {
   console.error('Fatal error in fetch script:', e);
+  // Best-effort: write a stub _index.json noting the failure so status never silently freezes.
+  try {
+    writeFileSync(join(DATA_DIR, '_index.json'), JSON.stringify({
+      lastUpdated: new Date().toISOString(),
+      error: String(e?.message || e),
+      sources: [],
+    }, null, 2), 'utf8');
+  } catch (_) { /* ignore */ }
   process.exit(1);
 });
