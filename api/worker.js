@@ -550,7 +550,7 @@ async function handleContribute(request, env) {
       ).run();
       return json({ ok: true, stored: true, stage: 'd1' }, 200, env);
     } catch (e) {
-      return json({ ok: true, stored: false, stage: 'd1-error', detail: e.message }, 202, env);
+      return json({ ok: false, stored: false, stage: 'd1-error', detail: e.message }, 500, env);
     }
   }
 

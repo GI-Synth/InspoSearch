@@ -2383,8 +2383,10 @@ export async function fetchMoreResults() {
   const exactPool = (STATE._exactQualifiers && STATE._exactQualifiers.length)
     ? STATE._exactQualifiers.map(q => ' ' + q)
     : _EXACT_LANE_B_MODIFIERS;
+  // page starts at 2 on first load-more; treat that as pool index 0 so the
+  // empty-qualifier slot (plain re-query) runs first before rotating modifiers.
   const laneBKw = (STATE.searchMode === 'exact')
-    ? (primaryKw + exactPool[(page - 1) % exactPool.length]).trim()
+    ? (primaryKw + exactPool[(page - 2) % exactPool.length]).trim()
     : synKw;
   const laneB = [];
   const previousHitIds = new Set(STATE.results.map(r => r.source).filter(Boolean));
