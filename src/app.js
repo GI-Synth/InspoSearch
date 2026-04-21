@@ -2480,10 +2480,13 @@ export async function fetchMoreResults() {
   _secondaryControllers.delete(ac);
   updateLoadMoreLabel();
   // Auto-chain: IntersectionObserver only fires on transitions. If this
-  // load-more appended few items and the sentinel is still in the rootMargin
-  // zone, the observer won't re-fire on its own. Check manually and
-  // re-enter until we're exhausted or have enough items below the viewport.
-  if (!STATE.exhausted && STATE.results.length < CONSTANTS.MAX_RESULTS) {
+  // load-more appended items and the sentinel is still in the rootMargin
+  // zone, the observer won't re-fire on its own. Only chain when the last
+  // call was productive (emptyStreak reset to 0) — otherwise we'd spam
+  // network fan-outs of ~30 adapters each until emptyStreak hits 5.
+  if (!STATE.exhausted
+      && STATE.emptyStreak === 0
+      && STATE.results.length < CONSTANTS.MAX_RESULTS) {
     setTimeout(() => {
       if (STATE.loading || STATE.exhausted) return;
       const sentinel = document.getElementById('more-container');
@@ -2492,7 +2495,7 @@ export async function fetchMoreResults() {
       if (rect.top < window.innerHeight + 800 && rect.bottom > 0) {
         fetchMoreResults();
       }
-    }, 150);
+    }, 400);
   }
 }
 

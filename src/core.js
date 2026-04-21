@@ -1070,11 +1070,11 @@ export let getDisplayResults = function getDisplayResults(items, query) {
       .sort((a, b) => b.score - a.score)
       .map(x => x.item);
     _lastDisplayOrder = ranked;
-    // Was: slice(0, STATE.imageCount) — capped initial render at 80, which
-    // starved infinite scroll when post-fetch culling removed anything
-    // beyond that slice. Return the full ranked list; the lazy image loader
-    // still gates network requests by viewport.
-    return ranked;
+    // Bounded cap (4× imageCount) — high enough that orphan cleanup in
+    // runSearch keeps streaming cards ranked beyond #80, but low enough
+    // that initial render doesn't block the main thread with 500+ DOM
+    // insertions. Remainder lives in _lastDisplayOrder for reserve pool.
+    return ranked.slice(0, STATE.imageCount * 4);
   }
 
   // Explore mode: group by source, sort within each bucket by relevance,
@@ -1127,8 +1127,8 @@ export let getDisplayResults = function getDisplayResults(items, query) {
   }
 
   _lastDisplayOrder = merged;
-  // See exact-mode note above — return full merged ranking, not a STATE.imageCount slice.
-  return merged;
+  // See exact-mode note above — bounded cap instead of unlimited.
+  return merged.slice(0, STATE.imageCount * 4);
 }
 
 export function showQuietTip(targetId, text, tipKey) {
