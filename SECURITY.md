@@ -19,4 +19,4 @@ InspoSearch is a client-side application. The main security considerations are:
 
 ## Supported Versions
 
-Only the latest version deployed to `insposearch.pages.dev` is supported.
+Only the latest version deployed to `insposearch.org` is supported.
