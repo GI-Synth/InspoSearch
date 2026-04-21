@@ -536,6 +536,50 @@ export function checkFailedImages() {
 export const renderedIds = new Set();
 // pHash seen set — reset on each new search, checked as each image loads
 export const _pHashSeen = new Set();
+// LSH band index: maps 8-bit band-key → list of phashes that hashed to it.
+// Lets us narrow the full distance check to a small candidate set per insert,
+// turning O(n) per card into ~O(1) average and killing the O(n²) burst stall.
+const _PHASH_BANDS = 8;            // 8 bands × 8 bits = 64-bit hash
+const _PHASH_BAND_SIZE = 8;
+const _pHashBandIndex = Array.from({ length: _PHASH_BANDS }, () => new Map());
+function _phashBandKeys(hash) {
+  const keys = new Array(_PHASH_BANDS);
+  for (let b = 0; b < _PHASH_BANDS; b++) {
+    let k = 0;
+    const start = b * _PHASH_BAND_SIZE;
+    for (let i = 0; i < _PHASH_BAND_SIZE; i++) k = (k << 1) | hash[start + i];
+    keys[b] = k;
+  }
+  return keys;
+}
+function _phashCandidates(hash) {
+  const keys = _phashBandKeys(hash);
+  const seen = new Set();
+  const out = [];
+  for (let b = 0; b < _PHASH_BANDS; b++) {
+    const bucket = _pHashBandIndex[b].get(keys[b]);
+    if (!bucket) continue;
+    for (const h of bucket) {
+      if (seen.has(h)) continue;
+      seen.add(h);
+      out.push(h);
+    }
+  }
+  return out;
+}
+function _phashRegister(hash) {
+  const keys = _phashBandKeys(hash);
+  for (let b = 0; b < _PHASH_BANDS; b++) {
+    const map = _pHashBandIndex[b];
+    const k = keys[b];
+    let bucket = map.get(k);
+    if (!bucket) { bucket = []; map.set(k, bucket); }
+    bucket.push(hash);
+  }
+}
+function _phashClearIndex() {
+  for (const m of _pHashBandIndex) m.clear();
+}
 
 // ── Preload-then-append render queue ──────────────────────────────────
 // Images are validated off-DOM before any card is created. This prevents
@@ -546,12 +590,39 @@ let _renderActive = 0;
 let _renderGen = 0;           // generation counter — clearGrid invalidates in-flight loads
 const _RENDER_CONCURRENCY = 12;
 
+// Time-sliced card-work scheduler. Runs queued tasks in a rAF callback,
+// budgeting ~8ms per frame. Anything left over rolls to the next frame so
+// click/scroll handlers always get a turn between bursts.
+const _cardWorkQueue = [];
+let _cardWorkScheduled = false;
+const _CARD_WORK_BUDGET_MS = 8;
+function _drainCardWork() {
+  _cardWorkScheduled = false;
+  const start = performance.now();
+  while (_cardWorkQueue.length && performance.now() - start < _CARD_WORK_BUDGET_MS) {
+    const fn = _cardWorkQueue.shift();
+    try { fn(); } catch (e) { console.error(e); }
+  }
+  if (_cardWorkQueue.length && !_cardWorkScheduled) {
+    _cardWorkScheduled = true;
+    requestAnimationFrame(_drainCardWork);
+  }
+}
+function _scheduleCardWork(fn) {
+  _cardWorkQueue.push(fn);
+  if (_cardWorkScheduled) return;
+  _cardWorkScheduled = true;
+  requestAnimationFrame(_drainCardWork);
+}
+
 export function clearGrid() {
   document.getElementById('image-grid').innerHTML = '';
   renderedIds.clear();
   _gridItemMap.clear();
   _pHashSeen.clear();
+  _phashClearIndex();
   _renderQueue.length = 0;
+  _cardWorkQueue.length = 0;
   _renderActive = 0;
   _renderGen++;
 }
@@ -738,8 +809,14 @@ function _processRenderQueue() {
         _processRenderQueue();
         return;
       }
-      _appendValidCard(item, grid, testImg);
-      _processRenderQueue();
+      // Yield to the event loop before running per-card sync work
+      // (color sampling, pHash, dedup). Without this, a burst of 12
+      // concurrent image loads runs back-to-back and starves clicks.
+      _scheduleCardWork(() => {
+        if (gen !== _renderGen) return;
+        _appendValidCard(item, grid, testImg);
+        _processRenderQueue();
+      });
     };
 
     testImg.onerror = () => {
@@ -820,13 +897,14 @@ function _appendValidCard(item, grid, preloadedImg) {
   }
   if (!item._phash) item._phash = computePHash(img);
   if (item._phash && _pHashSeen.size > 0) {
-    for (const seen of _pHashSeen) {
+    const candidates = _phashCandidates(item._phash);
+    for (const seen of candidates) {
       if (pHashDistance(item._phash, seen) < PHASH_THRESHOLD) {
         renderedIds.delete(item.id); _backfillOne(); return;
       }
     }
   }
-  if (item._phash) _pHashSeen.add(item._phash);
+  if (item._phash) { _pHashSeen.add(item._phash); _phashRegister(item._phash); }
 
   // ── Badge ──
   const badge = document.createElement('span');

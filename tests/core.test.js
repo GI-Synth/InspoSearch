@@ -54,22 +54,9 @@ describe('cacheKey', () => {
   });
 });
 
-// ── classifyQuery (from app.js ~line 333) ──
-const NATURE_QUERY_TERMS = [
-  'beetle','moth','butterfly','lichen','fungus','coral','species','genus',
-  'flora','fauna','specimen','fern','moss','mushroom','insect','bird','fish',
-];
-const SPACE_QUERY_TERMS = [
-  'galaxy','nebula','supernova','asteroid','comet','exoplanet','pulsar',
-  'quasar','spacecraft','satellite','orbit','cosmic','stellar','mars','jupiter',
-];
-
-function classifyQuery(q) {
-  const lower = (q || '').toLowerCase();
-  const isNature = NATURE_QUERY_TERMS.some(t => lower.includes(t));
-  const isSpace  = SPACE_QUERY_TERMS.some(t => lower.includes(t));
-  return { isNature, isSpace };
-}
+// ── classifyQuery — import the real implementation from src/state.js
+// so regressions in the term lists or matcher are caught here.
+import { classifyQuery, classifyQueryExtended } from '../src/state.js';
 
 describe('classifyQuery', () => {
   it('detects nature queries', () => {
@@ -88,6 +75,26 @@ describe('classifyQuery', () => {
     const r = classifyQuery('renaissance portrait');
     expect(r.isNature).toBe(false);
     expect(r.isSpace).toBe(false);
+  });
+  // Regression: "ant" must not match "antique", "sun" must not match "sunset",
+  // etc. — substring matches on these short tokens routed biology/space-only
+  // sources (GBIF, NASA APOD) into unrelated art/cartography searches.
+  it('does not substring-match short nature tokens inside unrelated words', () => {
+    expect(classifyQuery('antique map cartography').isNature).toBe(false);
+    expect(classifyQuery('antarctic expedition').isNature).toBe(false);
+    expect(classifyQuery('beethoven portrait').isNature).toBe(false);
+    expect(classifyQuery('birdcage architecture').isNature).toBe(false); // "bird" only as substring
+    expect(classifyQuery('a single bird').isNature).toBe(true); // whole-word match
+  });
+  it('does not substring-match short space tokens inside unrelated words', () => {
+    expect(classifyQuery('sunset over venice').isSpace).toBe(false); // "sun" embedded in "sunset"
+    expect(classifyQuery('the sun and moon').isSpace).toBe(true);    // whole-word match
+    expect(classifyQuery('earthenware pottery').isSpace).toBe(false);
+    expect(classifyQuery('starbucks logo').isSpace).toBe(false);
+  });
+  it('classifyQueryExtended applies the same word-boundary rule', () => {
+    const r = classifyQueryExtended('antique map cartography');
+    expect(r.isNature).toBe(false);
   });
 });
 

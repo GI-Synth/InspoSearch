@@ -4,5 +4,6 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.js'],
     exclude: ['tests/e2e/**', 'node_modules/**'],
+    setupFiles: ['./tests/setup.js'],
   },
 });

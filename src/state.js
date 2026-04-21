@@ -362,7 +362,7 @@ export const NATURE_QUERY_TERMS = [
   'flora','fauna','specimen','fern','moss','algae','mushroom','insect',
   'arachnid','amphibian','reptile','crustacean','orchid','seabird','mammal',
   'polypore','bryophyte','cephalopod','dragonfly','grasshopper','termite',
-  'cicada','barnacle','echinoderm','nudibranch','mycelium','lichen',
+  'cicada','barnacle','echinoderm','nudibranch','mycelium',
   'wildflower','blossom','seedpod','herbarium','bird','fish','whale',
   'shark','snake','lizard','frog','toad','newt','salamander','worm',
   'plankton','diatom','protozoa','caterpillar','wasp','bee','hornet','ant',
@@ -388,10 +388,26 @@ export const SPACE_ONLY_SOURCES = new Set([
   'nasa','nasa_images','apod','hubble','noaa',
 ]);
 
+// Word-boundary match: prevents short terms like "ant" matching "antique"
+// or "sun" matching "sunset". Uses tokenization rather than regex so
+// hyphenated/multi-word terms ("black hole", "solar system") still match.
+const _termRegexCache = new WeakMap();
+function _termRegexFor(terms) {
+  let re = _termRegexCache.get(terms);
+  if (re) return re;
+  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  re = new RegExp('(?:^|[^a-z0-9])(?:' + escaped.join('|') + ')(?=$|[^a-z0-9])', 'i');
+  _termRegexCache.set(terms, re);
+  return re;
+}
+function _matchTerms(lower, terms) {
+  return _termRegexFor(terms).test(lower);
+}
+
 export function classifyQuery(q) {
   const lower = (q || '').toLowerCase();
-  const isNature = NATURE_QUERY_TERMS.some(t => lower.includes(t));
-  const isSpace  = SPACE_QUERY_TERMS.some(t => lower.includes(t));
+  const isNature = _matchTerms(lower, NATURE_QUERY_TERMS);
+  const isSpace  = _matchTerms(lower, SPACE_QUERY_TERMS);
   return { isNature, isSpace };
 }
 
@@ -1222,7 +1238,7 @@ export const SCIENCE_QUERY_TERMS = [
 
 export function classifyQueryExtended(q) {
   const lower = (q || '').toLowerCase();
-  const check = terms => terms.some(t => lower.includes(t));
+  const check = terms => _matchTerms(lower, terms);
   return {
     isNature:  check(NATURE_QUERY_TERMS),
     isSpace:   check(SPACE_QUERY_TERMS),
