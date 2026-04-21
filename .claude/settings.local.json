@@ -1,20 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git fetch *)",
-      "Bash(git merge *)",
-      "Bash(echo \"exit: $?\")",
-      "Bash(git stash *)",
-      "Bash(git pull *)",
-      "Bash(grep -c *)",
-      "Bash(git checkout *)",
+      "Bash(gh run *)",
+      "Bash(node -e \"import\\('./src/fetchers.js'\\).then\\(m => console.log\\('adapters:', m.ADAPTERS ? m.ADAPTERS.size : 'N/A'\\)\\).catch\\(e => console.log\\('error:', e.message\\)\\)\")",
       "Bash(npm test *)",
-      "Bash(npm install *)",
+      "Bash(npm run *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "WebSearch",
-      "WebFetch(domain:pro.europeana.eu)",
-      "Bash(npm run *)"
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)",
+      "Bash(npx wrangler *)",
+      "Bash(curl -sI \"https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/640px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg\" -A \"InspoSearch/1.1\")",
+      "Bash(npx vitest *)",
+      "Bash(git fetch *)"
     ]
   }
 }
