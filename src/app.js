@@ -8896,24 +8896,31 @@ export function applyBoardTemplate(template) {
     } catch (_) {}
   }
 
-  // Wrap runSearch so every explicit search refreshes the URL
-  var origRunSearch = window.runSearch;
+  // Wrap runSearch so every explicit search refreshes the URL.
+  // Reassign BOTH the module binding (used by Enter key, pills, etc.) and
+  // window.runSearch (external callers). Capturing only window.runSearch
+  // misses the overwhelming majority of call sites.
+  var origRunSearch = runSearch;
   if (typeof origRunSearch === 'function') {
-    window.runSearch = function (q, forceRefresh) {
+    var wrappedRun = function (q, forceRefresh) {
       var ret = origRunSearch(q, forceRefresh);
       Promise.resolve(ret).finally(writeURL);
       return ret;
     };
+    runSearch = wrappedRun;
+    window.runSearch = wrappedRun;
   }
 
-  // Filter-change hooks: piggy-back on the same refilterResults signal
-  var origRefilter = window.refilterResults;
+  // Same for refilterResults — filter buttons call the module binding.
+  var origRefilter = refilterResults;
   if (typeof origRefilter === 'function') {
-    window.refilterResults = function () {
+    var wrappedRefilter = function () {
       var ret = origRefilter.apply(this, arguments);
       writeURL();
       return ret;
     };
+    refilterResults = wrappedRefilter;
+    window.refilterResults = wrappedRefilter;
   }
 
   // On first load, if URL has ?q=, replay the state and fire the search
