@@ -2479,6 +2479,21 @@ export async function fetchMoreResults() {
   STATE.loading = false;
   _secondaryControllers.delete(ac);
   updateLoadMoreLabel();
+  // Auto-chain: IntersectionObserver only fires on transitions. If this
+  // load-more appended few items and the sentinel is still in the rootMargin
+  // zone, the observer won't re-fire on its own. Check manually and
+  // re-enter until we're exhausted or have enough items below the viewport.
+  if (!STATE.exhausted && STATE.results.length < CONSTANTS.MAX_RESULTS) {
+    setTimeout(() => {
+      if (STATE.loading || STATE.exhausted) return;
+      const sentinel = document.getElementById('more-container');
+      if (!sentinel) return;
+      const rect = sentinel.getBoundingClientRect();
+      if (rect.top < window.innerHeight + 800 && rect.bottom > 0) {
+        fetchMoreResults();
+      }
+    }, 150);
+  }
 }
 
 export function updateLoadMoreLabel() {
@@ -2696,15 +2711,17 @@ export async function runSearch(query, forceRefresh = false) {
 
   const visible = getDisplayResults(STATE.results, effectiveQuery);
   if (visible.length) {
-    // ── Sync grid: remove orphaned streaming cards, append missing ones ──
-    // During streaming, onSourceResult appended preview cards. Some may not
-    // survive post-fetch filtering. Remove those orphans, then render any
-    // new items from the authoritative ranked set.
-    const visibleIds = new Set(visible.map(i => i.id));
+    // ── Sync grid: remove truly filtered-out streaming cards, append missing ones ──
+    // During streaming, onSourceResult appended preview cards. Some may fail
+    // post-fetch filters (negative/phrase/license/NSFW). Only those cards
+    // should be removed. Previously this used `visible` (capped by
+    // STATE.imageCount), which also removed cards that merely ranked below
+    // the cap — starving infinite scroll.
+    const keepIds = new Set(STATE.results.map(i => i.id));
     const grid = document.getElementById('image-grid');
     for (const card of [...grid.querySelectorAll('.image-card')]) {
       const id = card.dataset.id;
-      if (id && !visibleIds.has(id)) {
+      if (id && !keepIds.has(id)) {
         renderedIds.delete(id);
         _gridItemMap.delete(id);
         card.remove();

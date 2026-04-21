@@ -1070,7 +1070,11 @@ export let getDisplayResults = function getDisplayResults(items, query) {
       .sort((a, b) => b.score - a.score)
       .map(x => x.item);
     _lastDisplayOrder = ranked;
-    return ranked.slice(0, STATE.imageCount);
+    // Was: slice(0, STATE.imageCount) — capped initial render at 80, which
+    // starved infinite scroll when post-fetch culling removed anything
+    // beyond that slice. Return the full ranked list; the lazy image loader
+    // still gates network requests by viewport.
+    return ranked;
   }
 
   // Explore mode: group by source, sort within each bucket by relevance,
@@ -1123,7 +1127,8 @@ export let getDisplayResults = function getDisplayResults(items, query) {
   }
 
   _lastDisplayOrder = merged;
-  return _lastDisplayOrder.slice(0, STATE.imageCount);
+  // See exact-mode note above — return full merged ranking, not a STATE.imageCount slice.
+  return merged;
 }
 
 export function showQuietTip(targetId, text, tipKey) {
