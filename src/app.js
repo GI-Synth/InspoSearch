@@ -5553,8 +5553,7 @@ export function renderAiSection(tags, errorMsg) {
 
 /* -- Trigger AI analysis for latest selected item -- */
 export async function runGeminiOnSelected() {
-  const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
-  if (!hasKey || !STATE.selected.length) return;
+  if (!STATE.selected.length) return;
   const item = STATE.selected[STATE.selected.length - 1];
 
   // Already have AI tags for this item

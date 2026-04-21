@@ -15,7 +15,10 @@
       "Bash(npx vitest *)",
       "Bash(git fetch *)",
       "Bash(gh workflow *)",
-      "Bash(node -e \"import\\('./src/state.js'\\).then\\(m=>console.log\\('DYNAMIC_REGISTRY len:', m.DYNAMIC_REGISTRY?.length, 'ALL_SOURCES len:', m.ALL_SOURCES?.length\\)\\)\")"
+      "Bash(node -e \"import\\('./src/state.js'\\).then\\(m=>console.log\\('DYNAMIC_REGISTRY len:', m.DYNAMIC_REGISTRY?.length, 'ALL_SOURCES len:', m.ALL_SOURCES?.length\\)\\)\")",
+      "Bash(git log *)",
+      "WebSearch",
+      "mcp__chrome-devtools__evaluate_script"
     ]
   }
 }
