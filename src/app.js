@@ -101,6 +101,19 @@ export const PAGE2_FETCHERS = {
   nypl:        (kw, lim, sig, pg) => fetchNYPL(kw, lim, sig, pg),
   inaturalist: (kw, lim, sig, pg) => fetchINaturalist(kw, lim, sig, pg),
   wikidata:    (kw, lim, sig, pg) => fetchWikidata(kw, lim, sig, (pg - 1) * lim),
+  // P1.1 second expansion — 12 additional adapters threaded with page param.
+  nasa:        (kw, lim, sig, pg) => fetchNASA(kw, lim, sig, pg),
+  nasa_images: (kw, lim, sig, pg) => fetchNASAImages(kw, lim, sig, pg),
+  pexels:      (kw, lim, sig, pg) => fetchPexels(kw, lim, sig, pg),
+  pixabay:     (kw, lim, sig, pg) => fetchPixabay(kw, lim, sig, pg),
+  unsplash:    (kw, lim, sig, pg) => fetchUnsplash(kw, lim, sig, pg),
+  wikiart:     (kw, lim, sig, pg) => fetchWikiArt(kw, lim, sig, pg),
+  trove:       (kw, lim, sig, pg) => fetchTrove(kw, lim, sig, pg),
+  finna:       (kw, lim, sig, pg) => fetchFinna(kw, lim, sig, pg),
+  joconde:     (kw, lim, sig, pg) => fetchJoconde(kw, lim, sig, pg),
+  mnw:         (kw, lim, sig, pg) => fetchMNW(kw, lim, sig, pg),
+  ddb:         (kw, lim, sig, pg) => fetchDDB(kw, lim, sig, pg),
+  onb:         (kw, lim, sig, pg) => fetchONB(kw, lim, sig, pg),
 };
 
 export async function fetchAll(keywords, totalCount, isSilent = false) {

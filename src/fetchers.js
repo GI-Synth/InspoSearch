@@ -220,11 +220,11 @@ export async function fetchMet(keyword, limit, signal, offset = 0) {
 /* ============================================================
    10b. NASA / RIJKSMUSEUM / EUROPEANA
 ============================================================ */
-export async function fetchNASA(keyword, limit, signal) {
+export async function fetchNASA(keyword, limit, signal, page = 1) {
 
   try {
     const res = await safeFetch(
-      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
+      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}&page=${page}`,
       { signal }
     );
     if (!res.ok) throw new Error('NASA fetch failed');
@@ -572,12 +572,12 @@ export async function fetchSmithsonianUnit(unitCode, keyword, limit, signal) {
   }
 }
 
-export async function fetchPexels(keyword, limit, signal) {
+export async function fetchPexels(keyword, limit, signal, page = 1) {
   if (!STATE.pexelsKey) return [];
 
   try {
     const res = await safeFetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(keyword)}&per_page=${limit}`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(keyword)}&per_page=${limit}&page=${page}`,
       {
         signal,
         headers: { Authorization: STATE.pexelsKey }
@@ -830,15 +830,15 @@ export async function fetchFlickrCommons(keyword, limit, signal, page = 1) {
   }
 }
 
-export async function fetchPixabay(keyword, limit, signal) {
+export async function fetchPixabay(keyword, limit, signal, page = 1) {
   if (!STATE.pixabayKey) return [];
-  const pbKey = 'pixabay_' + keyword;
+  const pbKey = 'pixabay_' + keyword + '_p' + page;
   const pbCached = cacheGet(pbKey);
   if (pbCached) return pbCached.results.slice(0, limit);
   try {
 
     const res = await safeFetch(
-      `https://pixabay.com/api/?key=${STATE.pixabayKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=${limit}&safesearch=true`,
+      `https://pixabay.com/api/?key=${STATE.pixabayKey}&q=${encodeURIComponent(keyword)}&image_type=photo&per_page=${limit}&page=${page}&safesearch=true`,
       { signal }
     );
     if (!res.ok) throw new Error('Pixabay failed');
@@ -867,11 +867,11 @@ export async function fetchPixabay(keyword, limit, signal) {
   }
 }
 
-export async function fetchWikiArt(keyword, limit, signal) {
+export async function fetchWikiArt(keyword, limit, signal, page = 1) {
   try {
 
     const res = await safeFetch(
-      `https://www.wikiart.org/en/search/${encodeURIComponent(keyword)}/1?json=2&layout=new`,
+      `https://www.wikiart.org/en/search/${encodeURIComponent(keyword)}/${page}?json=2&layout=new`,
       { signal }
     );
     if (!res.ok) throw new Error('WikiArt failed');
@@ -1189,11 +1189,11 @@ export async function fetchChroniclingAmerica(keyword, limit, signal) {
   }
 }
 
-export async function fetchTrove(keyword, limit, signal) {
+export async function fetchTrove(keyword, limit, signal, page = 1) {
   if (!STATE.troveKey) return [];
   try {
     const res = await safeFetch(
-      `https://api.trove.nla.gov.au/v3/result?q=${encodeURIComponent(keyword)}&category=picture&encoding=json&n=${limit}&key=${STATE.troveKey}`,
+      `https://api.trove.nla.gov.au/v3/result?q=${encodeURIComponent(keyword)}&category=picture&encoding=json&n=${limit}&s=${(page - 1) * limit}&key=${STATE.troveKey}`,
       { signal }
     );
     if (!res.ok) throw new Error('Trove failed');
@@ -1603,11 +1603,11 @@ export async function fetchTate(keyword, limit, signal) {
 }
 
 // C02 — Finnish Heritage Agency (Finna.fi)
-export async function fetchFinna(keyword, limit, signal) {
+export async function fetchFinna(keyword, limit, signal, page = 1) {
   try {
 
     const res = await safeFetch(
-      `https://api.finna.fi/api/v1/search?lookfor=${encodeURIComponent(keyword)}&type=AllFields&filter[]=format:0%2FImage%2F&limit=${limit}&field[]=id&field[]=title&field[]=summary&field[]=images&field[]=year`,
+      `https://api.finna.fi/api/v1/search?lookfor=${encodeURIComponent(keyword)}&type=AllFields&filter[]=format:0%2FImage%2F&limit=${limit}&page=${page}&field[]=id&field[]=title&field[]=summary&field[]=images&field[]=year`,
       { signal }
     );
     if (!res.ok) throw new Error('Finna failed');
@@ -1675,10 +1675,10 @@ export async function fetchSOCH(keyword, limit, signal) {
 }
 
 // C04 — Joconde (French national museum database)
-export async function fetchJoconde(keyword, limit, signal) {
+export async function fetchJoconde(keyword, limit, signal, page = 1) {
   try {
     const res = await safeFetch(
-      `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?q=${encodeURIComponent(keyword)}&limit=${limit}&select=reference,titre,auteur,presence_image,domaine,periode_de_creation`,
+      `https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/base-joconde-extrait/records?q=${encodeURIComponent(keyword)}&limit=${limit}&offset=${(page - 1) * limit}&select=reference,titre,auteur,presence_image,domaine,periode_de_creation`,
       { signal },
       8000
     );
@@ -1708,11 +1708,11 @@ export async function fetchJoconde(keyword, limit, signal) {
 }
 
 // C05 — Polish National Museum Warsaw
-export async function fetchMNW(keyword, limit, signal) {
+export async function fetchMNW(keyword, limit, signal, page = 1) {
   try {
 
     const res = await safeFetch(
-      `https://api.mnw.art.pl/api/v1/objects?search=${encodeURIComponent(keyword)}&per_page=${limit}&has_image=true`,
+      `https://api.mnw.art.pl/api/v1/objects?search=${encodeURIComponent(keyword)}&per_page=${limit}&page=${page}&has_image=true`,
       { signal }
     );
     if (!res.ok) throw new Error('MNW failed');
@@ -1838,10 +1838,10 @@ export async function fetchDPLAProvider(provider, keyword, limit, signal) {
 }
 
 /* ── DDB — Deutsche Digitale Bibliothek (key-gated) ──────── */
-export async function fetchDDB(keyword, limit, signal) {
+export async function fetchDDB(keyword, limit, signal, page = 1) {
   if (!STATE.ddbKey) return [];
   try {
-    const url = `https://api.deutsche-digitale-bibliothek.de/search?query=${encodeURIComponent(keyword)}&rows=${limit}&type_fct=mediatype_002&oauth_consumer_key=${encodeURIComponent(STATE.ddbKey)}`;
+    const url = `https://api.deutsche-digitale-bibliothek.de/search?query=${encodeURIComponent(keyword)}&rows=${limit}&offset=${(page - 1) * limit}&type_fct=mediatype_002&oauth_consumer_key=${encodeURIComponent(STATE.ddbKey)}`;
     const res = await safeFetch(url, { signal });
     if (!res.ok) throw new Error('DDB failed');
     const data = await res.json();
@@ -2432,10 +2432,10 @@ export async function fetchFolger(keyword, limit, signal) {
   }
 }
 
-export async function fetchONB(keyword, limit, signal) {
+export async function fetchONB(keyword, limit, signal, page = 1) {
   try {
     const res = await safeFetch(
-      `https://api.onb.ac.at/api/v1/search?q=${encodeURIComponent(keyword)}&imageOnly=true&rows=${limit}&start=0`,
+      `https://api.onb.ac.at/api/v1/search?q=${encodeURIComponent(keyword)}&imageOnly=true&rows=${limit}&start=${(page - 1) * limit}`,
       { signal },
       6000
     );
@@ -3043,10 +3043,10 @@ export async function fetchALA(keyword, limit, signal) {
 }
 
 // ── Phase D: NASA Images Library ─────────────────────────────────────────
-export async function fetchNASAImages(keyword, limit, signal) {
+export async function fetchNASAImages(keyword, limit, signal, page = 1) {
   try {
     const res = await safeFetch(
-      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}`,
+      `https://images-api.nasa.gov/search?q=${encodeURIComponent(keyword)}&media_type=image&page_size=${limit}&page=${page}`,
       { signal }
     );
     if (!res.ok) throw new Error('NASA Images fetch failed');
@@ -3488,11 +3488,11 @@ export async function fetchLouvreAD(keyword, limit, signal) {
 ============================================================ */
 
 /* Unsplash photography — free key required */
-export async function fetchUnsplash(keyword, limit, signal) {
+export async function fetchUnsplash(keyword, limit, signal, page = 1) {
   if (!STATE.unsplashKey) return [];
   try {
     const res = await safeFetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=${Math.min(limit, 30)}&client_id=${STATE.unsplashKey}`,
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(keyword)}&per_page=${Math.min(limit, 30)}&page=${page}&client_id=${STATE.unsplashKey}`,
       { signal }
     );
     if (!res.ok) throw new Error('Unsplash failed');
