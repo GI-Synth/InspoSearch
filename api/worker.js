@@ -114,6 +114,12 @@ export default {
       case '/caption':
         return handleCaption(request, env);
 
+      case '/tags':
+        return handleTags(request, env);
+
+      case '/contribute':
+        return handleContribute(request, env);
+
       case '/board':
         if (request.method === 'POST') return handleBoardSave(request, env);
         return json({ error: 'POST to /board to save a board' }, 405, env);
@@ -134,6 +140,8 @@ export default {
             '/proxy?url=<encoded-api-url>',
             '/semantic?q=...',
             'POST /caption  { "url": "..." }',
+            'POST /tags     { "url": "...", "query": "..." }',
+            'POST /contribute { "image_url": "...", "tags": [...], "consent_token": "..." }',
             'POST /board    { "items": [...], "query": "..." }',
             '/board/:id',
           ],
@@ -414,6 +422,130 @@ async function handleCaption(request, env) {
   } catch (e) {
     return json({ error: 'Caption generation failed', detail: e.message }, 502, env);
   }
+}
+
+// ── /tags — Workers AI structured tag extraction ──────────────────────────
+// Accepts POST { url, query? }
+// Fetches image bytes, runs vision model with a tag-extraction prompt, returns
+// { tags: [...], description, model }. Primary vision entry point for
+// InspoSearch's free default AI tier.
+const TAGS_MODEL = '@cf/meta/llama-3.2-11b-vision-instruct';
+const TAGS_FALLBACK_MODEL = '@cf/unum/uform-gen2-qwen-500m';
+
+async function handleTags(request, env) {
+  if (!env.AI) return json({ error: 'AI binding not configured' }, 503, env);
+
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400, env); }
+
+  const imgUrl = (body.url || '').trim();
+  const query  = (body.query || '').toString().slice(0, 120);
+  if (!imgUrl || !/^https?:\/\//i.test(imgUrl)) {
+    return json({ error: 'Missing or invalid "url" field' }, 400, env);
+  }
+
+  try {
+    const imgResp = await fetch(imgUrl, {
+      headers: { 'User-Agent': 'InspoSearch/1.1' },
+      cf: { cacheTtl: 600, cacheEverything: true },
+    });
+    if (!imgResp.ok) return json({ error: 'Failed to fetch image' }, 502, env);
+    const contentType = imgResp.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) return json({ error: 'URL does not point to an image' }, 400, env);
+    const bytes = new Uint8Array(await imgResp.arrayBuffer());
+
+    const prompt = `Return exactly 8 visual/conceptual tags for this image as a JSON array of lowercase strings. Cover mood, color-palette name, era/movement, style, medium, subject, composition, texture. ${query ? 'Search context: "' + query + '". ' : ''}Reply with ONLY the JSON array, no prose.`;
+
+    let text = '';
+    let modelUsed = TAGS_MODEL;
+    try {
+      const r = await env.AI.run(TAGS_MODEL, {
+        image: [...bytes],
+        prompt,
+        max_tokens: 200,
+      });
+      text = (r.response || r.description || '').trim();
+    } catch {
+      modelUsed = TAGS_FALLBACK_MODEL;
+      const r = await env.AI.run(TAGS_FALLBACK_MODEL, {
+        image: [...bytes],
+        prompt,
+        max_tokens: 200,
+      });
+      text = (r.description || r.response || '').trim();
+    }
+
+    let tags = [];
+    const match = text.match(/\[[\s\S]*?\]/);
+    if (match) {
+      try { tags = JSON.parse(match[0]); } catch { /* fall through */ }
+    }
+    if (!Array.isArray(tags) || !tags.length) {
+      tags = text
+        .split(/[\n,]/)
+        .map(s => s.replace(/^[-*•\d.)"\s]+|["\s]+$/g, '').toLowerCase())
+        .filter(s => s.length > 1 && s.length < 40)
+        .slice(0, 8);
+    }
+    tags = tags.filter(t => typeof t === 'string').map(t => t.toLowerCase().trim()).filter(Boolean).slice(0, 8);
+    if (!tags.length) return json({ error: 'Model returned no parseable tags', raw: text }, 502, env);
+
+    return json({ tags, description: text, model: modelUsed }, 200, env);
+  } catch (e) {
+    return json({ error: 'Tag generation failed', detail: e.message }, 502, env);
+  }
+}
+
+// ── /contribute — opt-in community metadata contribution ──────────────────
+// Accepts POST { image_url, source_id?, tags: [...], query?, consent_token, model? }
+// Stage 1 stub: validates payload shape and returns { ok: true, stored: false }.
+// Real D1 persistence plugs in at Stage 2 per INSPOENRICH_ROADMAP.md.
+async function handleContribute(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400, env); }
+
+  const imageUrl = String(body.image_url || '').trim();
+  const tags     = Array.isArray(body.tags) ? body.tags : null;
+  const token    = String(body.consent_token || '').trim();
+
+  if (!imageUrl || !/^https?:\/\//i.test(imageUrl)) {
+    return json({ error: 'Missing or invalid "image_url"' }, 400, env);
+  }
+  if (!tags || !tags.length || tags.length > 32) {
+    return json({ error: '"tags" must be a non-empty array (max 32)' }, 400, env);
+  }
+  if (!token || token.length < 8 || token.length > 128) {
+    return json({ error: 'Missing or invalid "consent_token"' }, 400, env);
+  }
+
+  const payload = {
+    image_url:     imageUrl.slice(0, 500),
+    source_id:     String(body.source_id || '').slice(0, 60),
+    tags:          tags.filter(t => typeof t === 'string').map(t => t.slice(0, 60)).slice(0, 32),
+    query:         String(body.query || '').slice(0, 200),
+    model:         String(body.model || '').slice(0, 80),
+    consent_token: token.slice(0, 128),
+    received_at:   new Date().toISOString(),
+  };
+
+  // Stage 2: persist to D1 (`contributed_metadata` table) here.
+  if (env.METADATA_DB) {
+    try {
+      await env.METADATA_DB.prepare(
+        `INSERT INTO contributed_metadata (image_url, source_id, tags, query, model, consent_token, received_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+      ).bind(
+        payload.image_url, payload.source_id,
+        JSON.stringify(payload.tags), payload.query, payload.model,
+        payload.consent_token, payload.received_at
+      ).run();
+      return json({ ok: true, stored: true, stage: 'd1' }, 200, env);
+    } catch (e) {
+      return json({ ok: true, stored: false, stage: 'd1-error', detail: e.message }, 202, env);
+    }
+  }
+
+  return json({ ok: true, stored: false, stage: 'stub-d1-pending' }, 202, env);
 }
 
 // ── /board POST — save board to KV ───────────────────────────────────────

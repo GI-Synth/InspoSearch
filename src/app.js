@@ -1339,7 +1339,7 @@ export async function updatePanel(previewItem) {
   // AI key note
   const noKeyNote = document.getElementById('no-key-note');
   const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
-  noKeyNote.textContent = hasAiKey ? '' : 'no key — add an ai key for vision';
+  noKeyNote.textContent = hasAiKey ? '' : 'free ai enabled — add a key for faster/deeper analysis';
 
   updateAnalyseButton(displayItems[displayItems.length - 1]);
 
@@ -3441,8 +3441,10 @@ export async function callAI(prompt, base64 = null, mimeType = 'image/jpeg') {
   if (provider === 'claude' && STATE.claudeKey)  return _callClaude(prompt, base64, mimeType);
   if (provider === 'openai'  && STATE.openaiKey) return _callOpenAI(prompt, base64, mimeType);
   if (provider === 'ollama')                     return _callOllama(prompt, base64, mimeType);
-  if (!STATE.geminiKey) throw new Error('no ai key — add a key in api keys panel');
-  return _callGeminiSingle(prompt, base64, mimeType);
+  if (STATE.geminiKey)                           return _callGeminiSingle(prompt, base64, mimeType);
+  // No BYOK key — prompt-only text flows fall back to Workers AI /semantic.
+  // Vision flows should route via _callWorkersAITags() directly.
+  throw new Error('no-byok-text');
 }
 
 /* -- callAIChat: multi-turn conversation dispatcher -- */
@@ -4976,7 +4978,7 @@ export function buildSourceRow(container, src) {
           updateKeysDot();
           if (src.stateKey === 'geminiKey') {
             document.getElementById('panel-ai-tags').style.display = 'none';
-            document.getElementById('no-key-note').textContent = 'no key — add gemini key for vision';
+            document.getElementById('no-key-note').textContent = 'free ai enabled — add a key for faster/deeper analysis';
           }
           // If we just cleared the active provider key, fall back to gemini
           if (src.aiProvider && STATE.aiProvider === src.id) {
@@ -5120,7 +5122,7 @@ document.getElementById('keys-panel-close')?.addEventListener('click', () => {
 
 /* Gemini no-key note initial state */
 document.getElementById('no-key-note').textContent =
-  (STATE.geminiKey || STATE.claudeKey || STATE.openaiKey) ? '' : 'no key — add an ai key for vision';
+  (STATE.geminiKey || STATE.claudeKey || STATE.openaiKey) ? '' : 'free ai enabled — add a key for faster/deeper analysis';
 
 console.log('[insposearch] Phase 7 — Keys Panel ready.');
 
@@ -5167,10 +5169,104 @@ export async function urlToBase64(url) {
   }
 }
 
+/* -- _callWorkersAITags: free default vision provider (Cloudflare Workers AI) --
+   Posts the image URL to the InspoSearch Worker, which fetches bytes at the edge
+   and runs Llama 3.2 Vision. Returns an array of tags. Falls back cleanly if
+   the endpoint is unavailable. Returns {tags, description, model}. */
+export async function _callWorkersAITags(item, query = '') {
+  const url = item.image || item.thumb || item.url;
+  if (!url || !/^https?:\/\//.test(url)) throw new Error('no image url');
+  const res = await fetch(`${_API_BASE}/tags`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, query: query || (localStorage.getItem('inspo_last_query') || '') || '' }),
+    signal: AbortSignal.timeout(25_000),
+  });
+  if (!res.ok) {
+    const msg = await res.json().catch(() => ({}));
+    throw new Error('workers-ai: ' + (msg.error || res.status));
+  }
+  const data = await res.json();
+  return {
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    description: data.description || '',
+    model: data.model || 'workers-ai',
+  };
+}
+
+/* -- AI consent popup — shown once on first use of free Workers AI analysis.
+   Storage: `inspo_ai_consent` = 'granted' | 'denied'. A rotating opaque token
+   accompanies each contribution and can be revoked by clearing consent. --*/
+function _genConsentToken() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function ensureAIConsent() {
+  // Explicit prior answer — respect it.
+  if (STATE.aiConsent === 'granted' || STATE.aiConsent === 'denied') return STATE.aiConsent;
+
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.id = 'ai-consent-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div role="dialog" aria-labelledby="ai-consent-title" style="max-width:440px;background:var(--bg,#fff);color:var(--ink,#111);border:1px solid var(--line,#ccc);padding:22px 24px;font-family:var(--font-ui);font-size:12px;line-height:1.55;">
+        <h2 id="ai-consent-title" style="margin:0 0 12px;font-size:13px;letter-spacing:.06em;text-transform:lowercase;">✦ help build the open metadata layer</h2>
+        <p style="margin:0 0 10px;">inspoSearch uses a free ai model to describe images. with your consent, the tags it generates are saved anonymously and linked to the image url — helping future searches find it, for everyone.</p>
+        <p style="margin:0 0 14px;color:var(--ink-2,#555);">no account. no personal data. you can revoke anytime in settings. your own saved boards and api keys are never shared.</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button id="ai-consent-deny" class="btn" style="padding:8px 14px;">analyse only — don't share</button>
+          <button id="ai-consent-grant" class="btn" style="padding:8px 14px;background:var(--accent,#111);color:var(--bg,#fff);">contribute anonymously</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const finish = (choice) => {
+      STATE.aiConsent = choice;
+      localStorage.setItem('inspo_ai_consent', choice);
+      if (choice === 'granted' && !STATE.aiConsentToken) {
+        STATE.aiConsentToken = _genConsentToken();
+        localStorage.setItem('inspo_ai_consent_token', STATE.aiConsentToken);
+      }
+      if (choice === 'denied') {
+        STATE.aiConsentToken = null;
+        localStorage.removeItem('inspo_ai_consent_token');
+      }
+      overlay.remove();
+      resolve(choice);
+    };
+    overlay.querySelector('#ai-consent-grant').addEventListener('click', () => finish('granted'));
+    overlay.querySelector('#ai-consent-deny').addEventListener('click', () => finish('denied'));
+    overlay.addEventListener('click', e => { if (e.target === overlay) finish('denied'); });
+  });
+}
+
+/* -- contributeTags: fire-and-forget POST to /contribute if user has opted in. */
+function contributeTags(item, tags, model) {
+  if (STATE.aiConsent !== 'granted' || !STATE.aiConsentToken) return;
+  try {
+    fetch(`${_API_BASE}/contribute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image_url:     item.image || item.thumb || item.url,
+        source_id:     item.source || '',
+        tags,
+        query:         (localStorage.getItem('inspo_last_query') || '') || '',
+        model:         model || 'workers-ai',
+        consent_token: STATE.aiConsentToken,
+      }),
+      signal: AbortSignal.timeout(6000),
+    }).catch(() => { /* best-effort */ });
+  } catch { /* swallow */ }
+}
+
 /* -- analyzeWithGemini: AI vision tagging — routes to active provider -- */
 export async function analyzeWithGemini(item) {
   const hasKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
-  if (!hasKey) { console.warn('[ai] no key'); return []; }
+  const useWorkersAI = !hasKey && (STATE.aiProvider || 'gemini') !== 'ollama';
 
   // Check in-memory cache
   if (item.aiTags && item.aiTags.length > 0) return item.aiTags;
@@ -5178,6 +5274,24 @@ export async function analyzeWithGemini(item) {
   // Check localStorage cache
   const cached = getAITagsCache(item.id);
   if (cached) { item.aiTags = cached; return cached; }
+
+  // Free default tier: Cloudflare Workers AI. Ask for consent on first use.
+  if (useWorkersAI) {
+    await ensureAIConsent();
+    try {
+      const { tags, model } = await _callWorkersAITags(item, (localStorage.getItem('inspo_last_query') || ''));
+      if (tags.length) {
+        setAITagsCache(item.id, tags);
+        item.aiTags = tags;
+        contributeTags(item, tags, model);
+      }
+      return tags;
+    } catch (err) {
+      console.warn('[ai] workers-ai failed:', err.message);
+      renderAiSection(null, 'ai unavailable — try again in a moment, or add your own key');
+      return [];
+    }
+  }
 
   // Gemini daily limit check
   if ((STATE.aiProvider || 'gemini') === 'gemini' && STATE.geminiDailyCount >= 1500) {
@@ -5212,6 +5326,7 @@ export async function analyzeWithGemini(item) {
         setAITagsCache(item.id, result);
         item.aiTags = result;
         if ((STATE.aiProvider || 'gemini') === 'gemini') incrementGeminiCounter();
+        contributeTags(item, result, STATE.aiProvider || 'gemini');
       }
       return result;
     } catch (parseErr) {
@@ -5223,8 +5338,8 @@ export async function analyzeWithGemini(item) {
     console.error('[ai] caught error:', err.name, err.message, err);
     if (err.message?.includes('tainted') || err.message?.includes('cross-origin') || err.message?.includes('CORS')) {
       renderAiSection(null, 'AI unavailable — image blocked by CORS. Try a Met image.');
-    } else if (err.message?.includes('no ai key')) {
-      renderAiSection(null, 'no key — add an AI key in api keys panel');
+    } else if (err.message?.includes('no ai key') || err.message?.includes('no-byok-text')) {
+      renderAiSection(null, 'text generation needs a key — add one in api keys panel');
     } else {
       renderAiSection(null, `AI error: ${err.message || 'unavailable'}`);
     }
@@ -5327,16 +5442,14 @@ export function updateAnalyseButton(item) {
     return;
   }
 
-  // No results yet — show the button
+  // No results yet — show the button. Workers AI is the free default, so the
+  // button is always enabled; BYOK keys unlock deeper providers.
   document.getElementById('panel-ai-tags').style.display = 'none';
   section.style.display = '';
   const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
-  if (!hasAiKey) {
-    btn.disabled = true;
-    btn.title = 'add an ai key to unlock';
-  } else {
-    btn.title = '';
-  }
+  btn.disabled = false;
+  btn.title = hasAiKey ? '' : 'free ai analysis — add a key for deeper results';
+  if (label) label.textContent = hasAiKey ? 'analyse with ai' : 'analyse with ✦ free ai';
 }
 
 /* ============================================================

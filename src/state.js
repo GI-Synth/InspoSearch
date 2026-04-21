@@ -294,6 +294,8 @@ export const STATE = {
   ollamaEndpoint:      'http://localhost:11434', // Ollama base URL
   ollamaModel:         'llava',  // default Ollama vision model
   aiProvider:          'gemini', // 'gemini' | 'claude' | 'openai' | 'ollama'
+  aiConsent:           null,    // null | 'granted' | 'denied' — opt-in for community metadata contribution
+  aiConsentToken:      null,    // opaque per-device token sent with contributions; rotates when consent revoked
   chatHistory:         [],      // [{role, content}] conversation log
   chatSnapshot:        null,    // { base64, metadata } grid snapshot
   europeanaKey:        null,    // string | null (localStorage)
@@ -808,6 +810,8 @@ STATE.openaiEndpoint = localStorage.getItem('inspo_openai_endpoint')        || '
 STATE.ollamaEndpoint = localStorage.getItem('inspo_ollama_endpoint')        || 'http://localhost:11434';
 STATE.ollamaModel    = localStorage.getItem('inspo_ollama_model')           || 'llava';
 STATE.aiProvider     = localStorage.getItem('inspo_ai_provider')            || 'gemini';
+STATE.aiConsent      = localStorage.getItem('inspo_ai_consent')             || null;
+STATE.aiConsentToken = localStorage.getItem('inspo_ai_consent_token')       || null;
 STATE.europeanaKey   = localStorage.getItem('inspo_europeana_key')    || null;
 STATE.harvardKey     = localStorage.getItem('inspo_harvard_key')      || null;
 STATE.smithsonianKey = localStorage.getItem('inspo_smithsonian_key')  || null;

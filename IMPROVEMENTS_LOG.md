@@ -22,6 +22,7 @@ Searches yield far fewer results than source inventories suggest. Root causes id
 - [x] **Step 6** — Raise fetch concurrency to 40 + adaptive timeout ceiling to 12s.
 - [x] **Step 6b** — Extend 12s slow-source ceiling to 12 more known-slow adapters (Wave A).
 - [x] **Step 7** — Fix load-more / infinite-scroll: paginated-only fan-out + synonym variety + exhausted-state guard.
+- [x] **Step 12** — Cloudflare Workers AI as default vision provider + opt-in community metadata contribution.
 
 ---
 
@@ -483,3 +484,59 @@ Top item is always the pure-relevance pick (MMR seed). Items past the window kee
 - Back button doesn't spin through intermediate filter states (replaceState, not pushState).
 
 **For partners:** every share of a search is now a stable, citable URL pointing at a filtered view of our aggregated results. Citations in academic papers and lesson plans finally work without screenshots — a searchable path to any result set that includes your collection.
+
+---
+
+## Step 12 — Cloudflare Workers AI default + opt-in metadata contribution ✅
+
+**Date:** 2026-04-20
+**Files:** `api/worker.js`, `src/state.js`, `src/app.js`
+**Commits:** (pending)
+
+### What changed
+
+1. **New Worker endpoints** (`api/worker.js`):
+   - `POST /tags` — fetches image bytes, runs `@cf/meta/llama-3.2-11b-vision-instruct` with a tag-extraction prompt, returns `{ tags: [...], description, model }`. Falls back to `@cf/unum/uform-gen2-qwen-500m` on error.
+   - `POST /contribute` — accepts `{ image_url, source_id, tags, query, model, consent_token }`. Validates shape. Currently a stub: returns `{ ok: true, stored: false, stage: 'stub-d1-pending' }` unless `env.METADATA_DB` (D1) is bound, in which case it inserts into `contributed_metadata`. See roadmap for Stage 2 D1 table schema.
+
+2. **Workers AI as free default** (`src/app.js`):
+   - Added `_callWorkersAITags(item, query)` — posts image URL to `/tags`, no base64 conversion needed.
+   - `analyzeWithGemini()` now branches on `useWorkersAI = !hasKey && provider !== 'ollama'`. When true, skips base64/Gemini rate limits, prompts consent, calls `_callWorkersAITags`, caches.
+   - `updateAnalyseButton()` is now always enabled; label changes to "analyse with ✦ free ai" when no BYOK key is present.
+   - "no-key-note" reworded from "no key — add an ai key for vision" → "free ai enabled — add a key for faster/deeper analysis" (3 call sites).
+
+3. **Opt-in consent popup** (`src/app.js` `ensureAIConsent()`):
+   - First click on "analyse with ai" shows modal explaining the community metadata layer.
+   - Two choices: **contribute anonymously** (grants) or **analyse only — don't share** (denies). Click-outside counts as deny.
+   - Stored in `localStorage.inspo_ai_consent` (`'granted'` | `'denied'`) + rotating `inspo_ai_consent_token` (16-byte hex) generated on grant, cleared on deny.
+   - `contributeTags(item, tags, model)` fires fire-and-forget POST to `/contribute` only if `STATE.aiConsent === 'granted'`. Called from both Workers-AI path and BYOK success path.
+
+4. **State** (`src/state.js`):
+   - Added `aiConsent` and `aiConsentToken` fields + localStorage load.
+
+### Effect
+
+- New users can click "analyse with ai" and get tags immediately — no API key required.
+- Users who consent contribute structured metadata to a growing open corpus (stub for now; D1 wired on binding).
+- BYOK users still route to their chosen provider (Gemini/Claude/OpenAI/Ollama) and their results are also offered for contribution.
+
+### Rollback
+
+- `git revert HEAD` — reverts endpoint additions, consent UI, default-provider routing.
+- Or manually: remove `/tags` and `/contribute` cases in `api/worker.js`, restore the `if (!hasKey) return []` guard in `analyzeWithGemini`, undo label changes.
+
+### How to test (browser)
+
+1. Open in incognito (no prior consent).
+2. Search `sunflower`, click a result → side panel opens → click "analyse with ✦ free ai".
+3. Consent modal appears — pick either button.
+4. Within ~5-15s, AI tag pills should render in the panel.
+5. If you picked "contribute anonymously", DevTools Network should show a POST to `/contribute` returning `{ ok: true, stored: false, stage: 'stub-d1-pending' }` (202).
+6. Clear localStorage keys `inspo_ai_consent*` to re-trigger the popup.
+
+### Required deploy step
+
+The Worker must be redeployed for `/tags` and `/contribute` to exist:
+```
+cd api && npx wrangler deploy
+```
