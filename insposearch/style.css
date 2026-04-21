@@ -1031,6 +1031,17 @@ html, body {
   align-items: flex-start;
 }
 
+.logo-subtitle {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  margin-top: 2px;
+  padding: 0 0 6px 0;
+  min-height: 12px;
+}
+.logo-subtitle .ls-up { color: var(--ink-2); }
+
 .sidebar-section {
   display: flex;
   flex-direction: column;

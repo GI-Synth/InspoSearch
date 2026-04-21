@@ -1,10 +1,10 @@
 # InspoSearch
 
-**The world's open cultural image search — 2487+ sources, 2.5B+ images, one search.**
+**The world's open cultural image search — 292+ sources, 8,319+ federated institutions, one search.**
 
 [![Live](https://img.shields.io/badge/live-insposearch.pages.dev-000?style=flat&logo=cloudflare)](https://insposearch.pages.dev)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat)](LICENSE)
-[![Sources](https://img.shields.io/badge/sources-2496%2B-brightgreen?style=flat)](SOURCES.md)
+[![Sources](https://img.shields.io/badge/sources-292%2B-brightgreen?style=flat)](SOURCES.md)
 [![Images](https://img.shields.io/badge/images-2.5B%2B-brightgreen?style=flat)](SOURCES.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat)](CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-contributor%20covenant-purple?style=flat)](CODE_OF_CONDUCT.md)
@@ -43,8 +43,8 @@ No build step. No dependencies. No server. Opens by double-click.
 
 | Feature | Description |
 |---|---|
-| **2487+ sources** | World museums, archives, nature databases, libraries, photography |
-| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 2482482482482482482482482482482482482482482482482482472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472472477+ more |
+| **292+ sources** | World museums, archives, nature databases, libraries, photography |
+| **2.5B+ images** | Metropolitan Museum · Rijksmuseum · NASA · iNaturalist · Europeana · Wikimedia · 282+ more |
 | **Exact / Explore modes** | Tight keyword matching or broad serendipitous discovery |
 | **Board view** | Drag images to a canvas · arrange · annotate · export as PNG |
 | **Deep zoom** | OpenSeadragon IIIF viewer — explore gigapixel museum images |

@@ -19,6 +19,13 @@ import './core.js';
 // 3. Source fetchers — populates ADAPTERS at evaluation time
 import './fetchers.js';
 
+// 3b. Source-count single source of truth — imported for its side effect
+// of exposing computeSourceCount on window so app.js/DOM can call it.
+import * as SourceCount from './sourceCount.js';
+if (typeof window !== 'undefined') {
+  window.InspoCount = SourceCount;
+}
+
 // 4. Application logic — rendering, search, UI wiring, features
 //    This module has side-effects: addEventListener calls, IIFEs, init sequences
 import './app.js';

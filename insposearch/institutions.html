@@ -152,18 +152,18 @@
     <h1>InspoSearch for Institutions</h1>
     <p class="hero-sub">Add your museum, archive, or library collection to the open cultural heritage search engine.</p>
 
-    <div class="stat-row">
+    <div class="stat-row" id="live-stats" data-federated="">
       <div class="stat">
-        <div class="stat-num">2487+</div>
+        <div class="stat-num" data-stat="sources">292+</div>
         <div class="stat-label">active sources</div>
       </div>
       <div class="stat">
-        <div class="stat-num">2.5B+</div>
+        <div class="stat-num" data-stat="images">2.5B+</div>
         <div class="stat-label">searchable images</div>
       </div>
       <div class="stat">
-        <div class="stat-num">172</div>
-        <div class="stat-label">no-setup sources</div>
+        <div class="stat-num" data-stat="federated">8,319</div>
+        <div class="stat-label">federated institutions</div>
       </div>
     </div>
 
@@ -277,7 +277,7 @@
       </div>
 
       <div class="pitch-stats">
-        <span><strong>2487+</strong> active sources</span>
+        <span><strong>292+</strong> active sources</span>
         <span><strong>2.5B+</strong> searchable images</span>
         <span><strong>6</strong> languages</span>
         <span><strong>0</strong> ads</span>
@@ -340,6 +340,60 @@
   </div>
 
   <script>
+    /* Live source-count wiring. Reads the audit-derived counts JSON + current
+       localStorage keys, so the stat row always matches what the main app
+       shows. Re-renders on cross-tab 'storage' events when a user enters a
+       key in the main app. */
+    (function () {
+      var row = document.getElementById('live-stats');
+      if (!row) return;
+      var KEY_MAP = {
+        europeanaKey: 'inspo_europeana_key',
+        harvardKey:   'inspo_harvard_key',
+        smithsonianKey: 'inspo_smithsonian_key',
+        pexelsKey:    'inspo_pexels_key',
+        pixabayKey:   'inspo_pixabay_key',
+        flickrKey:    'inspo_flickr_key',
+        troveKey:     'inspo_trove_key',
+        digitalnzKey: 'inspo_digitalnz_key',
+        dplaKey:      'inspo_dpla_key',
+        ddbKey:       'inspo_ddb_key',
+        unsplashKey:  'inspo_unsplash_key'
+      };
+      function hasKey(stateVar) {
+        var ls = KEY_MAP[stateVar];
+        if (!ls) return false;
+        try { return !!localStorage.getItem(ls); } catch { return false; }
+      }
+      function render(counts) {
+        var total = 0, active = 0, fedMax = 0, fedActive = 0;
+        for (var id in counts.sources) {
+          var s = counts.sources[id];
+          total += 1;
+          if (!s.a) continue;                        // no adapter
+          var reachable = !s.k || hasKey(s.k);
+          if (reachable) active += 1;
+          if (s.n) {
+            fedMax += s.n;
+            if (reachable) fedActive += s.n;
+          }
+        }
+        row.querySelector('[data-stat="sources"]').textContent = active + '/' + total;
+        row.querySelector('[data-stat="federated"]').textContent =
+          fedActive.toLocaleString() + '/' + fedMax.toLocaleString();
+      }
+      fetch('data/_source_counts.json', { cache: 'no-cache' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) return;
+          render(data);
+          window.addEventListener('storage', function (e) {
+            if (e.key && e.key.indexOf('inspo_') === 0) render(data);
+          });
+        })
+        .catch(function () { /* keep static fallback numbers */ });
+    })();
+
     (function () {
       var modal = document.getElementById('contact-modal');
       var form = document.getElementById('contact-form');

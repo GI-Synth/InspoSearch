@@ -4949,6 +4949,10 @@ export function updateKeysDot() {
     .some(s => STATE[s.stateKey]);
   document.getElementById('keys-dot').style.display = anySet ? 'inline-block' : 'none';
   if (typeof updateApiStatus === 'function') updateApiStatus();
+  // Fan out to anyone listening for source-count changes (header subtitle, etc.)
+  try {
+    window.dispatchEvent(new CustomEvent('source-count-changed'));
+  } catch { /* non-DOM env (tests) */ }
 }
 
 export function setAIProvider(p) {
@@ -5292,6 +5296,24 @@ export function buildSourceRow(container, src) {
 buildKeyRows();
 updateKeysDot();
 updatePresetButtons();
+
+/* Logo subtitle — live source-count readout. Updates whenever a key is
+   added/cleared via the `source-count-changed` event dispatched by
+   updateKeysDot(). See src/sourceCount.js for the math. */
+(function initLogoSubtitle() {
+  const el = document.getElementById('logo-subtitle');
+  if (!el || !window.InspoCount) return;
+  function render() {
+    const c = window.InspoCount.computeSourceCount();
+    const fed = c.federatedActive.toLocaleString();
+    const fedMax = c.federatedMax.toLocaleString();
+    el.innerHTML =
+      `<span class="ls-up">${c.active}</span>/${c.total} sources · ` +
+      `<span class="ls-up">${fed}</span>/${fedMax} institutions`;
+  }
+  render();
+  window.addEventListener('source-count-changed', render);
+})();
 
 /* Show onboarding on first visit — no auto-search, just show the homepage */
 if (!localStorage.getItem('inspo_onboarding_seen')) {
@@ -8811,7 +8833,7 @@ export function applyBoardTemplate(template) {
    ------------------------------------------------------------------ */
 (function initDynamicSEO() {
   var DEFAULT_TITLE = 'insposearch';
-  var DEFAULT_DESC = 'Search 2487+ museum, archive, and photo sources for creative inspiration.';
+  var DEFAULT_DESC = 'Search 292+ museum, archive, and photo sources for creative inspiration.';
 
   function updateMeta(name, content) {
     var el = document.querySelector('meta[property="' + name + '"]') ||
@@ -8821,7 +8843,7 @@ export function applyBoardTemplate(template) {
 
   function setSearchMeta(query) {
     var title = query + ' — insposearch';
-    var desc = 'Search results for "' + query + '" across 2487+ cultural heritage sources.';
+    var desc = 'Search results for "' + query + '" across 292+ cultural heritage sources.';
     document.title = title;
     updateMeta('description', desc);
     updateMeta('og:title', title);
