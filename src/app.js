@@ -2256,6 +2256,16 @@ let _loadMoreWaveCursor = 0;
 // Per-source load-more call count — used for Lane B offset/page tracking
 // and per-source cap (P1.4) so one source can't hog the pool.
 const _loadMoreSourceCalls = new Map();
+// Exact-mode Lane B modifier rotation. STATE.keywords has length 1 in exact
+// mode, so Lane B's synKw used to collapse to primaryKw → every load-more
+// hit the same sources with the same query → 100% dupes. Rotating a neutral
+// qualifier through the API call surfaces a different slice of the catalog;
+// the exact-mode word-boundary filter at line 2359 still drops anything that
+// doesn't contain the original query as a whole word.
+const _EXACT_LANE_B_MODIFIERS = [
+  '', ' painting', ' photograph', ' drawing', ' sculpture', ' print',
+  ' portrait', ' landscape', ' study', ' watercolor', ' engraving', ' sketch',
+];
 
 export async function fetchMoreResults() {
   if (STATE.loading || !STATE.query) return;
@@ -2301,9 +2311,17 @@ export async function fetchMoreResults() {
   // ── Lane B — keyword rotation for dynamic-registry sources already hit. ──
   // Fixes the old Lane B which looked up ADAPTERS[id] with a source-id key
   // (adapter keys are protocol names, never source ids, so it always missed).
+  //
+  // In exact mode keywords has length 1, so synKw === primaryKw on every
+  // call. Without variation Lane B returns the same items each load-more →
+  // 100% dupes. Rotate through a neutral modifier list; exact-mode filter at
+  // line 2359 still enforces word-boundary match on the original query.
+  const laneBKw = (STATE.searchMode === 'exact')
+    ? (primaryKw + _EXACT_LANE_B_MODIFIERS[(page - 1) % _EXACT_LANE_B_MODIFIERS.length]).trim()
+    : synKw;
   const laneB = [];
   const previousHitIds = new Set(STATE.results.map(r => r.source).filter(Boolean));
-  if (synKw) {
+  if (laneBKw) {
     const dynamicById = new Map(DYNAMIC_REGISTRY.map(e => [e.id, e]));
     const rotatable = [...previousHitIds]
       .filter(id => !PAGE2_FETCHERS[id])
@@ -2319,7 +2337,7 @@ export async function fetchMoreResults() {
       const e = dynamicById.get(id);
       _loadMoreSourceCalls.set(id, (_loadMoreSourceCalls.get(id) || 0) + 1);
       laneB.push(
-        callIfHealthy(id, () => ADAPTERS[e.adapter](e.config, synKw, perB, timedSignal).catch(() => []))
+        callIfHealthy(id, () => ADAPTERS[e.adapter](e.config, laneBKw, perB, timedSignal).catch(() => []))
       );
     }
   }
@@ -2329,14 +2347,18 @@ export async function fetchMoreResults() {
   // weren't in the initial 120 selected by fetchAll. Each load-more activates a
   // fresh slice so the pool keeps growing past the initial fan-out.
   const laneC = [];
-  const ranked = selectDynamicSources(primaryKw, 400);
+  // Widened pool 400→800 so wave expansion has enough runway for deep scroll.
+  // Most registries top out far below 800, so asking for more is free.
+  const ranked = selectDynamicSources(primaryKw, 800);
   const initialCut = new Set(ranked.slice(0, 120).map(e => e.id));
   const waveCandidates = ranked
     .filter(e => !initialCut.has(e.id))
     .filter(e => !previousHitIds.has(e.id))
     .filter(e => !STATE.disabledSources.has(e.id) && isSourceHealthy(e.id))
     .filter(e => ADAPTERS[e.adapter]);
-  const WAVE_BATCH = 6;
+  // 6→10: each load-more activates more fresh sources, raising novel-item
+  // yield and delaying the 5-empty-streak exhaustion trigger.
+  const WAVE_BATCH = 10;
   const waveSlice = waveCandidates.slice(_loadMoreWaveCursor, _loadMoreWaveCursor + WAVE_BATCH);
   _loadMoreWaveCursor += waveSlice.length;
   const perC = Math.max(6, Math.ceil(STATE.imageCount / Math.max(4, waveSlice.length || 1)));
