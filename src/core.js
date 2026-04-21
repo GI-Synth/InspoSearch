@@ -224,11 +224,16 @@ export function isSourceHealthy(sourceName) {
   return true;
 }
 
-export function callIfHealthy(sourceName, fetchPromise) {
-  if (STATE.disabledSources.has(sourceName)) return Promise.resolve([]);
-  if (_unavailableSources.has(sourceName)) return Promise.resolve([]);
-  if (!isSourceHealthy(sourceName)) return Promise.resolve([]);
-  return fetchPromise;
+// Sentinel returned by callIfHealthy when a source is skipped (disabled/unavailable/unhealthy).
+// onSourceResult and fetchMoreResults must check for this to avoid recording phantom misses
+// or passing the symbol into downstream array operations.
+export const HEALTH_SKIP = Symbol('health_skip');
+
+export function callIfHealthy(sourceName, fetchPromiseOrFn) {
+  if (STATE.disabledSources.has(sourceName)) return Promise.resolve(HEALTH_SKIP);
+  if (_unavailableSources.has(sourceName)) return Promise.resolve(HEALTH_SKIP);
+  if (!isSourceHealthy(sourceName)) return Promise.resolve(HEALTH_SKIP);
+  return typeof fetchPromiseOrFn === 'function' ? fetchPromiseOrFn() : fetchPromiseOrFn;
 }
 
 export let _updateSourcesActiveCounterImmediate = function _updateSourcesActiveCounterImmediate() {
@@ -517,6 +522,9 @@ export function withTimeout(signal, ms = 3000) {
 
 // ── Fetch concurrency limiter — max 40 in-flight network requests ──
 export const _fetchSemaphore = { running: 0, queue: [], limit: 40, _totalFailed: 0 };
+export function _flushFetchQueue() {
+  _fetchSemaphore.queue.length = 0;
+}
 export function _acquireFetchSlot() {
   return new Promise(resolve => {
     if (_fetchSemaphore.running < _fetchSemaphore.limit) {

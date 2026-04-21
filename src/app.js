@@ -14,10 +14,10 @@ import {
   set_realRenderGrid
 } from './state.js';
 import {
-  CACHE_PREFIX, STOPWORDS, _fetchSemaphore, _flushSourceHealth,
+  CACHE_PREFIX, STOPWORDS, _fetchSemaphore, _flushFetchQueue, _flushSourceHealth,
   _healthWriteTimer, _lastDisplayOrder, cacheGet, cacheSet, cacheClear,
   callIfHealthy, createSourceIdentity, debounce, formatCacheAge,
-  getCacheAge, getAITagsCache, getDisplayResults, getSourceName,
+  getCacheAge, getAITagsCache, getDisplayResults, getSourceName, HEALTH_SKIP,
   hooks, incrementGeminiCounter, isAIProviderRateLimited,
   isGeminiRateLimited, isSourceHealthy, loadDisabledSources,
   loadGeminiCounter, loadSourceHealth, pickOnboardingTerm, pruneCache,
@@ -107,6 +107,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     if (STATE.abortController) STATE.abortController.abort();
     // Flush any pending health write before starting a new search
     if (_healthWriteTimer) { clearTimeout(_healthWriteTimer); _flushSourceHealth(); }
+    // Drain queued fetches from the previous search so they don't starve this one
+    _flushFetchQueue();
     STATE.abortController = new AbortController();
     signal = STATE.abortController.signal;
   }
@@ -159,6 +161,8 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
 
   const onSourceResult = sourceName => items => {
     if (signal.aborted) return;
+    // Skipped (disabled/unavailable/unhealthy) — don't record a phantom miss
+    if (items === HEALTH_SKIP) return;
 
     // Record health using RAW count (before exact-mode filtering)
     const rawCount = (items || []).length;
@@ -233,186 +237,186 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
 
   await Promise.allSettled([
     // ── Batch 1 ────────────────────────────────────────────
-    trackSource('met',          callIfHealthy('met',          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 6) : fetchMet(keywords.join(' '), limitFor('met'), signal))),
-    isSourceSkipped('nasa',        exactQueryClass) ? Promise.resolve() : trackSource('nasa',        callIfHealthy('nasa',        fetchNASA(keyword,           fetchBatch, signal))),
-    isSourceSkipped('inaturalist', exactQueryClass) ? Promise.resolve() : trackSource('inaturalist', callIfHealthy('inaturalist', fetchINaturalist(keyword,    limitFor('inaturalist'), signal))),
-    trackSource('chicago',      callIfHealthy('chicago',      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 5) : fetchChicagoArt(keyword, limitFor('chicago'), signal))),
-    trackSource('cleveland',    callIfHealthy('cleveland',    fetchCleveland(keyword,                       limitFor('cleveland'), signal))),
-    trackSource('va',           callIfHealthy('va',           fetchVA(keyword,                              limitFor('va'), signal))),
-    trackSource('wikiart', callIfHealthy('wikiart', fetchWikiArt(keyword,                         fetchBatch, signal))),
-    trackSource('nordic', callIfHealthy('nordic', fetchNordicMuseum(keyword,                    fetchBatch, signal))),
-    trackSource('flickr', callIfHealthy('flickr', fetchFlickrCommons(keyword,                   limitFor('flickr'), signal))),
-    trackSource('europeana', callIfHealthy('europeana', STATE.searchMode === 'exact' ? fetchEuropeanaDeep(keyword, 60, signal, 5) : fetchEuropeana(keyword, fetchBatch, signal))),
-    trackSource('europeana', callIfHealthy('europeana', fetchEuropeana(alt2,                          fetchBatch, signal))),
+    trackSource('met',          callIfHealthy('met', () =>          STATE.searchMode === 'exact' ? fetchMetDeep(keywords.join(' '), 40, signal, 6) : fetchMet(keywords.join(' '), limitFor('met'), signal))),
+    isSourceSkipped('nasa',        exactQueryClass) ? Promise.resolve() : trackSource('nasa',        callIfHealthy('nasa', () =>        fetchNASA(keyword,           fetchBatch, signal))),
+    isSourceSkipped('inaturalist', exactQueryClass) ? Promise.resolve() : trackSource('inaturalist', callIfHealthy('inaturalist', () => fetchINaturalist(keyword,    limitFor('inaturalist'), signal))),
+    trackSource('chicago',      callIfHealthy('chicago', () =>      STATE.searchMode === 'exact' ? fetchChicagoArtDeep(keyword, 50, signal, 5) : fetchChicagoArt(keyword, limitFor('chicago'), signal))),
+    trackSource('cleveland',    callIfHealthy('cleveland', () =>    fetchCleveland(keyword,                       limitFor('cleveland'), signal))),
+    trackSource('va',           callIfHealthy('va', () =>           fetchVA(keyword,                              limitFor('va'), signal))),
+    trackSource('wikiart', callIfHealthy('wikiart', () => fetchWikiArt(keyword,                         fetchBatch, signal))),
+    trackSource('nordic', callIfHealthy('nordic', () => fetchNordicMuseum(keyword,                    fetchBatch, signal))),
+    trackSource('flickr', callIfHealthy('flickr', () => fetchFlickrCommons(keyword,                   limitFor('flickr'), signal))),
+    trackSource('europeana', callIfHealthy('europeana', () => STATE.searchMode === 'exact' ? fetchEuropeanaDeep(keyword, 60, signal, 5) : fetchEuropeana(keyword, fetchBatch, signal))),
+    trackSource('europeana', callIfHealthy('europeana', () => fetchEuropeana(alt2,                          fetchBatch, signal))),
     ...(STATE.searchMode === 'exact' ? [] : [
-      trackSource('europeana', callIfHealthy('europeana', fetchEuropeana(keyword + ' fashion',          fetchBatch, signal))),
-      trackSource('europeana', callIfHealthy('europeana', fetchEuropeana(keyword + ' textile costume',  fetchBatch, signal))),
+      trackSource('europeana', callIfHealthy('europeana', () => fetchEuropeana(keyword + ' fashion',          fetchBatch, signal))),
+      trackSource('europeana', callIfHealthy('europeana', () => fetchEuropeana(keyword + ' textile costume',  fetchBatch, signal))),
     ]),
-    trackSource('rijksmuseum', callIfHealthy('rijksmuseum', fetchRijksmuseum(keyword,                     limitFor('rijksmuseum'), signal))),
-    trackSource('harvard', callIfHealthy('harvard', fetchHarvard(keyword,                         limitFor('harvard'), signal))),
-    trackSource('smithsonian', callIfHealthy('smithsonian', fetchSmithsonian(keyword,                     limitFor('smithsonian'), signal))),
-    trackSource('pexels', callIfHealthy('pexels', fetchPexels(keyword,                          fetchBatch, signal))),
-    trackSource('pixabay', callIfHealthy('pixabay', fetchPixabay(keyword,                         fetchBatch, signal))),
+    trackSource('rijksmuseum', callIfHealthy('rijksmuseum', () => fetchRijksmuseum(keyword,                     limitFor('rijksmuseum'), signal))),
+    trackSource('harvard', callIfHealthy('harvard', () => fetchHarvard(keyword,                         limitFor('harvard'), signal))),
+    trackSource('smithsonian', callIfHealthy('smithsonian', () => fetchSmithsonian(keyword,                     limitFor('smithsonian'), signal))),
+    trackSource('pexels', callIfHealthy('pexels', () => fetchPexels(keyword,                          fetchBatch, signal))),
+    trackSource('pixabay', callIfHealthy('pixabay', () => fetchPixabay(keyword,                         fetchBatch, signal))),
     // ── Batch 2 ────────────────────────────────────────────
-    trackSource('getty', callIfHealthy('getty', fetchGetty(keyword,                           limitFor('getty'), signal))),
-    trackSource('nga', callIfHealthy('nga', fetchNGA(keyword,                             limitFor('nga'), signal))),
-    isSourceSkipped('gbif', exactQueryClass) ? Promise.resolve() : trackSource('gbif', callIfHealthy('gbif', fetchGBIF(keyword,  limitFor('gbif'), signal))),
-    isSourceSkipped('eol', exactQueryClass) ? Promise.resolve() : trackSource('eol', callIfHealthy('eol', fetchEOL(keyword,   fetchBatch, signal))),
-    isSourceSkipped('apod', exactQueryClass) ? Promise.resolve() : trackSource('apod', callIfHealthy('apod', fetchAPOD(keyword,  fetchBatch, signal))),
-    trackSource('gallica', callIfHealthy('gallica', fetchGallica(keyword,                         limitFor('gallica'), signal))),
-    trackSource('chronicling', callIfHealthy('chronicling', fetchChroniclingAmerica(keyword,              fetchBatch, signal))),
-    trackSource('trove', callIfHealthy('trove', fetchTrove(keyword,                           fetchBatch, signal))),
-    trackSource('digitalnz', callIfHealthy('digitalnz', fetchDigitalNZ(keyword,                       fetchBatch, signal))),
-    trackSource('bhl', callIfHealthy('bhl', fetchBHL(keyword,                             limitFor('bhl'), signal))),
-    trackSource('carnegie', callIfHealthy('carnegie', fetchCarnegie(keyword,                        fetchBatch, signal))),
-    trackSource('prado', callIfHealthy('prado', fetchPrado(keyword,                           fetchBatch, signal))),
-    trackSource('parismusees', callIfHealthy('parismusees', fetchParisMusees(keyword,                     fetchBatch, signal))),
-    trackSource('yale', callIfHealthy('yale', fetchYale(keyword,                            limitFor('yale'), signal))),
-    trackSource('picsum', callIfHealthy('picsum', fetchPicsum(keyword,                          fetchBatch, signal))),
-    isSourceSkipped('usgs', exactQueryClass) ? Promise.resolve() : trackSource('usgs', callIfHealthy('usgs', fetchUSGS(keyword, fetchBatch, signal))),
-    trackSource('cooperhewitt', callIfHealthy('cooperhewitt', fetchCooperHewitt(keyword,                    fetchBatch, signal))),
+    trackSource('getty', callIfHealthy('getty', () => fetchGetty(keyword,                           limitFor('getty'), signal))),
+    trackSource('nga', callIfHealthy('nga', () => fetchNGA(keyword,                             limitFor('nga'), signal))),
+    isSourceSkipped('gbif', exactQueryClass) ? Promise.resolve() : trackSource('gbif', callIfHealthy('gbif', () => fetchGBIF(keyword,  limitFor('gbif'), signal))),
+    isSourceSkipped('eol', exactQueryClass) ? Promise.resolve() : trackSource('eol', callIfHealthy('eol', () => fetchEOL(keyword,   fetchBatch, signal))),
+    isSourceSkipped('apod', exactQueryClass) ? Promise.resolve() : trackSource('apod', callIfHealthy('apod', () => fetchAPOD(keyword,  fetchBatch, signal))),
+    trackSource('gallica', callIfHealthy('gallica', () => fetchGallica(keyword,                         limitFor('gallica'), signal))),
+    trackSource('chronicling', callIfHealthy('chronicling', () => fetchChroniclingAmerica(keyword,              fetchBatch, signal))),
+    trackSource('trove', callIfHealthy('trove', () => fetchTrove(keyword,                           fetchBatch, signal))),
+    trackSource('digitalnz', callIfHealthy('digitalnz', () => fetchDigitalNZ(keyword,                       fetchBatch, signal))),
+    trackSource('bhl', callIfHealthy('bhl', () => fetchBHL(keyword,                             limitFor('bhl'), signal))),
+    trackSource('carnegie', callIfHealthy('carnegie', () => fetchCarnegie(keyword,                        fetchBatch, signal))),
+    trackSource('prado', callIfHealthy('prado', () => fetchPrado(keyword,                           fetchBatch, signal))),
+    trackSource('parismusees', callIfHealthy('parismusees', () => fetchParisMusees(keyword,                     fetchBatch, signal))),
+    trackSource('yale', callIfHealthy('yale', () => fetchYale(keyword,                            limitFor('yale'), signal))),
+    trackSource('picsum', callIfHealthy('picsum', () => fetchPicsum(keyword,                          fetchBatch, signal))),
+    isSourceSkipped('usgs', exactQueryClass) ? Promise.resolve() : trackSource('usgs', callIfHealthy('usgs', () => fetchUSGS(keyword, fetchBatch, signal))),
+    trackSource('cooperhewitt', callIfHealthy('cooperhewitt', () => fetchCooperHewitt(keyword,                    fetchBatch, signal))),
     // ── Batch 3 ────────────────────────────────────────────
-    trackSource('tate', callIfHealthy('tate', fetchTate(keyword,                            fetchBatch, signal))),
-    isSourceSkipped('finna', exactQueryClass) ? Promise.resolve() : trackSource('finna', callIfHealthy('finna', fetchFinna(keyword,                           fetchBatch, signal))),
-    trackSource('soch', callIfHealthy('soch', fetchSOCH(keyword,                            fetchBatch, signal))),
-    trackSource('joconde', callIfHealthy('joconde', fetchJoconde(keyword,                         fetchBatch, signal))),
-    trackSource('mnw', callIfHealthy('mnw', fetchMNW(keyword,                             fetchBatch, signal))),
-    trackSource('tepapa', callIfHealthy('tepapa', fetchTePapa(keyword,                          fetchBatch, signal))),
-    trackSource('dpla', callIfHealthy('dpla', fetchDPLA(keyword,                            limitFor('dpla'), signal))),
-    trackSource('ddb', callIfHealthy('ddb', fetchDDB(keyword,                             fetchBatch, signal))),
-    trackSource('artsy', callIfHealthy('artsy', fetchArtsy(keyword,                           fetchBatch, signal))),
-    trackSource('pas', callIfHealthy('pas', fetchPAS(keyword,                             fetchBatch, signal))),
-    trackSource('smg', callIfHealthy('smg', fetchSMG(keyword,                             fetchBatch, signal))),
-    trackSource('auckland', callIfHealthy('auckland', fetchAuckland(keyword,                        fetchBatch, signal))),
-    isSourceSkipped('photogrammar', exactQueryClass) ? Promise.resolve() : trackSource('photogrammar', callIfHealthy('photogrammar', fetchPhotogrammar(keyword, fetchBatch, signal))),
-    trackSource('wellcome', callIfHealthy('wellcome', fetchWellcome(keyword,                        limitFor('wellcome'), signal))),
-    trackSource('maas', callIfHealthy('maas', fetchMAAS(keyword,                            fetchBatch, signal))),
-    trackSource('smk', callIfHealthy('smk', fetchSMK(keyword,                             fetchBatch, signal))),
-    trackSource('thyssen', callIfHealthy('thyssen', fetchThyssen(keyword,                         fetchBatch, signal))),
+    trackSource('tate', callIfHealthy('tate', () => fetchTate(keyword,                            fetchBatch, signal))),
+    isSourceSkipped('finna', exactQueryClass) ? Promise.resolve() : trackSource('finna', callIfHealthy('finna', () => fetchFinna(keyword,                           fetchBatch, signal))),
+    trackSource('soch', callIfHealthy('soch', () => fetchSOCH(keyword,                            fetchBatch, signal))),
+    trackSource('joconde', callIfHealthy('joconde', () => fetchJoconde(keyword,                         fetchBatch, signal))),
+    trackSource('mnw', callIfHealthy('mnw', () => fetchMNW(keyword,                             fetchBatch, signal))),
+    trackSource('tepapa', callIfHealthy('tepapa', () => fetchTePapa(keyword,                          fetchBatch, signal))),
+    trackSource('dpla', callIfHealthy('dpla', () => fetchDPLA(keyword,                            limitFor('dpla'), signal))),
+    trackSource('ddb', callIfHealthy('ddb', () => fetchDDB(keyword,                             fetchBatch, signal))),
+    trackSource('artsy', callIfHealthy('artsy', () => fetchArtsy(keyword,                           fetchBatch, signal))),
+    trackSource('pas', callIfHealthy('pas', () => fetchPAS(keyword,                             fetchBatch, signal))),
+    trackSource('smg', callIfHealthy('smg', () => fetchSMG(keyword,                             fetchBatch, signal))),
+    trackSource('auckland', callIfHealthy('auckland', () => fetchAuckland(keyword,                        fetchBatch, signal))),
+    isSourceSkipped('photogrammar', exactQueryClass) ? Promise.resolve() : trackSource('photogrammar', callIfHealthy('photogrammar', () => fetchPhotogrammar(keyword, fetchBatch, signal))),
+    trackSource('wellcome', callIfHealthy('wellcome', () => fetchWellcome(keyword,                        limitFor('wellcome'), signal))),
+    trackSource('maas', callIfHealthy('maas', () => fetchMAAS(keyword,                            fetchBatch, signal))),
+    trackSource('smk', callIfHealthy('smk', () => fetchSMK(keyword,                             fetchBatch, signal))),
+    trackSource('thyssen', callIfHealthy('thyssen', () => fetchThyssen(keyword,                         fetchBatch, signal))),
     // ── Batch 4 — new sources ──────────────────────────────
-    trackSource('walters', callIfHealthy('walters', fetchWalters(keyword,                         perSource+4, signal))),
-    trackSource('princeton', callIfHealthy('princeton', fetchPrinceton(keyword,                       perSource+4, signal))),
-    isSourceSkipped('wikidata', exactQueryClass) ? Promise.resolve() : trackSource('wikidata', callIfHealthy('wikidata', fetchWikidata(keyword,                        perSource+4, signal))),
-    isSourceSkipped('noaa', exactQueryClass) ? Promise.resolve() : trackSource('noaa', callIfHealthy('noaa', fetchNOAA(keyword,   perSource+4, signal))),
-    isSourceSkipped('hubble', exactQueryClass) ? Promise.resolve() : trackSource('hubble', callIfHealthy('hubble', fetchHubble(keyword, perSource+4, signal))),
-    trackSource('cornell', callIfHealthy('cornell', fetchCornell(keyword,                         perSource+4, signal))),
-    trackSource('folger', callIfHealthy('folger', fetchFolger(keyword,                          perSource+4, signal))),
-    trackSource('onb', callIfHealthy('onb', fetchONB(keyword,                             perSource+4, signal))),
-    trackSource('nypl', callIfHealthy('nypl', fetchNYPL(keyword,                            limitFor('nypl'), signal))),
-    trackSource('mak', callIfHealthy('mak', fetchMAK(keyword,                             perSource+4, signal))),
-    trackSource('mna', callIfHealthy('mna', fetchMNA(keyword,                             perSource+4, signal))),
+    trackSource('walters', callIfHealthy('walters', () => fetchWalters(keyword,                         perSource+4, signal))),
+    trackSource('princeton', callIfHealthy('princeton', () => fetchPrinceton(keyword,                       perSource+4, signal))),
+    isSourceSkipped('wikidata', exactQueryClass) ? Promise.resolve() : trackSource('wikidata', callIfHealthy('wikidata', () => fetchWikidata(keyword,                        perSource+4, signal))),
+    isSourceSkipped('noaa', exactQueryClass) ? Promise.resolve() : trackSource('noaa', callIfHealthy('noaa', () => fetchNOAA(keyword,   perSource+4, signal))),
+    isSourceSkipped('hubble', exactQueryClass) ? Promise.resolve() : trackSource('hubble', callIfHealthy('hubble', () => fetchHubble(keyword, perSource+4, signal))),
+    trackSource('cornell', callIfHealthy('cornell', () => fetchCornell(keyword,                         perSource+4, signal))),
+    trackSource('folger', callIfHealthy('folger', () => fetchFolger(keyword,                          perSource+4, signal))),
+    trackSource('onb', callIfHealthy('onb', () => fetchONB(keyword,                             perSource+4, signal))),
+    trackSource('nypl', callIfHealthy('nypl', () => fetchNYPL(keyword,                            limitFor('nypl'), signal))),
+    trackSource('mak', callIfHealthy('mak', () => fetchMAK(keyword,                             perSource+4, signal))),
+    trackSource('mna', callIfHealthy('mna', () => fetchMNA(keyword,                             perSource+4, signal))),
     // ── Batch 4 — extra calls (reusing existing functions) ─
     ...(STATE.searchMode === 'exact' ? [] : [
-      trackSource('louvre', callIfHealthy('louvre', fetchJoconde(keyword + ' Louvre',             perSource+4, signal)
+      trackSource('louvre', callIfHealthy('louvre', () => fetchJoconde(keyword + ' Louvre',             perSource+4, signal)
         .then(r => r.map(i => ({ ...i, id: i.id.replace('joconde_', 'louvre_'), source: 'louvre' }))))),
     ]),
     ...(STATE.searchMode === 'exact' ? [] : [
-      trackSource('rijksmuseum', callIfHealthy('rijksmuseum', fetchRijksmuseum(keyword + ' drawing',        perSource+4, signal))),
-      trackSource('rijksmuseum', callIfHealthy('rijksmuseum', fetchRijksmuseum(keyword + ' print',          perSource+4, signal))),
-      trackSource('bhl', callIfHealthy('bhl', fetchBHL('illustrated ' + keyword,            perSource+4, signal))),
-      trackSource('smithsonian', callIfHealthy('smithsonian', fetchSmithsonian(keyword + ' photograph',     perSource+4, signal))),
+      trackSource('rijksmuseum', callIfHealthy('rijksmuseum', () => fetchRijksmuseum(keyword + ' drawing',        perSource+4, signal))),
+      trackSource('rijksmuseum', callIfHealthy('rijksmuseum', () => fetchRijksmuseum(keyword + ' print',          perSource+4, signal))),
+      trackSource('bhl', callIfHealthy('bhl', () => fetchBHL('illustrated ' + keyword,            perSource+4, signal))),
+      trackSource('smithsonian', callIfHealthy('smithsonian', () => fetchSmithsonian(keyword + ' photograph',     perSource+4, signal))),
     ]),
 
     // ── Batch 7 ────────────────────────────────────────────
-    trackSource('mia', callIfHealthy('mia', fetchMia(keyword,                            perSource+2, signal))),
-    trackSource('lacma', callIfHealthy('lacma', fetchLACMA(keyword,                          perSource+2, signal))),
-    trackSource('munch', callIfHealthy('munch', fetchMunch(keyword,                          perSource+2, signal))),
-    trackSource('mauritshuis', callIfHealthy('mauritshuis', fetchMauritshuis(keyword,                    perSource+2, signal))),
-    trackSource('nationalmuseumse', callIfHealthy('nationalmuseumse', fetchNationalmuseumSE(keyword,               perSource+2, signal))),
-    isSourceSkipped('naturalis', exactQueryClass) ? Promise.resolve() : trackSource('naturalis', callIfHealthy('naturalis', fetchNaturalis(keyword,      perSource+2, signal))),
-    trackSource('nmaahc', callIfHealthy('nmaahc', fetchNMAAHC(keyword,                         perSource+2, signal))),
-    trackSource('nasm', callIfHealthy('nasm', fetchNASM(keyword,                           perSource+2, signal))),
-    trackSource('whitney', callIfHealthy('whitney', fetchWhitney(keyword,                        perSource+2, signal))),
-    isSourceSkipped('nationalzoo', exactQueryClass) ? Promise.resolve() : trackSource('nationalzoo', callIfHealthy('nationalzoo', fetchNationalZoo(keyword,     perSource+2, signal))),
-    isSourceSkipped('gbiflit', exactQueryClass) ? Promise.resolve() : trackSource('gbiflit', callIfHealthy('gbiflit', fetchGBIFLiterature(keyword,  perSource+2, signal))),
-    trackSource('freersackler', callIfHealthy('freersackler', fetchFreerSackler(keyword,                   perSource+2, signal))),
+    trackSource('mia', callIfHealthy('mia', () => fetchMia(keyword,                            perSource+2, signal))),
+    trackSource('lacma', callIfHealthy('lacma', () => fetchLACMA(keyword,                          perSource+2, signal))),
+    trackSource('munch', callIfHealthy('munch', () => fetchMunch(keyword,                          perSource+2, signal))),
+    trackSource('mauritshuis', callIfHealthy('mauritshuis', () => fetchMauritshuis(keyword,                    perSource+2, signal))),
+    trackSource('nationalmuseumse', callIfHealthy('nationalmuseumse', () => fetchNationalmuseumSE(keyword,               perSource+2, signal))),
+    isSourceSkipped('naturalis', exactQueryClass) ? Promise.resolve() : trackSource('naturalis', callIfHealthy('naturalis', () => fetchNaturalis(keyword,      perSource+2, signal))),
+    trackSource('nmaahc', callIfHealthy('nmaahc', () => fetchNMAAHC(keyword,                         perSource+2, signal))),
+    trackSource('nasm', callIfHealthy('nasm', () => fetchNASM(keyword,                           perSource+2, signal))),
+    trackSource('whitney', callIfHealthy('whitney', () => fetchWhitney(keyword,                        perSource+2, signal))),
+    isSourceSkipped('nationalzoo', exactQueryClass) ? Promise.resolve() : trackSource('nationalzoo', callIfHealthy('nationalzoo', () => fetchNationalZoo(keyword,     perSource+2, signal))),
+    isSourceSkipped('gbiflit', exactQueryClass) ? Promise.resolve() : trackSource('gbiflit', callIfHealthy('gbiflit', () => fetchGBIFLiterature(keyword,  perSource+2, signal))),
+    trackSource('freersackler', callIfHealthy('freersackler', () => fetchFreerSackler(keyword,                   perSource+2, signal))),
 
-    trackSource('ago', callIfHealthy('ago', fetchAGO(keyword,                            perSource+2, signal))),
-    trackSource('pem', callIfHealthy('pem', fetchPEM(keyword,                            perSource+2, signal))),
-    trackSource('npg', callIfHealthy('npg', fetchNPG(keyword,                            perSource+2, signal))),
-    trackSource('louvread', callIfHealthy('louvread', fetchLouvreAD(keyword,                       perSource+2, signal))),
+    trackSource('ago', callIfHealthy('ago', () => fetchAGO(keyword,                            perSource+2, signal))),
+    trackSource('pem', callIfHealthy('pem', () => fetchPEM(keyword,                            perSource+2, signal))),
+    trackSource('npg', callIfHealthy('npg', () => fetchNPG(keyword,                            perSource+2, signal))),
+    trackSource('louvread', callIfHealthy('louvread', () => fetchLouvreAD(keyword,                       perSource+2, signal))),
     // ── Batch 7 — extra calls (reusing existing functions) ─
     ...(STATE.searchMode === 'exact' ? [] : [
-      trackSource('met', callIfHealthy('met', fetchMet('heilbrunn ' + keyword,             perSource+2, signal))),
-      trackSource('nmaahc', callIfHealthy('nmaahc', fetchNMAAHC(keyword + ' photograph',         perSource+2, signal))),
-      trackSource('cooperhewitt', callIfHealthy('cooperhewitt', fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal))),
-      trackSource('wellcome', callIfHealthy('wellcome', fetchWellcome(keyword + ' illustration',      perSource+2, signal))),
+      trackSource('met', callIfHealthy('met', () => fetchMet('heilbrunn ' + keyword,             perSource+2, signal))),
+      trackSource('nmaahc', callIfHealthy('nmaahc', () => fetchNMAAHC(keyword + ' photograph',         perSource+2, signal))),
+      trackSource('cooperhewitt', callIfHealthy('cooperhewitt', () => fetchCooperHewitt(keyword + ' textile pattern', perSource+2, signal))),
+      trackSource('wellcome', callIfHealthy('wellcome', () => fetchWellcome(keyword + ' illustration',      perSource+2, signal))),
     ]),
     // ── Phase 2 — new sources ─────────────────────────────
-    trackSource('unsplash', callIfHealthy('unsplash', fetchUnsplash(keyword,                        perSource+2, signal))),
-    trackSource('bodleian', callIfHealthy('bodleian', fetchBodleian(keyword,                        perSource+2, signal))),
-    trackSource('bsb', callIfHealthy('bsb', fetchBSB(keyword,                             perSource+2, signal))),
-    trackSource('cudl', callIfHealthy('cudl', fetchCUDL(keyword,                            perSource+2, signal))),
+    trackSource('unsplash', callIfHealthy('unsplash', () => fetchUnsplash(keyword,                        perSource+2, signal))),
+    trackSource('bodleian', callIfHealthy('bodleian', () => fetchBodleian(keyword,                        perSource+2, signal))),
+    trackSource('bsb', callIfHealthy('bsb', () => fetchBSB(keyword,                             perSource+2, signal))),
+    trackSource('cudl', callIfHealthy('cudl', () => fetchCUDL(keyword,                            perSource+2, signal))),
     // ── Phase 2 — manifest-loaded IIIF sources (injected dynamically) ─
     ...(STATE.manifestSources || []).map(cfg => {
       const adapterFunc = cfg.adapter === 'iiif_content_search' ? fetchIIIFSearch : fetchIIIFCollection;
-      return trackSource(cfg.id, callIfHealthy(cfg.id, adapterFunc(cfg, keyword, perSource+2, signal)
+      return trackSource(cfg.id, callIfHealthy(cfg.id, () => adapterFunc(cfg, keyword, perSource+2, signal)
         .then(r => r.map(i => ({ ...i, source: i.source || cfg.id })))))
     }),
     // ── Phase A — Europeana sub-collections (20) ─────────────────────────
     ...Object.entries(EUROPEANA_PROVIDERS).map(([id, cfg]) =>
-      trackSource(id, callIfHealthy(id, fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, keyword, Math.max(2, Math.ceil(perSource/3)), signal, cfg.extra || '')
+      trackSource(id, callIfHealthy(id, () => fetchEuropeanaFiltered(cfg.filterParam, cfg.filterValue, keyword, Math.max(2, Math.ceil(perSource/3)), signal, cfg.extra || '')
         .then(r => r.map(i => ({ ...i, source: id })))))
     ),
     // ── Phase A — DPLA hub sub-collections (15) ─────────────────────────
     ...Object.entries(DPLA_HUBS).map(([id, cfg]) =>
-      trackSource(id, callIfHealthy(id, fetchDPLAProvider(cfg.provider, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+      trackSource(id, callIfHealthy(id, () => fetchDPLAProvider(cfg.provider, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
         .then(r => r.map(i => ({ ...i, source: id })))))
     ),
     // ── Phase A — Smithsonian sub-museums (staggered to avoid 429) ────
     (async () => {
       const siEntries = Object.entries(SI_UNITS);
       const siTasks = siEntries.map(([id, cfg]) => () =>
-        trackSource(id, callIfHealthy(id, fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
+        trackSource(id, callIfHealthy(id, () => fetchSmithsonianUnit(cfg.code, keyword, Math.max(2, Math.ceil(perSource/3)), signal)
           .then(r => r.map(i => ({ ...i, source: id })))))
       );
       await promisePool(siTasks, 2);
     })(),
 
     // ── Phase B — zero-auth free APIs ────────────────────────────────────
-    isSourceSkipped('idigbio', exactQueryClass) ? Promise.resolve() : trackSource('idigbio', callIfHealthy('idigbio', fetchIDigBio(keyword, Math.max(3, perSource), signal))),
-    isSourceSkipped('ala', exactQueryClass) ? Promise.resolve() : trackSource('ala', callIfHealthy('ala', fetchALA(keyword,     Math.max(3, perSource), signal))),
+    isSourceSkipped('idigbio', exactQueryClass) ? Promise.resolve() : trackSource('idigbio', callIfHealthy('idigbio', () => fetchIDigBio(keyword, Math.max(3, perSource), signal))),
+    isSourceSkipped('ala', exactQueryClass) ? Promise.resolve() : trackSource('ala', callIfHealthy('ala', () => fetchALA(keyword,     Math.max(3, perSource), signal))),
     // ── Phase D — niche & specialized ──────────────────────────────────
-    isSourceSkipped('nasa_images', exactQueryClass) ? Promise.resolve() : trackSource('nasa_images', callIfHealthy('nasa_images', fetchNASAImages(keyword, Math.max(3, perSource), signal))),
+    isSourceSkipped('nasa_images', exactQueryClass) ? Promise.resolve() : trackSource('nasa_images', callIfHealthy('nasa_images', () => fetchNASAImages(keyword, Math.max(3, perSource), signal))),
     // ── Phase E — CORS-blocked, cache-first ─────────────────────────────
-    trackSource('nhm_london', callIfHealthy('nhm_london', fetchNHMLondon(keyword,              Math.max(3, perSource), signal))),
-    trackSource('wallace_collection', callIfHealthy('wallace_collection', fetchWallaceCollection(keyword,      Math.max(3, perSource), signal))),
-    trackSource('fitzwilliam', callIfHealthy('fitzwilliam', fetchFitzwilliam(keyword,            Math.max(3, perSource), signal))),
-    trackSource('national_gallery_london', callIfHealthy('national_gallery_london', fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal))),
-    trackSource('scottish_national', callIfHealthy('scottish_national', fetchScottishNational(keyword,       Math.max(3, perSource), signal))),
-    trackSource('musee_orsay', callIfHealthy('musee_orsay', fetchMuseeOrsay(keyword,             Math.max(3, perSource), signal))),
-    trackSource('vangogh_museum', callIfHealthy('vangogh_museum', fetchVanGoghMuseum(keyword,          Math.max(3, perSource), signal))),
-    trackSource('khm', callIfHealthy('khm', fetchKHM(keyword,                    Math.max(3, perSource), signal))),
-    trackSource('belvedere', callIfHealthy('belvedere', fetchBelvedere(keyword,              Math.max(3, perSource), signal))),
-    trackSource('staedel', callIfHealthy('staedel', fetchStaedel(keyword,                Math.max(3, perSource), signal))),
-    trackSource('rmfab', callIfHealthy('rmfab', fetchRMFAB(keyword,                  Math.max(3, perSource), signal))),
-    trackSource('guimet', callIfHealthy('guimet', fetchGuimet(keyword,                 Math.max(3, perSource), signal))),
-    trackSource('npm_taipei', callIfHealthy('npm_taipei', fetchNPMTaipei(keyword,              Math.max(3, perSource), signal))),
+    trackSource('nhm_london', callIfHealthy('nhm_london', () => fetchNHMLondon(keyword,              Math.max(3, perSource), signal))),
+    trackSource('wallace_collection', callIfHealthy('wallace_collection', () => fetchWallaceCollection(keyword,      Math.max(3, perSource), signal))),
+    trackSource('fitzwilliam', callIfHealthy('fitzwilliam', () => fetchFitzwilliam(keyword,            Math.max(3, perSource), signal))),
+    trackSource('national_gallery_london', callIfHealthy('national_gallery_london', () => fetchNationalGalleryLondon(keyword,  Math.max(3, perSource), signal))),
+    trackSource('scottish_national', callIfHealthy('scottish_national', () => fetchScottishNational(keyword,       Math.max(3, perSource), signal))),
+    trackSource('musee_orsay', callIfHealthy('musee_orsay', () => fetchMuseeOrsay(keyword,             Math.max(3, perSource), signal))),
+    trackSource('vangogh_museum', callIfHealthy('vangogh_museum', () => fetchVanGoghMuseum(keyword,          Math.max(3, perSource), signal))),
+    trackSource('khm', callIfHealthy('khm', () => fetchKHM(keyword,                    Math.max(3, perSource), signal))),
+    trackSource('belvedere', callIfHealthy('belvedere', () => fetchBelvedere(keyword,              Math.max(3, perSource), signal))),
+    trackSource('staedel', callIfHealthy('staedel', () => fetchStaedel(keyword,                Math.max(3, perSource), signal))),
+    trackSource('rmfab', callIfHealthy('rmfab', () => fetchRMFAB(keyword,                  Math.max(3, perSource), signal))),
+    trackSource('guimet', callIfHealthy('guimet', () => fetchGuimet(keyword,                 Math.max(3, perSource), signal))),
+    trackSource('npm_taipei', callIfHealthy('npm_taipei', () => fetchNPMTaipei(keyword,              Math.max(3, perSource), signal))),
     // Phase F — Fashion & Textile CORS-blocked sources
-    trackSource('galliera', callIfHealthy('galliera', fetchGalliera(keyword,               Math.max(3, perSource), signal))),
-    trackSource('arts_decoratifs', callIfHealthy('arts_decoratifs', fetchArtsDecoratifs(keyword,         Math.max(3, perSource), signal))),
-    trackSource('centraal_museum', callIfHealthy('centraal_museum', fetchCentraalMuseum(keyword,         Math.max(3, perSource), signal))),
-    trackSource('textile_museum_tilburg', callIfHealthy('textile_museum_tilburg', fetchTextileMuseum(keyword,          Math.max(3, perSource), signal))),
-    trackSource('wereldculturen', callIfHealthy('wereldculturen', fetchWereldculturen(keyword,         Math.max(3, perSource), signal))),
-    trackSource('dec_arts_prague', callIfHealthy('dec_arts_prague', fetchDecArtsPrague(keyword,          Math.max(3, perSource), signal))),
-    trackSource('designmuseum_dk', callIfHealthy('designmuseum_dk', fetchDesignmuseumDK(keyword,         Math.max(3, perSource), signal))),
-    trackSource('boijmans', callIfHealthy('boijmans', fetchBoijmans(keyword,               Math.max(3, perSource), signal))),
-    trackSource('museu_traje', callIfHealthy('museu_traje', fetchMuseuTraje(keyword,             Math.max(3, perSource), signal))),
+    trackSource('galliera', callIfHealthy('galliera', () => fetchGalliera(keyword,               Math.max(3, perSource), signal))),
+    trackSource('arts_decoratifs', callIfHealthy('arts_decoratifs', () => fetchArtsDecoratifs(keyword,         Math.max(3, perSource), signal))),
+    trackSource('centraal_museum', callIfHealthy('centraal_museum', () => fetchCentraalMuseum(keyword,         Math.max(3, perSource), signal))),
+    trackSource('textile_museum_tilburg', callIfHealthy('textile_museum_tilburg', () => fetchTextileMuseum(keyword,          Math.max(3, perSource), signal))),
+    trackSource('wereldculturen', callIfHealthy('wereldculturen', () => fetchWereldculturen(keyword,         Math.max(3, perSource), signal))),
+    trackSource('dec_arts_prague', callIfHealthy('dec_arts_prague', () => fetchDecArtsPrague(keyword,          Math.max(3, perSource), signal))),
+    trackSource('designmuseum_dk', callIfHealthy('designmuseum_dk', () => fetchDesignmuseumDK(keyword,         Math.max(3, perSource), signal))),
+    trackSource('boijmans', callIfHealthy('boijmans', () => fetchBoijmans(keyword,               Math.max(3, perSource), signal))),
+    trackSource('museu_traje', callIfHealthy('museu_traje', () => fetchMuseuTraje(keyword,             Math.max(3, perSource), signal))),
     // Phase G — Art, Sculpture & History CORS-blocked (14)
-    trackSource('kmska', callIfHealthy('kmska', fetchKMSKA(keyword,                  Math.max(3, perSource), signal))),
-    trackSource('amsterdam_museum', callIfHealthy('amsterdam_museum', fetchAmsterdamMuseum(keyword,        Math.max(3, perSource), signal))),
-    trackSource('ngi', callIfHealthy('ngi', fetchNGI(keyword,                    Math.max(3, perSource), signal))),
-    trackSource('fries_museum', callIfHealthy('fries_museum', fetchFriesMuseum(keyword,            Math.max(3, perSource), signal))),
-    trackSource('groeninge', callIfHealthy('groeninge', fetchGroeninge(keyword,              Math.max(3, perSource), signal))),
-    trackSource('groninger', callIfHealthy('groninger', fetchGroninger(keyword,              Math.max(3, perSource), signal))),
-    trackSource('moma_wd', callIfHealthy('moma_wd', fetchMoMAWD(keyword,                 Math.max(3, perSource), signal))),
-    trackSource('rijksmuseum_twenthe', callIfHealthy('rijksmuseum_twenthe', fetchRijksmuseumTwenthe(keyword,     Math.max(3, perSource), signal))),
-    trackSource('herzog_anton_ulrich', callIfHealthy('herzog_anton_ulrich', fetchHerzogAntonUlrich(keyword,      Math.max(3, perSource), signal))),
-    trackSource('galleria_palatina', callIfHealthy('galleria_palatina', fetchGalleriaPalatina(keyword,       Math.max(3, perSource), signal))),
-    trackSource('lakenhal', callIfHealthy('lakenhal', fetchLakenhal(keyword,               Math.max(3, perSource), signal))),
-    trackSource('teylers', callIfHealthy('teylers', fetchTeylers(keyword,                Math.max(3, perSource), signal))),
-    trackSource('alte_pinakothek', callIfHealthy('alte_pinakothek', fetchAltePinakothek(keyword,         Math.max(3, perSource), signal))),
-    trackSource('quai_branly', callIfHealthy('quai_branly', fetchQuaiBranly(keyword,             Math.max(3, perSource), signal))),
+    trackSource('kmska', callIfHealthy('kmska', () => fetchKMSKA(keyword,                  Math.max(3, perSource), signal))),
+    trackSource('amsterdam_museum', callIfHealthy('amsterdam_museum', () => fetchAmsterdamMuseum(keyword,        Math.max(3, perSource), signal))),
+    trackSource('ngi', callIfHealthy('ngi', () => fetchNGI(keyword,                    Math.max(3, perSource), signal))),
+    trackSource('fries_museum', callIfHealthy('fries_museum', () => fetchFriesMuseum(keyword,            Math.max(3, perSource), signal))),
+    trackSource('groeninge', callIfHealthy('groeninge', () => fetchGroeninge(keyword,              Math.max(3, perSource), signal))),
+    trackSource('groninger', callIfHealthy('groninger', () => fetchGroninger(keyword,              Math.max(3, perSource), signal))),
+    trackSource('moma_wd', callIfHealthy('moma_wd', () => fetchMoMAWD(keyword,                 Math.max(3, perSource), signal))),
+    trackSource('rijksmuseum_twenthe', callIfHealthy('rijksmuseum_twenthe', () => fetchRijksmuseumTwenthe(keyword,     Math.max(3, perSource), signal))),
+    trackSource('herzog_anton_ulrich', callIfHealthy('herzog_anton_ulrich', () => fetchHerzogAntonUlrich(keyword,      Math.max(3, perSource), signal))),
+    trackSource('galleria_palatina', callIfHealthy('galleria_palatina', () => fetchGalleriaPalatina(keyword,       Math.max(3, perSource), signal))),
+    trackSource('lakenhal', callIfHealthy('lakenhal', () => fetchLakenhal(keyword,               Math.max(3, perSource), signal))),
+    trackSource('teylers', callIfHealthy('teylers', () => fetchTeylers(keyword,                Math.max(3, perSource), signal))),
+    trackSource('alte_pinakothek', callIfHealthy('alte_pinakothek', () => fetchAltePinakothek(keyword,         Math.max(3, perSource), signal))),
+    trackSource('quai_branly', callIfHealthy('quai_branly', () => fetchQuaiBranly(keyword,             Math.max(3, perSource), signal))),
     // Phase H — 113 World Museum sources (deferred to wave 2 below)
     // ── DYNAMIC REGISTRY — Europeana providers, DPLA hubs (when keys set) ──
     ...selectDynamicSources(keyword, 120).map(entry => {
@@ -431,7 +435,7 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
   if (!signal.aborted) {
     await Promise.allSettled(
       WD_PHASE_H.map(s =>
-        trackSource(s.id, callIfHealthy(s.id, WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal)))
+        trackSource(s.id, callIfHealthy(s.id, () => WD_PHASE_H_FETCHERS[s.id](keyword, Math.max(3, perSource), signal)))
       )
     ).catch(() => {});
   }
@@ -2193,7 +2197,7 @@ export async function fetchMoreResults() {
   );
   const perPaginated = Math.max(8, Math.ceil(STATE.imageCount / Math.max(6, paginatedIds.length)));
   const paginatedCalls = paginatedIds.map(id =>
-    callIfHealthy(id, PAGE2_FETCHERS[id](primaryKw, perPaginated, signal, page).catch(() => []))
+    callIfHealthy(id, () => PAGE2_FETCHERS[id](primaryKw, perPaginated, signal, page).catch(() => []))
   );
 
   // Strategy B — non-paginated productive sources get a synonym fan-out for variety.
@@ -2207,7 +2211,7 @@ export async function fetchMoreResults() {
       .slice(0, 10);
     const perSyn = Math.max(6, Math.ceil(STATE.imageCount / Math.max(6, topNonPaginated.length || 1)));
     for (const id of topNonPaginated) {
-      synonymCalls.push(callIfHealthy(id, ADAPTERS[id](synKw, perSyn, signal).catch(() => [])));
+      synonymCalls.push(callIfHealthy(id, () => ADAPTERS[id](synKw, perSyn, signal).catch(() => [])));
     }
   }
 
@@ -2219,7 +2223,7 @@ export async function fetchMoreResults() {
     return;
   }
 
-  let items = settled.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  let items = settled.flatMap(r => r.status === 'fulfilled' && r.value !== HEALTH_SKIP ? r.value : []);
   if (STATE.searchMode === 'exact') {
     const lq = STATE.query.toLowerCase();
     items = items.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''} ${r.artist || ''}`.toLowerCase(), lq));
