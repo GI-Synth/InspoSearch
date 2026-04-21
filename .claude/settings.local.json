@@ -13,7 +13,9 @@
       "Bash(npx wrangler *)",
       "Bash(curl -sI \"https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/640px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg\" -A \"InspoSearch/1.1\")",
       "Bash(npx vitest *)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(gh workflow *)",
+      "Bash(node -e \"import\\('./src/state.js'\\).then\\(m=>console.log\\('DYNAMIC_REGISTRY len:', m.DYNAMIC_REGISTRY?.length, 'ALL_SOURCES len:', m.ALL_SOURCES?.length\\)\\)\")"
     ]
   }
 }

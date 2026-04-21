@@ -429,7 +429,7 @@ async function handleCaption(request, env) {
 // Fetches image bytes, runs vision model with a tag-extraction prompt, returns
 // { tags: [...], description, model }. Primary vision entry point for
 // InspoSearch's free default AI tier.
-const TAGS_MODEL = '@cf/meta/llama-3.2-11b-vision-instruct';
+const TAGS_MODEL = '@cf/llava-hf/llava-1.5-7b-hf';
 const TAGS_FALLBACK_MODEL = '@cf/unum/uform-gen2-qwen-500m';
 
 async function handleTags(request, env) {
@@ -444,33 +444,41 @@ async function handleTags(request, env) {
     return json({ error: 'Missing or invalid "url" field' }, 400, env);
   }
 
+  const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+
   try {
-    const imgResp = await fetch(imgUrl, {
-      headers: { 'User-Agent': 'InspoSearch/1.1' },
+    let imgResp = await fetch(imgUrl, {
+      headers: { 'User-Agent': BROWSER_UA, 'Accept': 'image/*,*/*;q=0.8', 'Referer': new URL(imgUrl).origin + '/' },
       cf: { cacheTtl: 600, cacheEverything: true },
     });
-    if (!imgResp.ok) return json({ error: 'Failed to fetch image' }, 502, env);
+    if (!imgResp.ok) {
+      imgResp = await fetch(imgUrl, { headers: { 'User-Agent': BROWSER_UA } });
+    }
+    if (!imgResp.ok) return json({ error: 'Failed to fetch image', status: imgResp.status }, 502, env);
     const contentType = imgResp.headers.get('content-type') || '';
-    if (!contentType.startsWith('image/')) return json({ error: 'URL does not point to an image' }, 400, env);
+    if (!contentType.startsWith('image/')) return json({ error: 'URL does not point to an image', contentType }, 400, env);
     const bytes = new Uint8Array(await imgResp.arrayBuffer());
 
     const prompt = `Return exactly 8 visual/conceptual tags for this image as a JSON array of lowercase strings. Cover mood, color-palette name, era/movement, style, medium, subject, composition, texture. ${query ? 'Search context: "' + query + '". ' : ''}Reply with ONLY the JSON array, no prose.`;
 
     let text = '';
     let modelUsed = TAGS_MODEL;
+    let primaryError = null;
     try {
       const r = await env.AI.run(TAGS_MODEL, {
         image: [...bytes],
         prompt,
-        max_tokens: 200,
+        max_tokens: 256,
       });
-      text = (r.response || r.description || '').trim();
-    } catch {
+      text = (r.description || r.response || '').trim();
+      if (!text) throw new Error('empty response from primary model');
+    } catch (err) {
+      primaryError = err.message || String(err);
       modelUsed = TAGS_FALLBACK_MODEL;
       const r = await env.AI.run(TAGS_FALLBACK_MODEL, {
         image: [...bytes],
         prompt,
-        max_tokens: 200,
+        max_tokens: 256,
       });
       text = (r.description || r.response || '').trim();
     }
@@ -490,7 +498,7 @@ async function handleTags(request, env) {
     tags = tags.filter(t => typeof t === 'string').map(t => t.toLowerCase().trim()).filter(Boolean).slice(0, 8);
     if (!tags.length) return json({ error: 'Model returned no parseable tags', raw: text }, 502, env);
 
-    return json({ tags, description: text, model: modelUsed }, 200, env);
+    return json({ tags, description: text, model: modelUsed, primaryError }, 200, env);
   } catch (e) {
     return json({ error: 'Tag generation failed', detail: e.message }, 502, env);
   }
