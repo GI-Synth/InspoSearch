@@ -3168,85 +3168,85 @@ export async function fetchNHMLondon(keyword, limit, signal) {
 }
 
 // Wallace Collection London
-export async function fetchWallaceCollection(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('wallace_collection', keyword);
+export async function fetchWallaceCollection(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('wallace_collection', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'wallace_collection' }));
   return [];
 }
 
 // Fitzwilliam Museum Cambridge
-export async function fetchFitzwilliam(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('fitzwilliam', keyword);
+export async function fetchFitzwilliam(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('fitzwilliam', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'fitzwilliam' }));
   return [];
 }
 
 // National Gallery London
-export async function fetchNationalGalleryLondon(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('national_gallery_london', keyword);
+export async function fetchNationalGalleryLondon(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('national_gallery_london', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'national_gallery_london' }));
   return [];
 }
 
 // Scottish National Gallery
-export async function fetchScottishNational(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('scottish_national', keyword);
+export async function fetchScottishNational(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('scottish_national', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'scottish_national' }));
   return [];
 }
 
 // Musée d'Orsay (Paris) — Impressionist & Post-Impressionist masterworks
-export async function fetchMuseeOrsay(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('musee_orsay', keyword);
+export async function fetchMuseeOrsay(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('musee_orsay', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'musee_orsay' }));
   return [];
 }
 
 // Van Gogh Museum (Amsterdam)
-export async function fetchVanGoghMuseum(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('vangogh_museum', keyword);
+export async function fetchVanGoghMuseum(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('vangogh_museum', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'vangogh_museum' }));
   return [];
 }
 
 // Kunsthistorisches Museum Vienna
-export async function fetchKHM(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('khm', keyword);
+export async function fetchKHM(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('khm', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'khm' }));
   return [];
 }
 
 // Belvedere Museum Vienna
-export async function fetchBelvedere(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('belvedere', keyword);
+export async function fetchBelvedere(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('belvedere', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'belvedere' }));
   return [];
 }
 
 // Städel Museum Frankfurt
-export async function fetchStaedel(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('staedel', keyword);
+export async function fetchStaedel(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('staedel', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'staedel' }));
   return [];
 }
 
 // Royal Museums of Fine Arts of Belgium (Brussels)
-export async function fetchRMFAB(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('rmfab', keyword);
+export async function fetchRMFAB(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('rmfab', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'rmfab' }));
   return [];
 }
 
 // Musée Guimet Paris (Asian art)
-export async function fetchGuimet(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('guimet', keyword);
+export async function fetchGuimet(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('guimet', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'guimet' }));
   return [];
 }
 
 // National Palace Museum Taipei
-export async function fetchNPMTaipei(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('npm_taipei', keyword);
+export async function fetchNPMTaipei(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('npm_taipei', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'npm_taipei' }));
   return [];
 }
@@ -3254,144 +3254,144 @@ export async function fetchNPMTaipei(keyword, limit, signal) {
 // ── Fashion & Textile Sources (Phase F) ─────────────────────────────────
 
 // Musée Galliera (Palais Galliera) — Paris couture museum
-export async function fetchGalliera(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('galliera', keyword);
+export async function fetchGalliera(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('galliera', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'galliera' }));
   return [];
 }
 
 // Musée des Arts Décoratifs — Paris fashion, design, decorative arts
-export async function fetchArtsDecoratifs(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('arts_decoratifs', keyword);
+export async function fetchArtsDecoratifs(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('arts_decoratifs', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'arts_decoratifs' }));
   return [];
 }
 
 // Centraal Museum Utrecht — Dutch costume, fashion, art
-export async function fetchCentraalMuseum(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('centraal_museum', keyword);
+export async function fetchCentraalMuseum(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('centraal_museum', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'centraal_museum' }));
   return [];
 }
 
 // Textile Museum Tilburg — Dutch textile art & fashion
-export async function fetchTextileMuseum(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('textile_museum_tilburg', keyword);
+export async function fetchTextileMuseum(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('textile_museum_tilburg', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'textile_museum_tilburg' }));
   return [];
 }
 
 // Nationaal Museum van Wereldculturen — world cultures (textiles, costumes)
-export async function fetchWereldculturen(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('wereldculturen', keyword);
+export async function fetchWereldculturen(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('wereldculturen', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'wereldculturen' }));
   return [];
 }
 
 // Museum of Decorative Arts Prague — applied art, textiles, glass, fashion
-export async function fetchDecArtsPrague(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('dec_arts_prague', keyword);
+export async function fetchDecArtsPrague(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('dec_arts_prague', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'dec_arts_prague' }));
   return [];
 }
 
 // Designmuseum Danmark — Danish design, fashion, textiles
-export async function fetchDesignmuseumDK(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('designmuseum_dk', keyword);
+export async function fetchDesignmuseumDK(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('designmuseum_dk', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'designmuseum_dk' }));
   return [];
 }
 
 // Museum Boijmans Van Beuningen — Rotterdam; fashion, applied art
-export async function fetchBoijmans(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('boijmans', keyword);
+export async function fetchBoijmans(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('boijmans', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'boijmans' }));
   return [];
 }
 
 // Museu Nacional do Traje — Lisbon costume museum
-export async function fetchMuseuTraje(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('museu_traje', keyword);
+export async function fetchMuseuTraje(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('museu_traje', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'museu_traje' }));
   return [];
 }
 
 // ── Phase G — Art, Sculpture & History CORS-blocked (14) ──────────────
-export async function fetchKMSKA(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('kmska', keyword);
+export async function fetchKMSKA(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('kmska', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'kmska' }));
   return [];
 }
-export async function fetchAmsterdamMuseum(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('amsterdam_museum', keyword);
+export async function fetchAmsterdamMuseum(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('amsterdam_museum', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'amsterdam_museum' }));
   return [];
 }
-export async function fetchNGI(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('ngi', keyword);
+export async function fetchNGI(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('ngi', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'ngi' }));
   return [];
 }
-export async function fetchFriesMuseum(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('fries_museum', keyword);
+export async function fetchFriesMuseum(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('fries_museum', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'fries_museum' }));
   return [];
 }
-export async function fetchGroeninge(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('groeninge', keyword);
+export async function fetchGroeninge(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('groeninge', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'groeninge' }));
   return [];
 }
-export async function fetchGroninger(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('groninger', keyword);
+export async function fetchGroninger(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('groninger', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'groninger' }));
   return [];
 }
-export async function fetchMoMAWD(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('moma_wd', keyword);
+export async function fetchMoMAWD(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('moma_wd', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'moma_wd' }));
   return [];
 }
-export async function fetchRijksmuseumTwenthe(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('rijksmuseum_twenthe', keyword);
+export async function fetchRijksmuseumTwenthe(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('rijksmuseum_twenthe', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'rijksmuseum_twenthe' }));
   return [];
 }
-export async function fetchHerzogAntonUlrich(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('herzog_anton_ulrich', keyword);
+export async function fetchHerzogAntonUlrich(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('herzog_anton_ulrich', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'herzog_anton_ulrich' }));
   return [];
 }
-export async function fetchGalleriaPalatina(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('galleria_palatina', keyword);
+export async function fetchGalleriaPalatina(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('galleria_palatina', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'galleria_palatina' }));
   return [];
 }
-export async function fetchLakenhal(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('lakenhal', keyword);
+export async function fetchLakenhal(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('lakenhal', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'lakenhal' }));
   return [];
 }
-export async function fetchTeylers(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('teylers', keyword);
+export async function fetchTeylers(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('teylers', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'teylers' }));
   return [];
 }
-export async function fetchAltePinakothek(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('alte_pinakothek', keyword);
+export async function fetchAltePinakothek(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('alte_pinakothek', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'alte_pinakothek' }));
   return [];
 }
-export async function fetchQuaiBranly(keyword, limit, signal) {
-  const cached = await fetchFromDataCache('quai_branly', keyword);
+export async function fetchQuaiBranly(keyword, limit, signal, page = 1) {
+  const cached = await fetchFromDataCache('quai_branly', keyword, (page - 1) * limit);
   if (cached) return cached.map(item => ({ ...item, source: 'quai_branly' }));
   return [];
 }
 // Phase H — 113 World Museum fetch functions (cache-first)
 export const WD_PHASE_H_FETCHERS = {};
 WD_PHASE_H.forEach(s => {
-  WD_PHASE_H_FETCHERS[s.id] = async function(keyword, limit, signal) {
-    const cached = await fetchFromDataCache(s.id, keyword);
+  WD_PHASE_H_FETCHERS[s.id] = async function(keyword, limit, signal, page = 1) {
+    const cached = await fetchFromDataCache(s.id, keyword, (page - 1) * limit);
     if (cached) return cached.map(item => ({ ...item, source: s.id }));
     return [];
   };

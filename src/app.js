@@ -114,7 +114,53 @@ export const PAGE2_FETCHERS = {
   mnw:         (kw, lim, sig, pg) => fetchMNW(kw, lim, sig, pg),
   ddb:         (kw, lim, sig, pg) => fetchDDB(kw, lim, sig, pg),
   onb:         (kw, lim, sig, pg) => fetchONB(kw, lim, sig, pg),
+  // P1.3 static-data pagination — cache-only wrappers that now slice the
+  // pre-fetched array by (page-1)*limit offset. ~35 sources × ~300 items avg
+  // ≈ 10k+ additional paginated results from already-cached data.
+  wallace_collection:    (kw, lim, sig, pg) => fetchWallaceCollection(kw, lim, sig, pg),
+  fitzwilliam:           (kw, lim, sig, pg) => fetchFitzwilliam(kw, lim, sig, pg),
+  national_gallery_london:(kw, lim, sig, pg) => fetchNationalGalleryLondon(kw, lim, sig, pg),
+  scottish_national:     (kw, lim, sig, pg) => fetchScottishNational(kw, lim, sig, pg),
+  musee_orsay:           (kw, lim, sig, pg) => fetchMuseeOrsay(kw, lim, sig, pg),
+  vangogh_museum:        (kw, lim, sig, pg) => fetchVanGoghMuseum(kw, lim, sig, pg),
+  khm:                   (kw, lim, sig, pg) => fetchKHM(kw, lim, sig, pg),
+  belvedere:             (kw, lim, sig, pg) => fetchBelvedere(kw, lim, sig, pg),
+  staedel:               (kw, lim, sig, pg) => fetchStaedel(kw, lim, sig, pg),
+  rmfab:                 (kw, lim, sig, pg) => fetchRMFAB(kw, lim, sig, pg),
+  guimet:                (kw, lim, sig, pg) => fetchGuimet(kw, lim, sig, pg),
+  npm_taipei:            (kw, lim, sig, pg) => fetchNPMTaipei(kw, lim, sig, pg),
+  galliera:              (kw, lim, sig, pg) => fetchGalliera(kw, lim, sig, pg),
+  arts_decoratifs:       (kw, lim, sig, pg) => fetchArtsDecoratifs(kw, lim, sig, pg),
+  centraal_museum:       (kw, lim, sig, pg) => fetchCentraalMuseum(kw, lim, sig, pg),
+  textile_museum_tilburg:(kw, lim, sig, pg) => fetchTextileMuseum(kw, lim, sig, pg),
+  wereldculturen:        (kw, lim, sig, pg) => fetchWereldculturen(kw, lim, sig, pg),
+  dec_arts_prague:       (kw, lim, sig, pg) => fetchDecArtsPrague(kw, lim, sig, pg),
+  designmuseum_dk:       (kw, lim, sig, pg) => fetchDesignmuseumDK(kw, lim, sig, pg),
+  boijmans:              (kw, lim, sig, pg) => fetchBoijmans(kw, lim, sig, pg),
+  museu_traje:           (kw, lim, sig, pg) => fetchMuseuTraje(kw, lim, sig, pg),
+  kmska:                 (kw, lim, sig, pg) => fetchKMSKA(kw, lim, sig, pg),
+  amsterdam_museum:      (kw, lim, sig, pg) => fetchAmsterdamMuseum(kw, lim, sig, pg),
+  ngi:                   (kw, lim, sig, pg) => fetchNGI(kw, lim, sig, pg),
+  fries_museum:          (kw, lim, sig, pg) => fetchFriesMuseum(kw, lim, sig, pg),
+  groeninge:             (kw, lim, sig, pg) => fetchGroeninge(kw, lim, sig, pg),
+  groninger:             (kw, lim, sig, pg) => fetchGroninger(kw, lim, sig, pg),
+  moma_wd:               (kw, lim, sig, pg) => fetchMoMAWD(kw, lim, sig, pg),
+  rijksmuseum_twenthe:   (kw, lim, sig, pg) => fetchRijksmuseumTwenthe(kw, lim, sig, pg),
+  herzog_anton_ulrich:   (kw, lim, sig, pg) => fetchHerzogAntonUlrich(kw, lim, sig, pg),
+  galleria_palatina:     (kw, lim, sig, pg) => fetchGalleriaPalatina(kw, lim, sig, pg),
+  lakenhal:              (kw, lim, sig, pg) => fetchLakenhal(kw, lim, sig, pg),
+  teylers:               (kw, lim, sig, pg) => fetchTeylers(kw, lim, sig, pg),
+  alte_pinakothek:       (kw, lim, sig, pg) => fetchAltePinakothek(kw, lim, sig, pg),
+  quai_branly:           (kw, lim, sig, pg) => fetchQuaiBranly(kw, lim, sig, pg),
 };
+
+// P1.3 Phase H — 113 World Museum cache fetchers are all page-aware now.
+// Register them programmatically so this stays in sync with the WD_PHASE_H list.
+for (const [id, fn] of Object.entries(WD_PHASE_H_FETCHERS)) {
+  if (!PAGE2_FETCHERS[id]) {
+    PAGE2_FETCHERS[id] = (kw, lim, sig, pg) => fn(kw, lim, sig, pg);
+  }
+}
 
 export async function fetchAll(keywords, totalCount, isSilent = false) {
   // isSilent = true means background/cross-ref call — don't cancel existing requests
