@@ -652,7 +652,7 @@ export function sourceFetch(url, opts = {}, sourceName) {
 // Sources with missing data files are tracked in _unavailableSources to avoid
 // repeated 404s and to prevent health-miss penalties for missing cache files.
 export const _unavailableSources = new Set();
-export async function fetchFromDataCache(sourceId, keyword) {
+export async function fetchFromDataCache(sourceId, keyword, offset = 0) {
   if (_unavailableSources.has(sourceId)) return [];  // skip silently, no miss penalty
   try {
     const res = await fetch(`/data/${sourceId}.json`);
@@ -671,9 +671,10 @@ export async function fetchFromDataCache(sourceId, keyword) {
     );
     // If keyword filter returns nothing, return random sample
     const results = filtered.length > 0 ? filtered :
-      data.items.sort(() => Math.random() - 0.5).slice(0, 20);
+      data.items.sort(() => Math.random() - 0.5).slice(0, 40);
+    const limit = STATE.perSource || 20;
     // Sanitize: upgrade HTTP→HTTPS to prevent mixed-content blocking (e.g. KHM Vienna)
-    return results.slice(0, STATE.perSource || 20).map(item => ({
+    return results.slice(offset, offset + limit).map(item => ({
       ...item,
       thumb: item.thumb?.replace(/^http:\/\//, 'https://'),
       url:   item.url?.replace(/^http:\/\//, 'https://'),

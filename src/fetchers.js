@@ -607,11 +607,11 @@ export async function fetchPexels(keyword, limit, signal) {
   }
 }
 
-export async function fetchINaturalist(keyword, limit, signal) {
+export async function fetchINaturalist(keyword, limit, signal, page = 1) {
 
   try {
     const res = await sourceFetch(
-      `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(keyword)}&photos=true&per_page=${limit}&order=votes&license=cc-by,cc-by-nc,cc0`,
+      `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(keyword)}&photos=true&per_page=${limit}&page=${page}&order=votes&license=cc-by,cc-by-nc,cc0`,
       { signal }, 'inaturalist'
     );
     if (!res.ok) throw new Error('iNaturalist fetch failed');
@@ -2255,7 +2255,7 @@ export async function fetchPrinceton(keyword, limit, signal) {
   }
 }
 
-export async function fetchWikidata(keyword, limit, signal) {
+export async function fetchWikidata(keyword, limit, signal, offset = 0) {
   try {
     const sparql = `SELECT ?item ?itemLabel ?image ?date WHERE {
   ?item wdt:P18 ?image.
@@ -2263,7 +2263,7 @@ export async function fetchWikidata(keyword, limit, signal) {
   FILTER(LANG(?itemLabel) = "en")
   FILTER(CONTAINS(LCASE(?itemLabel), LCASE("${keyword.replace(/"/g, '')}")))
   OPTIONAL { ?item wdt:P571 ?date. }
-} LIMIT ${limit}`.trim();
+} LIMIT ${limit} OFFSET ${offset}`.trim();
     const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparql)}&format=json`;
     const res = await safeFetch(url, {
       signal,
@@ -2461,10 +2461,10 @@ export async function fetchONB(keyword, limit, signal) {
   }
 }
 
-export async function fetchNYPL(keyword, limit, signal) {
+export async function fetchNYPL(keyword, limit, signal, page = 1) {
   try {
     const res = await safeFetch(
-      `https://api.repo.nypl.org/api/v2/items/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&page=1`,
+      `https://api.repo.nypl.org/api/v2/items/search?q=${encodeURIComponent(keyword)}&per_page=${limit}&page=${page}`,
       { signal }
     );
     if (!res.ok) throw new Error('NYPL failed');

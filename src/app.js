@@ -94,6 +94,13 @@ export const PAGE2_FETCHERS = {
   wellcome:    (kw, lim, sig, pg) => fetchWellcome(kw, lim, sig, pg),
   europeana:   (kw, lim, sig, pg) => fetchEuropeana(kw, lim, sig, (pg - 1) * lim + 1),
   chicago:     (kw, lim, sig, pg) => fetchChicagoArt(kw, lim, sig, pg),
+  // Expanded paginated pool (P1.1): native page/offset/OFFSET support.
+  met:         (kw, lim, sig, pg) => fetchMet(kw, lim, sig, (pg - 1) * lim),
+  loc:         (kw, lim, sig, pg) => fetchLOC(kw, lim, sig, pg),
+  gbif:        (kw, lim, sig, pg) => fetchGBIF(kw, lim, sig, (pg - 1) * lim),
+  nypl:        (kw, lim, sig, pg) => fetchNYPL(kw, lim, sig, pg),
+  inaturalist: (kw, lim, sig, pg) => fetchINaturalist(kw, lim, sig, pg),
+  wikidata:    (kw, lim, sig, pg) => fetchWikidata(kw, lim, sig, (pg - 1) * lim),
 };
 
 export async function fetchAll(keywords, totalCount, isSilent = false) {
@@ -2137,6 +2144,12 @@ export function setSearchMode(mode, persist = true) {
     renderGrid(visible);
     if (!visible.length) showEmptyState();
   }
+  // Mode switch can free up the load-more lanes (exact ↔ explore changes
+  // which sources qualify), so re-arm exhaustion + observer.
+  STATE.exhausted = false;
+  STATE.emptyStreak = 0;
+  if (typeof initInfiniteScroll === 'function') initInfiniteScroll();
+  updateLoadMoreLabel();
 }
 
 /* ============================================================
@@ -2238,6 +2251,12 @@ export function onSourceResultGlobal(items) {
   renderGrid(batch);
 }
 
+// Per-load-more-generation tracking for Lane C wave expansion.
+let _loadMoreWaveCursor = 0;
+// Per-source load-more call count — used for Lane B offset/page tracking
+// and per-source cap (P1.4) so one source can't hog the pool.
+const _loadMoreSourceCalls = new Map();
+
 export async function fetchMoreResults() {
   if (STATE.loading || !STATE.query) return;
   const btn = document.getElementById('btn-load-more');
@@ -2257,43 +2276,78 @@ export async function fetchMoreResults() {
   const page      = STATE.currentPage;
   const keywords  = STATE.keywords.length ? STATE.keywords : [STATE.query];
   const primaryKw = keywords[0];
-  // Cycle through expanded keywords so later pages diversify (explore mode only —
-  // in exact mode STATE.keywords has length 1, so synKw === primaryKw and the
-  // synonym fan-out below is skipped.)
-  const synKw = keywords[(page - 1) % keywords.length];
+  // Rotate through expanded keywords so non-paginated lanes diversify.
+  // In exact mode STATE.keywords has length 1 — synKw === primaryKw — so
+  // Lane B's fan-out collapses to just an offset advance.
+  const synKw = keywords[(page - 1) % keywords.length] || primaryKw;
 
   const ac     = new AbortController();
   _secondaryControllers.add(ac);
   const signal = ac.signal;
+  // Per-call timeout ceiling (P1 item 7) — stop one slow adapter from
+  // blocking the batch. 12 s matches the slow-source ceiling in fetchAll.
+  const timedSignal = withTimeout(signal, 12000);
 
-  // Strategy A — paginated adapters advance to the next page with the primary keyword.
-  // Only these adapters honor a page/offset argument; fanning out to the full 2,800+
-  // source pool would just re-fetch page 1 from adapters that ignore the offset and
-  // the results would all be dedup-filtered out.
+  // ── Lane A — true pagination (PAGE2_FETCHERS) ──
   const paginatedIds = Object.keys(PAGE2_FETCHERS).filter(id =>
     !STATE.disabledSources.has(id) && isSourceHealthy(id)
   );
   const perPaginated = Math.max(8, Math.ceil(STATE.imageCount / Math.max(6, paginatedIds.length)));
-  const paginatedCalls = paginatedIds.map(id =>
-    callIfHealthy(id, () => PAGE2_FETCHERS[id](primaryKw, perPaginated, signal, page).catch(() => []))
-  );
+  const laneA = paginatedIds.map(id => {
+    _loadMoreSourceCalls.set(id, (_loadMoreSourceCalls.get(id) || 0) + 1);
+    return callIfHealthy(id, () => PAGE2_FETCHERS[id](primaryKw, perPaginated, timedSignal, page).catch(() => []));
+  });
 
-  // Strategy B — non-paginated productive sources get a synonym fan-out for variety.
-  // No-op in exact mode (synKw === primaryKw).
-  const synonymCalls = [];
-  if (STATE.searchMode !== 'exact' && synKw && synKw !== primaryKw) {
-    const previousHits = new Set(STATE.results.map(r => r.source).filter(Boolean));
-    const topNonPaginated = [...previousHits]
-      .filter(id => !PAGE2_FETCHERS[id] && ADAPTERS[id] &&
-                    !STATE.disabledSources.has(id) && isSourceHealthy(id))
-      .slice(0, 10);
-    const perSyn = Math.max(6, Math.ceil(STATE.imageCount / Math.max(6, topNonPaginated.length || 1)));
-    for (const id of topNonPaginated) {
-      synonymCalls.push(callIfHealthy(id, () => ADAPTERS[id](synKw, perSyn, signal).catch(() => [])));
+  // ── Lane B — keyword rotation for dynamic-registry sources already hit. ──
+  // Fixes the old Lane B which looked up ADAPTERS[id] with a source-id key
+  // (adapter keys are protocol names, never source ids, so it always missed).
+  const laneB = [];
+  const previousHitIds = new Set(STATE.results.map(r => r.source).filter(Boolean));
+  if (synKw) {
+    const dynamicById = new Map(DYNAMIC_REGISTRY.map(e => [e.id, e]));
+    const rotatable = [...previousHitIds]
+      .filter(id => !PAGE2_FETCHERS[id])
+      .filter(id => !STATE.disabledSources.has(id) && isSourceHealthy(id))
+      .filter(id => (_loadMoreSourceCalls.get(id) || 0) < 10)  // per-source cap
+      .filter(id => {
+        const e = dynamicById.get(id);
+        return e && ADAPTERS[e.adapter];
+      })
+      .slice(0, 12);
+    const perB = Math.max(5, Math.ceil(STATE.imageCount / Math.max(6, rotatable.length || 1)));
+    for (const id of rotatable) {
+      const e = dynamicById.get(id);
+      _loadMoreSourceCalls.set(id, (_loadMoreSourceCalls.get(id) || 0) + 1);
+      laneB.push(
+        callIfHealthy(id, () => ADAPTERS[e.adapter](e.config, synKw, perB, timedSignal).catch(() => []))
+      );
     }
   }
 
-  const settled = await Promise.allSettled([...paginatedCalls, ...synonymCalls]);
+  // ── Lane C — wave expansion: activate dynamic sources beyond the initial cut. ──
+  // Picks the next N from the scored ranking that haven't been called yet and
+  // weren't in the initial 120 selected by fetchAll. Each load-more activates a
+  // fresh slice so the pool keeps growing past the initial fan-out.
+  const laneC = [];
+  const ranked = selectDynamicSources(primaryKw, 400);
+  const initialCut = new Set(ranked.slice(0, 120).map(e => e.id));
+  const waveCandidates = ranked
+    .filter(e => !initialCut.has(e.id))
+    .filter(e => !previousHitIds.has(e.id))
+    .filter(e => !STATE.disabledSources.has(e.id) && isSourceHealthy(e.id))
+    .filter(e => ADAPTERS[e.adapter]);
+  const WAVE_BATCH = 6;
+  const waveSlice = waveCandidates.slice(_loadMoreWaveCursor, _loadMoreWaveCursor + WAVE_BATCH);
+  _loadMoreWaveCursor += waveSlice.length;
+  const perC = Math.max(6, Math.ceil(STATE.imageCount / Math.max(4, waveSlice.length || 1)));
+  for (const e of waveSlice) {
+    _loadMoreSourceCalls.set(e.id, (_loadMoreSourceCalls.get(e.id) || 0) + 1);
+    laneC.push(
+      callIfHealthy(e.id, () => ADAPTERS[e.adapter](e.config, primaryKw, perC, timedSignal).catch(() => []))
+    );
+  }
+
+  const settled = await Promise.allSettled([...laneA, ...laneB, ...laneC]);
   // Abandon if the user started a new search while we were fetching.
   if (STATE._searchGen !== startGen || STATE.query !== startQuery) {
     STATE.loading = false;
@@ -2301,7 +2355,7 @@ export async function fetchMoreResults() {
     return;
   }
 
-  let items = settled.flatMap(r => r.status === 'fulfilled' && r.value !== HEALTH_SKIP ? r.value : []);
+  let items = settled.flatMap(r => r.status === 'fulfilled' && r.value !== HEALTH_SKIP ? (r.value || []) : []);
   if (STATE.searchMode === 'exact') {
     const lq = STATE.query.toLowerCase();
     items = items.filter(r => matchesAsWholeWord(`${r.title || ''} ${r.description || ''} ${r.artist || ''}`.toLowerCase(), lq));
@@ -2313,7 +2367,8 @@ export async function fetchMoreResults() {
     return true;
   });
   const existingIds = new Set(STATE.results.map(r => r.id));
-  const novel = items.filter(r => !existingIds.has(r.id));
+  const existingUrls = new Set(STATE.results.map(r => r.url).filter(Boolean));
+  const novel = items.filter(r => !existingIds.has(r.id) && !(r.url && existingUrls.has(r.url)));
   if (novel.length > 0 && STATE.results.length < CONSTANTS.MAX_RESULTS) {
     const room = CONSTANTS.MAX_RESULTS - STATE.results.length;
     const batch = novel.slice(0, room);
@@ -2321,10 +2376,11 @@ export async function fetchMoreResults() {
     renderGrid(batch);
     STATE.emptyStreak = 0;
   } else {
-    // Zero novel items — either everything was a duplicate or the paginated
-    // sources have nothing left. Two consecutive empty pages → call it done.
+    // Zero novel items — every lane was all-dupes or empty.
+    // Threshold raised 2 → 5 so niche queries get more attempts before
+    // we declare the well dry (Lane C keeps surfacing fresh sources).
     STATE.emptyStreak = (STATE.emptyStreak || 0) + 1;
-    if (STATE.emptyStreak >= 2) {
+    if (STATE.emptyStreak >= 5) {
       STATE.exhausted = true;
       if (_infiniteScrollObs) { _infiniteScrollObs.disconnect(); _infiniteScrollObs = null; }
     }
@@ -2391,6 +2447,8 @@ export async function runSearch(query, forceRefresh = false) {
   STATE.currentPage = 1;
   STATE.exhausted = false;     // reset load-more exhaustion for new query
   STATE.emptyStreak = 0;       // reset zero-yield counter
+  _loadMoreWaveCursor = 0;     // reset Lane C wave cursor
+  _loadMoreSourceCalls.clear();// reset per-source load-more counts
   STATE._searchGen++;
   const gen = STATE._searchGen;
   STATE.results = [];          // immediately clear stale results (race-condition fix)
