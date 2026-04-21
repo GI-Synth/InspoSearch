@@ -296,6 +296,7 @@ export const STATE = {
   aiProvider:          'gemini', // 'gemini' | 'claude' | 'openai' | 'ollama'
   aiConsent:           null,    // null | 'granted' | 'denied' — opt-in for community metadata contribution
   aiConsentToken:      null,    // opaque per-device token sent with contributions; rotates when consent revoked
+  panelItem:           null,    // item currently previewed in the side panel (may not be in STATE.selected)
   chatHistory:         [],      // [{role, content}] conversation log
   chatSnapshot:        null,    // { base64, metadata } grid snapshot
   europeanaKey:        null,    // string | null (localStorage)

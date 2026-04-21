@@ -1439,7 +1439,9 @@ export async function updatePanel(previewItem) {
   const hasAiKey = STATE.geminiKey || STATE.claudeKey || STATE.openaiKey;
   noKeyNote.textContent = hasAiKey ? '' : 'free ai enabled — add a key for faster/deeper analysis';
 
-  updateAnalyseButton(displayItems[displayItems.length - 1]);
+  const _activeItem = displayItems[displayItems.length - 1];
+  STATE.panelItem = _activeItem;
+  updateAnalyseButton(_activeItem);
 
   showQuietTip('panel-colors', 'palette appears here as you select references', 'inspo_tip_palette');
 }
@@ -5571,8 +5573,8 @@ export function renderAiSection(tags, errorMsg) {
 
 /* -- Trigger AI analysis for latest selected item -- */
 export async function runGeminiOnSelected() {
-  if (!STATE.selected.length) return;
-  const item = STATE.selected[STATE.selected.length - 1];
+  const item = STATE.panelItem || STATE.selected[STATE.selected.length - 1];
+  if (!item) return;
 
   // Already have AI tags for this item
   if (item.aiTags && item.aiTags.length) {
