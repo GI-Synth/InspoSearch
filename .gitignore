@@ -46,3 +46,16 @@ PRE-CALL-FIXES.md
 insposearch-review.md
 scripts/analyze-deps.cjs
 EUROPEANA_RECENT_CHANGES.md
+
+# Internal audits / roadmaps — local only
+AUDIT_*.md
+CREDIBILITY_PLAN.md
+E2E_BROWSER_REVIEW.md
+E2E_REVIEW_WORKERS_AI.md
+INSPOENRICH_ROADMAP.md
+REAL_ROADMAP.md
+SOURCE_AUDIT.md
+
+# Test artifacts
+playwright-report/
+test-results/
