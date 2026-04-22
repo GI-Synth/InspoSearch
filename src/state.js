@@ -15,7 +15,7 @@ export const CONSTANTS = {
   RETRY_DELAY:        2000,
   MAX_RESULTS:        5000,
   MAX_CHAT_HISTORY:     20,
-  HEALTH_MISS_LIMIT:     3,   // consecutive misses before disabling a source
+  HEALTH_MISS_LIMIT:     5,   // consecutive misses before disabling a source
   HEALTH_RECOVERY_MS: 5 * 60 * 1000, // auto-recover paused sources after 5 min
   FETCH_TIMEOUT:      5000,   // default safeFetch timeout (ms)
   COUNTER_DEBOUNCE:    300,   // updateSourcesActiveCounter debounce (ms)
@@ -95,7 +95,7 @@ export const BADGE_META = {
   smg:              ['smg','science'],     auckland:         ['auckland','auckland'],
   photogrammar:     ['photogrammar','fsa'], wellcome:        ['wellcome','wellcome'],
   maas:             ['maas','maas'],       smk:              ['smk','denmark'],
-  thyssen:          ['thyssen','thyssen'], wdl:              ['wdl','wdl'],
+  thyssen:          ['thyssen','thyssen'],
   walters:          ['walters','walters'], princeton:        ['princeton','princeton'],
   wikidata:         ['wikidata','wikidata'], noaa:           ['noaa','noaa'],
   hubble:           ['hubble','hubble'],   cornell:          ['cornell','cornell'],
@@ -855,7 +855,7 @@ export const ALL_SOURCES = [
   'gbif','eol','apod','gallica','chronicling','trove','digitalnz',
   'bhl','carnegie','prado','parismusees','yale','picsum','usgs','cooperhewitt',
   'tate','finna','soch','joconde','mnw','tepapa','dpla','artsy','pas','smg',
-  'auckland','photogrammar','wellcome','maas','smk','thyssen','wdl','walters',
+  'auckland','photogrammar','wellcome','maas','smk','thyssen','walters',
   'princeton','wikidata','noaa','hubble','cornell','folger','onb','nypl',
   'mak','mna','louvre',
   // Batch 7
@@ -915,21 +915,21 @@ export const SOURCE_GROUPS = {
   nature:      ['inaturalist','gbif','eol','bhl','noaa','hubble','apod',
                'nasa','usgs','naturalis','nationalzoo','gbiflit'],
   historical:  ['chronicling','gallica','loc','trove','digitalnz',
-               'wdl','bhl','folger','onb','nypl','soch','nordic',
+               'bhl','folger','onb','nypl','soch','nordic',
                'lacma','mauritshuis','nationalmuseumse','bodleian','cudl','bsb','ddb'],
   artdesign:   ['wikiart','wikidata','cooperhewitt','tate','va',
                'artsy','dpla','europeana','getty','nga','carnegie','maas',
                'smk','thyssen','wellcome','rijksmuseum','parismusees',
                'chicago','cleveland',
                'mia','lacma','mauritshuis','whitney','munch','freersackler'],
-  maps:        ['loc','usgs','nypl','wdl','bsb','bodleian','cudl'],
+  maps:        ['loc','usgs','nypl','bsb','bodleian','cudl'],
   fashion:     ['va','nordic','cooperhewitt','mak','maas','smk','parismusees'],
   science:     ['nasa','apod','hubble','noaa','usgs','gbif','eol',
                'inaturalist','smg','naturalis','nasm','nationalzoo','gbiflit'],
   botanical:   ['bhl','gbiflit','cornell','naturalis','eol','gbif'],
   archives:    ['loc','gallica','chronicling','bhl',
                'trove','digitalnz','nypl','folger','onb','soch','finna',
-               'wdl','photogrammar','wikidata','bodleian','cudl','bsb','ddb'],
+               'photogrammar','wikidata','bodleian','cudl','bsb','ddb'],
 };
 
 /* ── Source metadata for filtering (Phase 2) ── */

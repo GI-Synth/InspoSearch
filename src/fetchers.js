@@ -9,7 +9,7 @@ import {
 } from './state.js';
 import {
   cacheGet, cacheSet, extractTags, fetchFromDataCache, isLikelyReal,
-  safeFetch, shuffle, sleep, sourceFetch, stripHtml
+  maybeProxyImage, proxyImageUrl, safeFetch, shuffle, sleep, sourceFetch, stripHtml
 } from './core.js';
 
 /* Map UI medium values → Europeana TYPE facet values */
@@ -198,8 +198,8 @@ export function normalizeMet(obj) {
   if (!thumb) return null;
   return {
     id:          `met_${obj.objectID}`,
-    url:         full,
-    thumb:       thumb,
+    url:         proxyImageUrl(full),
+    thumb:       proxyImageUrl(thumb),
     title:       obj.title || 'Untitled',
     description: [obj.artistDisplayName, obj.medium, obj.culture].filter(Boolean).join(' — '),
     artist:      obj.artistDisplayName || '',
@@ -783,8 +783,8 @@ export async function fetchCleveland(keyword, limit, signal, skip = 0) {
       .filter(obj => obj.images?.web?.url)
       .map(obj => ({
         id:          `cle_${obj.id}`,
-        url:         obj.images.print?.url || obj.images.full?.url || obj.images.web.url,
-        thumb:       obj.images.web.url,
+        url:         proxyImageUrl(obj.images.print?.url || obj.images.full?.url || obj.images.web.url),
+        thumb:       proxyImageUrl(obj.images.web.url),
         title:       obj.title || 'Untitled',
         description: [obj.creators?.[0]?.description, obj.technique, obj.creation_date]
           .filter(Boolean).join(' — '),
@@ -1198,36 +1198,9 @@ export async function fetchGallica(keyword, limit, signal, startRecord = 1) {
   }
 }
 
-export async function fetchChroniclingAmerica(keyword, limit, signal) {
-  try {
-
-    const res = await sourceFetch(
-      `https://chroniclingamerica.loc.gov/search/pages/results/?andtext=${encodeURIComponent(keyword)}&format=json&rows=${limit}`,
-      { signal }, 'chronicling'
-    );
-    if (!res.ok) throw new Error('ChronAm failed');
-    const data = await res.json();
-    return (data.items || [])
-      .filter(item => item.id)
-      .map(item => ({
-        id:          `chron_${item.id.replace(/\//g, '_')}`,
-        url:         `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:100/0/default.jpg`,
-        thumb:       `https://chroniclingamerica.loc.gov${item.id}image_1/service:image/full/pct:25/0/default.jpg`,
-        title:       `${item.title || 'Newspaper'} — ${(item.date || '').slice(0, 4)}`,
-        description: item.ocr_eng?.slice(0, 100) || '',
-        source:      'chronicling',
-        sourceUrl:   `https://chroniclingamerica.loc.gov${item.id}`,
-        year:        (item.date || '').slice(0, 4) || null,
-        tags:        (item.subject || []).map(s => s.toLowerCase()),
-        colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    if (e.name === 'AbortError') return [];
-    console.warn('ChronAm failed:', e.message);
-    return [];
-  }
+export async function fetchChroniclingAmerica(_keyword, _limit, _signal) {
+  // Endpoint retired / 403s every request as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
 export async function fetchTrove(keyword, limit, signal, page = 1) {
@@ -1656,8 +1629,8 @@ export async function fetchFinna(keyword, limit, signal, page = 1) {
       .filter(item => item.images?.[0])
       .map(item => ({
         id:          'finna_' + String(item.id).replace(/[^a-z0-9]/gi, '_'),
-        url:         'https://finna.fi' + item.images[0],
-        thumb:       'https://finna.fi' + item.images[0],
+        url:         proxyImageUrl('https://finna.fi' + item.images[0]),
+        thumb:       proxyImageUrl('https://finna.fi' + item.images[0]),
         title:       Array.isArray(item.title) ? item.title[0] : (item.title || 'Finnish Heritage'),
         description: item.summary?.[0] || '',
         source:      'finna',
@@ -1728,8 +1701,8 @@ export async function fetchJoconde(keyword, limit, signal, page = 1) {
       .filter(item => item.reference && item.presence_image === 'oui')
       .map(item => ({
         id:          'joconde_' + item.reference,
-        url:         `https://www.pop.culture.gouv.fr/notice/joconde/${item.reference}`,
-        thumb:       `https://www.pop.culture.gouv.fr/medias/joconde/${item.reference}/img0.jpg`,
+        url:         proxyImageUrl(`https://www.pop.culture.gouv.fr/medias/joconde/${item.reference}/img0.jpg`),
+        thumb:       proxyImageUrl(`https://www.pop.culture.gouv.fr/medias/joconde/${item.reference}/img0.jpg`),
         title:       item.titre || 'French Museum Object',
         description: item.auteur || '',
         source:      'joconde',
@@ -2534,61 +2507,14 @@ export async function fetchNYPL(keyword, limit, signal, page = 1) {
   }
 }
 
-export async function fetchMAK(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://sammlung.mak.at/api/v1/search?q=${encodeURIComponent(keyword)}&has_image=true&per_page=${limit}`,
-      { signal }, 'mak'
-    );
-    if (!res.ok) throw new Error('MAK failed');
-    const data = await res.json();
-    return (data.objects || [])
-      .filter(item => item.image_url)
-      .map(item => ({
-        id:          'mak_' + String(item.id).replace(/[^a-z0-9]/gi, '_'),
-        url:         item.image_url,
-        thumb:       item.image_url,
-        title:       item.title || 'MAK Object',
-        description: item.artist || '',
-        year:        (item.date || '').match(/\d{4}/)?.[0] || null,
-        source:      'mak',
-        sourceUrl:   `https://sammlung.mak.at/en/objectdb/detail/${item.id}`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchMAK(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
-export async function fetchMNA(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://mna.inah.gob.mx/api/search?q=${encodeURIComponent(keyword)}&limit=${limit}`,
-      { signal }, 'mna'
-    );
-    if (!res.ok) throw new Error('MNA failed');
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : (data.results || []);
-    return items
-      .filter(item => item.image || item.image_url)
-      .map(item => ({
-        id:          'mna_' + String(item.id || item.objectId || Math.random()).replace(/[^a-z0-9]/gi, '_'),
-        url:         item.image || item.image_url,
-        thumb:       item.image || item.image_url,
-        title:       item.title || item.nombre || 'MNA Object',
-        description: item.culture || item.cultura || '',
-        year:        (item.date || item.fecha || '').match(/\d{4}/)?.[0] || null,
-        source:      'mna',
-        sourceUrl:   `https://mna.inah.gob.mx`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchMNA(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
 // ── BATCH 7 FETCH FUNCTIONS ──────────────────────────────────
@@ -2627,88 +2553,19 @@ export async function fetchMia(keyword, limit, signal) {
   }
 }
 
-export async function fetchLACMA(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://collections.lacma.org/api/search?q=${encodeURIComponent(keyword)}&f[]=has_image:true&f[]=public_domain:true&rows=${limit}&start=0`,
-      { signal }, 'lacma'
-    );
-    if (!res.ok) throw new Error('LACMA failed');
-    const data = await res.json();
-    return (data.response?.docs || [])
-      .filter(item => item.thumbnail_url_s)
-      .map(item => ({
-        id:          `lacma_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
-        url:         item.thumbnail_url_s,
-        thumb:       item.thumbnail_url_s,
-        title:       item.title_s || 'LACMA Object',
-        description: item.artist_s || '',
-        year:        (item.date_s || '').match(/\d{4}/)?.[0] || null,
-        source:      'lacma',
-        sourceUrl:   `https://collections.lacma.org/node/${(item.id || '').split(':')[1] || ''}`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchLACMA(_keyword, _limit, _signal) {
+  // Endpoint retired (405 Method Not Allowed) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
-export async function fetchMunch(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://www.munchmuseet.no/api/v1/works?q=${encodeURIComponent(keyword)}&limit=${limit}&hasImage=true`,
-      { signal }, 'munch'
-    );
-    if (!res.ok) throw new Error('Munch failed');
-    const data = await res.json();
-    return (data.items || [])
-      .filter(item => item.image?.url)
-      .map(item => ({
-        id:          `munch_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
-        url:         item.image.url,
-        thumb:       item.image.url,
-        title:       item.title || 'Munch Work',
-        description: item.technique || '',
-        year:        (item.dated || '').match(/\d{4}/)?.[0] || null,
-        source:      'munch',
-        sourceUrl:   `https://www.munchmuseet.no/en/the-collection/${item.id || ''}`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchMunch(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
-export async function fetchMauritshuis(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://www.mauritshuis.nl/api/collection/search?query=${encodeURIComponent(keyword)}&limit=${limit}&imageAvailable=true`,
-      { signal }, 'mauritshuis'
-    );
-    if (!res.ok) throw new Error('Mauritshuis failed');
-    const data = await res.json();
-    return (data.results || [])
-      .filter(item => item.image)
-      .map(item => ({
-        id:          `mauritshuis_${item.id || ''}`,
-        url:         item.image,
-        thumb:       item.image,
-        title:       item.title || 'Mauritshuis Object',
-        description: item.maker || '',
-        year:        (item.dating || '').match(/\d{4}/)?.[0] || null,
-        source:      'mauritshuis',
-        sourceUrl:   `https://www.mauritshuis.nl/en/our-collection/artworks/${item.id || ''}`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchMauritshuis(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
 export async function fetchNationalmuseumSE(keyword, limit, signal) {
@@ -3412,91 +3269,19 @@ WD_PHASE_H.forEach(s => {
   };
 });
 
-export async function fetchAGO(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://www.ago.ca/api/collection/search?q=${encodeURIComponent(keyword)}&limit=${limit}&type=artwork`,
-      { signal }, 'ago'
-    );
-    if (!res.ok) throw new Error('AGO failed');
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : (data.results || data.items || []);
-    return items
-      .filter(item => item.image || item.image_url || item.imageUrl)
-      .map(item => ({
-        id:          `ago_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
-        url:         item.image || item.image_url || item.imageUrl,
-        thumb:       item.image || item.image_url || item.imageUrl,
-        title:       item.title || 'AGO Object',
-        description: item.artist || item.maker || '',
-        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
-        source:      'ago',
-        sourceUrl:   `https://www.ago.ca/collection`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchAGO(_keyword, _limit, _signal) {
+  // Endpoint retired (403) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
-export async function fetchPEM(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://www.pem.org/api/collection/search?q=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
-      { signal }, 'pem'
-    );
-    if (!res.ok) throw new Error('PEM failed');
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : (data.results || data.items || []);
-    return items
-      .filter(item => item.image || item.image_url || item.imageUrl)
-      .map(item => ({
-        id:          `pem_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
-        url:         item.image || item.image_url || item.imageUrl,
-        thumb:       item.image || item.image_url || item.imageUrl,
-        title:       item.title || 'PEM Object',
-        description: item.artist || item.maker || '',
-        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
-        source:      'pem',
-        sourceUrl:   `https://www.pem.org/collections`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchPEM(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
-export async function fetchNPG(keyword, limit, signal) {
-  try {
-    const res = await sourceFetch(
-      `https://www.npg.org.uk/api/search?query=${encodeURIComponent(keyword)}&hasImage=true&limit=${limit}`,
-      { signal }, 'npg'
-    );
-    if (!res.ok) throw new Error('NPG failed');
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : (data.results || data.items || []);
-    return items
-      .filter(item => item.image || item.primaryImage || item.imageUrl)
-      .map(item => ({
-        id:          `npg_${String(item.id || '').replace(/[^a-z0-9]/gi, '_')}`,
-        url:         item.image || item.primaryImage || item.imageUrl,
-        thumb:       item.image || item.primaryImage || item.imageUrl,
-        title:       item.title || 'NPG Portrait',
-        description: item.sitter || item.artist || '',
-        year:        (item.date || item.dated || '').match(/\d{4}/)?.[0] || null,
-        source:      'npg',
-        sourceUrl:   `https://www.npg.org.uk/collections`,
-        tags: [], colors: [], aiTags: [],
-      }))
-      .filter(isLikelyReal)
-      .slice(0, limit);
-  } catch (e) {
-    return [];
-  }
+export async function fetchNPG(_keyword, _limit, _signal) {
+  // Endpoint retired (404) as of 2026-04-22. Stubbed pending replacement.
+  return [];
 }
 
 export async function fetchLouvreAD(keyword, limit, signal) {
@@ -3753,8 +3538,8 @@ export async function fetchIIIFCollection(config, keyword, limit, signal) {
         thumbUrl = thumbUrl || imgUrl;
         return {
           id:          `${config.id}_${i}_${String(getField(item, '@id') || i).replace(/[^a-z0-9]/gi, '_').slice(-20)}`,
-          url:         String(imgUrl),
-          thumb:       String(thumbUrl),
+          url:         maybeProxyImage(String(imgUrl)),
+          thumb:       maybeProxyImage(String(thumbUrl)),
           title:       String(getField(item, config.titleField || 'label') || 'Untitled'),
           description: String(getField(item, config.descField || '') || ''),
           source:      config.id,

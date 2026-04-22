@@ -575,6 +575,28 @@ export function proxyImageUrl(url) {
   return `${CONSTANTS.IMG_PROXY_URL}/?url=${encodeURIComponent(url)}&w=800`;
 }
 
+// Hostnames whose image CDNs refuse hotlinked/cross-origin <img> loads.
+// Adapters should wrap image URLs with maybeProxyImage() so these route through
+// the Cloudflare image proxy (which strips Referer and normalizes CORS).
+const _IMAGE_CORS_HOSTS = new Set([
+  'www.davidrumsey.com', 'davidrumsey.com',
+  'smb.museum-digital.de',
+  'iiif.digitalcommonwealth.org',
+  'www.pop.culture.gouv.fr',
+  'finna.fi', 'api.finna.fi',
+  'images.metmuseum.org',
+  'openaccess-cdn.clevelandart.org',
+]);
+
+export function maybeProxyImage(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (url.startsWith(CONSTANTS.IMG_PROXY_URL) || url.startsWith('data:')) return url;
+  try {
+    if (_IMAGE_CORS_HOSTS.has(new URL(url).hostname)) return proxyImageUrl(url);
+  } catch { /* relative URL or malformed — leave as-is */ }
+  return url;
+}
+
 // Domains whose APIs are CORS-blocked from the browser.
 // sourceFetch auto-retries these through the API proxy worker.
 const CORS_BLOCKED_API_DOMAINS = new Set([
@@ -604,6 +626,12 @@ const CORS_BLOCKED_API_DOMAINS = new Set([
   'www.munchmuseet.no',
   'digital.bodleian.ox.ac.uk',
   'search.artsmia.org',
+  // Added 2026-04-22 sweep — 5 sources silent due to missing CORS allowlist.
+  'collection.cooperhewitt.org',
+  'api.collection.carnegieart.org',
+  'api.mnw.art.pl',
+  'collections.tepapa.govt.nz',
+  'api.aucklandmuseum.com',
 ]);
 
 function _needsApiProxy(url) {

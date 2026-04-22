@@ -111,8 +111,21 @@ export default {
       return error('Failed to fetch upstream image: ' + e.message, 502);
     }
 
+    // Retry once on 5xx after 500ms — upstream CDNs (museum image servers)
+    // hiccup routinely. A single retry recovers most transient 502/503/504.
+    if (upstream.status >= 500 && upstream.status < 600) {
+      await new Promise(r => setTimeout(r, 500));
+      try {
+        upstream = await fetch(imgUrl, fetchOpts);
+      } catch (e) {
+        return error('Failed to fetch upstream image (retry): ' + e.message, 502);
+      }
+    }
+
     if (!upstream.ok) {
-      return error(`Upstream returned ${upstream.status}`, 502);
+      // Surface the true upstream status so clients can distinguish
+      // 404 (missing image — don't retry) from 5xx (try again later).
+      return error(`Upstream returned ${upstream.status}`, upstream.status >= 500 ? 502 : 404);
     }
 
     const ct = upstream.headers.get('content-type') || '';

@@ -677,6 +677,12 @@ const PROXY_ALLOWED_DOMAINS = new Set([
   'www.munchmuseet.no',
   'digital.bodleian.ox.ac.uk',
   'search.artsmia.org',
+  // Added 2026-04-22 sweep — 5 sources silent due to missing allowlist.
+  'collection.cooperhewitt.org',
+  'api.collection.carnegieart.org',
+  'api.mnw.art.pl',
+  'collections.tepapa.govt.nz',
+  'api.aucklandmuseum.com',
 ]);
 
 async function handleProxy(url, request, env) {

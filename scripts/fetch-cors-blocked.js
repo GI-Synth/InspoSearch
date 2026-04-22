@@ -199,66 +199,49 @@ async function fetchCUDL(term) {
 // ── main orchestrator ─────────────────────────────────────────────────────
 
 // NHM London — Natural History Museum
+// Resource: NHM specimen collection (8M+ records). Image identifier lives in
+// `associatedMedia[].identifier` — the IIIF endpoint at /media/<assetID>.
 async function fetchNHMLondon(term) {
-  const url = `https://data.nhm.ac.uk/api/3/action/datastore_search?resource_id=e4e0a710-2400-4e5f-a569-87dbab23d1d2&q=${encodeURIComponent(term)}&limit=25`;
+  const url = `https://data.nhm.ac.uk/api/3/action/datastore_search?resource_id=05ff2255-c38a-40c9-b657-4ccb55ab2feb&q=${encodeURIComponent(term)}&limit=25`;
   const res = await fetchWithTimeout(url, {
     headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return (data.result?.records || [])
-    .filter(r => r.accessURI || (r.indexTerms && r.indexTerms.accessURI?.[0]))
     .map(r => {
-      const img = r.accessURI || r.indexTerms?.accessURI?.[0] || '';
+      const media = Array.isArray(r.associatedMedia) ? r.associatedMedia[0] : null;
+      const ident = media?.identifier || '';
+      const img = ident ? `${ident}/preview` : '';
       return {
         img, thumb: img,
-        title: r.scientificName || r.typeStatus || 'NHM Specimen',
+        title: r.scientificName || r.specificEpithet || r.typeStatus || 'NHM Specimen',
         source: 'nhm_london', tags: [term],
       };
     })
-    .filter(item => item.img.startsWith('http'));
+    .filter(item => item.img.startsWith('https://'));
 }
 
-// Wallace Collection — The Wallace Collection, London
+// Wallace Collection — direct API at wallacelive.wallacecollection.org/emuseum/api was 404'd
+// when the site moved to /eMP/eMuseumPlus; fall back to Wikidata Q1327919 (~655 images).
 async function fetchWallaceCollection(term) {
-  const url = `https://wallacelive.wallacecollection.org/emuseum/api/search?q=${encodeURIComponent(term)}&rows=25&type=objects`;
-  const res = await fetchWithTimeout(url, {
-    headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.rows || data.results || [])
-    .filter(item => item.primaryMedia?.publicAccess?.uri || item.images?.[0]?.uri)
-    .map(item => {
-      const img = item.primaryMedia?.publicAccess?.uri || item.images?.[0]?.uri || '';
-      return {
-        img, thumb: img,
-        title: item.title?.[0]?.value || item.title || 'Wallace Collection Work',
-        source: 'wallace_collection', tags: [term],
-      };
-    })
-    .filter(item => item.img.startsWith('http'));
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image WHERE {
+      ?item wdt:P195 wd:Q1327919 .
+      ?item wdt:P18 ?image .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'wallace_collection');
 }
 
-// Fitzwilliam Museum Cambridge
+// Fitzwilliam Museum Cambridge — direct API at data.fitzmuseum.cam.ac.uk now requires
+// auth (HTTP 401); fall back to Wikidata Q1421440 (~1336 images).
 async function fetchFitzwilliam(term) {
-  const url = `https://data.fitzmuseum.cam.ac.uk/api/v1/objects?q=${encodeURIComponent(term)}&limit=25`;
-  const res = await fetchWithTimeout(url, {
-    headers: { 'User-Agent': 'InspoSearch/1.1 (https://github.com/GI-Synth/InspoSearch; mailto:bianca.condruz@hec.ca)', 'Accept': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return (data.data || data.results || [])
-    .filter(item => item.images?.length || item.thumbnail?.url)
-    .map(item => {
-      const img = item.images?.[0]?.media?.source || item.thumbnail?.url || '';
-      return {
-        img, thumb: img,
-        title: item.title?.[0]?.value || item.summary_title || 'Fitzwilliam Object',
-        source: 'fitzwilliam', tags: [term],
-      };
-    })
-    .filter(item => item.img.startsWith('http'));
+  return fetchWikidataSparql(offset => `
+    SELECT DISTINCT ?item ?itemLabel ?image WHERE {
+      ?item wdt:P195 wd:Q1421440 .
+      ?item wdt:P18 ?image .
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en,*" }
+    } LIMIT 25 OFFSET ${offset}`, term, 'fitzwilliam');
 }
 
 // National Gallery London — via Wikidata SPARQL (Q180788, ~4k images)
@@ -291,11 +274,11 @@ async function fetchMuseeOrsay(term) {
     } LIMIT 25 OFFSET ${offset}`, term, 'musee_orsay');
 }
 
-// Van Gogh Museum Amsterdam via Wikidata
+// Van Gogh Museum Amsterdam via Wikidata (Q224124 — corrected from dead Q272671)
 async function fetchVanGoghMuseum(term) {
   return fetchWikidataSparql(offset => `
     SELECT DISTINCT ?item ?itemLabel ?image WHERE {
-      ?item wdt:P195 wd:Q272671 .
+      ?item wdt:P195 wd:Q224124 .
       ?item wdt:P18 ?image .
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en,nl,*" }
     } LIMIT 25 OFFSET ${offset}`, term, 'vangogh_museum');
@@ -311,11 +294,12 @@ async function fetchKHM(term) {
     } LIMIT 25 OFFSET ${offset}`, term, 'khm');
 }
 
-// Belvedere Museum Vienna via Wikidata
+// Belvedere Museum Vienna via Wikidata (Q303139 — Österreichische Galerie Belvedere,
+// corrected from dead Q485700)
 async function fetchBelvedere(term) {
   return fetchWikidataSparql(offset => `
     SELECT DISTINCT ?item ?itemLabel ?image WHERE {
-      ?item wdt:P195 wd:Q485700 .
+      ?item wdt:P195 wd:Q303139 .
       ?item wdt:P18 ?image .
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de,*" }
     } LIMIT 25 OFFSET ${offset}`, term, 'belvedere');
@@ -332,30 +316,33 @@ async function fetchStaedel(term) {
 }
 
 // Royal Museums of Fine Arts of Belgium (Brussels) via Wikidata
+// (Q377500 — corrected from dead Q2407552)
 async function fetchRMFAB(term) {
   return fetchWikidataSparql(offset => `
     SELECT DISTINCT ?item ?itemLabel ?image WHERE {
-      ?item wdt:P195 wd:Q2407552 .
+      ?item wdt:P195 wd:Q377500 .
       ?item wdt:P18 ?image .
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr,nl,*" }
     } LIMIT 25 OFFSET ${offset}`, term, 'rmfab');
 }
 
 // Musée Guimet Paris (Asian art) via Wikidata
+// (Q860994 — corrected from dead Q205963)
 async function fetchGuimet(term) {
   return fetchWikidataSparql(offset => `
     SELECT DISTINCT ?item ?itemLabel ?image WHERE {
-      ?item wdt:P195 wd:Q205963 .
+      ?item wdt:P195 wd:Q860994 .
       ?item wdt:P18 ?image .
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr,*" }
     } LIMIT 25 OFFSET ${offset}`, term, 'guimet');
 }
 
 // National Palace Museum Taipei via Wikidata
+// (Q540668 — corrected from dead Q673651)
 async function fetchNPMTaipei(term) {
   return fetchWikidataSparql(offset => `
     SELECT DISTINCT ?item ?itemLabel ?image WHERE {
-      ?item wdt:P195 wd:Q673651 .
+      ?item wdt:P195 wd:Q540668 .
       ?item wdt:P18 ?image .
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en,zh,*" }
     } LIMIT 25 OFFSET ${offset}`, term, 'npm_taipei');
@@ -823,9 +810,19 @@ async function main() {
     mkdirSync(DATA_DIR, { recursive: true });
   }
 
+  // Optional --only=id1,id2,... filter for ad-hoc re-runs of a subset.
+  // Skips the _index.json rewrite when filtered, so we don't mark the other
+  // sources as `failed` just because they weren't attempted.
+  const onlyArg = process.argv.find(a => a.startsWith('--only='));
+  const onlyIds = onlyArg ? onlyArg.slice('--only='.length).split(',').map(s => s.trim()).filter(Boolean) : null;
+  const sourcesToRun = onlyIds ? SOURCES.filter(s => onlyIds.includes(s.id)) : SOURCES;
+  if (onlyIds) {
+    console.log(`Filtered to ${sourcesToRun.length} source(s): ${sourcesToRun.map(s => s.id).join(', ')}`);
+  }
+
   const results = { succeeded: [], failed: [] };
 
-  for (const source of SOURCES) {
+  for (const source of sourcesToRun) {
     log(source.id, `=== starting fetch ===`);
     try {
       const ok = await fetchSource(source);
@@ -837,20 +834,24 @@ async function main() {
     }
   }
 
-  // Write _index.json manifest
-  const indexData = {
-    lastUpdated: new Date().toISOString(),
-    sources: SOURCES.map(s => {
-      const succeeded = results.succeeded.includes(s.id);
-      return {
-        id: s.id,
-        name: s.name,
-        status: succeeded ? 'ok' : 'failed',
-        lastFetched: succeeded ? new Date().toISOString() : null,
-      };
-    }),
-  };
-  writeFileSync(join(DATA_DIR, '_index.json'), JSON.stringify(indexData, null, 2), 'utf8');
+  // Write _index.json manifest — but only when running the full set.
+  // A filtered run shouldn't overwrite the manifest with stale `failed` rows
+  // for sources we didn't attempt this time.
+  if (!onlyIds) {
+    const indexData = {
+      lastUpdated: new Date().toISOString(),
+      sources: SOURCES.map(s => {
+        const succeeded = results.succeeded.includes(s.id);
+        return {
+          id: s.id,
+          name: s.name,
+          status: succeeded ? 'ok' : 'failed',
+          lastFetched: succeeded ? new Date().toISOString() : null,
+        };
+      }),
+    };
+    writeFileSync(join(DATA_DIR, '_index.json'), JSON.stringify(indexData, null, 2), 'utf8');
+  }
 
   console.log('\n=== FETCH COMPLETE ===');
   console.log(`Succeeded: ${results.succeeded.length}/${SOURCES.length} — ${results.succeeded.join(', ') || '(none)'}`);
