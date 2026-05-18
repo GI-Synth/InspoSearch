@@ -2,7 +2,7 @@
   "sourceId": "wallraf_richartz",
   "sourceName": "Wallraf-Richartz Museum",
   "schemaVersion": 1,
-  "lastFetched": "2026-05-17T04:21:39.220Z",
+  "lastFetched": "2026-05-18T04:15:55.936Z",
   "items": [
     {
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/L%27%C3%A9tang%2C%20Albert%20Lebourg%20%28Dep.%200763%20FC%29.jpg",
@@ -680,225 +680,450 @@
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20Abduction%20on%20a%20Unicorn%2C%201516%2C%20NGA%206652.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20Abduction%20on%20a%20Unicorn%2C%201516%2C%20NGA%206652.jpg?width=400",
-      "title": "The Abduction on a Unicorn",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%20sous%20la%20neige%2C%20entr%C3%A9e%20de%20village%20en%20Bretagne%2C%20Gustave%20Loiseau%20%28Dep.%200771%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%20sous%20la%20neige%2C%20entr%C3%A9e%20de%20village%20en%20Bretagne%2C%20Gustave%20Loiseau%20%28Dep.%200771%20FC%29.jpg?width=400",
+      "title": "Landschaft im Schnee, Dorfeingang in der Bretagne",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20treille%20%C3%A0%20Saint-Germain%2C%20Maurice%20Denis%20%28Dep.%200741%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20treille%20%C3%A0%20Saint-Germain%2C%20Maurice%20Denis%20%28Dep.%200741%20FC%29.jpg?width=400",
+      "title": "Weinlaube in Saint-Germain",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Brittany%20Cottages%2C%20Riec%2C%20Lucien%20Pissarro%20%28Dep.%200702%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Brittany%20Cottages%2C%20Riec%2C%20Lucien%20Pissarro%20%28Dep.%200702%20FC%29.jpg?width=400",
+      "title": "Brittany Cottages, Riec",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Weiher%20von%20Gylieu%20bei%20Optevoz%2C%20Charles-Fran%C3%A7ois%20Daubigny%20%28WRM%203118%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Weiher%20von%20Gylieu%20bei%20Optevoz%2C%20Charles-Fran%C3%A7ois%20Daubigny%20%28WRM%203118%29.jpg?width=400",
+      "title": "Das Tal von Optevoz",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Toulouse-Lautrec%20-%20Barque%20de%20p%C3%AAche%2C%201880%2C%20Dep.%200719%20FC.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Toulouse-Lautrec%20-%20Barque%20de%20p%C3%AAche%2C%201880%2C%20Dep.%200719%20FC.jpg?width=400",
+      "title": "Fischerboot",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Delacroix%20-%20Der%20ungl%C3%A4ubige%20Thomas%2C%20um%201846.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Delacroix%20-%20Der%20ungl%C3%A4ubige%20Thomas%2C%20um%201846.jpg?width=400",
+      "title": "Der ungläubige Thomas",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Chaumi%C3%A8re%20dans%20un%20verger%2C%20Charles%20Th%C3%A9ophile%20Angrand%20%28Dep.%200730%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Chaumi%C3%A8re%20dans%20un%20verger%2C%20Charles%20Th%C3%A9ophile%20Angrand%20%28Dep.%200730%20FC%29.jpg?width=400",
+      "title": "Haus unter Ölbäumen",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20ramasseuses%20de%20varech%20-%20%C3%89mile%20Schuffenecker%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5144%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20ramasseuses%20de%20varech%20-%20%C3%89mile%20Schuffenecker%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5144%20%28cropped%29.jpg?width=400",
+      "title": "Kelp Gatherers",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bords%20de%20Seine%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8548%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bords%20de%20Seine%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8548%20%28without%20frame%29.jpg?width=400",
+      "title": "The banks of the Seine",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Courbet%20Schloss%20Chillon.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Courbet%20Schloss%20Chillon.jpg?width=400",
+      "title": "Chillon Castle",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20tricoteuses%2C%20Fernand%20Legout-G%C3%A9rard%20%28Dep.%200807%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20tricoteuses%2C%20Fernand%20Legout-G%C3%A9rard%20%28Dep.%200807%20FC%29.jpg?width=400",
+      "title": "Women Knitting",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/L%27arc-en%20ciel%20-%20Maxime%20Maufra%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5135%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/L%27arc-en%20ciel%20-%20Maxime%20Maufra%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5135%20%28cropped%29.jpg?width=400",
+      "title": "Regenbogen",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Arrest%20of%20Christ%20%28The%20Karlsruhe%20Passion%29%20c.1450-55.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Arrest%20of%20Christ%20%28The%20Karlsruhe%20Passion%29%20c.1450-55.jpg?width=400",
+      "title": "The Arrest of Christ",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Edwaert%20collier%20a%20toebakje%20still%20life%20of%20smoking%20utensils%20a%20jug%20and%20a115247%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Edwaert%20collier%20a%20toebakje%20still%20life%20of%20smoking%20utensils%20a%20jug%20and%20a115247%29.jpg?width=400",
+      "title": "Toebackje, still life of smoking utensils",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Barques%20et%20cabane%2C%20bord%20de%20Seine%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8546%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Barques%20et%20cabane%2C%20bord%20de%20Seine%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8546%20%28without%20frame%29.jpg?width=400",
+      "title": "Barken und Hütten, Seineufer",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Armand%20Guillaumin%20Landschaft%20von%20Louveciennes.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Armand%20Guillaumin%20Landschaft%20von%20Louveciennes.jpg?width=400",
+      "title": "Landschaft von Louveciennes",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20boulevard%20Saint-Martin%2C%20Raoul%20Dufy%20-%203171%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20boulevard%20Saint-Martin%2C%20Raoul%20Dufy%20-%203171%20%28cropped%29.jpg?width=400",
+      "title": "Le Boulevard Saint-Martin",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%20%C3%A0%20Aix-en-Provence%2C%20Paul%20C%C3%A9zanne%20-%203197%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%20%C3%A0%20Aix-en-Provence%2C%20Paul%20C%C3%A9zanne%20-%203197%20%28cropped%29.jpg?width=400",
+      "title": "Landschaft bei Aix-en-Provence",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paris%2C%20la%20Tour%20Eiffel%20-%20Louis%20Hayet%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8619%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paris%2C%20la%20Tour%20Eiffel%20-%20Louis%20Hayet%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8619%20%28without%20frame%29.jpg?width=400",
+      "title": "Paris, Eiffelturm",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Caillebotte%2C%20Petit%20bras%20de%20la%20Seine%2C%20effet%20d%27automne.%201890.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Caillebotte%2C%20Petit%20bras%20de%20la%20Seine%2C%20effet%20d%27automne.%201890.jpg?width=400",
+      "title": "Branch of the seine, effect in autumn",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Child%20among%20the%20Hollyhocks%20-%20Berthe%20Morisot%20-%20Paris%201863%20%E2%80%93%201874-%20Revolution%20in%20der%20Kunst-9810%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Child%20among%20the%20Hollyhocks%20-%20Berthe%20Morisot%20-%20Paris%201863%20%E2%80%93%201874-%20Revolution%20in%20der%20Kunst-9810%20%28without%20frame%29.jpg?width=400",
+      "title": "Child among the Hollyhocks",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caillebotte%20Gustave%20Trocknende%20Waesche%20am%20Ufer%20der%20Seine%201892.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caillebotte%20Gustave%20Trocknende%20Waesche%20am%20Ufer%20der%20Seine%201892.jpg?width=400",
+      "title": "Drying laundry at the bank of the Seine, Petit Gennevilliers",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Monet%20-%20Maisons%20%C3%A0%20Falaise%2C%20brouillard.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Monet%20-%20Maisons%20%C3%A0%20Falaise%2C%20brouillard.jpg?width=400",
+      "title": "House at Falaise in the Fog",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kerhuon%2C%20les%20p%C3%AAcheuses%20-%20Eug%C3%A8ne%20Boudin%20-%20Paris%201863%20%E2%80%93%201874-%20Revolution%20in%20der%20Kunst-4675%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kerhuon%2C%20les%20p%C3%AAcheuses%20-%20Eug%C3%A8ne%20Boudin%20-%20Paris%201863%20%E2%80%93%201874-%20Revolution%20in%20der%20Kunst-4675%20%28without%20frame%29.jpg?width=400",
+      "title": "Kerhuon, Fisherwomen",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Renoir%20-%20Jean%20Renoir%20cousant%20-%20Wallraf-Richartz.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Renoir%20-%20Jean%20Renoir%20cousant%20-%20Wallraf-Richartz.jpg?width=400",
+      "title": "Jean Renoir sewing",
+      "source": "wallraf_richartz",
+      "tags": [
+        "fashion"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gauguin%201884%20La%20Fumure%20des%20terres.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gauguin%201884%20La%20Fumure%20des%20terres.jpg?width=400",
+      "title": "Manuring, or Return from the Harvest\"",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Horror%20und%20Delight-Wright%20of%20Derby-Dovedale%20by%20Moonlight%20DSC2278.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Horror%20und%20Delight-Wright%20of%20Derby-Dovedale%20by%20Moonlight%20DSC2278.jpg?width=400",
-      "title": "Dovedale by Moonlight",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Voilier%20sur%20la%20Seine%20%C3%A0%20Argenteuil%20-%20Gustave%20Caillebotte-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8555%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Voilier%20sur%20la%20Seine%20%C3%A0%20Argenteuil%20-%20Gustave%20Caillebotte-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8555%20%28without%20frame%29.jpg?width=400",
+      "title": "Sailing ship on the Seine at Argenteuil",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1590%20Mostaert%20Dorfkirmes%20anagoria.JPG",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1590%20Mostaert%20Dorfkirmes%20anagoria.JPG?width=400",
-      "title": "Village Feast",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Signac%20-%20Samois%2C%20Etude%20N%C2%B0%208%20%28La%20Seine%20%C3%A0%20Samois%29%2C%20Dep.%200684%20FC.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Signac%20-%20Samois%2C%20Etude%20N%C2%B0%208%20%28La%20Seine%20%C3%A0%20Samois%29%2C%20Dep.%200684%20FC.jpg?width=400",
+      "title": "Samois Study No. 8",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Stigmatization%20of%20St%20Francis%20-%20WGA20202.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Stigmatization%20of%20St%20Francis%20-%20WGA20202.jpg?width=400",
-      "title": "The Stigmatisation of Saint Francis of Assisi",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20rivage%20de%20Trouville%2C%20Eug%C3%A8ne%20Boudin%20-%203139%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20rivage%20de%20Trouville%2C%20Eug%C3%A8ne%20Boudin%20-%203139%20%28cropped%29.jpg?width=400",
+      "title": "The shore of Trouville",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1620%20van%20Dyck%20Jupiter%20als%20Satyr%20bei%20Antiope%20anagoria.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1620%20van%20Dyck%20Jupiter%20als%20Satyr%20bei%20Antiope%20anagoria.jpg?width=400",
-      "title": "Jupiter as Satyr by Antiope",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Willem%20Kalf%20-%20Still%20Life%20with%20Silver%20Bowl%2C%20Glasses%2C%20and%20Fruit%20-%20WGA12084.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Willem%20Kalf%20-%20Still%20Life%20with%20Silver%20Bowl%2C%20Glasses%2C%20and%20Fruit%20-%20WGA12084.jpg?width=400",
+      "title": "Still life with fruit, glasses and a silver auricular style salver",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Leibl%20-%20Portr%C3%A4t%20des%20Malers%20Johann%20Sperl%20%281872%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Leibl%20-%20Portr%C3%A4t%20des%20Malers%20Johann%20Sperl%20%281872%29.jpg?width=400",
-      "title": "The painter Johann Sperl",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fischerdorf%2C%20Max%20Pechstein%20%28WRM%201217%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fischerdorf%2C%20Max%20Pechstein%20%28WRM%201217%29.jpg?width=400",
+      "title": "Ostdeutsche Dorflandschaft (Fischerdorf)",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaiser%20Karl%20IV.%20%28Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%29%2C%20WRM%20Dep.%200268.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaiser%20Karl%20IV.%20%28Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%29%2C%20WRM%20Dep.%200268.jpg?width=400",
-      "title": "Charles IV, Holy Roman Emperor",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paula%20Modersohn-Becker%20-%20Kind%20in%20der%20Wiege.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paula%20Modersohn-Becker%20-%20Kind%20in%20der%20Wiege.jpg?width=400",
+      "title": "Kind in der Wiege",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Dirck%20van%20Delen%20-%20Das%20Grabmahl%20eines%20Herrn%20aus%20der%20Familie%20van%20Tuyll%20van%20Serooskerken%20-%202845%20-%20Staatliche%20Kunsthalle%20Karlsruhe.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Dirck%20van%20Delen%20-%20Das%20Grabmahl%20eines%20Herrn%20aus%20der%20Familie%20van%20Tuyll%20van%20Serooskerken%20-%202845%20-%20Staatliche%20Kunsthalle%20Karlsruhe.jpg?width=400",
-      "title": "The tomb of a Lord from the Van Tuyll van Serooskerken-family",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Willem%20Claesz.%20Heda%20-%20Still%20Life%20-%20WGA11250.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Willem%20Claesz.%20Heda%20-%20Still%20Life%20-%20WGA11250.jpg?width=400",
+      "title": "Still life with roemer, chalice, and lemon",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20Scene%20with%20Bridges%20-%20Joos%20de%20Momper%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0186%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20Scene%20with%20Bridges%20-%20Joos%20de%20Momper%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0186%20%28without%20frame%29.jpg?width=400",
-      "title": "Mountain Scene with Bridges",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Begas%2C%20Carl%20Joseph%20-%20Selbstbildnis%20mit%20Johann%20Peter%20Weyer%20WRM%202340.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Begas%2C%20Carl%20Joseph%20-%20Selbstbildnis%20mit%20Johann%20Peter%20Weyer%20WRM%202340.jpg?width=400",
+      "title": "Self-Portrait with Johann Peter Weyer",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200264.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200264.jpg?width=400",
-      "title": "Kopf eines Propheten aus dem Hansasaal des Rathauses in Köln",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ritratto%20della%20famiglia%20Begas.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ritratto%20della%20famiglia%20Begas.jpg?width=400",
+      "title": "Die Familie Begas",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200265%20%E2%80%93%20Ausschnitt.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200265%20%E2%80%93%20Ausschnitt.jpg?width=400",
-      "title": "Kopf eines Propheten aus dem Hansasaal des Rathauses in Köln",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Joseph%20Anton%20Koch%20-%20Mountain%20Scene%20-%20WGA12232.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Joseph%20Anton%20Koch%20-%20Mountain%20Scene%20-%20WGA12232.jpg?width=400",
+      "title": "Mountain Scene",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200266.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200266.jpg?width=400",
-      "title": "Kopf eines Propheten aus dem Hansasaal des Rathauses in Köln",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Banlieue%20de%20Paris%20-%20Albert%20Marquet%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8615%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Banlieue%20de%20Paris%20-%20Albert%20Marquet%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8615%20%28without%20frame%29.jpg?width=400",
+      "title": "Stadtrand von Paris",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Wandgem%C3%A4lde%20aus%20dem%20Hansasaal%20im%20Rathaus%2C%20WRM%20mit%20Blick%20auf%20Rathaus.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Wandgem%C3%A4lde%20aus%20dem%20Hansasaal%20im%20Rathaus%2C%20WRM%20mit%20Blick%20auf%20Rathaus.jpg?width=400",
-      "title": "Wandgemälde aus dem Hansasaal im Rathaus",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Claesz%20-%20Breakfast%20still%20life%20with%20herring%2C%20shrimp%2C%20bread%2C%20orange%20and%20red%20wine.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Claesz%20-%20Breakfast%20still%20life%20with%20herring%2C%20shrimp%2C%20bread%2C%20orange%20and%20red%20wine.jpg?width=400",
+      "title": "Breakfast still life with herring, shrimp, bread, orange and red wine",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200267.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200267.jpg?width=400",
-      "title": "Head of a Prophet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/LES%20BORDS%20DE%20LA%20SEINE%20%C3%80%20VETHEUIL%2C%20TEMPS%20COUVERT.PNG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/LES%20BORDS%20DE%20LA%20SEINE%20%C3%80%20VETHEUIL%2C%20TEMPS%20COUVERT.PNG?width=400",
+      "title": "Flußlandschaft",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Velten%2C%20J.%20Der%20D%C3%BCsseldorfer%20Hafen%201832.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Velten%2C%20J.%20Der%20D%C3%BCsseldorfer%20Hafen%201832.jpg?width=400",
-      "title": "Der Düsseldorfer Hafen",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jardin%20%C3%A0%20Trouville%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28without%20frame%29-6022.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jardin%20%C3%A0%20Trouville%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28without%20frame%29-6022.jpg?width=400",
+      "title": "Garden at Trouville",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Gauguin%20106.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Gauguin%20106.jpg?width=400",
-      "title": "Riders on the Beach (II)",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Liebermann%2C%20Max%20-%20Selbstbildnis%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Liebermann%2C%20Max%20-%20Selbstbildnis%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud.jpg?width=400",
+      "title": "Self-portrait",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Claude%20Lorrain%20-%20Harbour%20Scene%20with%20Grieving%20Heliades%20-%20WGA04986.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Claude%20Lorrain%20-%20Harbour%20Scene%20with%20Grieving%20Heliades%20-%20WGA04986.jpg?width=400",
-      "title": "Harbour Scene with Grieving Heliades",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/G%C3%A9rard%2C%20Marguerite%20and%20Fragonard%2C%20Jean-Honor%C3%A9%20-%20Le%20chat%20angora%20-.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/G%C3%A9rard%2C%20Marguerite%20and%20Fragonard%2C%20Jean-Honor%C3%A9%20-%20Le%20chat%20angora%20-.jpg?width=400",
+      "title": "The Angora Cat",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Notre-Dame%20par%20la%20neige%20-%20%C3%89mile%20Schuffenecker%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8621%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Notre-Dame%20par%20la%20neige%20-%20%C3%89mile%20Schuffenecker%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8621%20%28without%20frame%29.jpg?width=400",
-      "title": "Notre Dame in the Snow",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Cornelisz%20workshop%20-%20Crucifixion%2C%20Mw.%20N.%20de%20Boer.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Cornelisz%20workshop%20-%20Crucifixion%2C%20Mw.%20N.%20de%20Boer.jpg?width=400",
+      "title": "The crucifixion",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Anthonie%20Palamedesz.%20-%20Party%20Scene%20with%20Music%20-%20WGA16875.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Anthonie%20Palamedesz.%20-%20Party%20Scene%20with%20Music%20-%20WGA16875.jpg?width=400",
-      "title": "Party Scene with Music",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Coucher%20du%20soleil%20au%20Croisic%2C%20paysage%20de%20Bretagne%20-%20Ferdinand%20du%20Puigaudeau%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5142%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Coucher%20du%20soleil%20au%20Croisic%2C%20paysage%20de%20Bretagne%20-%20Ferdinand%20du%20Puigaudeau%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5142%20%28cropped%29.jpg?width=400",
+      "title": "Coucher du soleil au Croisic, paysage de Bretagne",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartolom%C3%A9%20Esteban%20Perez%20Murillo%20-%20Old%20Woman%20and%20Boy%20-%20WGA16367.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartolom%C3%A9%20Esteban%20Perez%20Murillo%20-%20Old%20Woman%20and%20Boy%20-%20WGA16367.jpg?width=400",
-      "title": "Old Woman and Boy",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rocher%20%C3%A0%20la%20pointe%20de%20la%20Baumette%2C%20Armand%20Guillaumin%20%28Dep.%200559%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rocher%20%C3%A0%20la%20pointe%20de%20la%20Baumette%2C%20Armand%20Guillaumin%20%28Dep.%200559%20FC%29.jpg?width=400",
+      "title": "Felsklippe auf der Landzunge von Baumette",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ambrosius%20Benson%20%281490%20-%201550%29%20-%20Caritas%20with%20three%20children%20-%20716%20-%20Gem%C3%A4ldegalerie.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ambrosius%20Benson%20%281490%20-%201550%29%20-%20Caritas%20with%20three%20children%20-%20716%20-%20Gem%C3%A4ldegalerie.jpg?width=400",
-      "title": "Caritas with three children",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Saint-Tropez%2C%20calme%20-%20Paul%20Signac%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5148%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Saint-Tropez%2C%20calme%20-%20Paul%20Signac%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5148%20%28cropped%29.jpg?width=400",
+      "title": "Saint-Tropez, Calm",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20de%20Crayer%20Alexander%20and%20Diogenes.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20de%20Crayer%20Alexander%20and%20Diogenes.jpg?width=400",
-      "title": "Alexander and Diogenes",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Effet%20d%27automne%2C%20soleil%20du%20matin%2C%20Francis%20Picabia%20%28Dep.%200677%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Effet%20d%27automne%2C%20soleil%20du%20matin%2C%20Francis%20Picabia%20%28Dep.%200677%20FC%29.jpg?width=400",
+      "title": "Morgensonne im Herbst",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/0%20La%20P%C3%AAche%20miraculeuse%20-%20P.P.%20Rubens%20-%20Wallraf%20Richards%20Museum%2C%20K%C3%B6ln%20%282%29.JPG",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/0%20La%20P%C3%AAche%20miraculeuse%20-%20P.P.%20Rubens%20-%20Wallraf%20Richards%20Museum%2C%20K%C3%B6ln%20%282%29.JPG?width=400",
-      "title": "The miraculous draught of fishes",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Un%20Apr%C3%A8s-midi%20dans%20le%20parc%2C%20Henri%20Lebasque%20%28Dep.%200572%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Un%20Apr%C3%A8s-midi%20dans%20le%20parc%2C%20Henri%20Lebasque%20%28Dep.%200572%20FC%29.jpg?width=400",
+      "title": "Ein Nachmittag im Park",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Tintoretto%20-%20und%20Werkstatt%20-%20Die%20Heilige%20Familie%20mit%20der%20heiligen%20Elisabeth%20und%20dem%20Johannesknaben%2C%20around%201550-1555%2C%20Dep.%200331.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Tintoretto%20-%20und%20Werkstatt%20-%20Die%20Heilige%20Familie%20mit%20der%20heiligen%20Elisabeth%20und%20dem%20Johannesknaben%2C%20around%201550-1555%2C%20Dep.%200331.jpg?width=400",
-      "title": "Die Heilige Familie mit der heiligen Elisabeth und dem Johannesknaben",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nu%20dans%20le%20miroir%20-%20Pierre%20Bonnard%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5994%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nu%20dans%20le%20miroir%20-%20Pierre%20Bonnard%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5994%20%28without%20frame%29.jpg?width=400",
+      "title": "Nude in the mirror",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nature%20morte%20aux%20poires%2C%20Paul%20C%C3%A9zanne%20-%203194%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nature%20morte%20aux%20poires%2C%20Paul%20C%C3%A9zanne%20-%203194%20%28cropped%29.jpg?width=400",
-      "title": "Still life with pears",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20village%20de%20Champign%C3%A9%2C%20Maine-et-Loire%2C%20Henri%20Lebasque%20%28Dep.%200669%20FC%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20village%20de%20Champign%C3%A9%2C%20Maine-et-Loire%2C%20Henri%20Lebasque%20%28Dep.%200669%20FC%29.jpg?width=400",
+      "title": "Champigné im Department Maine-et-Loire",
       "source": "wallraf_richartz",
       "tags": [
         "nature"
@@ -1265,6 +1490,87 @@
       ]
     },
     {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20Abduction%20on%20a%20Unicorn%2C%201516%2C%20NGA%206652.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%2C%20Abduction%20on%20a%20Unicorn%2C%201516%2C%20NGA%206652.jpg?width=400",
+      "title": "The Abduction on a Unicorn",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Horror%20und%20Delight-Wright%20of%20Derby-Dovedale%20by%20Moonlight%20DSC2278.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Horror%20und%20Delight-Wright%20of%20Derby-Dovedale%20by%20Moonlight%20DSC2278.jpg?width=400",
+      "title": "Dovedale by Moonlight",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1590%20Mostaert%20Dorfkirmes%20anagoria.JPG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1590%20Mostaert%20Dorfkirmes%20anagoria.JPG?width=400",
+      "title": "Village Feast",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Stigmatization%20of%20St%20Francis%20-%20WGA20202.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Stigmatization%20of%20St%20Francis%20-%20WGA20202.jpg?width=400",
+      "title": "The Stigmatisation of Saint Francis of Assisi",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1620%20van%20Dyck%20Jupiter%20als%20Satyr%20bei%20Antiope%20anagoria.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1620%20van%20Dyck%20Jupiter%20als%20Satyr%20bei%20Antiope%20anagoria.jpg?width=400",
+      "title": "Jupiter as Satyr by Antiope",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Leibl%20-%20Portr%C3%A4t%20des%20Malers%20Johann%20Sperl%20%281872%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Leibl%20-%20Portr%C3%A4t%20des%20Malers%20Johann%20Sperl%20%281872%29.jpg?width=400",
+      "title": "The painter Johann Sperl",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaiser%20Karl%20IV.%20%28Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%29%2C%20WRM%20Dep.%200268.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaiser%20Karl%20IV.%20%28Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%29%2C%20WRM%20Dep.%200268.jpg?width=400",
+      "title": "Charles IV, Holy Roman Emperor",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Dirck%20van%20Delen%20-%20Das%20Grabmahl%20eines%20Herrn%20aus%20der%20Familie%20van%20Tuyll%20van%20Serooskerken%20-%202845%20-%20Staatliche%20Kunsthalle%20Karlsruhe.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Dirck%20van%20Delen%20-%20Das%20Grabmahl%20eines%20Herrn%20aus%20der%20Familie%20van%20Tuyll%20van%20Serooskerken%20-%202845%20-%20Staatliche%20Kunsthalle%20Karlsruhe.jpg?width=400",
+      "title": "The tomb of a Lord from the Van Tuyll van Serooskerken-family",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20Scene%20with%20Bridges%20-%20Joos%20de%20Momper%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0186%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Mountain%20Scene%20with%20Bridges%20-%20Joos%20de%20Momper%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0186%20%28without%20frame%29.jpg?width=400",
+      "title": "Mountain Scene with Bridges",
+      "source": "wallraf_richartz",
+      "tags": [
+        "texture"
+      ]
+    },
+    {
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Master%20of%20the%20Lyversberg%20Passion%20-%20Lyversberg%20Passion%20%28detail%29%20-%20WGA14596.jpg",
       "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Master%20of%20the%20Lyversberg%20Passion%20-%20Lyversberg%20Passion%20%28detail%29%20-%20WGA14596.jpg?width=400",
       "title": "Lyversberg Passion",
@@ -1490,237 +1796,228 @@
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20der%20heiligen%20Ursula%20und%20ihrer%20Gef%C3%A4hrtinnen%20in%20K%C3%B6ln%20und%20Traum%20der%20heiligen%20Ursula%20-%20WGA23734%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20der%20heiligen%20Ursula%20und%20ihrer%20Gef%C3%A4hrtinnen%20in%20K%C3%B6ln%20und%20Traum%20der%20heiligen%20Ursula%20-%20WGA23734%20%28cropped%29.jpg?width=400",
-      "title": "Scenes from the Small Ursula Cycle",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20Thoma%20%281839-1924%29%20-%20H%C3%BCgellandschaft%20mit%20K%C3%BChen%20und%20Wasser%20-%200121%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20Thoma%20%281839-1924%29%20-%20H%C3%BCgellandschaft%20mit%20K%C3%BChen%20und%20Wasser%20-%200121%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Hügellandschaft mit Kühen und Wasser",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Wehrdener%20Kalvarienberg%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2200%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Wehrdener%20Kalvarienberg%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2200%20%28cropped%29.jpg?width=400",
-      "title": "The crucifixion",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ferdinand%20Schmalzigang%20%281847-1902%29%20-%20Schafe%20vor%20dem%20Stall%20-%200129%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ferdinand%20Schmalzigang%20%281847-1902%29%20-%20Schafe%20vor%20dem%20Stall%20-%200129%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "sheep in front of the stable",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20Kreuz%20mit%20Maria%2C%20Johannes%20und%20Maria%20Magdalena%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2256%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20Kreuz%20mit%20Maria%2C%20Johannes%20und%20Maria%20Magdalena%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2256%20%28without%20frame%29.jpg?width=400",
-      "title": "The crucifixion",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Carl%20Spitzweg%20%281808-1885%29%20-%20M%C3%B6nch%20vor%20dem%20Haus%2C%20g%C3%A4hnender%20Einsiedler%20-%200378%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Carl%20Spitzweg%20%281808-1885%29%20-%20M%C3%B6nch%20vor%20dem%20Haus%2C%20g%C3%A4hnender%20Einsiedler%20-%200378%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Gardening monk in a small court-yard",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Darbringung%20Jesu%20im%20Tempel%2C%20um%201330%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200005%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Darbringung%20Jesu%20im%20Tempel%2C%20um%201330%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200005%29.jpg?width=400",
-      "title": "Presentation in the temple",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Arnold%20B%C3%B6cklin%20-%20Germanen%20auf%20Eberjagd.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Arnold%20B%C3%B6cklin%20-%20Germanen%20auf%20Eberjagd.jpg?width=400",
+      "title": "Germanen auf der Eberjagd",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Lovis%20Corinth%20Kreuzabnahme%201895.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Lovis%20Corinth%20Kreuzabnahme%201895.jpg?width=400",
-      "title": "Descent from the Cross",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eduard%20d.%20%C3%84.%20Schleich%20%281812-1874%29%20-%20Venedig%20bei%20Nacht%20-%200804%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eduard%20d.%20%C3%84.%20Schleich%20%281812-1874%29%20-%20Venedig%20bei%20Nacht%20-%200804%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Moon-light at the River in Venice",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/14th-century%20unknown%20painters%20-%20St%20Elizabeth%20Clothes%20the%20Poor%20and%20Tends%20the%20Sick%20-%20WGA23723.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/14th-century%20unknown%20painters%20-%20St%20Elizabeth%20Clothes%20the%20Poor%20and%20Tends%20the%20Sick%20-%20WGA23723.jpg?width=400",
-      "title": "St Elizabeth Clothes the Poor and Tends the Sick",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20von%20Amerling%20%281803-1887%29%20-%20Italienerin%20mit%20schwarzem%20Schleier%20-%200848%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20von%20Amerling%20%281803-1887%29%20-%20Italienerin%20mit%20schwarzem%20Schleier%20-%200848%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Portr. of a young lady with veil",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Museum%20der%20Museen.%20Eine%20Zeitreise%20durch%20die%20Kunst%20des%20Ausstellens%20und%20Sehens%20-R%C3%BCckkehr%20der%20Heiligen%20Familie%20aus%20%C3%84gypten%20mit%20einem%20Benediktinerabt%20als%20Stifter%2C%20Meister%20des%20Aachener%20Altars-7466%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Museum%20der%20Museen.%20Eine%20Zeitreise%20durch%20die%20Kunst%20des%20Ausstellens%20und%20Sehens%20-R%C3%BCckkehr%20der%20Heiligen%20Familie%20aus%20%C3%84gypten%20mit%20einem%20Benediktinerabt%20als%20Stifter%2C%20Meister%20des%20Aachener%20Altars-7466%20%28cropped%29.jpg?width=400",
-      "title": "Rückkehr der Heiligen Familie aus Ägypten mit einem Benediktinerabt als Stifter",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Moritz%20von%20Schwind%20%281804-1871%29%20-%20R%C3%BCbezahl%20-%201138%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Moritz%20von%20Schwind%20%281804-1871%29%20-%20R%C3%BCbezahl%20-%201138%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "\"Rübezahl\"",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Marienaltars-%20Verk%C3%BCndigung%20%28linker%20Fl%C3%BCgel%29%2C%20Darbringung%20Jesu%20im%20Tempel%20%28rechter%20Fl%C3%BCgel%29%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2202.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Marienaltars-%20Verk%C3%BCndigung%20%28linker%20Fl%C3%BCgel%29%2C%20Darbringung%20Jesu%20im%20Tempel%20%28rechter%20Fl%C3%BCgel%29%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2202.jpg?width=400",
-      "title": "part of a Marian altar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hercules%20Seghers%20-%20View%20of%20Brussels%20from%20the%20North-East%20-%20WGA21143.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hercules%20Seghers%20-%20View%20of%20Brussels%20from%20the%20North-East%20-%20WGA21143.jpg?width=400",
+      "title": "View of Brussels from the Northeast",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Verdammten%20-%20Colijn%20de%20Coter%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2295%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Verdammten%20-%20Colijn%20de%20Coter%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2295%20%28cropped%29.jpg?width=400",
-      "title": "Last Judgement: The Damned in Hell",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Alfred%20Rethel%20%281816-1859%29%20-%20Der%20Evangelist%20Lucas%20mit%20dem%20Stier%20-%202334%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Alfred%20Rethel%20%281816-1859%29%20-%20Der%20Evangelist%20Lucas%20mit%20dem%20Stier%20-%202334%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "the evangelist Lukas with his attributs",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fritz%20von%20Uhde%20-%20Die%20drei%20T%C3%B6chter%20des%20K%C3%BCnstlers%20im%20Garten%20%28ca.1900%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fritz%20von%20Uhde%20-%20Die%20drei%20T%C3%B6chter%20des%20K%C3%BCnstlers%20im%20Garten%20%28ca.1900%29.jpg?width=400",
-      "title": "The three daughters of the artist in the garden",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20Wilhelm%20Pfeiffer%20%281822-1891%29%20-%20Zigeunerlager%20mit%20Planwagen%20im%20Vordergrund%20-%202484%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20Wilhelm%20Pfeiffer%20%281822-1891%29%20-%20Zigeunerlager%20mit%20Planwagen%20im%20Vordergrund%20-%202484%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Zigeunerlager mit Planwagen im Vordergrund",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Aertsen%20-%20Market%20Scene%20-%20WGA0062.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Aertsen%20-%20Market%20Scene%20-%20WGA0062.jpg?width=400",
-      "title": "Market scene",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Johann%20Georg%20Hiltensperger%20%281806-1890%29%20-%20Die%20Nymphe%20Calypso%20-%202464%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Johann%20Georg%20Hiltensperger%20%281806-1890%29%20-%20Die%20Nymphe%20Calypso%20-%202464%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "The nymph Calypso, (female figure at the sea-shore = wurde gestrichen)",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelalt%C3%A4rchen%20mit%20Kreuzigung%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2204.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelalt%C3%A4rchen%20mit%20Kreuzigung%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2204.jpg?width=400",
-      "title": "Winged Altarpiece",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hubert%20gen.%20Robert%20des%20Ruines%20Robert%20%281733-1808%29%20-%20Architekturst%C3%BCck%20mit%20Staffage%20-%202900%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hubert%20gen.%20Robert%20des%20Ruines%20Robert%20%281733-1808%29%20-%20Architekturst%C3%BCck%20mit%20Staffage%20-%202900%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "arohitektur with five persones",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gei%C3%9Felung%20Christi%2C%20Dornenkr%C3%B6nung%20-%20Meister%20des%20Heisterbacher%20Altars%20-%20Wallraf-Richartz-Museum-2241%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gei%C3%9Felung%20Christi%2C%20Dornenkr%C3%B6nung%20-%20Meister%20des%20Heisterbacher%20Altars%20-%20Wallraf-Richartz-Museum-2241%20%28cropped%29.jpg?width=400",
-      "title": "The Flagellation of Christ",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartholom%C3%A4us%20d.%20%C3%84.%20Bruyn%20%281493-1555%29%20-%20Bildnis%20eines%20Mannes%20von%2038%20Jahren%20mit%20pelzbesetztem%20Mantel%20-%202967%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartholom%C3%A4us%20d.%20%C3%84.%20Bruyn%20%281493-1555%29%20-%20Bildnis%20eines%20Mannes%20von%2038%20Jahren%20mit%20pelzbesetztem%20Mantel%20-%202967%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Man's portrait with armour, rear: child wifh skull",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Timmermann%20-%20S%C3%BCndenfall%20und%20Erl%C3%B6sung%20%28ca.1540%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Timmermann%20-%20S%C3%BCndenfall%20und%20Erl%C3%B6sung%20%28ca.1540%29.jpg?width=400",
-      "title": "Law and Grace",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Michiel%20Sweerts%20%281626-1656%29%20-%20Trinker%20mit%20Weinglas%2C%20in%20der%20anderen%20Hand%20ein%20Notenblatt%20haltend%20-%202966%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Michiel%20Sweerts%20%281626-1656%29%20-%20Trinker%20mit%20Weinglas%2C%20in%20der%20anderen%20Hand%20ein%20Notenblatt%20haltend%20-%202966%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Musician with a wine-glass",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/16th-century%20unknown%20painters%20-%20Adoration%20of%20the%20Magi%20-%20WGA23614.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/16th-century%20unknown%20painters%20-%20Adoration%20of%20the%20Magi%20-%20WGA23614.jpg?width=400",
-      "title": "Anbetung der Könige",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%2C%20Bord%20de%20mer%20avec%20arbres%2C%20Anonyme%2C%20MNR%208.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%2C%20Bord%20de%20mer%20avec%20arbres%2C%20Anonyme%2C%20MNR%208.jpg?width=400",
+      "title": "Landschaft. Meeresufer mit Bäumen",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/George%20Flegel%20-%20Stilleben%20mit%20einem%20Hirschk%C3%A4fer%20%281635%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/George%20Flegel%20-%20Stilleben%20mit%20einem%20Hirschk%C3%A4fer%20%281635%29.jpg?width=400",
-      "title": "Still Life with Stag Beetle",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1879%20Morisot%20Boote%20auf%20der%20Seine%20anagoria.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1879%20Morisot%20Boote%20auf%20der%20Seine%20anagoria.jpg?width=400",
+      "title": "Boats on the River Seine",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gewitter%20am%20Tempelhofer%20Berg%20%281846%29%20-%20Adolf%20Friedrich%20Erdmann%20von%20Menzel%20%28Wallraff-Richartz%20Museum%2C%20K%C3%B6ln%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gewitter%20am%20Tempelhofer%20Berg%20%281846%29%20-%20Adolf%20Friedrich%20Erdmann%20von%20Menzel%20%28Wallraff-Richartz%20Museum%2C%20K%C3%B6ln%29.jpg?width=400",
-      "title": "Thunder on mount Tempelhof",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Don%20Quichote%2C%20Adolph%20Schroedter%20%28WRM%201305%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Don%20Quichote%2C%20Adolph%20Schroedter%20%28WRM%201305%29.jpg?width=400",
+      "title": "Don Quichote",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ecce%20homo%20-%20Bartholom%C3%A4us%20Bruyn%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum-2335.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ecce%20homo%20-%20Bartholom%C3%A4us%20Bruyn%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum-2335.jpg?width=400",
-      "title": "Abschied Christi von seiner Mutter",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fran%C3%A7ois%20Boucher%2C%20Ruhendes%20M%C3%A4dchen%20%281751%2C%20Wallraf-Richartz%20Museum%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fran%C3%A7ois%20Boucher%2C%20Ruhendes%20M%C3%A4dchen%20%281751%2C%20Wallraf-Richartz%20Museum%29.jpg?width=400",
+      "title": "Reclining Girl",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Lucia%20von%20Kreps%20im%20Alter%20von%205%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%201571%2C%20HM%201940%20132%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Lucia%20von%20Kreps%20im%20Alter%20von%205%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%201571%2C%20HM%201940%20132%29.jpg?width=400",
-      "title": "Portrait of  Catharina Lucia von Kreps (1653-1699)",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20plaine%20de%20Gennevilliers%2C%20Champs%20jaune%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6024%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20plaine%20de%20Gennevilliers%2C%20Champs%20jaune%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6024%20%28without%20frame%29.jpg?width=400",
+      "title": "The Yellow Fields at Gennevilliers",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20des%20Herwin%20von%20Kreps%20im%20Alter%20von%203%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%202308%2C%20HM%201940%20229%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20des%20Herwin%20von%20Kreps%20im%20Alter%20von%203%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%202308%2C%20HM%201940%20229%29.jpg?width=400",
-      "title": "Portrait of Herwin von Kreps",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacopo%20Robusti%20gen.%20Tintoretto%20%281518-1594%29%20-%20Grablegung%20Christi%20%28Beweinung%20Christi%29%20-%201916%20-%20F%C3%BChrermuseum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacopo%20Robusti%20gen.%20Tintoretto%20%281518-1594%29%20-%20Grablegung%20Christi%20%28Beweinung%20Christi%29%20-%201916%20-%20F%C3%BChrermuseum.jpg?width=400",
+      "title": "Entombment of Christ",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Juriaen%20van%20Streeck%20-%20Still-Life%20-%20WGA21880.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Juriaen%20van%20Streeck%20-%20Still-Life%20-%20WGA21880.jpg?width=400",
-      "title": "Still life with a Chinese lidded jar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Domenico%20di%20Michelino%20%281417%20-%2018.4.1491%29%20-%20The%20Virgin%20and%20Child%20-%201090%20-%20Gem%C3%A4ldegalerie.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Domenico%20di%20Michelino%20%281417%20-%2018.4.1491%29%20-%20The%20Virgin%20and%20Child%20-%201090%20-%20Gem%C3%A4ldegalerie.jpg?width=400",
+      "title": "Madonna and Child",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20dem%20Kind%20im%20Gr%C3%BCnen.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20dem%20Kind%20im%20Gr%C3%BCnen.jpg?width=400",
-      "title": "Virgin and Child in a garden",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Stilleben%20mit%20Keramikkrug%2C%20Flasche%20und%20Fr%C3%BCchten%2C%20Rudolf%20Levy%2C%20Thesing%2022.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Stilleben%20mit%20Keramikkrug%2C%20Flasche%20und%20Fr%C3%BCchten%2C%20Rudolf%20Levy%2C%20Thesing%2022.jpg?width=400",
+      "title": "Stilleben mit Keramikkrug, Flasche und Früchten",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29.jpg?width=400",
-      "title": "Thomas-Altar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/El%20jubileo%20de%20la%20Porci%C3%BAncula%20%28Wallraf-Richartz%20Museum%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/El%20jubileo%20de%20la%20Porci%C3%BAncula%20%28Wallraf-Richartz%20Museum%29.jpg?width=400",
+      "title": "The Jubilee of the Porziuncola",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20rechts.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20rechts.jpg?width=400",
-      "title": "Thomas-Altar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maerten%20van%20Heemskerck%20-%20Venus%20en%20Amor%201545.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maerten%20van%20Heemskerck%20-%20Venus%20en%20Amor%201545.jpg?width=400",
+      "title": "Venus and Cupid",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20links.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20links.jpg?width=400",
-      "title": "Thomas-Altar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20ghirlandaio%2C%20madonna%20in%20trono%20e%20santi%2C%201480%20ca.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20ghirlandaio%2C%20madonna%20in%20trono%20e%20santi%2C%201480%20ca.jpg?width=400",
+      "title": "The Virgin with Blessing Child Enthroned and Saints",
       "source": "wallraf_richartz",
       "tags": [
         "shadow"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20seated%20lady%20with%20roses%2C%20wearing%20a%20medal%20by%20Anthony%20van%20Dyck.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20seated%20lady%20with%20roses%2C%20wearing%20a%20medal%20by%20Anthony%20van%20Dyck.jpg?width=400",
-      "title": "Portrait of a seated lady with roses, wearing a medal",
-      "source": "wallraf_richartz",
-      "tags": [
-        "color"
       ]
     },
     {
@@ -1931,246 +2228,237 @@
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Abraham%20Mignon%20-%20Still-Life%20-%20WGA15664.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Abraham%20Mignon%20-%20Still-Life%20-%20WGA15664.jpg?width=400",
-      "title": "Still Life with Fruit",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Die%20Br%C3%BCcke%20von%20Langlois%20in%20Arles%20mit%20Dame%20mit%20Regenschirm.jpeg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Die%20Br%C3%BCcke%20von%20Langlois%20in%20Arles%20mit%20Dame%20mit%20Regenschirm.jpeg?width=400",
+      "title": "Langlois Bridge at Arles",
       "source": "wallraf_richartz",
       "tags": [
         "pattern"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Steinhausen%20Selbstbildnis%20des%20Malers%20mit%20seiner%20Frau.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Wilhelm%20Steinhausen%20Selbstbildnis%20des%20Malers%20mit%20seiner%20Frau.jpg?width=400",
-      "title": "Self-Portrait of the Painter with his Wife",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200264.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kopf%20eines%20Propheten%20aus%20dem%20Hansasaal%20des%20Rathauses%20in%20K%C3%B6ln%2C%20WRM%20Dep.%200264.jpg?width=400",
+      "title": "Kopf eines Propheten aus dem Hansasaal des Rathauses in Köln",
       "source": "wallraf_richartz",
       "tags": [
         "pattern"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20Thoma%20%281839-1924%29%20-%20H%C3%BCgellandschaft%20mit%20K%C3%BChen%20und%20Wasser%20-%200121%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20Thoma%20%281839-1924%29%20-%20H%C3%BCgellandschaft%20mit%20K%C3%BChen%20und%20Wasser%20-%200121%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Hügellandschaft mit Kühen und Wasser",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Wehrdener%20Kalvarienberg%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2200%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Wehrdener%20Kalvarienberg%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2200%20%28cropped%29.jpg?width=400",
+      "title": "The crucifixion",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ferdinand%20Schmalzigang%20%281847-1902%29%20-%20Schafe%20vor%20dem%20Stall%20-%200129%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ferdinand%20Schmalzigang%20%281847-1902%29%20-%20Schafe%20vor%20dem%20Stall%20-%200129%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "sheep in front of the stable",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20Kreuz%20mit%20Maria%2C%20Johannes%20und%20Maria%20Magdalena%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2256%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20Kreuz%20mit%20Maria%2C%20Johannes%20und%20Maria%20Magdalena%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2256%20%28without%20frame%29.jpg?width=400",
+      "title": "The crucifixion",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Carl%20Spitzweg%20%281808-1885%29%20-%20M%C3%B6nch%20vor%20dem%20Haus%2C%20g%C3%A4hnender%20Einsiedler%20-%200378%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Carl%20Spitzweg%20%281808-1885%29%20-%20M%C3%B6nch%20vor%20dem%20Haus%2C%20g%C3%A4hnender%20Einsiedler%20-%200378%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Gardening monk in a small court-yard",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Darbringung%20Jesu%20im%20Tempel%2C%20um%201330%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200005%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Darbringung%20Jesu%20im%20Tempel%2C%20um%201330%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200005%29.jpg?width=400",
+      "title": "Presentation in the temple",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Arnold%20B%C3%B6cklin%20-%20Germanen%20auf%20Eberjagd.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Arnold%20B%C3%B6cklin%20-%20Germanen%20auf%20Eberjagd.jpg?width=400",
-      "title": "Germanen auf der Eberjagd",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Lovis%20Corinth%20Kreuzabnahme%201895.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Lovis%20Corinth%20Kreuzabnahme%201895.jpg?width=400",
+      "title": "Descent from the Cross",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eduard%20d.%20%C3%84.%20Schleich%20%281812-1874%29%20-%20Venedig%20bei%20Nacht%20-%200804%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eduard%20d.%20%C3%84.%20Schleich%20%281812-1874%29%20-%20Venedig%20bei%20Nacht%20-%200804%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Moon-light at the River in Venice",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/14th-century%20unknown%20painters%20-%20St%20Elizabeth%20Clothes%20the%20Poor%20and%20Tends%20the%20Sick%20-%20WGA23723.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/14th-century%20unknown%20painters%20-%20St%20Elizabeth%20Clothes%20the%20Poor%20and%20Tends%20the%20Sick%20-%20WGA23723.jpg?width=400",
+      "title": "St Elizabeth Clothes the Poor and Tends the Sick",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20von%20Amerling%20%281803-1887%29%20-%20Italienerin%20mit%20schwarzem%20Schleier%20-%200848%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20von%20Amerling%20%281803-1887%29%20-%20Italienerin%20mit%20schwarzem%20Schleier%20-%200848%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Portr. of a young lady with veil",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Museum%20der%20Museen.%20Eine%20Zeitreise%20durch%20die%20Kunst%20des%20Ausstellens%20und%20Sehens%20-R%C3%BCckkehr%20der%20Heiligen%20Familie%20aus%20%C3%84gypten%20mit%20einem%20Benediktinerabt%20als%20Stifter%2C%20Meister%20des%20Aachener%20Altars-7466%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Museum%20der%20Museen.%20Eine%20Zeitreise%20durch%20die%20Kunst%20des%20Ausstellens%20und%20Sehens%20-R%C3%BCckkehr%20der%20Heiligen%20Familie%20aus%20%C3%84gypten%20mit%20einem%20Benediktinerabt%20als%20Stifter%2C%20Meister%20des%20Aachener%20Altars-7466%20%28cropped%29.jpg?width=400",
+      "title": "Rückkehr der Heiligen Familie aus Ägypten mit einem Benediktinerabt als Stifter",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Moritz%20von%20Schwind%20%281804-1871%29%20-%20R%C3%BCbezahl%20-%201138%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Moritz%20von%20Schwind%20%281804-1871%29%20-%20R%C3%BCbezahl%20-%201138%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "\"Rübezahl\"",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Marienaltars-%20Verk%C3%BCndigung%20%28linker%20Fl%C3%BCgel%29%2C%20Darbringung%20Jesu%20im%20Tempel%20%28rechter%20Fl%C3%BCgel%29%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2202.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Marienaltars-%20Verk%C3%BCndigung%20%28linker%20Fl%C3%BCgel%29%2C%20Darbringung%20Jesu%20im%20Tempel%20%28rechter%20Fl%C3%BCgel%29%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2202.jpg?width=400",
+      "title": "part of a Marian altar",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hercules%20Seghers%20-%20View%20of%20Brussels%20from%20the%20North-East%20-%20WGA21143.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hercules%20Seghers%20-%20View%20of%20Brussels%20from%20the%20North-East%20-%20WGA21143.jpg?width=400",
-      "title": "View of Brussels from the Northeast",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Verdammten%20-%20Colijn%20de%20Coter%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2295%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Verdammten%20-%20Colijn%20de%20Coter%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2295%20%28cropped%29.jpg?width=400",
+      "title": "Last Judgement: The Damned in Hell",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Alfred%20Rethel%20%281816-1859%29%20-%20Der%20Evangelist%20Lucas%20mit%20dem%20Stier%20-%202334%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Alfred%20Rethel%20%281816-1859%29%20-%20Der%20Evangelist%20Lucas%20mit%20dem%20Stier%20-%202334%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "the evangelist Lukas with his attributs",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fritz%20von%20Uhde%20-%20Die%20drei%20T%C3%B6chter%20des%20K%C3%BCnstlers%20im%20Garten%20%28ca.1900%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fritz%20von%20Uhde%20-%20Die%20drei%20T%C3%B6chter%20des%20K%C3%BCnstlers%20im%20Garten%20%28ca.1900%29.jpg?width=400",
+      "title": "The three daughters of the artist in the garden",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20Wilhelm%20Pfeiffer%20%281822-1891%29%20-%20Zigeunerlager%20mit%20Planwagen%20im%20Vordergrund%20-%202484%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Friedrich%20Wilhelm%20Pfeiffer%20%281822-1891%29%20-%20Zigeunerlager%20mit%20Planwagen%20im%20Vordergrund%20-%202484%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Zigeunerlager mit Planwagen im Vordergrund",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Aertsen%20-%20Market%20Scene%20-%20WGA0062.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Pieter%20Aertsen%20-%20Market%20Scene%20-%20WGA0062.jpg?width=400",
+      "title": "Market scene",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Johann%20Georg%20Hiltensperger%20%281806-1890%29%20-%20Die%20Nymphe%20Calypso%20-%202464%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Johann%20Georg%20Hiltensperger%20%281806-1890%29%20-%20Die%20Nymphe%20Calypso%20-%202464%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "The nymph Calypso, (female figure at the sea-shore = wurde gestrichen)",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelalt%C3%A4rchen%20mit%20Kreuzigung%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2204.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelalt%C3%A4rchen%20mit%20Kreuzigung%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2204.jpg?width=400",
+      "title": "Winged Altarpiece",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hubert%20gen.%20Robert%20des%20Ruines%20Robert%20%281733-1808%29%20-%20Architekturst%C3%BCck%20mit%20Staffage%20-%202900%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hubert%20gen.%20Robert%20des%20Ruines%20Robert%20%281733-1808%29%20-%20Architekturst%C3%BCck%20mit%20Staffage%20-%202900%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "arohitektur with five persones",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gei%C3%9Felung%20Christi%2C%20Dornenkr%C3%B6nung%20-%20Meister%20des%20Heisterbacher%20Altars%20-%20Wallraf-Richartz-Museum-2241%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gei%C3%9Felung%20Christi%2C%20Dornenkr%C3%B6nung%20-%20Meister%20des%20Heisterbacher%20Altars%20-%20Wallraf-Richartz-Museum-2241%20%28cropped%29.jpg?width=400",
+      "title": "The Flagellation of Christ",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartholom%C3%A4us%20d.%20%C3%84.%20Bruyn%20%281493-1555%29%20-%20Bildnis%20eines%20Mannes%20von%2038%20Jahren%20mit%20pelzbesetztem%20Mantel%20-%202967%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bartholom%C3%A4us%20d.%20%C3%84.%20Bruyn%20%281493-1555%29%20-%20Bildnis%20eines%20Mannes%20von%2038%20Jahren%20mit%20pelzbesetztem%20Mantel%20-%202967%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Man's portrait with armour, rear: child wifh skull",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Timmermann%20-%20S%C3%BCndenfall%20und%20Erl%C3%B6sung%20%28ca.1540%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Timmermann%20-%20S%C3%BCndenfall%20und%20Erl%C3%B6sung%20%28ca.1540%29.jpg?width=400",
+      "title": "Law and Grace",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Michiel%20Sweerts%20%281626-1656%29%20-%20Trinker%20mit%20Weinglas%2C%20in%20der%20anderen%20Hand%20ein%20Notenblatt%20haltend%20-%202966%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Michiel%20Sweerts%20%281626-1656%29%20-%20Trinker%20mit%20Weinglas%2C%20in%20der%20anderen%20Hand%20ein%20Notenblatt%20haltend%20-%202966%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Musician with a wine-glass",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/16th-century%20unknown%20painters%20-%20Adoration%20of%20the%20Magi%20-%20WGA23614.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/16th-century%20unknown%20painters%20-%20Adoration%20of%20the%20Magi%20-%20WGA23614.jpg?width=400",
+      "title": "Anbetung der Könige",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%2C%20Bord%20de%20mer%20avec%20arbres%2C%20Anonyme%2C%20MNR%208.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paysage%2C%20Bord%20de%20mer%20avec%20arbres%2C%20Anonyme%2C%20MNR%208.jpg?width=400",
-      "title": "Landschaft. Meeresufer mit Bäumen",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/George%20Flegel%20-%20Stilleben%20mit%20einem%20Hirschk%C3%A4fer%20%281635%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/George%20Flegel%20-%20Stilleben%20mit%20einem%20Hirschk%C3%A4fer%20%281635%29.jpg?width=400",
+      "title": "Still Life with Stag Beetle",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1879%20Morisot%20Boote%20auf%20der%20Seine%20anagoria.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1879%20Morisot%20Boote%20auf%20der%20Seine%20anagoria.jpg?width=400",
-      "title": "Boats on the River Seine",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gewitter%20am%20Tempelhofer%20Berg%20%281846%29%20-%20Adolf%20Friedrich%20Erdmann%20von%20Menzel%20%28Wallraff-Richartz%20Museum%2C%20K%C3%B6ln%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gewitter%20am%20Tempelhofer%20Berg%20%281846%29%20-%20Adolf%20Friedrich%20Erdmann%20von%20Menzel%20%28Wallraff-Richartz%20Museum%2C%20K%C3%B6ln%29.jpg?width=400",
+      "title": "Thunder on mount Tempelhof",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Don%20Quichote%2C%20Adolph%20Schroedter%20%28WRM%201305%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Don%20Quichote%2C%20Adolph%20Schroedter%20%28WRM%201305%29.jpg?width=400",
-      "title": "Don Quichote",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ecce%20homo%20-%20Bartholom%C3%A4us%20Bruyn%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum-2335.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ecce%20homo%20-%20Bartholom%C3%A4us%20Bruyn%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum-2335.jpg?width=400",
+      "title": "Abschied Christi von seiner Mutter",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fran%C3%A7ois%20Boucher%2C%20Ruhendes%20M%C3%A4dchen%20%281751%2C%20Wallraf-Richartz%20Museum%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fran%C3%A7ois%20Boucher%2C%20Ruhendes%20M%C3%A4dchen%20%281751%2C%20Wallraf-Richartz%20Museum%29.jpg?width=400",
-      "title": "Reclining Girl",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Lucia%20von%20Kreps%20im%20Alter%20von%205%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%201571%2C%20HM%201940%20132%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Lucia%20von%20Kreps%20im%20Alter%20von%205%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%201571%2C%20HM%201940%20132%29.jpg?width=400",
+      "title": "Portrait of  Catharina Lucia von Kreps (1653-1699)",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20plaine%20de%20Gennevilliers%2C%20Champs%20jaune%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6024%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20plaine%20de%20Gennevilliers%2C%20Champs%20jaune%20-%20Gustave%20Caillebotte%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6024%20%28without%20frame%29.jpg?width=400",
-      "title": "The Yellow Fields at Gennevilliers",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20des%20Herwin%20von%20Kreps%20im%20Alter%20von%203%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%202308%2C%20HM%201940%20229%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20des%20Herwin%20von%20Kreps%20im%20Alter%20von%203%20Jahren%2C%20Christiaen%20Gillisz.%20van%20Couwenbergh%20%28WRM%202308%2C%20HM%201940%20229%29.jpg?width=400",
+      "title": "Portrait of Herwin von Kreps",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacopo%20Robusti%20gen.%20Tintoretto%20%281518-1594%29%20-%20Grablegung%20Christi%20%28Beweinung%20Christi%29%20-%201916%20-%20F%C3%BChrermuseum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacopo%20Robusti%20gen.%20Tintoretto%20%281518-1594%29%20-%20Grablegung%20Christi%20%28Beweinung%20Christi%29%20-%201916%20-%20F%C3%BChrermuseum.jpg?width=400",
-      "title": "Entombment of Christ",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Juriaen%20van%20Streeck%20-%20Still-Life%20-%20WGA21880.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Juriaen%20van%20Streeck%20-%20Still-Life%20-%20WGA21880.jpg?width=400",
+      "title": "Still life with a Chinese lidded jar",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Domenico%20di%20Michelino%20%281417%20-%2018.4.1491%29%20-%20The%20Virgin%20and%20Child%20-%201090%20-%20Gem%C3%A4ldegalerie.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Domenico%20di%20Michelino%20%281417%20-%2018.4.1491%29%20-%20The%20Virgin%20and%20Child%20-%201090%20-%20Gem%C3%A4ldegalerie.jpg?width=400",
-      "title": "Madonna and Child",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20dem%20Kind%20im%20Gr%C3%BCnen.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20dem%20Kind%20im%20Gr%C3%BCnen.jpg?width=400",
+      "title": "Virgin and Child in a garden",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Stilleben%20mit%20Keramikkrug%2C%20Flasche%20und%20Fr%C3%BCchten%2C%20Rudolf%20Levy%2C%20Thesing%2022.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Stilleben%20mit%20Keramikkrug%2C%20Flasche%20und%20Fr%C3%BCchten%2C%20Rudolf%20Levy%2C%20Thesing%2022.jpg?width=400",
-      "title": "Stilleben mit Keramikkrug, Flasche und Früchten",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29.jpg?width=400",
+      "title": "Thomas-Altar",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/El%20jubileo%20de%20la%20Porci%C3%BAncula%20%28Wallraf-Richartz%20Museum%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/El%20jubileo%20de%20la%20Porci%C3%BAncula%20%28Wallraf-Richartz%20Museum%29.jpg?width=400",
-      "title": "The Jubilee of the Porziuncola",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20rechts.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20rechts.jpg?width=400",
+      "title": "Thomas-Altar",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maerten%20van%20Heemskerck%20-%20Venus%20en%20Amor%201545.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maerten%20van%20Heemskerck%20-%20Venus%20en%20Amor%201545.jpg?width=400",
-      "title": "Venus and Cupid",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20links.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thomas-Altar%2C%20Meister%20des%20Bartholom%C3%A4us-Altars%20%28WRM%200179%29%2C%20Au%C3%9Fenseite%20links.jpg?width=400",
+      "title": "Thomas-Altar",
       "source": "wallraf_richartz",
       "tags": [
-        "modern"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20ghirlandaio%2C%20madonna%20in%20trono%20e%20santi%2C%201480%20ca.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20ghirlandaio%2C%20madonna%20in%20trono%20e%20santi%2C%201480%20ca.jpg?width=400",
-      "title": "The Virgin with Blessing Child Enthroned and Saints",
-      "source": "wallraf_richartz",
-      "tags": [
-        "modern"
+        "vintage"
       ]
     },
     {
@@ -2179,7 +2467,664 @@
       "title": "Dream of the Pharaoh",
       "source": "wallraf_richartz",
       "tags": [
-        "water"
+        "vintage"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Wachtstube%20wrm%201001%2001.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Wachtstube%20wrm%201001%2001.jpg?width=400",
+      "title": "Guardroom",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20101%20WGA%20version.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20101%20WGA%20version.jpg?width=400",
+      "title": "Portrait of a man, probably Nicolaes Noppen",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20102%20WGA%20version.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20102%20WGA%20version.jpg?width=400",
+      "title": "Portrait of a woman, possibly Cornelia van der Meer",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Kessel%20%281641-1680%29%20-%20Ruined%20stone%20bridge.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Kessel%20%281641-1680%29%20-%20Ruined%20stone%20bridge.jpg?width=400",
+      "title": "A Broken Stone Bridge near a Castle",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Aachen%20Selbstbildnis.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Aachen%20Selbstbildnis.jpg?width=400",
+      "title": "Self-portrait of Hans von Aachen",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Four%20Girls%20on%20the%20Bridge%20-%20Edvard%20Munch%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6000%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Four%20Girls%20on%20the%20Bridge%20-%20Edvard%20Munch%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6000%20%28without%20frame%29.jpg?width=400",
+      "title": "Four Girls on the Bridge",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Pl%C3%B8yemark%20%28Ploughed%20Field%29%2C%20lot.63.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Pl%C3%B8yemark%20%28Ploughed%20Field%29%2C%20lot.63.jpg?width=400",
+      "title": "Ploughed Field",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Asgardstrand%2C%201888-1890%2C%20Dep.%200718%20FC%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Asgardstrand%2C%201888-1890%2C%20Dep.%200718%20FC%20%28cropped%29.jpg?width=400",
+      "title": "Beach Landscape",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Juno%20and%20Argus%20-%20WGA20280.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Juno%20and%20Argus%20-%20WGA20280.jpg?width=400",
+      "title": "Juno and Argus",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Po%C3%A9sie%20-%20Jean-Baptiste%20Camille%20Corot%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8527%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Po%C3%A9sie%20-%20Jean-Baptiste%20Camille%20Corot%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8527%20%28without%20frame%29.jpg?width=400",
+      "title": "Poetry'",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Goyen%20-%20River%20Scene%20-%20WGA10197.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Goyen%20-%20River%20Scene%20-%20WGA10197.jpg?width=400",
+      "title": "River Scene",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Edouard%20Manet%20Bunch%20of%20Asparagus.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Edouard%20Manet%20Bunch%20of%20Asparagus.jpg?width=400",
+      "title": "A Bundle of Asparagus",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eisvergn%C3%BCgen%20vor%20einem%20Br%C3%BCckenturm%2C%20Jan%20van%20Goyen.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eisvergn%C3%BCgen%20vor%20einem%20Br%C3%BCckenturm%2C%20Jan%20van%20Goyen.jpg?width=400",
+      "title": "Iceskating before a City Gatehouse",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20029.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20029.jpg?width=400",
+      "title": "Jabach Altarpiece",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20044.png",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20044.png?width=400",
+      "title": "Jabach Altarpiece",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20043.png",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20043.png?width=400",
+      "title": "Jabach Altarpiece",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jarbach%20Altarpiece%2001.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jarbach%20Altarpiece%2001.jpg?width=400",
+      "title": "Jabach Altarpiece",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Kreuz%20an%20der%20Ostsee%20%28Wallraf-Richartz-Museum%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Kreuz%20an%20der%20Ostsee%20%28Wallraf-Richartz-Museum%29.jpg?width=400",
+      "title": "The Cross Beside The Baltic",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/H%C3%A9rodiade%20-%20Paul%20Delaroche%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6067%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/H%C3%A9rodiade%20-%20Paul%20Delaroche%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6067%20%28without%20frame%29.jpg?width=400",
+      "title": "Herodias with the Head of St. John the Baptist",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%2C%20Dutch%20%28active%20Leiden%20and%20Amsterdam%29%20-%20Christ%20Crucified%20between%20Two%20Thieves%20%28The%20Three%20Crosses%29%20-%20Google%20Art%20Project.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%2C%20Dutch%20%28active%20Leiden%20and%20Amsterdam%29%20-%20Christ%20Crucified%20between%20Two%20Thieves%20%28The%20Three%20Crosses%29%20-%20Google%20Art%20Project.jpg?width=400",
+      "title": "The Three Crosses",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Isaac%20van%20Ostade%20-%20Farmhouse%20Interior%20-%20WGA16760.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Isaac%20van%20Ostade%20-%20Farmhouse%20Interior%20-%20WGA16760.jpg?width=400",
+      "title": "Farmhouse Interior",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Isaacksz.%20van%20Ruisdael%20-%20Waterfall%20by%20a%20Church%20-%20WGA20508.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Isaacksz.%20van%20Ruisdael%20-%20Waterfall%20by%20a%20Church%20-%20WGA20508.jpg?width=400",
+      "title": "A Waterfall with church and trees",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Aelbert%20Cuyp%20-%20Dordrecht%20Harbor%20by%20Moonlight%204168.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Aelbert%20Cuyp%20-%20Dordrecht%20Harbor%20by%20Moonlight%204168.jpg?width=400",
+      "title": "Dordrecht Harbor by Moonlight",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Bauernhaus%20mit%20B%C3%A4umen.jpeg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Bauernhaus%20mit%20B%C3%A4umen.jpeg?width=400",
+      "title": "Cottage with Trees",
+      "source": "wallraf_richartz",
+      "tags": [
+        "modern"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Blumenstilleben%20in%20einer%20Nische%20-%20Roelant%20Savery%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0176%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Blumenstilleben%20in%20einer%20Nische%20-%20Roelant%20Savery%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0176%20%28without%20frame%29.jpg?width=400",
+      "title": "Day Lily and other Flowers in a Vase in a Niche",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eiche%20im%20Schnee%20-%20Caspar%20David%20Friedrich.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eiche%20im%20Schnee%20-%20Caspar%20David%20Friedrich.jpg?width=400",
+      "title": "Oak in the Snow",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Flussufer%20im%20Nebel%20-%20Wallraf-Richartz-Museum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Flussufer%20im%20Nebel%20-%20Wallraf-Richartz-Museum.jpg?width=400",
+      "title": "Ship in the early morning fog",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20S%C3%BC%C3%9F%20von%20Kulmbach%20%28zugeschr.%29%20-%20Heiliger%20Georg.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hans%20S%C3%BC%C3%9F%20von%20Kulmbach%20%28zugeschr.%29%20-%20Heiliger%20Georg.jpg?width=400",
+      "title": "Saint George and the Dragon",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20de%20l%27artiste%2C%20par%20Paul%20C%C3%A9zanne%2C%20MNR228%2C%20Mus%C3%A9e%20d%27Orsay.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20de%20l%27artiste%2C%20par%20Paul%20C%C3%A9zanne%2C%20MNR228%2C%20Mus%C3%A9e%20d%27Orsay.jpg?width=400",
+      "title": "Portrait de l'artiste (Self-portrait)",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Self-Portrait%20in%20a%20Circle%20of%20Friends%20at%20Mantua.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Self-Portrait%20in%20a%20Circle%20of%20Friends%20at%20Mantua.jpg?width=400",
+      "title": "Self-Portrait in a Circle of Friends in Mantua",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20-%20Christ%20at%20the%20Column%20Wallraf-Richartz-Museum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20-%20Christ%20at%20the%20Column%20Wallraf-Richartz-Museum.jpg?width=400",
+      "title": "Christ at the Column",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hens%20and%20Ducks%20in%20a%20Landscape%20by%20Melchior%20d%27Hondecoeter%20private%20collection.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hens%20and%20Ducks%20in%20a%20Landscape%20by%20Melchior%20d%27Hondecoeter%20private%20collection.jpg?width=400",
+      "title": "Poultry",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Snyders%20-%20Still-Life%20with%20a%20Basket%20of%20Fruit%20-%20WGA21523.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Snyders%20-%20Still-Life%20with%20a%20Basket%20of%20Fruit%20-%20WGA21523.jpg?width=400",
+      "title": "Still-Life with a Basket of Fruit, a Squirrel, and a Cat",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Luini%20Ecce%20Homo.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Luini%20Ecce%20Homo.jpg?width=400",
+      "title": "Ecce Homo",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%AAte%20de%20lionne%20-%20Th%C3%A9odore%20G%C3%A9ricault%20-%20Mus%C3%A9e%20du%20Louvre%20Peintures%20MNR%20137.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%AAte%20de%20lionne%20-%20Th%C3%A9odore%20G%C3%A9ricault%20-%20Mus%C3%A9e%20du%20Louvre%20Peintures%20MNR%20137.jpg?width=400",
+      "title": "Head of a lion",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Steen%20-%20Samson%20and%20Delilah%20-%20WGA21753.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Steen%20-%20Samson%20and%20Delilah%20-%20WGA21753.jpg?width=400",
+      "title": "Samson Mocked by the Philistines",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Meister%20der%20Heiligen%20Sippe%20%28der%20J%C3%BCngere%29.03.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Meister%20der%20Heiligen%20Sippe%20%28der%20J%C3%BCngere%29.03.jpg?width=400",
+      "title": "Sippenaltar, Mitteltafel: Die Sippe der Heiligen Jungfrau",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Courbet%20-%20The%20Hunt%20Breakfast%20-%20WGA5468.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gustave%20Courbet%20-%20The%20Hunt%20Breakfast%20-%20WGA5468.jpg?width=400",
+      "title": "The Hunt Breakfast",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20%28II%29%20-%20Portrait%20of%20a%20Young%20Man%20-%20WGA22152.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20%28II%29%20-%20Portrait%20of%20a%20Young%20Man%20-%20WGA22152.jpg?width=400",
+      "title": "Portrait of a Young Man",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Follower%20of%20Jheronimus%20Bosch%20Adoration%20of%20the%20Magi%20Cologne.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Follower%20of%20Jheronimus%20Bosch%20Adoration%20of%20the%20Magi%20Cologne.jpg?width=400",
+      "title": "Adoration of the Magi",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Camille%20Pissarro%20-%20L%C2%B4Hermitage%20%C3%A0%20Pontoise%20-%201867.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Camille%20Pissarro%20-%20L%C2%B4Hermitage%20%C3%A0%20Pontoise%20-%201867.jpg?width=400",
+      "title": "L´Hermitage à Pontoise",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eugene%20Delacroix%20-%20A%20Vase%20of%20Flowers%20-%20NG%202405%20-%20National%20Galleries%20of%20Scotland.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eugene%20Delacroix%20-%20A%20Vase%20of%20Flowers%20-%20NG%202405%20-%20National%20Galleries%20of%20Scotland.jpg?width=400",
+      "title": "A Vase of Flowers",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%20142.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%20142.jpg?width=400",
+      "title": "Self-portrait as Zeuxis Laughing",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/%27Woman%20in%20Blue%20against%20Blue%20Water%27%20by%20Edvard%20Munch%2C%201891.JPG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/%27Woman%20in%20Blue%20against%20Blue%20Water%27%20by%20Edvard%20Munch%2C%201891.JPG?width=400",
+      "title": "Woman in Blue against Blue Water",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Henry%20Ritter%20-%20Middy%27s%20Predigt%20%281853%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Henry%20Ritter%20-%20Middy%27s%20Predigt%20%281853%29.jpg?width=400",
+      "title": "Middy's sermon",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/M.%20Marziale%20-%20Christus%20en%20de%20overspelige%20vrouw%20-%20NK2275%20-%20Cultural%20Heritage%20Agency%20of%20the%20Netherlands%20Art%20Collection.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/M.%20Marziale%20-%20Christus%20en%20de%20overspelige%20vrouw%20-%20NK2275%20-%20Cultural%20Heritage%20Agency%20of%20the%20Netherlands%20Art%20Collection.jpg?width=400",
+      "title": "Christ and the adulteress (John 8:2-11)",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Adoration%20of%20the%20shepherds%2C%20by%20Gerard%20van%20Honthorst.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Adoration%20of%20the%20shepherds%2C%20by%20Gerard%20van%20Honthorst.jpg?width=400",
+      "title": "Adoration of the Shepherds",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20Dou%20-%20Old%20Woman%20with%20a%20Candle%20-%20WGA06653.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20Dou%20-%20Old%20Woman%20with%20a%20Candle%20-%20WGA06653.jpg?width=400",
+      "title": "Old Woman with a Candle",
+      "source": "wallraf_richartz",
+      "tags": [
+        "minimal"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Heraclitus.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Heraclitus.jpg?width=400",
+      "title": "The Philosoper Heraclitus",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Catharina%20van%20Hemessen%20-%20Girl%20at%20the%20Virginal.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Catharina%20van%20Hemessen%20-%20Girl%20at%20the%20Virginal.jpg?width=400",
+      "title": "Young woman playing a virginal",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/1897%20Sisley%20Langland%20Bay%20anagoria.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/1897%20Sisley%20Langland%20Bay%20anagoria.jpg?width=400",
+      "title": "Langland Bay",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/P1110631%20Wallraf%20museum%20Canaletto%20Grand%20canal%20de%20Venise%20WRM2549%20rwk.JPG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/P1110631%20Wallraf%20museum%20Canaletto%20Grand%20canal%20de%20Venise%20WRM2549%20rwk.JPG?width=400",
+      "title": "View of the Grand Canal",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Marc%2C%20Wildschweine%2C%201913%2C%20%C3%96l%20auf%20Pappe%2C%20Museum%20Ludwig.png",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Marc%2C%20Wildschweine%2C%201913%2C%20%C3%96l%20auf%20Pappe%2C%20Museum%20Ludwig.png?width=400",
+      "title": "Wild boars",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ernst-Ludwig-Kirchner-Weiblicher-Akt-mit-Hut-Museum-Ludwig.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ernst-Ludwig-Kirchner-Weiblicher-Akt-mit-Hut-Museum-Ludwig.jpg?width=400",
+      "title": "Half-Length Nude with Hat",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Antonisz%20van%20Ravesteyn%20-%20Portrait%20of%20Joannes%20de%20Ruyter%20-%201632.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Antonisz%20van%20Ravesteyn%20-%20Portrait%20of%20Joannes%20de%20Ruyter%20-%201632.jpg?width=400",
+      "title": "Joannes de Ruyter (ca. 1627-1678)",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Quinten%20Massijs%20%28I%29%20-%20John%20the%20Baptist%20and%20St%20Agnes%20-%20WGA14280.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Quinten%20Massijs%20%28I%29%20-%20John%20the%20Baptist%20and%20St%20Agnes%20-%20WGA14280.jpg?width=400",
+      "title": "John the Baptist and St Agnes",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ernst%20Ludwig%20Kirchner%20-%20Das%20Boskett%2C%20Albertplatz%20in%20Dresden.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ernst%20Ludwig%20Kirchner%20-%20Das%20Boskett%2C%20Albertplatz%20in%20Dresden.jpg?width=400",
+      "title": "Das Boskett: Albertplatz in Dresden",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Stefan%20Lochner%20Madonna%20im%20Rosenhag.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Stefan%20Lochner%20Madonna%20im%20Rosenhag.jpg?width=400",
+      "title": "Madonna of the Rose Bower",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Cuyp%2C%20Jacob%20Gerritsz.%20-%20.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Cuyp%2C%20Jacob%20Gerritsz.%20-%20.jpg?width=400",
+      "title": "Two children with a lamb",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2154%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2154%20%28cropped%29.jpg?width=400",
+      "title": "Triptych",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2155.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2155.jpg?width=400",
+      "title": "Triptych",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2156.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20der%20Heiligen%20Sippe%20-%20Meister%20der%20Heiligen%20Sippe%20der%20%C3%84ltere%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2156.jpg?width=400",
+      "title": "Triptych",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Max%20Liebermann%20-%20Die%20Rasenbleiche.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Max%20Liebermann%20-%20Die%20Rasenbleiche.jpg?width=400",
+      "title": "The Bleaching Ground",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/JacobdeGheynII-NeptuneandAmphitrite.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/JacobdeGheynII-NeptuneandAmphitrite.jpg?width=400",
+      "title": "Neptune and Amphitrite",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20van%20Honthorst%20001.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20van%20Honthorst%20001.jpg?width=400",
+      "title": "Adoration of the Shepherds",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Capo%20di%20Noli%20-%20Paul%20Signac%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6004%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Capo%20di%20Noli%20-%20Paul%20Signac%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6004%20%28without%20frame%29.jpg?width=400",
+      "title": "Capo di Noli, near Genoa",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Environs%20de%20Louveciennes%2C%201876%20-%20IMG%203565x.JPG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Environs%20de%20Louveciennes%2C%201876%20-%20IMG%203565x.JPG?width=400",
+      "title": "Neighbourhood of Louveciennes",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/J%C3%BCngstes%20Gericht%20-%20Stefan%20Lochner%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5126%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/J%C3%BCngstes%20Gericht%20-%20Stefan%20Lochner%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5126%20%28cropped%29.jpg?width=400",
+      "title": "Last Judgement",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paris%20Bordone%20-%20Bathsheba%20Bathing%20-%20WGA02456.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paris%20Bordone%20-%20Bathsheba%20Bathing%20-%20WGA02456.jpg?width=400",
+      "title": "Bathsheba Bathing",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Seine%20au%20Pont%20de%20Grenelle%20-%20Paul%20Gauguin%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8631%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Seine%20au%20Pont%20de%20Grenelle%20-%20Paul%20Gauguin%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8631%20%28without%20frame%29.jpg?width=400",
+      "title": "The Seine at Pont de Grenelle",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Monet%20w822.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Monet%20w822.jpg?width=400",
+      "title": "Hollowed Cliff near Étretat",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Vall%C3%A9e%20du%20Lot4%29.webp",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Vall%C3%A9e%20du%20Lot4%29.webp?width=400",
+      "title": "Valley of the Lot at Vers",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20scholar%2C%20possibly%20Jan%20Cornelisz.%20Sylvius%2C%20studio%20of%20Rembrandt%2C%201644%2C%20oil%20on%20canvas%2C%20127.7%20by%20104.5%20cm%2C%20Wallraf-Richartz-Museum%2C%20Cologne.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20scholar%2C%20possibly%20Jan%20Cornelisz.%20Sylvius%2C%20studio%20of%20Rembrandt%2C%201644%2C%20oil%20on%20canvas%2C%20127.7%20by%20104.5%20cm%2C%20Wallraf-Richartz-Museum%2C%20Cologne.jpg?width=400",
+      "title": "Portrait of a Scholar at his Desk (formerly called Lipsius)",
+      "source": "wallraf_richartz",
+      "tags": [
+        "urban"
       ]
     },
     {
@@ -2192,225 +3137,9 @@
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Wachtstube%20wrm%201001%2001.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerard%20ter%20Borch%20-%20Wachtstube%20wrm%201001%2001.jpg?width=400",
-      "title": "Guardroom",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20101%20WGA%20version.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20101%20WGA%20version.jpg?width=400",
-      "title": "Portrait of a man, probably Nicolaes Noppen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20102%20WGA%20version.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Hals%20102%20WGA%20version.jpg?width=400",
-      "title": "Portrait of a woman, possibly Cornelia van der Meer",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Kessel%20%281641-1680%29%20-%20Ruined%20stone%20bridge.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Kessel%20%281641-1680%29%20-%20Ruined%20stone%20bridge.jpg?width=400",
-      "title": "A Broken Stone Bridge near a Castle",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Aachen%20Selbstbildnis.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Aachen%20Selbstbildnis.jpg?width=400",
-      "title": "Self-portrait of Hans von Aachen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Four%20Girls%20on%20the%20Bridge%20-%20Edvard%20Munch%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6000%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Four%20Girls%20on%20the%20Bridge%20-%20Edvard%20Munch%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6000%20%28without%20frame%29.jpg?width=400",
-      "title": "Four Girls on the Bridge",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Pl%C3%B8yemark%20%28Ploughed%20Field%29%2C%20lot.63.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Pl%C3%B8yemark%20%28Ploughed%20Field%29%2C%20lot.63.jpg?width=400",
-      "title": "Ploughed Field",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Asgardstrand%2C%201888-1890%2C%20Dep.%200718%20FC%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Munch%20-%20Asgardstrand%2C%201888-1890%2C%20Dep.%200718%20FC%20%28cropped%29.jpg?width=400",
-      "title": "Beach Landscape",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Juno%20and%20Argus%20-%20WGA20280.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Juno%20and%20Argus%20-%20WGA20280.jpg?width=400",
-      "title": "Juno and Argus",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Po%C3%A9sie%20-%20Jean-Baptiste%20Camille%20Corot%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8527%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20Po%C3%A9sie%20-%20Jean-Baptiste%20Camille%20Corot%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8527%20%28without%20frame%29.jpg?width=400",
-      "title": "Poetry'",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Goyen%20-%20River%20Scene%20-%20WGA10197.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20van%20Goyen%20-%20River%20Scene%20-%20WGA10197.jpg?width=400",
-      "title": "River Scene",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Edouard%20Manet%20Bunch%20of%20Asparagus.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Edouard%20Manet%20Bunch%20of%20Asparagus.jpg?width=400",
-      "title": "A Bundle of Asparagus",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eisvergn%C3%BCgen%20vor%20einem%20Br%C3%BCckenturm%2C%20Jan%20van%20Goyen.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Eisvergn%C3%BCgen%20vor%20einem%20Br%C3%BCckenturm%2C%20Jan%20van%20Goyen.jpg?width=400",
-      "title": "Iceskating before a City Gatehouse",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20029.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20029.jpg?width=400",
-      "title": "Jabach Altarpiece",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20044.png",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20044.png?width=400",
-      "title": "Jabach Altarpiece",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20043.png",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Albrecht%20D%C3%BCrer%20043.png?width=400",
-      "title": "Jabach Altarpiece",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jarbach%20Altarpiece%2001.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jarbach%20Altarpiece%2001.jpg?width=400",
-      "title": "Jabach Altarpiece",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Kreuz%20an%20der%20Ostsee%20%28Wallraf-Richartz-Museum%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20David%20Friedrich%20-%20Kreuz%20an%20der%20Ostsee%20%28Wallraf-Richartz-Museum%29.jpg?width=400",
-      "title": "The Cross Beside The Baltic",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/H%C3%A9rodiade%20-%20Paul%20Delaroche%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6067%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/H%C3%A9rodiade%20-%20Paul%20Delaroche%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-6067%20%28without%20frame%29.jpg?width=400",
-      "title": "Herodias with the Head of St. John the Baptist",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%2C%20Dutch%20%28active%20Leiden%20and%20Amsterdam%29%20-%20Christ%20Crucified%20between%20Two%20Thieves%20%28The%20Three%20Crosses%29%20-%20Google%20Art%20Project.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rembrandt%20Harmensz.%20van%20Rijn%2C%20Dutch%20%28active%20Leiden%20and%20Amsterdam%29%20-%20Christ%20Crucified%20between%20Two%20Thieves%20%28The%20Three%20Crosses%29%20-%20Google%20Art%20Project.jpg?width=400",
-      "title": "The Three Crosses",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Isaac%20van%20Ostade%20-%20Farmhouse%20Interior%20-%20WGA16760.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Isaac%20van%20Ostade%20-%20Farmhouse%20Interior%20-%20WGA16760.jpg?width=400",
-      "title": "Farmhouse Interior",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Isaacksz.%20van%20Ruisdael%20-%20Waterfall%20by%20a%20Church%20-%20WGA20508.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Isaacksz.%20van%20Ruisdael%20-%20Waterfall%20by%20a%20Church%20-%20WGA20508.jpg?width=400",
-      "title": "A Waterfall with church and trees",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Aelbert%20Cuyp%20-%20Dordrecht%20Harbor%20by%20Moonlight%204168.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Aelbert%20Cuyp%20-%20Dordrecht%20Harbor%20by%20Moonlight%204168.jpg?width=400",
-      "title": "Dordrecht Harbor by Moonlight",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Bauernhaus%20mit%20B%C3%A4umen.jpeg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Bauernhaus%20mit%20B%C3%A4umen.jpeg?width=400",
-      "title": "Cottage with Trees",
-      "source": "wallraf_richartz",
-      "tags": [
-        "forest"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Die%20Br%C3%BCcke%20von%20Langlois%20in%20Arles%20mit%20Dame%20mit%20Regenschirm.jpeg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Van%20Gogh%20-%20Die%20Br%C3%BCcke%20von%20Langlois%20in%20Arles%20mit%20Dame%20mit%20Regenschirm.jpeg?width=400",
-      "title": "Langlois Bridge at Arles",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20seated%20lady%20with%20roses%2C%20wearing%20a%20medal%20by%20Anthony%20van%20Dyck.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20seated%20lady%20with%20roses%2C%20wearing%20a%20medal%20by%20Anthony%20van%20Dyck.jpg?width=400",
+      "title": "Portrait of a seated lady with roses, wearing a medal",
       "source": "wallraf_richartz",
       "tags": [
         "forest"
@@ -3371,6 +4100,15 @@
       ]
     },
     {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Italian%20Harbour%20in%20Moonlight%20-%20Jacob%20Philipp%20Hackert%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5960%20%28without%20frame%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Italian%20Harbour%20in%20Moonlight%20-%20Jacob%20Philipp%20Hackert%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5960%20%28without%20frame%29.jpg?width=400",
+      "title": "Italian Harbour in Moonlight",
+      "source": "wallraf_richartz",
+      "tags": [
+        "ceramic"
+      ]
+    },
+    {
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20Studi%20per%20l%27Adorazione%20dei%20Magi.jpg",
       "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20Studi%20per%20l%27Adorazione%20dei%20Magi.jpg?width=400",
       "title": "Figural Studies for the Adoration of the Magi",
@@ -3506,198 +4244,189 @@
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Largillierre%20La%20Soucari%C3%A8re%20Cologne.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Largillierre%20La%20Soucari%C3%A8re%20Cologne.jpg?width=400",
-      "title": "Die Marquise de Soucarières und ihr Page",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ceramic"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Piombo%2C%20Sebastiano%20del%20%28Nachahmer%29%20-%20Heilige%20Familie%20mit%20dem%20Johannesknaben%20%28nach%20S.%20del%20Piombo%29%2C%20Inv.-Nr.%20WRM%202355.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Piombo%2C%20Sebastiano%20del%20%28Nachahmer%29%20-%20Heilige%20Familie%20mit%20dem%20Johannesknaben%20%28nach%20S.%20del%20Piombo%29%2C%20Inv.-Nr.%20WRM%202355.jpg?width=400",
-      "title": "Bildnis des Johann von Jüdden",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20loge%20au%20mascaron%20dor%C3%A9%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203176%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20loge%20au%20mascaron%20dor%C3%A9%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203176%20%28cropped%29.jpg?width=400",
+      "title": "Die Loge mit der goldenen Maske",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarfragment%20mit%20der%20Heiligen%20Katharina%20-%20Meister%20der%20Georgslegende%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2254%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarfragment%20mit%20der%20Heiligen%20Katharina%20-%20Meister%20der%20Georgslegende%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2254%20%28cropped%29.jpg?width=400",
-      "title": "Engel der Verkündigung/Heilige Katharina mit Stifter und acht Söhnen",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Mademoiselle%20Marcelle%20Lender%2C%20en%20buste%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203175%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Mademoiselle%20Marcelle%20Lender%2C%20en%20buste%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203175%20%28cropped%29.jpg?width=400",
+      "title": "Mademoiselle Marcelle Lender, Brustbild",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarfragment%20mit%20der%20Heiligen%20Barbara%20-%20Meister%20der%20Georgslegende%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2254%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarfragment%20mit%20der%20Heiligen%20Barbara%20-%20Meister%20der%20Georgslegende%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2254%20%28cropped%29.jpg?width=400",
-      "title": "Maria der Verkündigung/Heilige Barbara mit Stifterin und sieben Töchtern",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rote%20Rosen%20in%20einem%20Glaskrug%2C%20Lovis%20Corinth%201919%20%28761%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rote%20Rosen%20in%20einem%20Glaskrug%2C%20Lovis%20Corinth%201919%20%28761%29.jpg?width=400",
+      "title": "Rote Rosen in einem Glaskrug",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bruyn%2C%20Bartholom%C3%A4us%20%28der%20%C3%84ltere%29%20-%20Legende%20des%20heiligen%20Viktor%2C%20WRM%200238.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bruyn%2C%20Bartholom%C3%A4us%20%28der%20%C3%84ltere%29%20-%20Legende%20des%20heiligen%20Viktor%2C%20WRM%200238.jpg?width=400",
-      "title": "Legende des heiligen Viktor",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20da%20Vinci%20%28Werkstatt%29%20-%20Madonna%20vor%20dem%20Kastell%2C%20around%201485%2C%20Dep.%200328.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20da%20Vinci%20%28Werkstatt%29%20-%20Madonna%20vor%20dem%20Kastell%2C%20around%201485%2C%20Dep.%200328.jpg?width=400",
+      "title": "Madonna vor dem Kastell",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Stra%C3%9Fe%20in%20Oberbayern%2C%20Alexej%20von%20Jawlensky%20%28Dep.%200754%20FC%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Stra%C3%9Fe%20in%20Oberbayern%2C%20Alexej%20von%20Jawlensky%20%28Dep.%200754%20FC%29.jpg?width=400",
-      "title": "Straße in Oberbayern",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Triptychon%20mit%20Passionsszenen%2C%20Meister%20der%20Kleinen%20Passion%201415-1420.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Triptychon%20mit%20Passionsszenen%2C%20Meister%20der%20Kleinen%20Passion%201415-1420.jpg?width=400",
+      "title": "Parts of.a Triptych: the Small Passion",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20heilige%20Pantaleon%20-%20Anh%C3%A4nger%20von%20Albrecht%20D%C3%BCrer%20-%20Wallraf-Richartz-Museum-2318%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20heilige%20Pantaleon%20-%20Anh%C3%A4nger%20von%20Albrecht%20D%C3%BCrer%20-%20Wallraf-Richartz-Museum-2318%20%28cropped%29.jpg?width=400",
-      "title": "Der heilige Pantaleon",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20vor%20Pilatus%20und%20Gei%C3%9Felung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200039%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20vor%20Pilatus%20und%20Gei%C3%9Felung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200039%29.jpg?width=400",
+      "title": "Christus vor Pilatus und Geißelung",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/P1110629%20Wallraf%20museum%20H.%20Rigaud%20Everhard%20Jabach%20WRM1066%20rwk.JPG",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/P1110629%20Wallraf%20museum%20H.%20Rigaud%20Everhard%20Jabach%20WRM1066%20rwk.JPG?width=400",
-      "title": "Everhard Jabach",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20%C3%96lberg%20und%20Gefangennahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200038%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20%C3%96lberg%20und%20Gefangennahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200038%29.jpg?width=400",
+      "title": "Christus am Ölberg und Gefangennahme",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Wallfahrer%20an%20der%20Heilquelle%2C%20Hubert%20Salentin%20%28WVZ%20143%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Wallfahrer%20an%20der%20Heilquelle%2C%20Hubert%20Salentin%20%28WVZ%20143%29.jpg?width=400",
-      "title": "Wallfahrer",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Dornenkr%C3%B6nung%20und%20Kreuztragung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200040%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Dornenkr%C3%B6nung%20und%20Kreuztragung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200040%29.jpg?width=400",
+      "title": "Dornenkrönung und Kreuztragung",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Pelser%2C%20geborene%20Brassart%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20der%20Catharina%20Pelser%2C%20geborene%20Brassart%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud.jpg?width=400",
-      "title": "Bildnis der Catharina Pelser, geborene Brassart",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Heiligen%20Laurentius%20und%20Stephanus%2C%20Meister%20der%20Kleinen%20Passion%20%28rba%20mf030925%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Heiligen%20Laurentius%20und%20Stephanus%2C%20Meister%20der%20Kleinen%20Passion%20%28rba%20mf030925%29.jpg?width=400",
+      "title": "Die Heiligen Laurentius und Stephanus",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Badia%20a%20Isola%20Master%2C%20Saint%20Peter%2C%20ca.%201315-20%2C%20Mount%20Holyoke%20College.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Badia%20a%20Isola%20Master%2C%20Saint%20Peter%2C%20ca.%201315-20%2C%20Mount%20Holyoke%20College.jpg?width=400",
-      "title": "Saint Peter",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thronende%20Madonna%20mit%20Kind%20und%20zehn%20Engeln%20-%20Francesco%20di%20Antonio%20di%20Bartolomeo%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5132%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thronende%20Madonna%20mit%20Kind%20und%20zehn%20Engeln%20-%20Francesco%20di%20Antonio%20di%20Bartolomeo%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5132%20%28cropped%29.jpg?width=400",
+      "title": "Thronende Madonna mit Kind und zehn Engeln",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolaes%20Maes%20-%20Bildnis%20eines%20Mannes%2C%20koeln%201804054.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolaes%20Maes%20-%20Bildnis%20eines%20Mannes%2C%20koeln%201804054.jpg?width=400",
-      "title": "Portrait of an unknown man",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20in%20K%C3%B6ln%20und%20Martyrium%20-%20WGA23734%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20in%20K%C3%B6ln%20und%20Martyrium%20-%20WGA23734%20%28cropped%29.jpg?width=400",
+      "title": "Scenes from the Small Ursula Cycle",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/De%20verzoeking%20van%20de%20H.%20Antonius%2C%20David%20Tenier%20%28II%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/De%20verzoeking%20van%20de%20H.%20Antonius%2C%20David%20Tenier%20%28II%29.jpg?width=400",
-      "title": "Die Versuchung des heiligen Antonius",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Bril%20-%20Coastal%20Landscape%20-%20WGA3184.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Bril%20-%20Coastal%20Landscape%20-%20WGA3184.jpg?width=400",
+      "title": "Coastal Landscape",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Sturz%20des%20Phaeton-%20-%20Frans%20Francken%20%28II%29%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0180%20%28without%20frame%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Sturz%20des%20Phaeton-%20-%20Frans%20Francken%20%28II%29%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-0180%20%28without%20frame%29.jpg?width=400",
-      "title": "Der Sturz des Phaeton",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Papillons%2C%20Odilon%20Redon%20-%203165%20%28cropped%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Papillons%2C%20Odilon%20Redon%20-%203165%20%28cropped%29.jpg?width=400",
+      "title": "Schmetterlinge",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Heiliger%20Johannes%20der%20T%C3%A4ufer%2C%20Badia-a-Isola-Meister%20%28WRM%200608%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Heiliger%20Johannes%20der%20T%C3%A4ufer%2C%20Badia-a-Isola-Meister%20%28WRM%200608%29.jpg?width=400",
-      "title": "Heiliger Johannes der Täufer",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ap%C3%A8s%20le%20bain%20-%20Edgar%20Degas%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8589.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ap%C3%A8s%20le%20bain%20-%20Edgar%20Degas%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8589.jpg?width=400",
+      "title": "Nach dem Bade",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Heiliger%20Paulus%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2196%20%28cropped%2C%20without%20frame.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Heiliger%20Paulus%20-%20Anonymus%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2196%20%28cropped%2C%20without%20frame.jpg?width=400",
-      "title": "Saint Paul",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gardeuse%20d%27oies%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8567.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gardeuse%20d%27oies%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8567.jpg?width=400",
+      "title": "Die Gänsemagd",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20%28Franz%20von%20Assisi%29%2C%20Meister%20der%20Ursulalegende%2C%20Meister%20von%20St.%20Severin.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fl%C3%BCgelaltar%20%28Franz%20von%20Assisi%29%2C%20Meister%20der%20Ursulalegende%2C%20Meister%20von%20St.%20Severin.jpg?width=400",
-      "title": "Flügelaltar",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Signac%20-%20Notre-Dame%2C%201920%2C%20Dep.%202001001%20FC.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Signac%20-%20Notre-Dame%2C%201920%2C%20Dep.%202001001%20FC.jpg?width=400",
+      "title": "Notre-Dame",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20captive%2C%20Odilon%20Redon%20-%203169%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20captive%2C%20Odilon%20Redon%20-%203169%20%28cropped%29.jpg?width=400",
-      "title": "Die Gefangene",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Bril%20002.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20Bril%20002.jpg?width=400",
+      "title": "Mountain landscape",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20C%C3%A9zanne%20-%20Dans%20la%20plaine%20de%20Bellevue.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Paul%20C%C3%A9zanne%20-%20Dans%20la%20plaine%20de%20Bellevue.jpg?width=400",
-      "title": "Landschaft im Westen von Aix-en-Provence",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Hackaert%20-%20River%20Scene%20-%20WGA11013.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jan%20Hackaert%20-%20River%20Scene%20-%20WGA11013.jpg?width=400",
+      "title": "River Scene",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Barrias%20Hittorf.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Barrias%20Hittorf.jpg?width=400",
-      "title": "Porträt des Architekten Jacob Ignaz Hittorf",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Jordaens%20-%20Crucifixion%20of%20Christ.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jacob%20Jordaens%20-%20Crucifixion%20of%20Christ.jpg?width=400",
+      "title": "Crucifixion of Christ",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Odilon%20Redon%20-%20Saint%20Georges%20et%20le%20dragon%20-%20Wallraf-Richartz.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Odilon%20Redon%20-%20Saint%20Georges%20et%20le%20dragon%20-%20Wallraf-Richartz.jpg?width=400",
-      "title": "Battle with the dragon",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Lenbach%2C%20Franz%20von%20-%20Papst%20Leo%20XIII.%20-%20WRM%201142%20-%20Wallraf%E2%80%93Richartz%20Museum.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Lenbach%2C%20Franz%20von%20-%20Papst%20Leo%20XIII.%20-%20WRM%201142%20-%20Wallraf%E2%80%93Richartz%20Museum.jpg?width=400",
+      "title": "Pope Leo XIII",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Th%C3%A9odore%20G%C3%A9ricault%20-%20Kopf%20eines%20Verwundeten%20%281814%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Th%C3%A9odore%20G%C3%A9ricault%20-%20Kopf%20eines%20Verwundeten%20%281814%29.jpg?width=400",
-      "title": "Head of a woundet Man",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/The%C3%A2tre%20de%20l%27Atelier%2C%20Place%20Dancourt%2C%20Maurice%20Utrillo%20%28WRM%203051%29.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/The%C3%A2tre%20de%20l%27Atelier%2C%20Place%20Dancourt%2C%20Maurice%20Utrillo%20%28WRM%203051%29.jpg?width=400",
+      "title": "Theâtre de l'Atelier, Place Dancourt",
       "source": "wallraf_richartz",
       "tags": [
         "textile"
@@ -3709,7 +4438,7 @@
       "title": "Die Versuchung des heiligen Antonius",
       "source": "wallraf_richartz",
       "tags": [
-        "ruins"
+        "textile"
       ]
     },
     {
@@ -3718,16 +4447,7 @@
       "title": "Doubting Saint Thomas",
       "source": "wallraf_richartz",
       "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Engel%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Engel%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg?width=400",
-      "title": "Angel",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
+        "textile"
       ]
     },
     {
@@ -3736,7 +4456,7 @@
       "title": "Die Dogana in Venedig",
       "source": "wallraf_richartz",
       "tags": [
-        "ruins"
+        "textile"
       ]
     },
     {
@@ -3745,556 +4465,25 @@
       "title": "Head of a Woman",
       "source": "wallraf_richartz",
       "tags": [
-        "ruins"
+        "textile"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Grablegung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200043%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Grablegung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200043%29.jpg?width=400",
-      "title": "Grablegung",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20Bernhard%20Hardy%2C%20by%20Kaspar%20Benedikt%20Beckenkamp.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Caspar%20Bernhard%20Hardy%2C%20by%20Kaspar%20Benedikt%20Beckenkamp.jpg?width=400",
+      "title": "Caspar Bernhard Hardy",
       "source": "wallraf_richartz",
       "tags": [
         "ruins"
       ]
     },
     {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Otto%20Mueller%20-%20Zwei%20Zigeunerinnen%20mit%20Katze%20%281926-27%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Otto%20Mueller%20-%20Zwei%20Zigeunerinnen%20mit%20Katze%20%281926-27%29.jpg?width=400",
-      "title": "Two gypsy women with cat",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolaas%20Roosendael%2C%20Susanna%20Accused%20by%20the%20Elders%2C%201673.jpg",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolaas%20Roosendael%2C%20Susanna%20Accused%20by%20the%20Elders%2C%201673.jpg?width=400",
+      "title": "Susanna Accused by the Elders",
       "source": "wallraf_richartz",
       "tags": [
         "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kreuzabnahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200042%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kreuzabnahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200042%29.jpg?width=400",
-      "title": "Kreuzabnahme",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarpiece%20of%20St%20Sebastian.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Altarpiece%20of%20St%20Sebastian.jpg?width=400",
-      "title": "Sebastian-Altar: Die Marter des heiligen Sebastian",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/J%20C%20Reinhart%20-%20Felslandschaft%20mit%20Wasserfall%20%281816%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/J%20C%20Reinhart%20-%20Felslandschaft%20mit%20Wasserfall%20%281816%29.jpg?width=400",
-      "title": "Felslandschaft mit Wasserfall",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/J%20C%20Reinhart%20-%20Apollo%20mit%20der%20Pythonschlange%20%281817%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/J%20C%20Reinhart%20-%20Apollo%20mit%20der%20Pythonschlange%20%281817%29.jpg?width=400",
-      "title": "Apollo with the Python",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Martyrdom%20of%20Saint%20Reparata%20-%20Bernardo%20Daddi%20-%20Wallraf-Richartz%20Museum%20-%20Cologne%20-%20Germany%202017.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Martyrdom%20of%20Saint%20Reparata%20-%20Bernardo%20Daddi%20-%20Wallraf-Richartz%20Museum%20-%20Cologne%20-%20Germany%202017.jpg?width=400",
-      "title": "Die Marter der heiligen Reparata im Feuerofen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Tintoretto%2C%20Jacopo%20Tiepolo%2C%20Paolo.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Tintoretto%2C%20Jacopo%20Tiepolo%2C%20Paolo.jpg?width=400",
-      "title": "Portrait of Paolo Tiepolo",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321.jpg?width=400",
-      "title": "Teile eines Flügelaltars mit Heiligen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Der%20heilige%20Evangelist%20Johannes%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Der%20heilige%20Evangelist%20Johannes%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg?width=400",
-      "title": "Der heilige Evangelist Johannes",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Der%20heilige%20Johannes%20der%20T%C3%A4ufer%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Teile%20eines%20Fl%C3%BCgelaltars%20mit%20Heiligen%20-%20Der%20heilige%20Johannes%20der%20T%C3%A4ufer%20-%20Georg%20Pencz%20-%20Wallraf-Richartz-Museum-2321%20%28cropped%29.jpg?width=400",
-      "title": "Der heilige Johannes der Täufer",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Wilhelm%20Seiwert%20Arbeiter%201926.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Franz%20Wilhelm%20Seiwert%20Arbeiter%201926.jpg?width=400",
-      "title": "Q133043383",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hoerle%20Zwei%20Frauen%201930.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Hoerle%20Zwei%20Frauen%201930.jpg?width=400",
-      "title": "Q133043380",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Seiwert%20Stadt%20und%20Land%201932.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Seiwert%20Stadt%20und%20Land%201932.jpg?width=400",
-      "title": "Q133043384",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kirchner%20-%20Milchtragerin%20in%20den%20Alpen%2C%20around%201919-20%2C%20ML%20763161.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kirchner%20-%20Milchtragerin%20in%20den%20Alpen%2C%20around%201919-20%2C%20ML%20763161.jpg?width=400",
-      "title": "Q133043389",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Selbstbildnis%2C%20Jankel%20Adler%2C%20ML%2076-2977%20-%202611.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Selbstbildnis%2C%20Jankel%20Adler%2C%20ML%2076-2977%20-%202611.jpg?width=400",
-      "title": "Q133046403",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Balzac%20-%20Auguste%20Rodin%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8601.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Balzac%20-%20Auguste%20Rodin%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8601.jpg?width=400",
-      "title": "Balzac",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Versuchung%20des%20Heiligen%20Antonius%20-%20Johann%20Liss%20-%20Museum%20Wallraf-0263%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Versuchung%20des%20Heiligen%20Antonius%20-%20Johann%20Liss%20-%20Museum%20Wallraf-0263%20%28cropped%29.jpg?width=400",
-      "title": "Die Versuchung des heiligen Antonius",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Snyders%20-%20Two%20young%20jumping%20lions.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frans%20Snyders%20-%20Two%20young%20jumping%20lions.jpg?width=400",
-      "title": "Zwei spielende junge Löwen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Chrysanthemen%2C%20Christian%20Rohlfs%20%28ML-Z%201950-170%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Chrysanthemen%2C%20Christian%20Rohlfs%20%28ML-Z%201950-170%29.jpg?width=400",
-      "title": "Chrysanthemen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ruins"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Still%20life%20with%20strawberries%20in%20a%20clay%20pot%20-%20Adriaen%20Coorte%20-%20Museum%20Wallraf-0239%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Still%20life%20with%20strawberries%20in%20a%20clay%20pot%20-%20Adriaen%20Coorte%20-%20Museum%20Wallraf-0239%20%28cropped%29.jpg?width=400",
-      "title": "Still life with strawberries in a terracotta pot",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ingres%20-%20Kopf%20der%20Minerva%20%28Athene%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ingres%20-%20Kopf%20der%20Minerva%20%28Athene%29.jpg?width=400",
-      "title": "Minerva",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20Rosen%2C%20Lovis%20Corinth%201918%20%28743%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rosa%20Rosen%2C%20Lovis%20Corinth%201918%20%28743%29.jpg?width=400",
-      "title": "Rosa Rosen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20Young%20Man%20by%20Godfried%20Schalcken%2C%20Museum%20Wallraf-0272%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20of%20a%20Young%20Man%20by%20Godfried%20Schalcken%2C%20Museum%20Wallraf-0272%20%28cropped%29.jpg?width=400",
-      "title": "Portrait of a Young Man by Godfried Schalcken",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ansicht%20von%20Venedig%2C%20Der%20Canale%20della%20Giudecca%20mit%20Blick%20auf%20die%20Zattere%2C%20Francesco%20Guardi%20-%203131%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ansicht%20von%20Venedig%2C%20Der%20Canale%20della%20Giudecca%20mit%20Blick%20auf%20die%20Zattere%2C%20Francesco%20Guardi%20-%203131%20%28cropped%29.jpg?width=400",
-      "title": "Ansicht von Venedig: Der Canale della Giudecca mit Blick auf die Zattere",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ansicht%20von%20Venedig-%20Die%20Lagune%20mit%20Blick%20auf%20die%20Isola%20della%20Certosa%2C%20Francesco%20Guardi%20-%203129%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ansicht%20von%20Venedig-%20Die%20Lagune%20mit%20Blick%20auf%20die%20Isola%20della%20Certosa%2C%20Francesco%20Guardi%20-%203129%20%28cropped%29.jpg?width=400",
-      "title": "Ansicht von Venedig: Die Lagune mit Blick auf die Isola della Certosa",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20Boulevards%2C%20Pierre%20Bonnard%20-%203174%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20Boulevards%2C%20Pierre%20Bonnard%20-%203174%20%28cropped%29.jpg?width=400",
-      "title": "Die Boulevards",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Souvenir%20de%20Toscane%2C%20Camille%20Corot%20-%203136%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Souvenir%20de%20Toscane%2C%20Camille%20Corot%20-%203136%20%28cropped%29.jpg?width=400",
-      "title": "Erinnerung an die Toskana",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Environs%20de%20Rome%2C%20Camille%20Corot%20-%203134%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Environs%20de%20Rome%2C%20Camille%20Corot%20-%203134%20%28cropped%29.jpg?width=400",
-      "title": "Umgebung von Rom",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Souvenir%20d%27Italie%2C%20Camille%20Corot%20-%203137%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Souvenir%20d%27Italie%2C%20Camille%20Corot%20-%203137%20%28cropped%29.jpg?width=400",
-      "title": "Erinnerung an Italien",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20faneuses%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8561.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Les%20faneuses%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8561.jpg?width=400",
-      "title": "Heuwenderinnen",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20march%C3%A9%20%C3%A0%20Pontoise%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8563.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Le%20march%C3%A9%20%C3%A0%20Pontoise%20-%20Camille%20Pissarro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-8563.jpg?width=400",
-      "title": "Szene auf dem Markt in Pontoise",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20d%27Ar%C3%AF%20Redon%20en%20profil%20-%203167%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Portrait%20d%27Ar%C3%AF%20Redon%20en%20profil%20-%203167%20%28cropped%29.jpg?width=400",
-      "title": "Bildnis des Sohnes des Künstlers im Profil",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%AAte%20d%27enfant%20%28Pierre%20Renoir%29%2C%20Pierre-Auguste%20Renoir%20-%203219%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%AAte%20d%27enfant%20%28Pierre%20Renoir%29%2C%20Pierre-Auguste%20Renoir%20-%203219%20%28cropped%29.jpg?width=400",
-      "title": "Child's head (Pierre Renoir)",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20loge%20au%20mascaron%20dor%C3%A9%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203176%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/La%20loge%20au%20mascaron%20dor%C3%A9%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203176%20%28cropped%29.jpg?width=400",
-      "title": "Die Loge mit der goldenen Maske",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Mademoiselle%20Marcelle%20Lender%2C%20en%20buste%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203175%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Mademoiselle%20Marcelle%20Lender%2C%20en%20buste%2C%20Toulouse-Lautrec%2C%20Wallraf%20-%203175%20%28cropped%29.jpg?width=400",
-      "title": "Mademoiselle Marcelle Lender, Brustbild",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rote%20Rosen%20in%20einem%20Glaskrug%2C%20Lovis%20Corinth%201919%20%28761%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rote%20Rosen%20in%20einem%20Glaskrug%2C%20Lovis%20Corinth%201919%20%28761%29.jpg?width=400",
-      "title": "Rote Rosen in einem Glaskrug",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20da%20Vinci%20%28Werkstatt%29%20-%20Madonna%20vor%20dem%20Kastell%2C%20around%201485%2C%20Dep.%200328.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo%20da%20Vinci%20%28Werkstatt%29%20-%20Madonna%20vor%20dem%20Kastell%2C%20around%201485%2C%20Dep.%200328.jpg?width=400",
-      "title": "Madonna vor dem Kastell",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Triptychon%20mit%20Passionsszenen%2C%20Meister%20der%20Kleinen%20Passion%201415-1420.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Triptychon%20mit%20Passionsszenen%2C%20Meister%20der%20Kleinen%20Passion%201415-1420.jpg?width=400",
-      "title": "Parts of.a Triptych: the Small Passion",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20vor%20Pilatus%20und%20Gei%C3%9Felung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200039%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20vor%20Pilatus%20und%20Gei%C3%9Felung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200039%29.jpg?width=400",
-      "title": "Christus vor Pilatus und Geißelung",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20%C3%96lberg%20und%20Gefangennahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200038%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Christus%20am%20%C3%96lberg%20und%20Gefangennahme%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200038%29.jpg?width=400",
-      "title": "Christus am Ölberg und Gefangennahme",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Dornenkr%C3%B6nung%20und%20Kreuztragung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200040%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Dornenkr%C3%B6nung%20und%20Kreuztragung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200040%29.jpg?width=400",
-      "title": "Dornenkrönung und Kreuztragung",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Heiligen%20Laurentius%20und%20Stephanus%2C%20Meister%20der%20Kleinen%20Passion%20%28rba%20mf030925%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20Heiligen%20Laurentius%20und%20Stephanus%2C%20Meister%20der%20Kleinen%20Passion%20%28rba%20mf030925%29.jpg?width=400",
-      "title": "Die Heiligen Laurentius und Stephanus",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Thronende%20Madonna%20mit%20Kind%20und%20zehn%20Engeln%20-%20Francesco%20di%20Antonio%20di%20Bartolomeo%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5132%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Thronende%20Madonna%20mit%20Kind%20und%20zehn%20Engeln%20-%20Francesco%20di%20Antonio%20di%20Bartolomeo%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-5132%20%28cropped%29.jpg?width=400",
-      "title": "Thronende Madonna mit Kind und zehn Engeln",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20in%20K%C3%B6ln%20und%20Martyrium%20-%20WGA23734%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Legende%20der%20heiligen%20Ursula%2C%20Ankunft%20in%20K%C3%B6ln%20und%20Martyrium%20-%20WGA23734%20%28cropped%29.jpg?width=400",
-      "title": "Scenes from the Small Ursula Cycle",
-      "source": "wallraf_richartz",
-      "tags": [
-        "sky"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Engel%20der%20Verk%C3%BCndigung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200044%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Engel%20der%20Verk%C3%BCndigung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200044%29.jpg?width=400",
-      "title": "Engel der Verkündigung",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20der%20Verk%C3%BCndigung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200045%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20der%20Verk%C3%BCndigung%2C%20Meister%20der%20Kleinen%20Passion%20%28WRM%200045%29.jpg?width=400",
-      "title": "Maria der Verkündigung",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Self-portrait%20by%20Paula%20Modersohn-Becker.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Self-portrait%20by%20Paula%20Modersohn-Becker.jpg?width=400",
-      "title": "Selbstbildnis vor blaugrauem Grund",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Syphon%2C%20verre%20et%20journal%20-%20Juan%20Gris%20-%20Museum%20Ludwig-7052%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Syphon%2C%20verre%20et%20journal%20-%20Juan%20Gris%20-%20Museum%20Ludwig-7052%20%28cropped%29.jpg?width=400",
-      "title": "Syphon, Glas und Zeitung",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Schweinehirt%2C%20Georg%20Schrimpf%20-%202617%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Schweinehirt%2C%20Georg%20Schrimpf%20-%202617%20%28cropped%29.jpg?width=400",
-      "title": "Swineherd",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frauenkopf%20mit%20Blumen%20im%20Haar%2C%20Alexej%20von%20Jawlensky%20-%202631%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frauenkopf%20mit%20Blumen%20im%20Haar%2C%20Alexej%20von%20Jawlensky%20-%202631%20%28cropped%29.jpg?width=400",
-      "title": "Frauenkopf mit Blumen im Haar",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rhythme%20sans%20fin%20-%20Robert%20Delaunay%20-%20Museum%20Ludwig-7020.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rhythme%20sans%20fin%20-%20Robert%20Delaunay%20-%20Museum%20Ludwig-7020.jpg?width=400",
-      "title": "Endless Rhythm",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kinderbildnis%20des%20Daniel%20de%20Ruyter%20-%20Jan%20van%20Ravesteyn%20-%20Museum%20Wallraf-0253%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kinderbildnis%20des%20Daniel%20de%20Ruyter%20-%20Jan%20van%20Ravesteyn%20-%20Museum%20Wallraf-0253%20%28cropped%29.jpg?width=400",
-      "title": "Kinderbildnis des Daniel de Ruyter",
-      "source": "wallraf_richartz",
-      "tags": [
-        "ocean"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Honthorst%20-%20Unknown%20French%20Lady%2C%201638%2C%20Wallraf-Richartz%20Museum.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Honthorst%20-%20Unknown%20French%20Lady%2C%201638%2C%20Wallraf-Richartz%20Museum.jpg?width=400",
-      "title": "Bildnis der Äbtissin Marie III. de La Rochefoucault de Chaumont?",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Frederick%20de%20Moucheron%20-%20Mountain%20Scene%20with%20Herd%20of%20Cattle%20-%20WGA16303.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Frederick%20de%20Moucheron%20-%20Mountain%20Scene%20with%20Herd%20of%20Cattle%20-%20WGA16303.jpg?width=400",
-      "title": "Gebirgslandschaft mit einer Viehherde",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nature%20morte%20avec%20bouteille%20et%20vaisselle%2C%20manner%20of%20Jean%20Sim%C3%A9on%20Chardin%20%28WRM%202644%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nature%20morte%20avec%20bouteille%20et%20vaisselle%2C%20manner%20of%20Jean%20Sim%C3%A9on%20Chardin%20%28WRM%202644%29.jpg?width=400",
-      "title": "Stilleben mit Flasche und Terrine",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/The%20penitent%20Mary%20Magdalena%20%281670%29%20by%20Bartolome%20Esteban%20Murillo.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/The%20penitent%20Mary%20Magdalena%20%281670%29%20by%20Bartolome%20Esteban%20Murillo.jpg?width=400",
-      "title": "Penitent Magdalene",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Federschneider%2C%20Jan%20Lievens%2C%201627%2C%20oil%20on%20canvas%2C%20127.0%20by%20107.5%20cm%2C%20Wallraf-Richartz-Museum%20%26%20Foundation%20Corboud%2C%20Cologne.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20Federschneider%2C%20Jan%20Lievens%2C%201627%2C%20oil%20on%20canvas%2C%20127.0%20by%20107.5%20cm%2C%20Wallraf-Richartz-Museum%20%26%20Foundation%20Corboud%2C%20Cologne.jpg?width=400",
-      "title": "Der Federschneider: Kaufmann über seinen Rechnungsbüchern die Feder spitzend",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Cornelis%20van%20Poelenburch%20-%20Landscape%20with%20Nymphs%20-%20WGA18007.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Cornelis%20van%20Poelenburch%20-%20Landscape%20with%20Nymphs%20-%20WGA18007.jpg?width=400",
-      "title": "Landschaft mit Nymphe",
-      "source": "wallraf_richartz",
-      "tags": [
-        "mountain"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kr%C3%B6nung%20Mariens%20mit%20den%20vierundzwanzig%20%C3%84ltesten%20-%20Anonymous%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2258%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kr%C3%B6nung%20Mariens%20mit%20den%20vierundzwanzig%20%C3%84ltesten%20-%20Anonymous%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2258%20%28cropped%29.jpg?width=400",
-      "title": "Krönung Mariens mit den vierundzwanzig Ältesten",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Andachtstafel%20mit%20dem%20Leben%20Christi%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200006%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Andachtstafel%20mit%20dem%20Leben%20Christi%2C%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud%20%28WRM%200006%29.jpg?width=400",
-      "title": "Andachtstafel mit dem Leben Christi",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
       ]
     },
     {
@@ -4303,7 +4492,7 @@
       "title": "Bildnis eines Ehepaares",
       "source": "wallraf_richartz",
       "tags": [
-        "botanical"
+        "ruins"
       ]
     },
     {
@@ -4312,196 +4501,7 @@
       "title": "Das Kreuz an der Ostsee",
       "source": "wallraf_richartz",
       "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Carolsfeld%20Madonna%20con%20Bambino%201820.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Carolsfeld%20Madonna%20con%20Bambino%201820.jpg?width=400",
-      "title": "Maria mit dem Kind",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Marktszene%2C%20Max%20Liebermann%20%28WRM%202341%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Marktszene%2C%20Max%20Liebermann%20%28WRM%202341%29.jpg?width=400",
-      "title": "Marktszene",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaspar%20Benedikt%20Beckenkamp%20-%20Selbstbildnis%20%28ca.1800%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Kaspar%20Benedikt%20Beckenkamp%20-%20Selbstbildnis%20%28ca.1800%29.jpg?width=400",
-      "title": "Selbstbildnis",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Diptychon%20mit%20Bildnissen%20des%20Ehepaares%20Pilgrum%2C%20Bartholom%C3%A4us%20Bruyn%20%28I%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Diptychon%20mit%20Bildnissen%20des%20Ehepaares%20Pilgrum%2C%20Bartholom%C3%A4us%20Bruyn%20%28I%29.jpg?width=400",
-      "title": "Diptych with portraits of the Pilgrum couple",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Selbstbildnis%2C%20Heinrich%20Mosler-Pallenberg%20%28WRM%201891%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Selbstbildnis%2C%20Heinrich%20Mosler-Pallenberg%20%28WRM%201891%29.jpg?width=400",
-      "title": "Selbstbildnis",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Jahrhundertausstellung%201906%20KatNr.%200728.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Jahrhundertausstellung%201906%20KatNr.%200728.jpg?width=400",
-      "title": "Ernst Thelott",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Auferstehender%20Christus%20-%20Sano%20di%20Pietro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2180%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Auferstehender%20Christus%20-%20Sano%20di%20Pietro%20-%20Wallraf-Richartz-Museum%20%26%20Fondation%20Corboud-2180%20%28cropped%29.jpg?width=400",
-      "title": "Auferstehender Christus",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/In%20der%20Bibliothek%2C%20Victor%20Lagye%20%28WRM%202231%29.jpeg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/In%20der%20Bibliothek%2C%20Victor%20Lagye%20%28WRM%202231%29.jpeg?width=400",
-      "title": "Der Bibliothekar",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Emanuel%20de%20Witte%20-%20Interior%20of%20a%20Church%20-%20WGA25803.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Emanuel%20de%20Witte%20-%20Interior%20of%20a%20Church%20-%20WGA25803.jpg?width=400",
-      "title": "Inneres einer Kirche",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20R%C3%B6merin%2C%20follower%20of%20Ingres%20%28WRM%202686%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20R%C3%B6merin%2C%20follower%20of%20Ingres%20%28WRM%202686%29.jpg?width=400",
-      "title": "Bildnis einer Römerin",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Giandomenico%20Tiepolo%20Adoration%20of%20the%20Magi.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Giandomenico%20Tiepolo%20Adoration%20of%20the%20Magi.jpg?width=400",
-      "title": "Anbetung der Könige",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Architekturst%C3%BCck%2C%20Kirchplatz%2C%20Pieter-Frans%20De%20Noter.webp",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Architekturst%C3%BCck%2C%20Kirchplatz%2C%20Pieter-Frans%20De%20Noter.webp?width=400",
-      "title": "Architekturstück",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20barmherzige%20Samariter%2C%20Max%20Liebermann%20%28WRM%201187%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Der%20barmherzige%20Samariter%2C%20Max%20Liebermann%20%28WRM%201187%29.jpg?width=400",
-      "title": "Der barmherzige Samariter",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20heilige%20Ursula%2C%20Bartholom%C3%A4us%20Bruyn%20%28I%29%20%28rba%20c000254%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Die%20heilige%20Ursula%2C%20Bartholom%C3%A4us%20Bruyn%20%28I%29%20%28rba%20c000254%29.jpg?width=400",
-      "title": "Die heilige Ursula",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rottmann%20Carl-Cefalu.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Rottmann%20Carl-Cefalu.jpg?width=400",
-      "title": "Cefalù",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20Frau%2C%20Nordniederlande%2C%2017.%20Jh.%20%28WRM%201006%29.jpeg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20Frau%2C%20Nordniederlande%2C%2017.%20Jh.%20%28WRM%201006%29.jpeg?width=400",
-      "title": "Bildnis einer Frau",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/B%28L%29OOMING%20-%20Barocke%20Bl%C3%BCtenpracht%20-%20Blumenstillleben%20-David%20Cornelisz%20de%20Heem-3114%20%28cropped%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/B%28L%29OOMING%20-%20Barocke%20Bl%C3%BCtenpracht%20-%20Blumenstillleben%20-David%20Cornelisz%20de%20Heem-3114%20%28cropped%29.jpg?width=400",
-      "title": "Blumenstilleben",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Judengasse%20in%20Amsterdam%2C%20Max%20Liebermann%20%28WRM%201189%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Judengasse%20in%20Amsterdam%2C%20Max%20Liebermann%20%28WRM%201189%29.jpg?width=400",
-      "title": "Judengasse in Amsterdam",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Batsheba%2C%20ca.%201632%2C%20copy%20after%20Rembrandt%20%28WRM%202671%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Batsheba%2C%20ca.%201632%2C%20copy%20after%20Rembrandt%20%28WRM%202671%29.jpg?width=400",
-      "title": "Bathseba",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20Kind%20und%20den%20Heiligen%20Ansanus%20und%20Katharina%20von%20Siena%2C%20Bartolomeo%20Neroni%20%28attribution%29%2C%20%28WRM%200495%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Maria%20mit%20Kind%20und%20den%20Heiligen%20Ansanus%20und%20Katharina%20von%20Siena%2C%20Bartolomeo%20Neroni%20%28attribution%29%2C%20%28WRM%200495%29.jpg?width=400",
-      "title": "Maria mit Kind und den Heiligen Ansanus und Katharina von Siena",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20Frau%20%28Selbstportr%C3%A4t%20Anna%20Maria%20Schurman%3F%29%2C%20WRM%201379.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bildnis%20einer%20Frau%20%28Selbstportr%C3%A4t%20Anna%20Maria%20Schurman%3F%29%2C%20WRM%201379.jpg?width=400",
-      "title": "Bildnis einer Frau",
-      "source": "wallraf_richartz",
-      "tags": [
-        "botanical"
+        "ruins"
       ]
     }
   ]
