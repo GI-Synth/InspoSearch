@@ -15,19 +15,60 @@
  * KV board TTL: 30 days.
  */
 
-const RATE_LIMIT = 60;
+// ── Rate limiting — tiered by endpoint cost ───────────────────────────────
+// A single InspoSearch query fans out to 120–200 source calls, a large share
+// of which land on /proxy. The old flat 60/min budget was therefore consumed
+// by ONE search, and every subsequent search inside that minute got 429s.
+// Sources then looked empty, tripped the health tracker, and got paused —
+// which is what made result quality visibly decay the more a user searched.
+//
+// Budgets are sized to the work each endpoint actually does:
+//   proxy   — read-only upstream fan-out, ~200/search → 1200/min ≈ 6 searches
+//   read    — cheap JSON/edge reads (/health, /sources, /search, /random)
+//   ai      — Workers AI inference, costs real compute
+//   write   — KV writes (/board, /contribute), the only durable side effects
 const RATE_WINDOW = 60_000;
+const RATE_LIMITS = {
+  proxy: 1200,
+  read:   600,
+  ai:      60,
+  write:   30,
+};
+const RATE_TIER_BY_PATH = {
+  '/proxy':      'proxy',
+  '/caption':    'ai',
+  '/semantic':   'ai',
+  '/tags':       'ai',
+  '/board':      'write',
+  '/contribute': 'write',
+};
 const rateBuckets = new Map();
 
-function checkRateLimit(ip) {
+export function rateTierFor(path) {
+  return RATE_TIER_BY_PATH[path] || 'read';
+}
+
+// Buckets are per-isolate and short-lived, but Cloudflare recycles isolates
+// often enough that a stale-entry sweep keeps the Map from growing unbounded.
+function sweepRateBuckets(now) {
+  if (rateBuckets.size < 5000) return;
+  for (const [key, bucket] of rateBuckets) {
+    if (now - bucket.start > RATE_WINDOW) rateBuckets.delete(key);
+  }
+}
+
+function checkRateLimit(ip, tier) {
   const now = Date.now();
-  let bucket = rateBuckets.get(ip);
+  sweepRateBuckets(now);
+  const key = tier + '|' + ip;
+  let bucket = rateBuckets.get(key);
   if (!bucket || now - bucket.start > RATE_WINDOW) {
     bucket = { start: now, count: 0 };
-    rateBuckets.set(ip, bucket);
+    rateBuckets.set(key, bucket);
   }
   bucket.count++;
-  return bucket.count <= RATE_LIMIT;
+  const limit = RATE_LIMITS[tier] ?? RATE_LIMITS.read;
+  return { ok: bucket.count <= limit, limit, retryAfter: Math.max(1, Math.ceil((RATE_WINDOW - (now - bucket.start)) / 1000)) };
 }
 
 // Reflect a request's Origin if it matches our allowlist; fall back to '*' for
@@ -104,13 +145,22 @@ export default {
       return json({ error: 'Method not allowed' }, 405, env, request);
     }
 
-    // Rate limiting
-    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
-    if (!checkRateLimit(ip)) {
-      return json({ error: 'Rate limit exceeded. Max 60 requests/min.' }, 429, env, request);
-    }
-
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    // Rate limiting — per-tier, so a search's /proxy fan-out can't exhaust the
+    // budget for cheap reads (or vice versa). See RATE_LIMITS above.
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    const tier = rateTierFor(path);
+    const rate = checkRateLimit(ip, tier);
+    if (!rate.ok) {
+      const res = json(
+        { error: `Rate limit exceeded. Max ${rate.limit} requests/min for ${tier} endpoints.` },
+        429, env, request,
+      );
+      // Let clients back off for the right amount of time instead of guessing.
+      res.headers.set('Retry-After', String(rate.retryAfter));
+      return res;
+    }
 
     switch (path) {
       case '/health':
@@ -124,6 +174,9 @@ export default {
 
       case '/proxy':
         return handleProxy(url, request, env);
+
+      case '/keys':
+        return handleKeys(env, request);
 
       case '/random':
         return handleRandom(url, env);
@@ -642,9 +695,21 @@ async function handleBoardGet(id, env) {
   }
 }
 
-// ── /proxy — CORS API proxy with strict domain allowlist ──────────────────
-// Forwards GET requests to CORS-blocked museum/library APIs.
-// Only allows requests to pre-approved domains to prevent abuse.
+// ── /proxy — CORS API proxy ───────────────────────────────────────────────
+// Forwards GET requests to museum/library APIs that don't return CORS headers.
+//
+// Access model: the destination host must appear in PROXY_ALLOWED_DOMAINS
+// (exact match) or under PROXY_ALLOWED_SUFFIXES (institution domain + any of
+// its subdomains). Origin is NOT part of this decision — an Origin header is
+// attacker-controlled outside a browser, so trusting it turned this endpoint
+// into an open proxy that would fetch any public URL on our account's bill.
+//
+// Suffix matching is what keeps the list maintainable: a museum that moves
+// from `api.example.org` to `iiif.example.org` keeps working without a code
+// change, while the internet at large stays out.
+//
+// SSRF protection: private/loopback/link-local hosts and non-standard ports
+// are always rejected, independent of the allowlist.
 const PROXY_ALLOWED_DOMAINS = new Set([
   'collectionapi.metmuseum.org',
   'chroniclingamerica.loc.gov',
@@ -679,11 +744,114 @@ const PROXY_ALLOWED_DOMAINS = new Set([
   'search.artsmia.org',
   // Added 2026-04-22 sweep — 5 sources silent due to missing allowlist.
   'collection.cooperhewitt.org',
-  'api.collection.carnegieart.org',
-  'api.mnw.art.pl',
   'collections.tepapa.govt.nz',
   'api.aucklandmuseum.com',
+  // Removed 2026-08-02: api.collection.carnegieart.org, api.mnw.art.pl and
+  // collections.folger.edu no longer resolve (NXDOMAIN). See RETIRED_SOURCES
+  // in src/state.js.
 ]);
+
+// ── Server-held API keys ──────────────────────────────────────────────────
+// The 8 highest-inventory sources (Europeana, Harvard, DPLA, Smithsonian,
+// Trove, Pexels, Pixabay, Unsplash) are key-gated. Historically the key came
+// from the visitor's own localStorage, so these sources were dark for the
+// ~100% of visitors who never registered for one.
+//
+// Instead, the client embeds the sentinel below where a key would go and
+// routes the request through /proxy; the worker swaps in the real secret,
+// chosen by destination host, so the key is never exposed to the browser.
+//
+// Each entry is inert until its secret exists:  wrangler secret put <NAME>
+const KEY_SENTINEL = '__INSPO_SERVER_KEY__';
+const SERVER_KEY_HOSTS = [
+  { suffix: 'europeana.eu',        secret: 'EUROPEANA_KEY' },
+  { suffix: 'harvardartmuseums.org', secret: 'HARVARD_KEY' },
+  { suffix: 'dp.la',               secret: 'DPLA_KEY' },
+  { suffix: 'si.edu',              secret: 'SMITHSONIAN_KEY' },
+  { suffix: 'nla.gov.au',          secret: 'TROVE_KEY' },
+  { suffix: 'pexels.com',          secret: 'PEXELS_KEY' },
+  { suffix: 'pixabay.com',         secret: 'PIXABAY_KEY' },
+  { suffix: 'unsplash.com',        secret: 'UNSPLASH_KEY' },
+];
+
+export function serverKeyForHost(hostname) {
+  const h = (hostname || '').toLowerCase();
+  const hit = SERVER_KEY_HOSTS.find(k => h === k.suffix || h.endsWith('.' + k.suffix));
+  return hit ? hit.secret : null;
+}
+
+// Which keys this deployment can actually supply. The client calls /keys on
+// boot and enables exactly these sources — so adding a secret switches a
+// source on for every visitor with no client release.
+export function availableServerKeys(env) {
+  return SERVER_KEY_HOSTS
+    .filter(k => typeof env?.[k.secret] === 'string' && env[k.secret].length > 0)
+    .map(k => k.secret);
+}
+
+function handleKeys(env, request) {
+  return json({ keys: availableServerKeys(env), sentinel: KEY_SENTINEL }, 200, env, request);
+}
+
+// Institution domains — any subdomain is proxyable. This is what replaced
+// blanket Origin-trust: it covers `api.`, `iiif.`, `collections.`, `data.`
+// and friends without an entry per subdomain, while keeping the destination
+// set bounded to cultural-heritage institutions we actually source from.
+//
+// Adding a new museum/library source = add its registrable domain here.
+const PROXY_ALLOWED_SUFFIXES = [
+  // — North America —
+  'metmuseum.org', 'clevelandart.org', 'artic.edu', 'si.edu', 'nga.gov',
+  'thewalters.org', 'lacma.org', 'artsmia.org', 'pem.org', 'nypl.org',
+  'cooperhewitt.org', 'yale.edu',
+  'cornell.edu', 'harvard.edu', 'harvardartmuseums.org', 'loc.gov',
+  'digitalcommonwealth.org', 'getty.edu', 'moma.org', 'whitney.org',
+  'guggenheim.org', 'philamuseum.org', 'mfa.org', 'brooklynmuseum.org',
+  'ago.ca', 'gallery.ca', 'inah.gob.mx', 'dp.la', 'nasa.gov',
+  // — UK & Ireland —
+  'vam.ac.uk', 'tate.org.uk', 'npg.org.uk', 'nhm.ac.uk', 'ox.ac.uk',
+  'cam.ac.uk', 'britishmuseum.org', 'nationalgallery.org.uk',
+  'wellcomecollection.org', 'rct.uk', 'nationaltrust.org.uk',
+  'nationalgalleries.org', 'iwm.org.uk', 'sciencemuseumgroup.org.uk',
+  // — Europe —
+  'rijksmuseum.nl', 'mauritshuis.nl', 'boijmans.nl', 'europeana.eu',
+  'museum-digital.de', 'bsb-muenchen.de', 'staedelmuseum.de', 'smb.museum',
+  'bnf.fr', 'culture.gouv.fr', 'louvre.fr', 'photo.rmn.fr',
+  'mak.at', 'khm.at', 'onb.ac.at', 'belvedere.at',
+  'smk.dk', 'nationalmuseum.se', 'kulturarvsdata.se', 'finna.fi',
+  'munchmuseet.no', 'nasjonalmuseet.no', 'wikiart.org',
+  'museodelprado.es', 'museothyssen.org', 'uffizi.it', 'vangoghmuseum.nl',
+  // — Rest of world —
+  'tepapa.govt.nz', 'aucklandmuseum.com', 'maas.museum', 'nla.gov.au',
+  'louvreabudhabi.ae', 'npm.gov.tw', 'nmwa.go.jp',
+  // — Aggregators / infrastructure —
+  'wikimedia.org', 'wikipedia.org', 'wikidata.org', 'emuseum.com',
+  'iiif.io', 'davidrumsey.com', 'archive.org',
+  // — Key-gated sources (see SERVER_KEY_HOSTS) —
+  'dp.la', 'nla.gov.au', 'pexels.com', 'pixabay.com', 'unsplash.com',
+];
+
+// True when `hostname` is the institution domain itself or a subdomain of it.
+// Compares against a leading dot so `evilmetmuseum.org` cannot match
+// `metmuseum.org` — only `metmuseum.org` and `*.metmuseum.org` do.
+export function isAllowedProxyHost(hostname) {
+  const h = (hostname || '').toLowerCase();
+  if (PROXY_ALLOWED_DOMAINS.has(h)) return true;
+  return PROXY_ALLOWED_SUFFIXES.some(d => h === d || h.endsWith('.' + d));
+}
+
+// Hostnames that are never proxied, regardless of allowlist (SSRF guard).
+// Covers private, loopback, link-local, and metadata-service IPv4/IPv6.
+const _PRIVATE_IP_RE = /^(?:127\.|10\.|192\.168\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|0\.|::1$|fc|fd|fe80:|169\.254\.169\.254$)/i;
+const _LOCAL_HOSTS = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'broadcasthost']);
+
+export function isPrivateOrLocalHost(hostname) {
+  const h = (hostname || '').toLowerCase();
+  if (_LOCAL_HOSTS.has(h)) return true;
+  if (_PRIVATE_IP_RE.test(h)) return true;
+  // Bracketed IPv6 like [::1] arrives un-bracketed from URL parsing; covered above.
+  return false;
+}
 
 async function handleProxy(url, request, env) {
   if (request.method !== 'GET') {
@@ -702,17 +870,46 @@ async function handleProxy(url, request, env) {
     return json({ error: 'Only http/https URLs are supported' }, 400, env);
   }
 
-  if (!PROXY_ALLOWED_DOMAINS.has(parsed.hostname)) {
-    return json({ error: 'Domain not in allowlist' }, 403, env);
+  // SSRF guard — never proxy to private/loopback hosts or non-standard ports.
+  if (isPrivateOrLocalHost(parsed.hostname)) {
+    return json({ error: 'Host not allowed' }, 403, env);
+  }
+  if (parsed.port && parsed.port !== '80' && parsed.port !== '443') {
+    return json({ error: 'Non-standard ports not allowed' }, 403, env);
+  }
+
+  // Access gate: destination must be a known cultural-heritage host. Origin is
+  // deliberately NOT consulted — it is attacker-controlled outside a browser,
+  // so gating on it left this endpoint working as an open proxy.
+  if (!isAllowedProxyHost(parsed.hostname)) {
+    return json({ error: 'Host not in proxy allowlist' }, 403, env);
+  }
+
+  // Swap the client's key sentinel for the real secret. Bound to the
+  // destination host so a sentinel aimed at one API can never surface another
+  // API's key, and refused outright when the secret isn't configured — better
+  // a clear 503 than a request that leaks the literal sentinel upstream.
+  let outboundUrl = targetUrl;
+  if (targetUrl.includes(KEY_SENTINEL)) {
+    const secretName = serverKeyForHost(parsed.hostname);
+    const secret = secretName ? env?.[secretName] : null;
+    if (!secret) {
+      return json({ error: 'No server key configured for this host' }, 503, env);
+    }
+    outboundUrl = targetUrl.split(KEY_SENTINEL).join(encodeURIComponent(secret));
   }
 
   try {
-    const upstream = await fetch(targetUrl, {
+    const upstream = await fetch(outboundUrl, {
       headers: {
         'User-Agent': UA,
         'Accept': 'application/json, application/ld+json, text/xml, */*;q=0.5',
       },
-      cf: { cacheTtl: 300, cacheEverything: true },
+      // Never edge-cache a keyed request: the outbound URL carries the secret,
+      // so it must not become part of a cache key.
+      cf: outboundUrl === targetUrl
+        ? { cacheTtl: 300, cacheEverything: true }
+        : { cacheTtl: 0 },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT),
     });
 

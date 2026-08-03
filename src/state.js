@@ -845,6 +845,22 @@ STATE.artsySecret    = localStorage.getItem('inspo_artsy_secret')     || null;
 STATE.unsplashKey    = localStorage.getItem('inspo_unsplash_key')     || null;
 
 /* ============================================================
+   RETIRED SOURCES
+   Hosts whose DNS no longer resolves — verified 2026-08-02 by direct
+   request (curl, no proxy): connection never reaches name lookup, so
+   these are gone rather than blocked, throttled, or CORS-limited.
+   Retired sources still consumed a request slot on every search and
+   always returned empty, which counted as a health "miss" and dragged
+   the active-source count down for no benefit.
+   Re-check before deleting the adapters; museums do restore APIs.
+============================================================ */
+export const RETIRED_SOURCES = new Set([
+  'carnegie', // api.collection.carnegieart.org — NXDOMAIN
+  'mnw',      // api.mnw.art.pl — NXDOMAIN
+  'folger',   // collections.folger.edu — NXDOMAIN
+]);
+
+/* ============================================================
    SOURCE REGISTRY
    66 unique source IDs used by callIfHealthy (all fetchAll calls)
 ============================================================ */
@@ -897,7 +913,7 @@ export const ALL_SOURCES = [
   ...WD_PHASE_H.map(s => s.id),
   // DDB — Deutsche Digitale Bibliothek (key-gated)
   'ddb',
-];
+].filter(id => !RETIRED_SOURCES.has(id));
 
 export const SOURCE_GROUPS = {
   museums:     ['met','rijksmuseum','chicago','cleveland','va','getty','nga',
