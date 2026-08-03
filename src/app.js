@@ -28,6 +28,7 @@ import {
   mulberry32, applyPreset, applySourceFilter, _updateSourcesActiveCounterImmediate,
   saveDisabledSources, getSourceConfig, getSourceDomain, getSourceMonogram,
   trigramSimilarity, withTimeout, promisePool, extractTags, isLikelyReal,
+  wasRecentlyThrottled,
   interleave, shuffle, cacheKey, CACHE_TTL, CACHE_MAX_BYTES,
   disableGeminiButtons, SOURCE_VIEW_FILTER, sourceFetch, fetchFromDataCache,
   proxyImageUrl,
@@ -235,8 +236,11 @@ export async function fetchAll(keywords, totalCount, isSilent = false) {
     if (rawCount > 0) {
       sourceHitThisSearch.add(sourceName);
       recordSourceResult(sourceName, rawCount);
-    } else if (!sourceHitThisSearch.has(sourceName)) {
-      // Only record a miss if no variant call for this source has hit yet
+    } else if (!sourceHitThisSearch.has(sourceName) && !wasRecentlyThrottled()) {
+      // Only record a miss if no variant call for this source has hit yet.
+      // Skipped entirely during a throttle window: an empty result caused by
+      // HTTP 429 means "busy", and pausing the source for it is exactly how
+      // quality used to degrade across a run of searches.
       recordSourceResult(sourceName, 0);
     }
     updateSourcesActiveCounter();

@@ -544,20 +544,75 @@ export function _releaseFetchSlot() {
 }
 
 // ── safeFetch — drop-in fetch replacement with timeout + 429 retry + concurrency limit ──
+// Also auto-retries via the API proxy worker on TypeError (browser CORS failure).
+// Skipped for relative URLs, the API/image proxy hosts themselves, and known
+// non-API endpoints to avoid pointless or recursive proxying.
+function _eligibleForProxyRetry(url) {
+  if (!CONSTANTS.API_PROXY_URL) return false;
+  if (typeof url !== 'string') return false;
+  if (!/^https?:\/\//i.test(url)) return false;            // relative URLs (e.g. /data/*.json)
+  if (url.startsWith(CONSTANTS.API_PROXY_URL)) return false; // already proxied
+  if (url.startsWith(CONSTANTS.IMG_PROXY_URL)) return false; // image proxy host
+  return true;
+}
+
+// ── Throttle tracking ──────────────────────────────────────────────────────
+// A source that answers HTTP 429 is busy, not broken — but to the caller both
+// look identical (an empty array), so the health tracker used to pause healthy
+// sources during a throttle burst. That is what made result quality decay over
+// a run of searches. safeFetch stamps the time of the last unrecovered 429 so
+// callers can tell the two cases apart before recording a "miss".
+export let _lastThrottleAt = 0;
+// Window generously covers the tail of an in-flight fan-out: sources called at
+// the start of a search must still be treated as throttled when their siblings
+// hit the limit seconds later.
+const THROTTLE_GRACE_MS = 15_000;
+export function noteThrottled() { _lastThrottleAt = Date.now(); }
+export function wasRecentlyThrottled() {
+  return _lastThrottleAt > 0 && Date.now() - _lastThrottleAt < THROTTLE_GRACE_MS;
+}
+export function _resetThrottleState() { _lastThrottleAt = 0; }
+
+// Respect the worker's Retry-After when present, otherwise exponential backoff.
+function _retryDelayFor(res, attempt) {
+  const header = parseInt(res.headers?.get?.('Retry-After') || '', 10);
+  // Cap header-driven waits — a 60s Retry-After would stall the whole search.
+  if (Number.isFinite(header) && header > 0) return Math.min(header * 1000, 8000);
+  return CONSTANTS.RETRY_DELAY * Math.pow(2, attempt);
+}
+
 export async function safeFetch(url, opts = {}, timeoutMs = CONSTANTS.FETCH_TIMEOUT) {
   await _acquireFetchSlot();
   try {
     const origSignal = opts.signal;
     const s = origSignal ? withTimeout(origSignal, timeoutMs) : AbortSignal.timeout(timeoutMs);
     const fetchOpts = { ...opts, signal: s };
-    let res = await fetch(url, fetchOpts);
-    // Exponential backoff on 429: retry up to 2 times (2s → 4s)
-    for (let attempt = 0; res.status === 429 && attempt < 2; attempt++) {
-      const delay = CONSTANTS.RETRY_DELAY * Math.pow(2, attempt);
-      await sleep(delay);
-      if (origSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    let res;
+    // Track which URL actually produced the response, so 429 retries go back to
+    // the proxy rather than to an origin we already know the browser blocks.
+    let effectiveUrl = url;
+    try {
       res = await fetch(url, fetchOpts);
+    } catch (err) {
+      // Browser-level CORS / DNS / network failure surfaces as TypeError.
+      // Retry through the API proxy worker, which serves the allowlisted
+      // cultural-heritage hosts with CORS headers attached.
+      if (err instanceof TypeError && _eligibleForProxyRetry(url)) {
+        effectiveUrl = `${CONSTANTS.API_PROXY_URL}/proxy?url=${encodeURIComponent(url)}`;
+        res = await fetch(effectiveUrl, fetchOpts);
+      } else {
+        throw err;
+      }
     }
+    // Backoff on 429: retry up to 2 times, honouring Retry-After when sent.
+    for (let attempt = 0; res.status === 429 && attempt < 2; attempt++) {
+      await sleep(_retryDelayFor(res, attempt));
+      if (origSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      res = await fetch(effectiveUrl, fetchOpts);
+    }
+    // Still throttled after retries — flag it so the health tracker doesn't
+    // punish this source (and its siblings) for someone else's rate limit.
+    if (res.status === 429) noteThrottled();
     return res;
   } catch (err) {
     _fetchSemaphore._totalFailed++;
