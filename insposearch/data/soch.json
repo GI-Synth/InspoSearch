@@ -2,7 +2,7 @@
   "sourceId": "soch",
   "sourceName": "Swedish Open Cultural Heritage",
   "schemaVersion": 1,
-  "lastFetched": "2026-08-05T03:07:37.208Z",
+  "lastFetched": "2026-08-06T03:07:15.442Z",
   "items": [
     {
       "img": "https://ems.dimu.org/image/019EGJhcjvDFN?dimension=600x600",
@@ -17,7 +17,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007109/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007109/image.jpg",
-      "title": "Dinkelspiel, Max",
+      "title": {
+        "@id": "_:e7561a58ebcef400fd740a399f82be5e"
+      },
       "source": "soch",
       "tags": [
         "portrait"
@@ -27,7 +29,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007105/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007105/image.jpg",
-      "title": "Dinkelspiel, Max",
+      "title": {
+        "@id": "_:d5ba6962e24e39fb1b09701d092e252f"
+      },
       "source": "soch",
       "tags": [
         "portrait"
@@ -37,7 +41,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2181043/bild-1913.06.0246.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2181043/bild-1913.06.0246.jpg",
-      "title": "Kaudern, Walter",
+      "title": "Merina",
       "source": "soch",
       "tags": [
         "portrait"
@@ -47,7 +51,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007101/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007101/image.jpg",
-      "title": "Dinkelspiel, Max",
+      "title": "Nationalmuseum, Stockholm",
       "source": "soch",
       "tags": [
         "portrait"
@@ -57,7 +61,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2181038/bild-1913.06.0245.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2181038/bild-1913.06.0245.jpg",
-      "title": "Merina",
+      "title": "Kaudern, Walter",
       "source": "soch",
       "tags": [
         "portrait"
@@ -67,7 +71,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007097/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007097/image.jpg",
-      "title": "Dinkelspiel, Max",
+      "title": {
+        "@id": "_:3fbd8ee93bfd42076a592c110176a66e"
+      },
       "source": "soch",
       "tags": [
         "portrait"
@@ -78,7 +84,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007113/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4007113/image.jpg",
       "title": {
-        "@id": "_:d2efe2fce8dbf0ac6d8177e069321252"
+        "@id": "_:5685bd7ebf1edf814c292ba184571d4d"
       },
       "source": "soch",
       "tags": [
@@ -89,7 +95,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/3882557/0779.0547.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/3882557/0779.0547.jpg",
-      "title": "Okänd",
+      "title": {
+        "@id": "_:aaf01c528b424e954eb0351fa6e016e0"
+      },
       "source": "soch",
       "tags": [
         "portrait"
@@ -99,14 +107,22 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/3835488/0760.0057.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/3835488/0760.0057.jpg",
-      "title": {
-        "@id": "_:45c0b7c146591a91e8e115e97031f479"
-      },
+      "title": "Hedengren [?]",
       "source": "soch",
       "tags": [
         "portrait"
       ],
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/3835485"
+    },
+    {
+      "img": "https://ems.dimu.org/image/0334ASe72d8i?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/0334ASe72d8i?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "portrait"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/021018604153"
     },
     {
       "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/1418126/GMA_10203.jpg",
@@ -129,36 +145,16 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3104852"
     },
     {
-      "img": "https://ems.dimu.org/image/0334ASe72d8i?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/0334ASe72d8i?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "portrait"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/021018604153"
-    },
-    {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1569991/image.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1569991/image.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1569987/image.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1569987/image.jpg",
       "title": {
-        "@id": "_:38843477315678f066a8c7e59f2ccd88"
+        "@id": "_:efae3edd18f9f4c9f979f78ef61fb8fb"
       },
       "source": "soch",
       "tags": [
         "portrait"
       ],
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/1569967"
-    },
-    {
-      "img": "https://ems.dimu.org/image/019EGJhcjwE9W?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/019EGJhcjwE9W?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "landscape"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/0210214796661"
     },
     {
       "img": "https://ems.dimu.org/image/019EGJhcmPC5n?dimension=600x600",
@@ -169,6 +165,16 @@
         "landscape"
       ],
       "sourceUrl": "https://digitaltmuseum.se/0210214796984"
+    },
+    {
+      "img": "https://ems.dimu.org/image/019EGJhcjwE9W?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/019EGJhcjwE9W?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "landscape"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/0210214796661"
     },
     {
       "img": "https://ems.dimu.org/image/019EGJhcjvtfa?dimension=600x600",
@@ -191,8 +197,8 @@
       "sourceUrl": "https://digitaltmuseum.se/0210113202476"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/10976276/000470%28F.2472glasneg%29.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/10976276/000470%28F.2472glasneg%29.jpg",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/10976168/000470%28F.2472pasiktbak%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/10976168/000470%28F.2472pasiktbak%29.jpg",
       "title": "Andersson, Johan Gunnar [?]",
       "source": "soch",
       "tags": [
@@ -211,9 +217,11 @@
       "sourceUrl": "https://digitaltmuseum.se/021015943968"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5084905/C06809%28pasikt%29.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5084905/C06809%28pasikt%29.jpg",
-      "title": "Lindros, John",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5079539/C06809.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5079539/C06809.jpg",
+      "title": {
+        "@id": "_:98fb325f6ed60cc35d2ee08687abc988"
+      },
       "source": "soch",
       "tags": [
         "landscape"
@@ -224,7 +232,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26227947/0810.0026_pasiktbak.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26227947/0810.0026_pasiktbak.jpg",
       "title": {
-        "@id": "_:3be62040c34a2824ea93764855dd8a63"
+        "@id": "_:74b903ca47685bab6b042d81468ae440"
       },
       "source": "soch",
       "tags": [
@@ -353,8 +361,8 @@
       "sourceUrl": "https://digitaltmuseum.se/011015013684"
     },
     {
-      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/3990377/GM_40302.bild1.jpg",
-      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/3990377/GM_40302.bild1.jpg",
+      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/513286/GM_40307.jpg",
+      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/513286/GM_40307.jpg",
       "title": "bilder, tavla, kopparstick, Architectura Navalis",
       "source": "soch",
       "tags": [
@@ -363,18 +371,8 @@
       "sourceUrl": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/object/32054"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/3613920/00137_CIRKULART-MODE-MINI4.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/3613920/00137_CIRKULART-MODE-MINI4.jpg",
-      "title": "utställningstext",
-      "source": "soch",
-      "tags": [
-        "fashion"
-      ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/3613917"
-    },
-    {
-      "img": "https://ems.dimu.org/image/022s8Z6vXteB?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/022s8Z6vXteB?dimension=600x600",
+      "img": "https://ems.dimu.org/image/042s8Z6vXteC?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/042s8Z6vXteC?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -383,10 +381,20 @@
       "sourceUrl": "https://digitaltmuseum.se/011013855749"
     },
     {
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/3613920/00137_CIRKULART-MODE-MINI4.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/3613920/00137_CIRKULART-MODE-MINI4.jpg",
+      "title": "Circular fashion",
+      "source": "soch",
+      "tags": [
+        "fashion"
+      ],
+      "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/3613917"
+    },
+    {
       "img": "https://jlm.kulturhotell.se/files/fullsize/0bd7d193eaeb7fcc7e3a2060eefec2ff.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/0bd7d193eaeb7fcc7e3a2060eefec2ff.jpg",
       "title": {
-        "@id": "_:05a430f46b7cc517cf9abb969edc72e1"
+        "@id": "_:b9c4f93c7cc18c276a86c397ec9a8213"
       },
       "source": "soch",
       "tags": [
@@ -398,7 +406,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/3044a840c72c9507ab628c59cb6407c5.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/3044a840c72c9507ab628c59cb6407c5.jpg",
       "title": {
-        "@id": "_:63cead488dec762edb15ed418fa44ed5"
+        "@id": "_:9178b2a63b5046f2d278ce4b07b392d7"
       },
       "source": "soch",
       "tags": [
@@ -410,7 +418,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/4dd29ba3afc6beec038a08a33c8e7eb7.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/4dd29ba3afc6beec038a08a33c8e7eb7.jpg",
       "title": {
-        "@id": "_:a6200ad3486fd1c492ad17a377f2ab8e"
+        "@id": "_:9f7c73628caff6080e4d7ccd4df74922"
       },
       "source": "soch",
       "tags": [
@@ -422,7 +430,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/ce3e9b910c140a23392b26c6437276a7.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/ce3e9b910c140a23392b26c6437276a7.jpg",
       "title": {
-        "@id": "_:f625ec47c6ae51cf85f00426275dd277"
+        "@id": "_:87e77380e2031c8b72da6f21f63fa3de"
       },
       "source": "soch",
       "tags": [
@@ -434,7 +442,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/b0311c7b78b72e78b539b1d26577f6da.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/b0311c7b78b72e78b539b1d26577f6da.jpg",
       "title": {
-        "@id": "_:bcf59569df449ae1db0a69c77b6baed2"
+        "@id": "_:b048c6079ae989be0e5bce29f0136526"
       },
       "source": "soch",
       "tags": [
@@ -446,7 +454,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/10717b70ab943c84c5559eda118f0dfa.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/10717b70ab943c84c5559eda118f0dfa.jpg",
       "title": {
-        "@id": "_:bca0234a4edf31a2c466683a352df408"
+        "@id": "_:d1b8bc78bfb2da810a841af8d3a02e57"
       },
       "source": "soch",
       "tags": [
@@ -458,7 +466,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/3e201c6d797d61356dc70ca5f340d326.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/3e201c6d797d61356dc70ca5f340d326.jpg",
       "title": {
-        "@id": "_:3ce182dce74f4021be1c589ecd5e3d5c"
+        "@id": "_:acdbd972391085839844f1f002940d6e"
       },
       "source": "soch",
       "tags": [
@@ -470,7 +478,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/62bf6878f71728154b2583cee3cd244e.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/62bf6878f71728154b2583cee3cd244e.jpg",
       "title": {
-        "@id": "_:6320eeb98ae91cd565e8522b566b118d"
+        "@id": "_:f736a50b2c3f3b32c473383d8a01cb93"
       },
       "source": "soch",
       "tags": [
@@ -482,7 +490,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/630b03580c2dc8a0a1d7cccf0b41b8fe.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/630b03580c2dc8a0a1d7cccf0b41b8fe.jpg",
       "title": {
-        "@id": "_:a8e6b19679f490804311a295c0cb11c6"
+        "@id": "_:9fadf26cb5abe1a29d6d6d9ebedfb6b1"
       },
       "source": "soch",
       "tags": [
@@ -494,7 +502,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/af01940deea9cf119a9bd93fdfd8be6e.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/af01940deea9cf119a9bd93fdfd8be6e.jpg",
       "title": {
-        "@id": "_:5a566a3c2ae04b4d79607646128e7dd0"
+        "@id": "_:93f2f7e35a99f85f327a7f48bf4a87a3"
       },
       "source": "soch",
       "tags": [
@@ -506,7 +514,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/64d262b1a123df6ed9cc0db569a3d612.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/64d262b1a123df6ed9cc0db569a3d612.jpg",
       "title": {
-        "@id": "_:91e9371f98d29e6dcf0eb35bb08dd674"
+        "@id": "_:935bfc215fc53bb7bd4c23cf3c21a6cb"
       },
       "source": "soch",
       "tags": [
@@ -518,7 +526,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/f7f89b50b6054df22be173504d0eb2cc.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/f7f89b50b6054df22be173504d0eb2cc.jpg",
       "title": {
-        "@id": "_:dad00b5ec559177c0b051eb0967f830e"
+        "@id": "_:c81f56671afd67f35f51ae70aedbba0d"
       },
       "source": "soch",
       "tags": [
@@ -530,7 +538,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/f3372acaa9121977c76c22bfe776e78a.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/f3372acaa9121977c76c22bfe776e78a.jpg",
       "title": {
-        "@id": "_:9360e7b0db61188dc8499b018f548c49"
+        "@id": "_:7e0860cc756d928ce16fe9edc058d5b3"
       },
       "source": "soch",
       "tags": [
@@ -542,7 +550,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/f5639495ed5b126e99662431f974e5da.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/f5639495ed5b126e99662431f974e5da.jpg",
       "title": {
-        "@id": "_:c384c7a0aefad0e0fe78e7f09336554c"
+        "@id": "_:55417957f2a711cf86cd5738eede1175"
       },
       "source": "soch",
       "tags": [
@@ -554,7 +562,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/7b9fe535ce4056e68772b6fd1f602b35.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/7b9fe535ce4056e68772b6fd1f602b35.jpg",
       "title": {
-        "@id": "_:1be5fff10adaafb158ec1d349e1217e5"
+        "@id": "_:0e2f7dd4991d90e47ad11a6c791b22db"
       },
       "source": "soch",
       "tags": [
@@ -566,7 +574,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/3b84f7a576f64da63bc067268940c247.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/3b84f7a576f64da63bc067268940c247.jpg",
       "title": {
-        "@id": "_:c2a8138ed2e102ae9d89036e8c387fb3"
+        "@id": "_:adbafed91f053f23b6ce111a21cc84ea"
       },
       "source": "soch",
       "tags": [
@@ -578,7 +586,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/cd4046fdc7762f6c1206699764a5ee78.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/cd4046fdc7762f6c1206699764a5ee78.jpg",
       "title": {
-        "@id": "_:94fb02aa862caf30cbeb5eb7237b0d9e"
+        "@id": "_:b5f21fd7bbafa15effc422dd9f25db53"
       },
       "source": "soch",
       "tags": [
@@ -590,7 +598,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/9a83b403c6e04c85661e9bee31d84bcd.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/9a83b403c6e04c85661e9bee31d84bcd.jpg",
       "title": {
-        "@id": "_:b4ffcf2b480c950165789547ce7c24a9"
+        "@id": "_:daaa982617904daac6e906847649e239"
       },
       "source": "soch",
       "tags": [
@@ -602,7 +610,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/c9e01c6bfab9356bcab12fa5ebd8cd22.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/c9e01c6bfab9356bcab12fa5ebd8cd22.jpg",
       "title": {
-        "@id": "_:a0f78106477e08d3ebacdd9880235b13"
+        "@id": "_:276d570ab1c8008c207a8c604f8abadb"
       },
       "source": "soch",
       "tags": [
@@ -614,7 +622,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/b049258c36b3595c0f3c773c54358c68.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/b049258c36b3595c0f3c773c54358c68.jpg",
       "title": {
-        "@id": "_:7cb4c4b4590e8dbf5e7db25c3916cdf6"
+        "@id": "_:a78364cd769907c8e774860320c44dc4"
       },
       "source": "soch",
       "tags": [
@@ -626,7 +634,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/5d60f1ac197fc8afb4d3a753c4c30d49.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/5d60f1ac197fc8afb4d3a753c4c30d49.jpg",
       "title": {
-        "@id": "_:a212493741faa7ebda37227a33287da1"
+        "@id": "_:ca1eeb7b0cd817342163df0beb00a03d"
       },
       "source": "soch",
       "tags": [
@@ -638,7 +646,7 @@
       "img": "https://jlm.kulturhotell.se/files/fullsize/ad20ddba860952c17c0b6690ba863756.jpg",
       "thumb": "https://jlm.kulturhotell.se/files/fullsize/ad20ddba860952c17c0b6690ba863756.jpg",
       "title": {
-        "@id": "_:78e50d80abea2862c46914035b501136"
+        "@id": "_:48ab6f55917a14889167989e099f2f97"
       },
       "source": "soch",
       "tags": [
@@ -707,28 +715,28 @@
       "sourceUrl": "https://samlingar.norrbottensmuseum.se/web/object/811541"
     },
     {
-      "img": "https://samlingar.regionmuseet.se/files/fullsize/5a4e859fa5deb736aad38e5ee26a43e5.jpg",
-      "thumb": "https://samlingar.regionmuseet.se/files/fullsize/5a4e859fa5deb736aad38e5ee26a43e5.jpg",
-      "title": {
-        "@id": "_:34184630331441b3060d163ed7603eaa"
-      },
-      "source": "soch",
-      "tags": [
-        "texture"
-      ],
-      "sourceUrl": "https://samlingar.regionmuseet.se/objects/c62-63168/"
-    },
-    {
       "img": "https://samlingar.regionmuseet.se/files/fullsize/a8ff1d6860bae456e6b2109b91b7ef4b.jpg",
       "thumb": "https://samlingar.regionmuseet.se/files/fullsize/a8ff1d6860bae456e6b2109b91b7ef4b.jpg",
       "title": {
-        "@id": "_:52800a462bfcb44572c6a9a8f7ebe3e3"
+        "@id": "_:e287d778e9b6dc1d8372fbce76f2eaa6"
       },
       "source": "soch",
       "tags": [
         "texture"
       ],
       "sourceUrl": "https://samlingar.regionmuseet.se/objects/c62-63164/"
+    },
+    {
+      "img": "https://samlingar.regionmuseet.se/files/fullsize/5a4e859fa5deb736aad38e5ee26a43e5.jpg",
+      "thumb": "https://samlingar.regionmuseet.se/files/fullsize/5a4e859fa5deb736aad38e5ee26a43e5.jpg",
+      "title": {
+        "@id": "_:0a0174f8e5f80f21c65dd159f291c135"
+      },
+      "source": "soch",
+      "tags": [
+        "texture"
+      ],
+      "sourceUrl": "https://samlingar.regionmuseet.se/objects/c62-63168/"
     },
     {
       "img": "https://ems.dimu.org/image/022wZWV6ZCtG?dimension=600x600",
@@ -754,7 +762,7 @@
       "img": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/97445cda7d7ad9182878f8ad8bbd6fc9.jpg",
       "thumb": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/97445cda7d7ad9182878f8ad8bbd6fc9.jpg",
       "title": {
-        "@id": "_:673ba87606ae7a6f4b9ef12bab295d1d"
+        "@id": "_:526368d4592927148ff360e9f38f9aef"
       },
       "source": "soch",
       "tags": [
@@ -785,7 +793,7 @@
     {
       "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/839643/Like+deer+in+the+light%2C+2014.jpg",
       "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/839643/Like+deer+in+the+light%2C+2014.jpg",
-      "title": "Foley, Matthew",
+      "title": "Like deer in the light, 2014, Like deer in the light",
       "source": "soch",
       "tags": [
         "light"
@@ -833,9 +841,9 @@
       "sourceUrl": "https://digitaltmuseum.se/021016322072"
     },
     {
-      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/837043/Orfila%2C+2014.jpg",
-      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/837043/Orfila%2C+2014.jpg",
-      "title": "Northern (de)Lights, 2014, Northern (de)Lights",
+      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/836525/From+Far+to+Deep%2C+2014.jpg",
+      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/836525/From+Far+to+Deep%2C+2014.jpg",
+      "title": "Stengel, Tilo [föreställningsfoto], Battisti, Jubal [föreställningsfoto]",
       "source": "soch",
       "tags": [
         "light"
@@ -903,9 +911,9 @@
       "sourceUrl": "https://digitaltmuseum.se/021016103619"
     },
     {
-      "img": "https://carl.kulturen.com/web/image/zoom/1043758/76106_000_03.jpg",
-      "thumb": "https://carl.kulturen.com/web/image/zoom/1043758/76106_000_03.jpg",
-      "title": "MMT",
+      "img": "https://carl.kulturen.com/web/image/zoom/1043766/76106_000_05.jpg",
+      "thumb": "https://carl.kulturen.com/web/image/zoom/1043766/76106_000_05.jpg",
+      "title": "Katja of Sweden",
       "source": "soch",
       "tags": [
         "shadow"
@@ -916,7 +924,7 @@
       "img": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/1196789/zoom",
       "thumb": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/1196789/zoom",
       "title": {
-        "@id": "_:f8da0393f847bf1ffad683a96c8606f1"
+        "@id": "_:f20354d6b4353df3b145a5c1206b34ed"
       },
       "source": "soch",
       "tags": [
@@ -928,7 +936,7 @@
       "img": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/1196793/zoom",
       "thumb": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/1196793/zoom",
       "title": {
-        "@id": "_:43db2ee804e16354eaac05102d5f4b66"
+        "@id": "_:0363f2592e56a36d49480ed6d4b5c6c7"
       },
       "source": "soch",
       "tags": [
@@ -1010,7 +1018,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4073763/15301D.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4073763/15301D.jpg",
       "title": {
-        "@id": "_:14ad8d7ffdbf893a42629b62aa53f3b6"
+        "@id": "_:83380889d3ab2acff17e1c8a3cabe68a"
       },
       "source": "soch",
       "tags": [
@@ -1032,7 +1040,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4073931/15304D.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4073931/15304D.jpg",
       "title": {
-        "@id": "_:bd740e619cf51c924d838aa86480260d"
+        "@id": "_:e79a84e84f210c7861e86487f22367c6"
       },
       "source": "soch",
       "tags": [
@@ -1044,7 +1052,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344784/1115.0102.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344784/1115.0102.jpg",
       "title": {
-        "@id": "_:15672976c8d16ac7fb26c3a5aaed3a71"
+        "@id": "_:e61f6e42d22f4b1e37160f9e23c95ec2"
       },
       "source": "soch",
       "tags": [
@@ -1055,7 +1063,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344779/1115.0101.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344779/1115.0101.jpg",
-      "title": "Etnografiska museet, Stockholm",
+      "title": {
+        "@id": "_:37a3bbb16558aeccbfa6079a998c82db"
+      },
       "source": "soch",
       "tags": [
         "shadow"
@@ -1066,7 +1076,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344769/1115.0099.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344769/1115.0099.jpg",
       "title": {
-        "@id": "_:d0a2b1b54146fec3e3938e31267f444e"
+        "@id": "_:5117da4eb095afa2571919bcded885d2"
       },
       "source": "soch",
       "tags": [
@@ -1077,7 +1087,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344794/1115.0104.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344794/1115.0104.jpg",
-      "title": "Etnografiska museet, Stockholm",
+      "title": {
+        "@id": "_:957669425cec1dd33ee0a2b88c3312e6"
+      },
       "source": "soch",
       "tags": [
         "shadow"
@@ -1087,9 +1099,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344774/1115.0100.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2344774/1115.0100.jpg",
-      "title": {
-        "@id": "_:ddbead624769e3f150569bc0b31170c8"
-      },
+      "title": "Etnografiska museet, Stockholm",
       "source": "soch",
       "tags": [
         "shadow"
@@ -1117,8 +1127,8 @@
       "sourceUrl": "https://digitaltmuseum.se/021016301048"
     },
     {
-      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/2581037/GM_40949.bild1.jpg",
-      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/2581037/GM_40949.bild1.jpg",
+      "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/244009/GM_40949.jpg",
+      "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/244009/GM_40949.jpg",
       "title": "Coca-Cola Company",
       "source": "soch",
       "tags": [
@@ -1210,7 +1220,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2069633/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2069633/image.jpg",
       "title": {
-        "@id": "_:bff750f818aeb05cbd8a12e4fc977b1c"
+        "@id": "_:f928abdeed512ffa23ed7fc92f268013"
       },
       "source": "soch",
       "tags": [
@@ -1552,13 +1562,23 @@
       "img": "https://samlingar.regionmuseet.se/files/fullsize/ac8be5bf010396ff0da8d0804914124f.jpg",
       "thumb": "https://samlingar.regionmuseet.se/files/fullsize/ac8be5bf010396ff0da8d0804914124f.jpg",
       "title": {
-        "@id": "_:290145f566c3314768921f88d52fa543"
+        "@id": "_:bfc552299306ab80983ba453c6f50967"
       },
       "source": "soch",
       "tags": [
         "minimal"
       ],
       "sourceUrl": "https://samlingar.regionmuseet.se/objects/c62-49280/"
+    },
+    {
+      "img": "https://ems.dimu.org/image/032wYzp6FuFP?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/032wYzp6FuFP?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "minimal"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/011023806882"
     },
     {
       "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/265652/GTM_818_3.jpg",
@@ -1591,16 +1611,6 @@
       "sourceUrl": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/object/223374"
     },
     {
-      "img": "https://ems.dimu.org/image/032wYzp6FuFP?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/032wYzp6FuFP?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "minimal"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/011023806882"
-    },
-    {
       "img": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/c3be06d070edcdb4f4ed221129aba63d.jpg",
       "thumb": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/c3be06d070edcdb4f4ed221129aba63d.jpg",
       "title": "Swedish Heritage Item",
@@ -1614,7 +1624,7 @@
       "img": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/78a3e7a0fc297a9ca36683c4ad8fa8bc.jpg",
       "thumb": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/78a3e7a0fc297a9ca36683c4ad8fa8bc.jpg",
       "title": {
-        "@id": "_:4bcc465747915efb462ac8ee903223a5"
+        "@id": "_:b1beee5660eee85ee9f0fe39dbc827be"
       },
       "source": "soch",
       "tags": [
@@ -1663,8 +1673,8 @@
       "sourceUrl": "https://digitaltmuseum.se/021019721401"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434088/0321.p.0005_bearb.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434088/0321.p.0005_bearb.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434092/0321.p.0005_pasikt.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434092/0321.p.0005_pasikt.jpg",
       "title": "Cronholm, Folke",
       "source": "soch",
       "tags": [
@@ -1683,8 +1693,8 @@
       "sourceUrl": "https://digitaltmuseum.se/011015013973"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434070/0321.p.0003_bearb.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434070/0321.p.0003_bearb.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434074/0321.p.0003_pasikt.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434074/0321.p.0003_pasikt.jpg",
       "title": "Cronholm, Folke",
       "source": "soch",
       "tags": [
@@ -1693,14 +1703,24 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/2434067"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434061/0321.p.0002_bearb.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434061/0321.p.0002_bearb.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434065/0321.p.0002_pasikt.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2434065/0321.p.0002_pasikt.jpg",
       "title": "Cronholm, Folke",
       "source": "soch",
       "tags": [
         "water"
       ],
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/2434058"
+    },
+    {
+      "img": "https://ems.dimu.org/image/019EGKD4UmGWQ?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/019EGKD4UmGWQ?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "water"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/0210114931384"
     },
     {
       "img": "https://ems.dimu.org/image/032wZW33qq2R?dimension=600x600",
@@ -1873,8 +1893,8 @@
       "sourceUrl": "https://digitaltmuseum.se/021018069537"
     },
     {
-      "img": "https://ems.dimu.org/image/022wXVwXx6ZB?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/022wXVwXx6ZB?dimension=600x600",
+      "img": "https://ems.dimu.org/image/012uMXAhY1D4?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/012uMXAhY1D4?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -1926,7 +1946,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3750820/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3750820/representation",
       "title": {
-        "@id": "_:f3842eeb3bf027784ba5847b2484501b"
+        "@id": "_:fc3455b6eeb6761d0aab0a9bf6df505c"
       },
       "source": "soch",
       "tags": [
@@ -1977,7 +1997,7 @@
     {
       "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/1833486/GM_30378_4_2.bild1.jpg",
       "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/1833486/GM_30378_4_2.bild1.jpg",
-      "title": "Majblommans riksförbund",
+      "title": "Johansson, Gunnar",
       "source": "soch",
       "tags": [
         "flower"
@@ -2007,7 +2027,7 @@
     {
       "img": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/1833508/GM_30378_4_4.bild1.jpg",
       "thumb": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/image/zoom/1833508/GM_30378_4_4.bild1.jpg",
-      "title": "Majblommans riksförbund",
+      "title": "Johansson, Gunnar",
       "source": "soch",
       "tags": [
         "flower"
@@ -2035,8 +2055,8 @@
       "sourceUrl": "https://digitaltmuseum.se/0210214796961"
     },
     {
-      "img": "https://ems.dimu.org/image/019EGJhcmPXsS?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/019EGJhcmPXsS?dimension=600x600",
+      "img": "https://ems.dimu.org/image/019EGJhcmPXsT?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/019EGJhcmPXsT?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -2125,8 +2145,8 @@
       "sourceUrl": "https://museum.helsingborg.se/web/object/1344712"
     },
     {
-      "img": "https://ems.dimu.org/image/022waVgkYhKR?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/022waVgkYhKR?dimension=600x600",
+      "img": "https://ems.dimu.org/image/022waVgkYhKQ?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/022waVgkYhKQ?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -2147,7 +2167,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3640332/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3640332/representation",
-      "title": "beaker",
+      "title": "Statens Historiska museum",
       "source": "soch",
       "tags": [
         "geometric"
@@ -2165,9 +2185,9 @@
       "sourceUrl": "https://digitaltmuseum.se/021046827450"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3797095/representation",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3797095/representation",
-      "title": "pyxis",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3957468/image.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3957468/image.jpg",
+      "title": "Nationalmuseum, Stockholm",
       "source": "soch",
       "tags": [
         "geometric"
@@ -2175,8 +2195,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3103679"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730206/0820.0010_bak.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730206/0820.0010_bak.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730202/0820.0010.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730202/0820.0010.jpg",
       "title": "Alfredo Hugo Li Mau",
       "source": "soch",
       "tags": [
@@ -2185,8 +2205,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/25730199"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730184/0820.0008.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730184/0820.0008.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730188/0820.0008_bak.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730188/0820.0008_bak.jpg",
       "title": "Alfredo Hugo Li Mau",
       "source": "soch",
       "tags": [
@@ -2195,9 +2215,11 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/25730181"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730220/0820.0012.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730220/0820.0012.jpg",
-      "title": "Alfredo Hugo Li Mau",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730224/0820.0012_bak.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730224/0820.0012_bak.jpg",
+      "title": {
+        "@id": "_:fd61d61d546d48fe933a6993ef69b650"
+      },
       "source": "soch",
       "tags": [
         "geometric"
@@ -2205,8 +2227,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/25730217"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730175/0820.0007.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730175/0820.0007.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730179/0820.0007_bak.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25730179/0820.0007_bak.jpg",
       "title": "Alfredo Hugo Li Mau",
       "source": "soch",
       "tags": [
@@ -2225,8 +2247,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/25730154"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2327366/0899.a.0145_rambak.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2327366/0899.a.0145_rambak.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2327358/0899.a.0145_dia.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2327358/0899.a.0145_dia.jpg",
       "title": "Hultén, Oskar Eric Gunnar",
       "source": "soch",
       "tags": [
@@ -2238,7 +2260,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5273018/C07466.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/5273018/C07466.jpg",
       "title": {
-        "@id": "_:10be948795cfd7f26cafda26f206db4d"
+        "@id": "_:5e20b7a555979555932ac9c907c565f8"
       },
       "source": "soch",
       "tags": [
@@ -2250,7 +2272,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4340860/000009%28Utl%C3%A5nMagasinIIILikeAPrayer%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4340860/000009%28Utl%C3%A5nMagasinIIILikeAPrayer%29.jpg",
       "title": {
-        "@id": "_:51bb6d021bd947303931e3211d94eefa"
+        "@id": "_:c266c3ea937872c898305099c9f061b2"
       },
       "source": "soch",
       "tags": [
@@ -2259,8 +2281,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4340855"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1577974/image.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1577974/image.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1577970/image.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1577970/image.jpg",
       "title": "fotpall, sculpture, skulptur",
       "source": "soch",
       "tags": [
@@ -2272,7 +2294,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1579028/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1579028/image.jpg",
       "title": {
-        "@id": "_:94a06c2a9e50b091a9cb7a1b9afae856"
+        "@id": "_:b8b8e98da93129ac07920c11ce1cfdf5"
       },
       "source": "soch",
       "tags": [
@@ -2284,7 +2306,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/3786461/bild-1935.50.4154-9.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/3786461/bild-1935.50.4154-9.jpg",
       "title": {
-        "@id": "_:20ea202e56f70912522ecc16b8e6fbf6"
+        "@id": "_:dcd417e9dfa71239610754cf6556fd06"
       },
       "source": "soch",
       "tags": [
@@ -2293,10 +2315,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/1302755"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/1067480/121373_1134.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/1067480/121373_1134.jpg",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/1067485/121373_1135.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/1067485/121373_1135.jpg",
       "title": {
-        "@id": "_:aebed142d08b2c3b72f3436e88f429cb"
+        "@id": "_:a806b342c8a689c08690b6c7f08aa024"
       },
       "source": "soch",
       "tags": [
@@ -2308,7 +2330,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759743/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759743/representation",
       "title": {
-        "@id": "_:d5b2d50d49a84d0eed27ad03c3e01029"
+        "@id": "_:ab30e59f57c16e29f84859a94585820b"
       },
       "source": "soch",
       "tags": [
@@ -2320,7 +2342,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3996857/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3996857/image.jpg",
       "title": {
-        "@id": "_:f13e2b1e23efcd1e79e92fbd435cbc68"
+        "@id": "_:f0df967b973e453ab25341db425c64d1"
       },
       "source": "soch",
       "tags": [
@@ -2329,10 +2351,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3015700"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3994357/image.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3994357/image.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3994361/image.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3994361/image.jpg",
       "title": {
-        "@id": "_:a190be2cc2d0b8612ac076aff396ea60"
+        "@id": "_:2cd7ba0873fe7f1f14b81408765591ee"
       },
       "source": "soch",
       "tags": [
@@ -2344,7 +2366,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759339/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759339/representation",
       "title": {
-        "@id": "_:4ed00bc0441638eccbd645eb5fa38ccf"
+        "@id": "_:64bb11b0ff71cfd8e1cfc21d5cbeeeb5"
       },
       "source": "soch",
       "tags": [
@@ -2356,7 +2378,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26316234/0782.0216_dia.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26316234/0782.0216_dia.jpg",
       "title": {
-        "@id": "_:3773fd6e3fc367efe92254a4b3fc6ad0"
+        "@id": "_:699f17ec6962f70318fcc85be32a09d7"
       },
       "source": "soch",
       "tags": [
@@ -2368,7 +2390,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3796537/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3796537/representation",
       "title": {
-        "@id": "_:cb049d9db94376a0c34c61a970e4164a"
+        "@id": "_:147f98bbda52b26ec818f57382da59f0"
       },
       "source": "soch",
       "tags": [
@@ -2377,10 +2399,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3102916"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2128036/image.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2128036/image.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2128054/image.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2128054/image.jpg",
       "title": {
-        "@id": "_:015441f56e4b0c84c125d512cb285afd"
+        "@id": "_:39e9f271c8aad4c1c65c1f50cc7d845b"
       },
       "source": "soch",
       "tags": [
@@ -2389,10 +2411,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/1016878"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1339249/1936.20.0370.A_iB.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1339249/1936.20.0370.A_iB.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1339246/1936.20.0370.A.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1339246/1936.20.0370.A.jpg",
       "title": {
-        "@id": "_:7f3a6fdbddf4d6b85736a4f92364e44b"
+        "@id": "_:24cce79253e2be559fb3ea7d969e0c03"
       },
       "source": "soch",
       "tags": [
@@ -2401,10 +2423,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/1013062"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/27271748/9000.26.1343+%281%29.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/27271748/9000.26.1343+%281%29.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/27271758/9000.26.1343+%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/27271758/9000.26.1343+%282%29.jpg",
       "title": {
-        "@id": "_:05d876ff622b9c8654baab90bd5ea327"
+        "@id": "_:fd703819531614675e1f46c16106e0c1"
       },
       "source": "soch",
       "tags": [
@@ -2433,6 +2455,26 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109871"
     },
     {
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315333/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315333/representation",
+      "title": "kruka, kärl",
+      "source": "soch",
+      "tags": [
+        "ceramic"
+      ],
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109767"
+    },
+    {
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315469/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315469/representation",
+      "title": "kärl, kruka",
+      "source": "soch",
+      "tags": [
+        "ceramic"
+      ],
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/135460"
+    },
+    {
       "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315505/representation",
       "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315505/representation",
       "title": "kärl, kruka",
@@ -2451,26 +2493,6 @@
         "ceramic"
       ],
       "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109702"
-    },
-    {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315469/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315469/representation",
-      "title": "kruka, kärl",
-      "source": "soch",
-      "tags": [
-        "ceramic"
-      ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/135460"
-    },
-    {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315333/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315333/representation",
-      "title": "kruka, kärl",
-      "source": "soch",
-      "tags": [
-        "ceramic"
-      ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109767"
     },
     {
       "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315537/representation",
@@ -2493,24 +2515,14 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/107423"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315409/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315409/representation",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315413/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315413/representation",
       "title": "lock, husgeråd",
       "source": "soch",
       "tags": [
         "ceramic"
       ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109855"
-    },
-    {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315345/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315345/representation",
-      "title": "husgeråd, lock",
-      "source": "soch",
-      "tags": [
-        "ceramic"
-      ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109840"
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109862"
     },
     {
       "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/396386/representation",
@@ -2523,24 +2535,14 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109836"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315413/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315413/representation",
-      "title": "lock, husgeråd",
-      "source": "soch",
-      "tags": [
-        "ceramic"
-      ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109862"
-    },
-    {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315401/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315401/representation",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315345/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315345/representation",
       "title": "husgeråd, lock",
       "source": "soch",
       "tags": [
         "ceramic"
       ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109853"
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109840"
     },
     {
       "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/396390/representation",
@@ -2553,30 +2555,30 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109837"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/317453/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/317453/representation",
-      "title": "kärl",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315409/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315409/representation",
+      "title": "lock, husgeråd",
       "source": "soch",
       "tags": [
         "ceramic"
       ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109802"
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109855"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/316713/representation",
-      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/316713/representation",
-      "title": "kärl",
+      "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/315401/representation",
+      "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/315401/representation",
+      "title": "husgeråd, lock",
       "source": "soch",
       "tags": [
         "ceramic"
       ],
-      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109798"
+      "sourceUrl": "https://collections.smvk.se/carlotta-om/web/object/109853"
     },
     {
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759451/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759451/representation",
       "title": {
-        "@id": "_:11eed4f4815abf8ecea5d532d69b7e7f"
+        "@id": "_:aa17bc2ab847d87bc0c4746709efc467"
       },
       "source": "soch",
       "tags": [
@@ -2585,10 +2587,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3013800"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320788/1991.08.0022.C_alt.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320788/1991.08.0022.C_alt.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320809/1991.08.0022.C.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320809/1991.08.0022.C.jpg",
       "title": {
-        "@id": "_:31be99b6925b09d060398098cecacbcb"
+        "@id": "_:33e9d3b125abc171fc21fcf09a5a56b7"
       },
       "source": "soch",
       "tags": [
@@ -2630,7 +2632,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320794/1991.08.0019.C-D.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1320794/1991.08.0019.C-D.jpg",
       "title": {
-        "@id": "_:febaf9383488e5b2c89244be65d8b921"
+        "@id": "_:77369f2e50db62546b160bdf74fc5e6b"
       },
       "source": "soch",
       "tags": [
@@ -2782,7 +2784,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1129775/1914.19.0007.A.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1129775/1914.19.0007.A.jpg",
       "title": {
-        "@id": "_:0f153a4eb5198d97cbbcf26a42a47b8a"
+        "@id": "_:1896ce433a1afb4b882bf5b5f1ef997f"
       },
       "source": "soch",
       "tags": [
@@ -2794,7 +2796,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1129811/1914.19.0007.B.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1129811/1914.19.0007.B.jpg",
       "title": {
-        "@id": "_:f9c83072252df3e29646afae1e957de3"
+        "@id": "_:419ba6f8651b5b9149ecffd58ca07cfd"
       },
       "source": "soch",
       "tags": [
@@ -2853,16 +2855,6 @@
       "sourceUrl": "https://digitaltmuseum.se/0210110447782"
     },
     {
-      "img": "https://ems.dimu.org/image/032ykV2S4ZM7?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/032ykV2S4ZM7?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "ruins"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/021017074185"
-    },
-    {
       "img": "https://ems.dimu.org/image/019EGHCrj9uRv?dimension=600x600",
       "thumb": "https://ems.dimu.org/image/019EGHCrj9uRv?dimension=600x600",
       "title": "Swedish Heritage Item",
@@ -2871,6 +2863,16 @@
         "ruins"
       ],
       "sourceUrl": "https://digitaltmuseum.se/0210114588839"
+    },
+    {
+      "img": "https://ems.dimu.org/image/032ykV2S4ZM7?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/032ykV2S4ZM7?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "ruins"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/021017074185"
     },
     {
       "img": "https://ems.dimu.org/image/022ykUoLzu4X?dimension=600x600",
@@ -2893,16 +2895,6 @@
       "sourceUrl": "https://digitaltmuseum.se/0210110433826"
     },
     {
-      "img": "https://ems.dimu.org/image/022ykV2JcbpT?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/022ykV2JcbpT?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "ruins"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/021017068887"
-    },
-    {
       "img": "https://ems.dimu.org/image/0136MvrHuKy1?dimension=600x600",
       "thumb": "https://ems.dimu.org/image/0136MvrHuKy1?dimension=600x600",
       "title": "Swedish Heritage Item",
@@ -2911,6 +2903,16 @@
         "ruins"
       ],
       "sourceUrl": "https://digitaltmuseum.se/021019671557"
+    },
+    {
+      "img": "https://ems.dimu.org/image/022ykV2JcbpT?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/022ykV2JcbpT?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "ruins"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/021017068887"
     },
     {
       "img": "https://ems.dimu.org/image/0136Mux3Yd8t?dimension=600x600",
@@ -3143,8 +3145,8 @@
       "sourceUrl": "https://digitaltmuseum.se/0210214796388"
     },
     {
-      "img": "https://ems.dimu.org/image/032wZzaWsryW?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/032wZzaWsryW?dimension=600x600",
+      "img": "https://ems.dimu.org/image/032wZzaWsruE?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/032wZzaWsruE?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -3203,8 +3205,8 @@
       "sourceUrl": "https://digitaltmuseum.se/011013853199"
     },
     {
-      "img": "https://ems.dimu.org/image/032yjyobtafW?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/032yjyobtafW?dimension=600x600",
+      "img": "https://ems.dimu.org/image/032yjyobtab5?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/032yjyobtab5?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -3213,8 +3215,8 @@
       "sourceUrl": "https://digitaltmuseum.se/021026970565"
     },
     {
-      "img": "https://ems.dimu.org/image/012uMWwjqvor?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/012uMWwjqvor?dimension=600x600",
+      "img": "https://ems.dimu.org/image/012uMWwjqvos?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/012uMWwjqvos?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -3253,16 +3255,6 @@
       "sourceUrl": "https://digitaltmuseum.se/021015584586"
     },
     {
-      "img": "https://ems.dimu.org/image/032waWFXApyd?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/032waWFXApyd?dimension=600x600",
-      "title": "Swedish Heritage Item",
-      "source": "soch",
-      "tags": [
-        "ocean"
-      ],
-      "sourceUrl": "https://digitaltmuseum.se/021016524154"
-    },
-    {
       "img": "https://ems.dimu.org/image/012uNX3paNuV?dimension=600x600",
       "thumb": "https://ems.dimu.org/image/012uNX3paNuV?dimension=600x600",
       "title": "Swedish Heritage Item",
@@ -3273,8 +3265,18 @@
       "sourceUrl": "https://digitaltmuseum.se/021015644276"
     },
     {
-      "img": "https://ems.dimu.org/image/012uMWwjqvov?dimension=600x600",
-      "thumb": "https://ems.dimu.org/image/012uMWwjqvov?dimension=600x600",
+      "img": "https://ems.dimu.org/image/032waWFXApyd?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/032waWFXApyd?dimension=600x600",
+      "title": "Swedish Heritage Item",
+      "source": "soch",
+      "tags": [
+        "ocean"
+      ],
+      "sourceUrl": "https://digitaltmuseum.se/021016524154"
+    },
+    {
+      "img": "https://ems.dimu.org/image/012uMWwjqvow?dimension=600x600",
+      "thumb": "https://ems.dimu.org/image/012uMWwjqvow?dimension=600x600",
       "title": "Swedish Heritage Item",
       "source": "soch",
       "tags": [
@@ -3356,7 +3358,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979362/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979362/image.jpg",
       "title": {
-        "@id": "_:ce3a351391bd7fdf34dc7a0b059a1bc6"
+        "@id": "_:67564a010034074c1102d8e4a65737ea"
       },
       "source": "soch",
       "tags": [
@@ -3398,7 +3400,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979260/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979260/image.jpg",
       "title": {
-        "@id": "_:6c2fe740bec90f830baa49bacfc7d490"
+        "@id": "_:e82ace9721e530a08ac9e49670789c66"
       },
       "source": "soch",
       "tags": [
@@ -3419,9 +3421,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969187/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969187/image.jpg",
-      "title": {
-        "@id": "_:3fa7ce6e925dd95787850448c70d12d1"
-      },
+      "title": "Greenwood, Marianne",
       "source": "soch",
       "tags": [
         "mountain"
@@ -3431,7 +3431,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969183/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969183/image.jpg",
-      "title": "Greenwood, Marianne",
+      "title": {
+        "@id": "_:bdf4d64c8c7c63bc900f3b6c6d0a672a"
+      },
       "source": "soch",
       "tags": [
         "mountain"
@@ -3442,7 +3444,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979386/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979386/image.jpg",
       "title": {
-        "@id": "_:449b57c584ac571e8e21815e25eeef65"
+        "@id": "_:b71f40a537673670c959afb6cb9e3448"
       },
       "source": "soch",
       "tags": [
@@ -3454,7 +3456,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979374/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979374/image.jpg",
       "title": {
-        "@id": "_:b0fe42166fc39ef71d6fe215fd9c9e6d"
+        "@id": "_:fe4c06cbfb88cbcf44f9d5ad2d1ac8a8"
       },
       "source": "soch",
       "tags": [
@@ -3466,7 +3468,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969167/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969167/image.jpg",
       "title": {
-        "@id": "_:5f3527c290bd46095ebbbfb0d14f26d5"
+        "@id": "_:913120a181d9c142f6519f817668a4ce"
       },
       "source": "soch",
       "tags": [
@@ -3488,7 +3490,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1985177/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1985177/image.jpg",
       "title": {
-        "@id": "_:e193e43da24e1773448efe3fae150e77"
+        "@id": "_:85938b82d98698260df136700068fdf7"
       },
       "source": "soch",
       "tags": [
@@ -3500,7 +3502,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969147/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969147/image.jpg",
       "title": {
-        "@id": "_:652f0520d568b4f4200b12dc6fd48516"
+        "@id": "_:8ae2fdef9cf7654c5479305ffaeabedf"
       },
       "source": "soch",
       "tags": [
@@ -3512,7 +3514,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969155/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1969155/image.jpg",
       "title": {
-        "@id": "_:3d2c79418babc4e04ac913607352807f"
+        "@id": "_:d18d863d3e9e2c5a87d7857d6c0f3ec7"
       },
       "source": "soch",
       "tags": [
@@ -3533,7 +3535,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979426/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979426/image.jpg",
-      "title": "Greenwood, Marianne",
+      "title": {
+        "@id": "_:c7ba72359f183956d6e8fffbb55a369a"
+      },
       "source": "soch",
       "tags": [
         "mountain"
@@ -3543,9 +3547,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979422/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979422/image.jpg",
-      "title": {
-        "@id": "_:2a29ce1f3d4f14e32f8fd908b771c0a5"
-      },
+      "title": "Greenwood, Marianne",
       "source": "soch",
       "tags": [
         "mountain"
@@ -3556,7 +3558,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979418/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979418/image.jpg",
       "title": {
-        "@id": "_:730c6d5556c69d540899a3e48c628fb1"
+        "@id": "_:2c722d999ae61b8fe6c450ea89a4335e"
       },
       "source": "soch",
       "tags": [
@@ -3567,7 +3569,9 @@
     {
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979414/image.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/1979414/image.jpg",
-      "title": "Greenwood, Marianne",
+      "title": {
+        "@id": "_:830b29d42d2fcfe70aaf65bae006d8a4"
+      },
       "source": "soch",
       "tags": [
         "mountain"
@@ -3578,7 +3582,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759379/representation",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759379/representation",
       "title": {
-        "@id": "_:5dcc937496ae4301e330c04de50b5f14"
+        "@id": "_:bf3ddd3f397e9037b20b265d214b798e"
       },
       "source": "soch",
       "tags": [
@@ -3590,7 +3594,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265851/NME+012%3B1-11.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265851/NME+012%3B1-11.jpg",
       "title": {
-        "@id": "_:a91c6f62505c86de288a1ac699677292"
+        "@id": "_:b329e6e5f4e011418c660d5d13eb9ddf"
       },
       "source": "soch",
       "tags": [
@@ -3599,10 +3603,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/3015822"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265251/MM+34109.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265251/MM+34109.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265246/MM+34109%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265246/MM+34109%282%29.jpg",
       "title": {
-        "@id": "_:703fc69a00edb1658b6bec83db7742d2"
+        "@id": "_:2aaa0339b78585255d63ffa620203e16"
       },
       "source": "soch",
       "tags": [
@@ -3611,10 +3615,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259474"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265261/MM+34110.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265261/MM+34110.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265256/MM+34110%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265256/MM+34110%282%29.jpg",
       "title": {
-        "@id": "_:7b199d4fc7c78a249b124c3ca88e68cd"
+        "@id": "_:a4b336c47d331b74702317e4059f76fe"
       },
       "source": "soch",
       "tags": [
@@ -3626,7 +3630,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265051/MM+34089.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4265051/MM+34089.jpg",
       "title": {
-        "@id": "_:0c543eca8b86809a4388bf24eee05837"
+        "@id": "_:45250fe36e6c9d26d199fc0a4ba504fe"
       },
       "source": "soch",
       "tags": [
@@ -3638,7 +3642,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264446/MM+34029%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264446/MM+34029%282%29.jpg",
       "title": {
-        "@id": "_:e14a7ada0575bcf4acbe4901bfb50e1a"
+        "@id": "_:19ad18926f8abf35648d0e8f6ba5760e"
       },
       "source": "soch",
       "tags": [
@@ -3650,7 +3654,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264511/MM+34035.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264511/MM+34035.jpg",
       "title": {
-        "@id": "_:250890b8e747aa57f7de7b258db73f48"
+        "@id": "_:dfe10b284607ea945487ad60612af5aa"
       },
       "source": "soch",
       "tags": [
@@ -3662,7 +3666,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264636/MM+34048%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264636/MM+34048%282%29.jpg",
       "title": {
-        "@id": "_:ec7157b9a9c1c7083fe129fa89b9b006"
+        "@id": "_:65f43d592870dfb456937c8ca9dedeca"
       },
       "source": "soch",
       "tags": [
@@ -3674,7 +3678,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264681/MM+34052.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264681/MM+34052.jpg",
       "title": {
-        "@id": "_:4725d2224f25c8be64ac8a8957c6982d"
+        "@id": "_:42616d9e6c9c82f77bb9e353a9b60093"
       },
       "source": "soch",
       "tags": [
@@ -3686,7 +3690,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264711/MM+34055.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264711/MM+34055.jpg",
       "title": {
-        "@id": "_:8c1ade5be6b87c3f9f1b29f1898e3075"
+        "@id": "_:76555f1f91476abb165ec9f5cce4539b"
       },
       "source": "soch",
       "tags": [
@@ -3698,7 +3702,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264606/MM+34045%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264606/MM+34045%282%29.jpg",
       "title": {
-        "@id": "_:b59081e20eca6449fec9bf54abca591b"
+        "@id": "_:d7b19fb9c2ea072307c134865139c555"
       },
       "source": "soch",
       "tags": [
@@ -3707,10 +3711,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259167"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264741/MM+34058.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264741/MM+34058.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264736/MM+34058%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264736/MM+34058%282%29.jpg",
       "title": {
-        "@id": "_:ad2e7797770443d06db77a6cbff19556"
+        "@id": "_:644865f8b4f599e94cc3d4858a507184"
       },
       "source": "soch",
       "tags": [
@@ -3722,7 +3726,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264481/MM+34032.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264481/MM+34032.jpg",
       "title": {
-        "@id": "_:098c388996c0de7f4d19c0fdc9e90355"
+        "@id": "_:dbcd51e587be70cba424e5875f48b932"
       },
       "source": "soch",
       "tags": [
@@ -3731,10 +3735,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259151"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264746/MM+34059%282%29.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264746/MM+34059%282%29.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264751/MM+34059.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264751/MM+34059.jpg",
       "title": {
-        "@id": "_:d28180aa9cd2776c077bc71e5498d8de"
+        "@id": "_:aba3a8ecafbaa9a833935a70c6c815ba"
       },
       "source": "soch",
       "tags": [
@@ -3743,10 +3747,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259202"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264961/MM+34080.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264961/MM+34080.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264956/MM+34080%281%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264956/MM+34080%281%29.jpg",
       "title": {
-        "@id": "_:4215250efbacd2148534525c6af3ae60"
+        "@id": "_:f5ffe6ec88e97e078582c679504b42bf"
       },
       "source": "soch",
       "tags": [
@@ -3758,7 +3762,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264901/MM+34074.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264901/MM+34074.jpg",
       "title": {
-        "@id": "_:7c3092e555cfdc0dc505b0b90a19611d"
+        "@id": "_:f97e2fbdeb40f6489a795051241a561b"
       },
       "source": "soch",
       "tags": [
@@ -3767,10 +3771,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259217"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264861/MM+34070.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264861/MM+34070.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264856/MM+34070%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264856/MM+34070%282%29.jpg",
       "title": {
-        "@id": "_:15479249bb8036967883050811ae6873"
+        "@id": "_:b6af966774bd01e8963414ec4f62e59f"
       },
       "source": "soch",
       "tags": [
@@ -3779,10 +3783,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259213"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264791/MM+34063.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264791/MM+34063.jpg",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264786/MM+34063%282%29.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264786/MM+34063%282%29.jpg",
       "title": {
-        "@id": "_:eb2a40bae63d31a71f02f30dc961f129"
+        "@id": "_:6380f67ba0ae31565985582f7b3479da"
       },
       "source": "soch",
       "tags": [
@@ -3794,7 +3798,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264731/MM+34057.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264731/MM+34057.jpg",
       "title": {
-        "@id": "_:b799e97a34ba141430a0dd5548811723"
+        "@id": "_:7530281687ae72f03eda4a2ac4faef92"
       },
       "source": "soch",
       "tags": [
@@ -3803,10 +3807,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259200"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759615/representation",
-      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759615/representation",
+      "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759619/representation",
+      "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/3759619/representation",
       "title": {
-        "@id": "_:b996df8e96058f7f13ba033452a95b1b"
+        "@id": "_:6d717065c8de9bfc63cfc9d534e03aa6"
       },
       "source": "soch",
       "tags": [
@@ -3818,7 +3822,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264596/MM+34044%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264596/MM+34044%282%29.jpg",
       "title": {
-        "@id": "_:ff2cfbcaa017e5823ac238a1f88f0e8b"
+        "@id": "_:6f7e82b6835f7c4454680166db1edab4"
       },
       "source": "soch",
       "tags": [
@@ -3830,7 +3834,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264666/MM+34051%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264666/MM+34051%282%29.jpg",
       "title": {
-        "@id": "_:0cf6fa32ca5ab493ad74dc64249149d8"
+        "@id": "_:104b4112afb6b72aeab02152ac7b207d"
       },
       "source": "soch",
       "tags": [
@@ -3842,7 +3846,7 @@
       "img": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264576/MM+34042%282%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-mhm/web/image/zoom/4264576/MM+34042%282%29.jpg",
       "title": {
-        "@id": "_:dff5e032424869db84e4b78a77a1d47e"
+        "@id": "_:f602c11674cc364fba1bbd59e99e3091"
       },
       "source": "soch",
       "tags": [
@@ -3851,8 +3855,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-mhm/web/object/4259162"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25105799/0964.a.1040_rambak.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25105799/0964.a.1040_rambak.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/25105791/0964.a.1040.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/25105791/0964.a.1040.jpg",
       "title": "Okänd",
       "source": "soch",
       "tags": [
@@ -3861,8 +3865,8 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/4242957"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/2352505/0366.0078_bak.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/2352505/0366.0078_bak.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26902989/0366.0078_pasiktbak.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26902989/0366.0078_pasiktbak.jpg",
       "title": "Berendt, Gunvor",
       "source": "soch",
       "tags": [
@@ -3881,11 +3885,9 @@
       "sourceUrl": "https://samlingar.goteborgsstadsmuseum.se/carlotta/web/object/1307371"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/2506373/1944.12.0024_alt.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/2506373/1944.12.0024_alt.jpg",
-      "title": {
-        "@id": "_:530e3f513d4b6064591609477f51ffc0"
-      },
+      "img": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/2506378/1944.12.0024_alt2.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-vkm/web/image/zoom/2506378/1944.12.0024_alt2.jpg",
+      "title": "Rydén, Stig",
       "source": "soch",
       "tags": [
         "astronomy"
@@ -3926,7 +3928,7 @@
       "img": "https://samlingar.regionmuseet.se/files/fullsize/c80c3b725f6f67108c32674345f3da96.jpg",
       "thumb": "https://samlingar.regionmuseet.se/files/fullsize/c80c3b725f6f67108c32674345f3da96.jpg",
       "title": {
-        "@id": "_:8c61797dab96b589fad3ab7a68149ab8"
+        "@id": "_:6b82301141daa7ca119dc78cfa8157a6"
       },
       "source": "soch",
       "tags": [
@@ -3938,7 +3940,7 @@
       "img": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/52ea0f0cfb0f12b63de3ba68ddad4c81.jpg",
       "thumb": "https://sokisamlingar.sormlandsmuseum.se/files/fullsize/52ea0f0cfb0f12b63de3ba68ddad4c81.jpg",
       "title": {
-        "@id": "_:d16b62441c5c6d10133fa9d1e8a282c5"
+        "@id": "_:6e182e65a05a361de9acea04466b2048"
       },
       "source": "soch",
       "tags": [
@@ -3947,8 +3949,8 @@
       "sourceUrl": "https://sokisamlingar.sormlandsmuseum.se/objects/c24-275015/"
     },
     {
-      "img": "https://carl.kulturen.com/web/image/zoom/865488/82612_000_07.jpg",
-      "thumb": "https://carl.kulturen.com/web/image/zoom/865488/82612_000_07.jpg",
+      "img": "https://carl.kulturen.com/web/image/zoom/866512/82612_000_03.jpg",
+      "thumb": "https://carl.kulturen.com/web/image/zoom/866512/82612_000_03.jpg",
       "title": "aftonklänning, klänning",
       "source": "soch",
       "tags": [
@@ -3967,8 +3969,8 @@
       "sourceUrl": "https://digitaltmuseum.se/011015423976"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26903932/0696.0033_pasikt.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26903932/0696.0033_pasikt.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26903936/0696.0033_pasiktbak.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26903936/0696.0033_pasiktbak.jpg",
       "title": "Selling, Vivi (född Hellberg)",
       "source": "soch",
       "tags": [
@@ -3979,9 +3981,7 @@
     {
       "img": "https://collections.smvk.se/carlotta-om/web/image/zoom/1109423/006986%28nitrat17x11%2C5%29.jpg",
       "thumb": "https://collections.smvk.se/carlotta-om/web/image/zoom/1109423/006986%28nitrat17x11%2C5%29.jpg",
-      "title": {
-        "@id": "_:03bfbf8329b283e12d21215bf1d595ba"
-      },
+      "title": "Sirén, Osvald",
       "source": "soch",
       "tags": [
         "Baroque"
@@ -3992,7 +3992,7 @@
       "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275309/0964.d.1612_rambak.jpg",
       "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275309/0964.d.1612_rambak.jpg",
       "title": {
-        "@id": "_:4885797bd926224a640e2b67270375e5"
+        "@id": "_:7105cab4fb78b8a13e0d98209c98a0fd"
       },
       "source": "soch",
       "tags": [
@@ -4001,10 +4001,10 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/26275298"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275013/0964.d.1591_ram.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275013/0964.d.1591_ram.jpg",
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275009/0964.d.1591_glas.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275009/0964.d.1591_glas.jpg",
       "title": {
-        "@id": "_:7f6f9e657ab82a364a412168847c4fd4"
+        "@id": "_:04d32b849fb0ced24fe9af89074877db"
       },
       "source": "soch",
       "tags": [
@@ -4013,11 +4013,9 @@
       "sourceUrl": "https://collections.smvk.se/carlotta-em/web/object/26275006"
     },
     {
-      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26274996/0964.d.1590_glas.jpg",
-      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26274996/0964.d.1590_glas.jpg",
-      "title": {
-        "@id": "_:73b58cc8a0aae6ec2487f47c78a0397b"
-      },
+      "img": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275000/0964.d.1590_ram.jpg",
+      "thumb": "https://collections.smvk.se/carlotta-em/web/image/zoom/26275000/0964.d.1590_ram.jpg",
+      "title": "Svenska Missionsförbundet",
       "source": "soch",
       "tags": [
         "Baroque"
