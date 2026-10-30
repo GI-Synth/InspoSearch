@@ -2,7 +2,7 @@
   "sourceId": "galleria_borghese",
   "sourceName": "Galleria Borghese",
   "schemaVersion": 1,
-  "lastFetched": "2026-10-29T04:15:19.484Z",
+  "lastFetched": "2026-10-30T05:20:56.098Z",
   "items": [
     {
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Giorgione%2C%20Impassioned%20Singer.jpg",
@@ -89,6 +89,15 @@
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/John%20the%20Baptist%20%28Galleria%20Borghese%29-Caravaggio%20%281610%29.jpg",
       "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/John%20the%20Baptist%20%28Galleria%20Borghese%29-Caravaggio%20%281610%29.jpg?width=400",
       "title": "Saint John the Baptist",
+      "source": "galleria_borghese",
+      "tags": [
+        "portrait"
+      ]
+    },
+    {
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/0%20La%20lamentation%20sur%20le%20corps%20du%20Christ%20mort%20-%20Rubens%20-%20Galerie%20Borgh%C3%A8se%20-%20411%20%282%29.JPG",
+      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/0%20La%20lamentation%20sur%20le%20corps%20du%20Christ%20mort%20-%20Rubens%20-%20Galerie%20Borgh%C3%A8se%20-%20411%20%282%29.JPG?width=400",
+      "title": "The Deposition",
       "source": "galleria_borghese",
       "tags": [
         "portrait"
@@ -188,15 +197,6 @@
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Tiziano%20-%20Amor%20Sacro%20y%20Amor%20Profano%20%28Galer%C3%ADa%20Borghese%2C%20Roma%2C%201514%29FXD.jpg",
       "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Tiziano%20-%20Amor%20Sacro%20y%20Amor%20Profano%20%28Galer%C3%ADa%20Borghese%2C%20Roma%2C%201514%29FXD.jpg?width=400",
       "title": "Sacred and Profane Love",
-      "source": "galleria_borghese",
-      "tags": [
-        "portrait"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Deposition%20%28Galleria%20Borghese.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20The%20Deposition%20%28Galleria%20Borghese.jpg?width=400",
-      "title": "The Deposition",
       "source": "galleria_borghese",
       "tags": [
         "portrait"
@@ -649,7 +649,7 @@
       "title": "Escape of Aeneas from Troy",
       "source": "galleria_borghese",
       "tags": [
-        "fashion"
+        "nature"
       ]
     },
     {
@@ -658,7 +658,7 @@
       "title": "Saint John the Baptist",
       "source": "galleria_borghese",
       "tags": [
-        "fashion"
+        "nature"
       ]
     },
     {
@@ -667,7 +667,7 @@
       "title": "Apollo and Daphne",
       "source": "galleria_borghese",
       "tags": [
-        "fashion"
+        "nature"
       ]
     },
     {
@@ -676,7 +676,7 @@
       "title": "Portrait of a Man",
       "source": "galleria_borghese",
       "tags": [
-        "fashion"
+        "nature"
       ]
     },
     {
@@ -866,231 +866,6 @@
       "source": "galleria_borghese",
       "tags": [
         "nature"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Veronese%20-%20Predica%20del%20Battista%2C%201562%20circa%2C%20137.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Veronese%20-%20Predica%20del%20Battista%2C%201562%20circa%2C%20137.jpg?width=400",
-      "title": "Saint John the Baptist Preaching",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerrit%20van%20Honthorst%20cat02.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gerrit%20van%20Honthorst%20cat02.jpg?width=400",
-      "title": "The Concert",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Ritorno%20del%20figliol%20prodigo%20-%20Guercino.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Ritorno%20del%20figliol%20prodigo%20-%20Guercino.jpg?width=400",
-      "title": "Return of the Prodigal Son",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Baburen%2C%20Dirck%20van%20-%20Gefangennahme%20Christi%20-%201619.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Baburen%2C%20Dirck%20van%20-%20Gefangennahme%20Christi%20-%201619.jpg?width=400",
-      "title": "The Capture of Jesus Christ",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Raphael%20Portrait%20of%20a%20man%20cat14.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Raphael%20Portrait%20of%20a%20man%20cat14.jpg?width=400",
-      "title": "Portrait of a Man",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Giovanni%20Lanfranco%20-%20Norandino%20and%20Lucina%20Discovered%20by%20the%20Ogre%20-%20WGA12455.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Giovanni%20Lanfranco%20-%20Norandino%20and%20Lucina%20Discovered%20by%20the%20Ogre%20-%20WGA12455.jpg?width=400",
-      "title": "Norandino and Lucina Discovered by the Ogre",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Veronese%20-%20Predica%20di%20Sant%27Antonio%20da%20Padova%2C%20101.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Veronese%20-%20Predica%20di%20Sant%27Antonio%20da%20Padova%2C%20101.jpg?width=400",
-      "title": "Saint Anthony Preaching to the Fish",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bacchiacca%20-%20Scenes%20from%20the%20Story%20of%20Joseph%20-%20The%20Discovery%20of%20the%20Stolen%20Cup%20-%20WGA01102.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bacchiacca%20-%20Scenes%20from%20the%20Story%20of%20Joseph%20-%20The%20Discovery%20of%20the%20Stolen%20Cup%20-%20WGA01102.jpg?width=400",
-      "title": "Scenes from the Story of Joseph: The Discovery of the Stolen Cup",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Andrea%20del%20brescianino%2C%20ritratto%20di%20giovane%20donna%20come%20santa%20caterina%2C%201500-10%20ca.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Andrea%20del%20brescianino%2C%20ritratto%20di%20giovane%20donna%20come%20santa%20caterina%2C%201500-10%20ca.jpg?width=400",
-      "title": "Portrait of a young woman as Saint Catherine of Alexandria",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/15-%20Ermafrodito%2C%20I%20sec.%20d.C.%2C%20con%20restauri%20di%20V.%20Pacetti%20-FG15.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/15-%20Ermafrodito%2C%20I%20sec.%20d.C.%2C%20con%20restauri%20di%20V.%20Pacetti%20-FG15.jpg?width=400",
-      "title": "Sleeping Hermaphroditus",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Attribuito%20a%20Iacopino%20del%20Conte%20%28Firenze%201510%20-%20Roma%201598%29%20-%20Ritratto%20del%20cardinale%20Marcello%20Cervini%20Spannocchi%20-%20408%20-%20Galleria%20Borghese.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Attribuito%20a%20Iacopino%20del%20Conte%20%28Firenze%201510%20-%20Roma%201598%29%20-%20Ritratto%20del%20cardinale%20Marcello%20Cervini%20Spannocchi%20-%20408%20-%20Galleria%20Borghese.jpg?width=400",
-      "title": "Portrait of Cardinal Marcello Cervini degli Spannocchi",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Parmigianino%2C%20ritratto%20maschile%20galleria%20borghese.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Parmigianino%2C%20ritratto%20maschile%20galleria%20borghese.jpg?width=400",
-      "title": "Portrait of Pianerlotto",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bacchiacca%20-%20Scenes%20from%20the%20Story%20of%20Joseph%20-%20The%20Search%20for%20the%20Cup%20-%20WGA01100.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bacchiacca%20-%20Scenes%20from%20the%20Story%20of%20Joseph%20-%20The%20Search%20for%20the%20Cup%20-%20WGA01100.jpg?width=400",
-      "title": "Scenes from the Story of Joseph: The Search for the Cup",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Bernini%27s%20David%2002.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Bernini%27s%20David%2002.jpg?width=400",
-      "title": "David",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Giorgione%2C%20suonatore%20di%20flauto%202.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Giorgione%2C%20suonatore%20di%20flauto%202.jpg?width=400",
-      "title": "Suonatore di flauto",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Susanna%20and%20the%20Elders%20%28Galleria%20Borghese%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Peter%20Paul%20Rubens%20-%20Susanna%20and%20the%20Elders%20%28Galleria%20Borghese%29.jpg?width=400",
-      "title": "Susanna and the Elders",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Officer%20and%20soldiers%20preparing%20to%20leave%2C%20Pieter%20Codde%2C%20oil%20on%20panel%2C%201630s%2C%20Galleria%20Borghese.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Officer%20and%20soldiers%20preparing%20to%20leave%2C%20Pieter%20Codde%2C%20oil%20on%20panel%2C%201630s%2C%20Galleria%20Borghese.jpg?width=400",
-      "title": "Officer and soldiers preparing to leave",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Vecellio%20Tiziano%20%28Pieve%20di%20Cadore%201488-90%20-%20Venezia%201576%29%20-%20Cristo%20flagellato%20-%20194%20-%20Galleria%20Borghese.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Vecellio%20Tiziano%20%28Pieve%20di%20Cadore%201488-90%20-%20Venezia%201576%29%20-%20Cristo%20flagellato%20-%20194%20-%20Galleria%20Borghese.jpg?width=400",
-      "title": "Scourged Christ",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Boy%20with%20a%20Basket%20of%20Fruit-Caravaggio%20%281593%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Boy%20with%20a%20Basket%20of%20Fruit-Caravaggio%20%281593%29.jpg?width=400",
-      "title": "Boy with a Basket of Fruit",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gaspare%20Landi%20-%20Portrait%20of%20Canova%20-%20WGA12435.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Gaspare%20Landi%20-%20Portrait%20of%20Canova%20-%20WGA12435.jpg?width=400",
-      "title": "Portrait of Antonio Canova",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Agostino%20Carracci%20018.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Agostino%20Carracci%20018.jpg?width=400",
-      "title": "The Ecstasy of Saint Catherine of Siena",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Agostino%20carracci%2C%20estasi%20di%20santa%20caterina%2C%201590%20ca.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Agostino%20carracci%2C%20estasi%20di%20santa%20caterina%2C%201590%20ca.jpg?width=400",
-      "title": "The Ecstasy of Saint Catherine of Siena",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolas%20cordier%2C%20la%20zingarella%2C%201607-12%2C%2001.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Nicolas%20cordier%2C%20la%20zingarella%2C%201607-12%2C%2001.jpg?width=400",
-      "title": "La Zingarella",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20with%20the%20Head%20of%20Goliath-Caravaggio%20%281610%29.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/David%20with%20the%20Head%20of%20Goliath-Caravaggio%20%281610%29.jpg?width=400",
-      "title": "David with the Head of Goliath",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
-      ]
-    },
-    {
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Fede%20galizia%2C%20giuditta%20con%20la%20testa%20di%20oloferne%2C%201601.jpg",
-      "thumb": "https://commons.wikimedia.org/wiki/Special:FilePath/Fede%20galizia%2C%20giuditta%20con%20la%20testa%20di%20oloferne%2C%201601.jpg?width=400",
-      "title": "Judith with the Head of Holofernes",
-      "source": "galleria_borghese",
-      "tags": [
-        "abstract"
       ]
     },
     {
